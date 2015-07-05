@@ -1,0 +1,20 @@
+
+# The port to listen on
+port: 2255
+
+# The address to send all Bitcoin to.
+payoutAddress: 1EQctEaWHL6HRPJLo9CbAcfhnM8Ha118oS
+
+# Associate web paths with file system paths as well
+# as selecting the price for that directory/file
+paths:
+	/public:
+		localPath: '~/testServe'
+		basePrice: 1000
+
+	/public/expensive:
+		basePrice: 2999
+
+	/my-api:
+		proxyPass: 'localhost:3000'
+		basePrice: 1200

@@ -1,0 +1,15 @@
+# Associate web paths with file system paths as well
+# as selecting the price for that directory/file
+paths:
+	/serve/public:
+		localPath: '~/testServe/'
+		# Charged on a per file basis  
+		basePrice: 0.1 #satoshi per byte
+		priceMode: payPerByte_full
+
+	/serve/public/ppf:
+		# This would serve assets in `~/testServe/ppb/*` because the
+		# parent path has already stated the relative local path Charges 
+		# based on the content full byte count.
+		basePrice: 10000 # satoshi per file
+		priceMode: pricePerFile

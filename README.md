@@ -16,3 +16,5 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## DjangoBitcoin
+DjangoBitcoin is a server example. Check it out in the folder two1/djangobitcoin!

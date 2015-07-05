@@ -1,0 +1,5 @@
+FROM python:3-onbuild
+
+EXPOSE 8000
+WORKDIR two1/mmm/
+CMD [ "gunicorn", "cloudcall.wsgi", "--bind", "0.0.0.0:8000" ]
