@@ -80,21 +80,26 @@ class Script(object):
             else:
                 self.ser_dispatch_table[k] = self._serialize_default_opcode
         
-        self.script = ""
+        self.script = None
+        self.raw_script = None
         self.ast = []
 
         if raw:
-            self.disassemble(script)
+            self.raw_script = script
         else:
             self.script = script
-
-        self.parse()
+            self.parse()
 
     def parse(self):
         ''' This is a basic Recursive Descent Parser for the Bitcoin
             script language. It will tokenize the input script to allow
             interpretation of that script.
         '''
+        print(self.script is None, self.raw_script is not None)
+        if self.script is None and self.raw_script is not None:
+            print("lazily disassembling")
+            self.disassemble(self.raw_script)
+        
         self.ast = []
         self.tokens = self.script.split()
 
@@ -228,7 +233,7 @@ class Script(object):
         if len(args) == 0:
             raise ValueError("Not enough clauses for %s!" % opcode)
 
-        bytestr += self.__walk_ast__(args[0], self.ser_dispatch_table, self._serialize_var_data, b'')
+        bytestr += self._walk_ast(args[0], self.ser_dispatch_table, self._serialize_var_data, b'')
 
         if len(args) == 2:
             bytestr += bytes([self.BTC_OPCODE_TABLE['OP_ELSE']])
@@ -243,6 +248,10 @@ class Script(object):
         return bytestr
 
     def __bytes__(self):
+        if self.raw_script is not None:
+            return self.raw_script
+        if len(self.ast) == 0:
+            self.parse()
         return self._walk_ast(self.ast, self.ser_dispatch_table, self._serialize_var_data, b'')
 
 
@@ -250,12 +259,27 @@ if __name__ == '__main__':
     scr = 'OP_ADD OP_IF OP_DUP OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUALVERIFY OP_CHECKSIG OP_ELSE OP_IF OP_DUP OP_ELSE OP_2ROT OP_ENDIF OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUAL OP_ENDIF OP_PUSHDATA1 0x4e 0x010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101'
 
     s = Script(scr)
+    assert s.raw_script is None
+    assert s.script == scr
     print(s.ast)
-    print(bytes_to_str(bytes(s)))
+    s_bytes = bytes(s)
+    s_hex_str = bytes_to_str(s_bytes)
+    print(s_hex_str)
 
-    s1 = Script.from_bytes(bytes(s))[0]
+    s1 = Script.from_bytes(pack_var_str(s_bytes))[0]
+    assert s1.raw_script == s_bytes
     print(s1.ast)
     
 
-    s = Script(bytes.fromhex("483045022100d60baf72dbaed8d15c3150e3309c9f7725fbdf91b0560330f3e2a0ccb606dfba02206422b1c73ce390766f0dc4e9143d0fbb400cc207e4a9fd9130e7f79e52bf81220121034ccd52d8f72cfdd680077a1a171458a1f7574ebaa196095390ae45e68adb3688"), True)
-    
+    raw_scr = "483045022100d60baf72dbaed8d15c3150e3309c9f7725fbdf91b0560330f3e2a0ccb606dfba02206422b1c73ce390766f0dc4e9143d0fbb400cc207e4a9fd9130e7f79e52bf81220121034ccd52d8f72cfdd680077a1a171458a1f7574ebaa196095390ae45e68adb3688"
+    s = Script(bytes.fromhex(raw_scr), True)
+    assert s.raw_script is not None
+    assert s.script is None
+
+    s_hex_str = bytes_to_str(bytes(s))
+    assert s_hex_str == raw_scr
+    assert s.script is None
+
+    s.parse()
+    assert s.script is not None
+          

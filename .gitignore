@@ -6,3 +6,16 @@
 /two1/bitcoin/tests/txns.json
 /build/
 /two1/bitcoin/sha256.so
+.idea/
+dist/
+two1.egg-info/
+__pycache__
+*.log
+*.log.*
+/two1/mining/logs/app.log
+*.pyc
+docs/build/
+venv/
+*.log
+*.log.*
+

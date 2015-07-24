@@ -1,17 +1,16 @@
 import arrow
 from calendar import timegm
-import inspect
 import json
-import os
+import pytest
 from two1.bitcoin.utils import *
 from two1.bitcoin.block import Block, BlockHeader
 from two1.bitcoin.script import Script
 from two1.bitcoin.txn import CoinbaseInput, Transaction, TransactionInput, TransactionOutput
 
 
-def txn_from_json(tx_json):
+def txn_from_json(txn_json):
     inputs = []
-    for i in tx_json['inputs']:
+    for i in txn_json['inputs']:
         if 'output_hash' in i:
             outpoint = bytes.fromhex(i['output_hash'])[::-1] # In RPC order, need to make it internal
             script = Script(bytes.fromhex(i['script_signature_hex']), True)
@@ -23,7 +22,7 @@ def txn_from_json(tx_json):
             # Coinbase txn, we pass in a block version of 1 since the coinbase script
             # from api.chain.com already has the height in there. Don't want our stuff
             # to repack it in.
-            inp = CoinbaseInput(tx_json['block_height'],
+            inp = CoinbaseInput(txn_json['block_height'],
                                 bytes.fromhex(i['coinbase']),
                                 i['sequence'],
                                 1)
@@ -31,7 +30,7 @@ def txn_from_json(tx_json):
         inputs.append(inp)
 
     outputs = []    
-    for o in tx_json['outputs']:
+    for o in txn_json['outputs']:
         scr = Script(bytes.fromhex(o['script_hex']), True)
         out = TransactionOutput(o['value'], scr)
         outputs.append(out)
@@ -39,32 +38,31 @@ def txn_from_json(tx_json):
     txn = Transaction(Transaction.DEFAULT_TRANSACTION_VERSION,
                       inputs,
                       outputs,
-                      tx_json['lock_time'])
+                      txn_json['lock_time'])
 
     return txn
 
-def test_txn(tx_json):
-    ''' tx_json: a JSON dict from api.chain.com that also contains
+def test_txn(txn_json):
+    ''' txn_json: a JSON dict from api.chain.com that also contains
                  the raw hex of the transaction in the 'hex' key
     '''
 
-    txn = txn_from_json(tx_json)
+    txn = txn_from_json(txn_json)
     txn_bytes = bytes(txn)
     txn_hash = txn.hash
 
     try:
-        assert txn.num_inputs == len(tx_json['inputs'])
-        assert txn.num_outputs == len(tx_json['outputs'])
-        assert txn_hash == bytes.fromhex(tx_json['hash'])[::-1], \
-            "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (tx_json['hash'],
-                                                                                                        tx_json['hex'],
+        assert txn.num_inputs == len(txn_json['inputs'])
+        assert txn.num_outputs == len(txn_json['outputs'])
+        assert txn_hash == bytes.fromhex(txn_json['hash'])[::-1], \
+            "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (txn_json['hash'],
+                                                                                                        txn_json['hex'],
                                                                                                         bytes_to_str(txn_bytes),
-                                                                                                        tx_json)
-        return True
+                                                                                                        txn_json)
     except AssertionError as e:
         print(e)
-        return False
-
+        raise
+        
 def test_block(block_json):
     # Why is it so f*ing hard to get a UNIX-time from a time string?
     #print("block keys = %r, time = %r" % (block_json.keys(), block_json['time']))
@@ -97,7 +95,6 @@ def test_block(block_json):
         assert block.block_header.nonce == block_json['nonce']
         assert block_hash == bytes.fromhex(block_json['hash'])[::-1]
 
-        return True
     except AssertionError as e:
         print(e)
         print("block height:        %d" % (block.height))
@@ -115,26 +112,4 @@ def test_block(block_json):
         print("       nonce:        %d" % (block.block_header.nonce))
         print("   from json:        %d" % (block_json['nonce']))
 
-        return False
-
-this_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-    
-# Load blocks
-blocks = []
-txns = []
-with open(os.path.join(this_file_path, "blocks.json"), 'r') as f:
-    blocks = json.load(f)
-
-with open(os.path.join(this_file_path, "txns.json"), 'r') as f:
-    txns = json.load(f)
-
-print("Testing against %d transactions and %d blocks..." % (len(txns), len(blocks)))    
-
-result = True
-for b in blocks:
-    result |= test_block(b)
-
-for t in txns:
-    result |= test_txn(t)
-
-print("%s!" % ("Passed" if result else "Failed"))
+        raise
