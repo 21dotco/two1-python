@@ -1,22 +1,93 @@
-# -*- Mode: Python -*-
+"""two1
 
-from setuptools import setup, find_packages
+This tool uses the official PyPa packaging and click recommendations:
+https://github.com/pypa/sampleproject
+https://packaging.python.org/en/latest/distributing.html
+http://click.pocoo.org/4/setuptools/
+"""
+from setuptools import setup
+from setuptools import find_packages
+from codecs import open
+from os import path
 
-try:
-    from Cython.Build import cythonize
-    extensions = cythonize(['two1/bitcoin/sha256.pyx'])
-except:
-    from distutils.extension import Extension
-    extensions = [Extension("sha256", ["two1/bitcoin/sha256.c"])]
+here = path.abspath(path.dirname(__file__))
 
-setup (
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
+setup(
     name='two1',
-    version='0.1.0',
-    description='Open-sourced projects by 21, Inc.',
+
+    # Versions should comply with PEP440.  For a discussion on single-sourcing
+    # the version across setup.py and the project code, see
+    # https://packaging.python.org/en/latest/single_source_version.html
+    version='0.1',
+    description='Buy and sell anything on the internet with Bitcoin.',
+    long_description=long_description,
     url='https://github.com/21dotco/two1',
-    maintainer='Nigel Drego',
-    maintainer_email='nigel@21.co',
-    packages=find_packages(),
-    install_requires=['cython'],
-    ext_modules=extensions
+    author='21, Inc',
+    author_email='two1@21.co',
+    license='MIT',
+
+    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[
+        'Development Status :: 1 - Planning',
+        'Intended Audience :: Developers',
+        'Topic :: Internet',
+        'License :: OSI Approved :: MIT License',
+
+        # Specify the Python versions you support here. In particular, ensure
+        # that you indicate whether you support Python 2, Python 3 or both.
+        # 'Programming Language :: Python :: 2',
+        # 'Programming Language :: Python :: 2.6',
+        # 'Programming Language :: Python :: 2.7',
+        # 'Programming Language :: Python :: 3',
+        # 'Programming Language :: Python :: 3.2',
+        # 'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+    ],
+    keywords='bitcoin blockchain client server',
+
+    # You can just specify the packages manually here if your project is
+    # simple. Or you can use find_packages().
+    packages=['two1', 'two1.commands'],
+
+    # List run-time dependencies here.  These will be installed by pip when
+    # your project is installed. For an analysis of "install_requires" vs pip's
+    # requirements files see:
+    # https://packaging.python.org/en/latest/requirements.html
+    install_requires=['click'],
+
+    # List additional groups of dependencies here (e.g. development
+    # dependencies). You can install these using the following syntax,
+    # for example:
+    # $ pip install -e .[dev,test]
+    extras_require={
+        'dev': ['check-manifest'],
+        'test': ['coverage'],
+    },
+
+    # If there are data files included in your packages that need to be
+    # installed, specify them here.  If using Python 2.6 or less, then these
+    # have to be included in MANIFEST.in as well.
+    package_data={
+        'two1': ['two1-config.json'],
+    },
+
+    # Although 'package_data' is the preferred approach, in some case you may
+    # need to place data files outside of your packages. See:
+    # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files # noqa
+    # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
+    data_files=[('peers', ['data/default-peers.json'])],
+
+    # To provide executable scripts, use entry points in preference to the
+    # "scripts" keyword. Entry points provide cross-platform support and allow
+    # pip to create the appropriate form of executable for the target platform.
+    # See: http://stackoverflow.com/a/782984/72994
+    # http://click.pocoo.org/4/setuptools/
+    entry_points={
+        'console_scripts': [
+            'two1=two1.cli:main',
+        ],
+    },
 )

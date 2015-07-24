@@ -55,6 +55,13 @@ coverage.xml
 *.mo
 *.pot
 
+# Virtualenv
+venv/
+
+# Sphinx documentation built with docutils
+docs/_build/
+README.html
+
 # Django stuff:
 *.log
 

@@ -22,3 +22,7 @@ lxml==3.4.4
 beautifulsoup4==4.4.0
 pycoin==0.52
 birdy==0.2
+argh==0.26.1
+requests==2.7.0
+path.py==7.4
+click==4.1
