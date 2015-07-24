@@ -118,15 +118,16 @@ class Block(BlockBase):
             t, b = Transaction.from_bytes(b)
             txns.append(t)
 
-        return (
-            Block(bh.version,
-                  bh.prev_block_hash,
-                  bh.time,
-                  bh.bits,
-                  bh.nonce,
-                  txns),
-            b
-        )
+        return (Block.from_blockheader(bh, txns), b)
+
+    @classmethod
+    def from_blockheader(cls, bh, txns):
+        self = cls.__new__(cls)
+        self.block_header = bh
+        self.transactions = txns
+
+        self.merkle_tree = None
+        self.invalidate()
 
     def __init__(self, height, version, prev_block_hash, time, bits, nonce, txns):
         ''' See BlockHeader for all param definitions except txns
