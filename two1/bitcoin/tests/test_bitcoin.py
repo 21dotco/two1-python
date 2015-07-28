@@ -13,7 +13,7 @@ def txn_from_json(txn_json):
     for i in txn_json['inputs']:
         if 'output_hash' in i:
             outpoint = bytes.fromhex(i['output_hash'])[::-1] # In RPC order, need to make it internal
-            script = Script(bytes.fromhex(i['script_signature_hex']), True)
+            script = Script(bytes.fromhex(i['script_signature_hex']))
             inp = TransactionInput(outpoint,
                                    i['output_index'],
                                    script,
@@ -31,7 +31,7 @@ def txn_from_json(txn_json):
 
     outputs = []    
     for o in txn_json['outputs']:
-        scr = Script(bytes.fromhex(o['script_hex']), True)
+        scr = Script(bytes.fromhex(o['script_hex']))
         out = TransactionOutput(o['value'], scr)
         outputs.append(out)
 

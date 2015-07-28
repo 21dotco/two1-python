@@ -1,7 +1,19 @@
-from two1.bitcoin.exceptions import ParsingError
+from two1.bitcoin.exceptions import ParsingError, ScriptTypeError
 from two1.bitcoin.utils import bytes_to_str, pack_var_str, unpack_var_str, address_to_key
 
 class Script(object):
+    ''' Handles all Bitcoin script-related needs.
+        Currently this means: parsing text scripts, assembling/disassembling and
+        serialization/deserialization.
+
+        If a raw byte stream is passed in, disassembly and parsing are deferred until
+        required. If parsing is immediately required, call Script.parse() after constructing
+        the object.
+
+    Args:
+        script (bytes or str): Either a text or byte string containing the script to build.
+    '''
+    
     BTC_OPCODE_TABLE = {
         'OP_0':                     0x00, 'OP_FALSE':                 0x00, 'OP_PUSHDATA1':             0x4c,
         'OP_PUSHDATA2':             0x4d, 'OP_PUSHDATA4':             0x4e, 'OP_1NEGATE':               0x4f,
@@ -36,24 +48,60 @@ class Script(object):
 
     @staticmethod
     def from_bytes(b):
-        ''' Assumes the first part contains the length of the
-            script in bytes
+        ''' Deserializes a byte stream containing a script into a Script object.
+            Assumes the first part contains the length of the script in bytes.
+
+        Args:
+            b (bytes): A byte-stream containing the script, with the length of 
+                       the script in bytes prepended.
+
+        Returns:
+            (scr, b) (tuple): A tuple with the deserialized Script object and the
+                              remainder of the byte stream.
         '''
         raw_script, b = unpack_var_str(b)
         
-        return (Script(raw_script, True), b)
+        return (Script(raw_script), b)
     
     @staticmethod
     def build_p2pkh(hash160_address):
+        ''' Builds a Pay-to-Public-Key-Hash script.
+            
+        Args:
+            hash160_address (bytes): the RIPEMD-160 hash of the public key in internal byte order.
+
+        Returns:
+            scr (Script): a serializable Script object containing the p2pkh script.
+        '''
         return Script('OP_DUP OP_HASH160 0x%s OP_EQUALVERIFY OP_CHECKSIG' % bytes_to_str(hash160_address))
 
     @staticmethod
     def build_p2sh(hash160_address):
+        ''' Builds a Pay-to-Script-Hash script.
+            
+        Args:
+            hash160_address (bytes): the RIPEMD-160 hash of the script in internal byte order.
+
+        Returns:
+            scr (Script): a serializable Script object containing the p2sh script.
+        '''
+
         return Script('OP_HASH160 0x%s OP_EQUAL' % bytes_to_str(hash160_address))
 
     # Following two functions might not be necessary anymore
     @staticmethod
     def make_lock_script(version, key):
+        ''' Creates a lock script. 
+            If version is 5 or 196, a P2SH script is generated.
+            If version is 0 or 111, a P2PKH script is generated.
+
+        Args:
+            version (int): key version.
+            key (bytes): The RIPEMD-160 hash of the key.
+
+        Returns:
+            scr (Script): a serializable Script object.
+        '''
         if version in (5, 196):  # P2SH mainnet, testnet.
             return Script.build_p2sh(key)
         elif version in (0, 111):  # P2PKH mainnet, testnet.
@@ -63,13 +111,25 @@ class Script(object):
 
     @staticmethod
     def make_oscript(addr):
+        ''' Creates an output script using ``make_lock_script()``.
+
+        Args:
+            addr (bytes): the output address.
+
+        Returns:
+            scr (Script): a serializable Script object.
+        '''
         version, key = address_to_key(addr)
         return Script.make_lock_script(version, key)
 
-    def __init__(self, script, raw=False):
-        ''' script: Either a text or byte string containing the script to build.
-                    If script is a byte string, raw must be set to True.
-        '''
+    def __init__(self, script):
+        script_type = type(script)
+        if script_type is bytes:
+            raw = True
+        elif script_type is str:
+            raw = False
+        else:
+            raise ScriptTypeError("Script must either be of type 'bytes' or 'str', not %r." % (script_type))
 
         self.ser_dispatch_table = {}
         for k, v in self.BTC_OPCODE_TABLE.items():
@@ -93,11 +153,10 @@ class Script(object):
     def parse(self):
         ''' This is a basic Recursive Descent Parser for the Bitcoin
             script language. It will tokenize the input script to allow
-            interpretation of that script.
+            interpretation of that script. The resultant tokens are stored
+            in ``self.ast``.
         '''
-        print(self.script is None, self.raw_script is not None)
         if self.script is None and self.raw_script is not None:
-            print("lazily disassembling")
             self.disassemble(self.raw_script)
         
         self.ast = []
@@ -152,6 +211,13 @@ class Script(object):
         return ast
     
     def disassemble(self, raw):
+        ''' Disassembles a raw script (in bytes) to human-readable text
+            using the opcodes in BTC_OPCODE_TABLE. The disassembled string
+            is stored in self.script.
+
+        Args:
+            raw (bytes): A byte stream containing the script to be disassembled.
+        '''
         script = []
         while raw:
             op, raw = raw[0], raw[1:]
@@ -248,6 +314,14 @@ class Script(object):
         return bytestr
 
     def __bytes__(self):
+        ''' Serializes the object into a byte stream.
+            It does *not* prepend the length of the script to the returned
+            bytes. To do so, call two1.bitcoin.utils.pack_var_str() passing
+            in the returned bytes.
+            
+        Returns:
+            b (bytes): a serialized byte stream of this Script object.
+        '''
         if self.raw_script is not None:
             return self.raw_script
         if len(self.ast) == 0:
@@ -272,7 +346,7 @@ if __name__ == '__main__':
     
 
     raw_scr = "483045022100d60baf72dbaed8d15c3150e3309c9f7725fbdf91b0560330f3e2a0ccb606dfba02206422b1c73ce390766f0dc4e9143d0fbb400cc207e4a9fd9130e7f79e52bf81220121034ccd52d8f72cfdd680077a1a171458a1f7574ebaa196095390ae45e68adb3688"
-    s = Script(bytes.fromhex(raw_scr), True)
+    s = Script(bytes.fromhex(raw_scr))
     assert s.raw_script is not None
     assert s.script is None
 

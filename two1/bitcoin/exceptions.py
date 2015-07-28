@@ -21,3 +21,6 @@ class InvalidBlockError(DeserializationError):
 
 class ParsingError(Exception):
     pass
+
+class ScriptTypeError(Exception):
+    pass

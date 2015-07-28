@@ -2,6 +2,7 @@ import json
 import os
 import random
 import requests
+import sys
 import time
 
 from two1.bitcoin.utils import *
@@ -35,15 +36,7 @@ def get_from_chain(url_adder):
 
 def get_block(block):
     ''' block can be: a hash, index or "latest" '''
-    blk = get_from_chain("blocks/%s" % (block))
-
-    txns = []
-    for t in blk['transaction_hashes']:
-        txns.append(get_txn(t))
-
-    blk['transactions'] = txns
-
-    return blk
+    return get_from_chain("blocks/%s" % (block))
 
 def get_txn(tx):
     tx_json = _get_txn(tx)
@@ -64,8 +57,8 @@ def _get_txn(tx, raw=False):
 if __name__ == "__main__":
     last_block_index = get_block("latest")['height']
     print("last_block_index = %d" % (last_block_index))
-    num_txns = 250
-    full_blocks = 10
+    num_txns = 2500
+    full_blocks = 50
 
     block_indices = [random.randrange(0, last_block_index) for i in range(num_txns)]
 
@@ -81,36 +74,36 @@ if __name__ == "__main__":
     blocks = []
     blocks_grabbed = 0
     for bi in block_indices:
-        block_hash = rpc_conn.getblockhash(bi)
-        block = rpc_conn.getblock(block_hash)
-
-        b = None
+        b = get_block(bi)
         if blocks_grabbed < full_blocks:
-            b = get_block(block_hash)
             blocks.append(b)
-            txns += b['transactions']
-            blocks_grabbed += 1
-            print("blocks_grabbed = %d, block indices = %r" % (blocks_grabbed, [bl['height'] for bl in blocks]))
 
-        if blocks_grabbed == full_blocks:
+            # Grab all the txns in this block
+            for t, txn_hash in enumerate(b['transaction_hashes']):
+                sys.stdout.write("\rGrabbing txn #%d/%d for block %d (%d/%d) ..." %
+                                 (t, len(b['transaction_hashes']), bi, blocks_grabbed + 1, full_blocks))
+                txns.append(get_txn(txn_hash))
+
+            blocks_grabbed += 1
+
+            # Dump the file along the way
             with open("blocks.json", 'w') as f:
                 json.dump(blocks, f)    
+        else:
+            got_tx = False
+            while not got_tx:
+                try:
+                    tx_num = random.randrange(0, len(b['transaction_hashes']))
+                
+                    tx = get_txn(b['transaction_hashes'][tx_num])
+                    tx['block_version'] = b['version']
+                    txns.append(tx)
+                    got_tx = True
+                except:
+                    pass
+                
+            print("\rblock = %d (version: %d), used txn %d" % (bi, b['version'], tx_num))
 
-
-        got_tx = False
-        while not got_tx:
-            try:
-                tx_num = random.randrange(0, len(block['tx']))
-
-                tx = get_txn(block['tx'][tx_num])
-                tx['block_version'] = block['version']
-                txns.append(tx)
-                got_tx = True
-            except:
-                pass
-
-        print("block = %d (version: %d), using txn %d" % (bi, block['version'], tx_num))
-
-    with open("txns.json", 'w') as f:
-        json.dump(txns, f)
+        with open("txns.json", 'w') as f:
+            json.dump(txns, f)
         
