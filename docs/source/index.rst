@@ -8,10 +8,14 @@ Welcome to two1's documentation!
 
 Contents:
 
+.. automodule:: two1.bitcoin.block
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. toctree::
-   :maxdepth: 2
-
-
+   :maxdepth: 3
+	   
 
 Indices and tables
 ==================

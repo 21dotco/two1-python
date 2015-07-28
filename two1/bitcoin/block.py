@@ -19,6 +19,18 @@ class BlockHeader(object):
 
     @staticmethod
     def from_bytes(b):
+        ''' Creates a BlockHeader object from a serialized
+            bytestream. This function "eats" the bytestream and
+            returns the remainder of the stream after deserializing
+            the fields of the BlockHeader.
+
+        Args:
+            b (list): List of bytes beginning with the (4-byte) version.
+
+        Returns:
+            two1.bitcoin.BlockHeader: A two1.bitcoin.BlockHeader object.
+            b: The remainder of the bytestream after deserialization.
+        '''
         version, b = unpack_u32(b)
         prev_block_hash, b = b[0:32], b[32:]
         merkle_root_hash, b = b[0:32], b[32:]
@@ -38,16 +50,21 @@ class BlockHeader(object):
 
     def __init__(self, version, prev_block_hash, merkle_root_hash,
                  time, bits, nonce):
-        ''' version: 32 bit uint (host endianness)
-            prev_block_hash: SHA-256 byte string (internal byte order, i.e.
-                             normal output of hashlib.sha256().digest())
-            merkle_root_hash: SHA-256 byte string (internal byte order)
-            time: 32 bit uint (host endianness)
-            bits: 32 bit uint (host endianness)
-            nonce: 32 bit uint (host endianness)
+        ''' Instantiate a BlockHeader object. When serializing the
+            block, the 32-bit uints are converted to little-endian but
+            the hashes remain in internal byte order.
 
-            When serializing the block, the 32-bit uints are converted
-            to little-endian but the hashes remain in internal byte order.
+        Args:
+            version (uint): The block version. Endianness: host
+            prev_block_hash (list): SHA-256 byte string (internal byte order, i.e.
+                                    normal output of hashlib.sha256().digest())
+            merkle_root_hash (list): SHA-256 byte string (internal byte order)
+            time (uint): Block timestamp. Endianness: host
+            bits (uint): Compact representation of the difficulty. Endianness: host
+            nonce (uint): Endianness: host
+
+        Returns:
+            two1.bitcoin.BlockHeader: A two1.bitcoin.BlockHeader object
         '''
         self.version = version
         self.prev_block_hash = prev_block_hash
@@ -68,6 +85,15 @@ class BlockHeader(object):
 
     @property
     def hash(self):
+        ''' Returns the double SHA-256 hash of the serialized object.
+
+        Args:
+            None
+
+        Returns:
+            dhash (list): list of 32 bytes containing the double SHA-256
+            hash in internal order
+        '''
         return dhash(bytes(self))
 
 
@@ -76,6 +102,8 @@ class BlockBase(object):
     '''
 
     def __init__(self, height, version, prev_block_hash, time, bits):
+        ''' Blah
+        '''
         self.height = height
 
         self.block_header = BlockHeader(version,
@@ -95,6 +123,17 @@ class BlockBase(object):
         pass
         
     def compute_hash(self, nonce):
+        ''' Computes the hash of the blockheader after inserting
+            the nonce.
+
+        Args:
+            nonce (uint): Nonce to insert and compute hash with.
+            Endianness: host.
+
+        Returns:
+            hash (list): list of 32-bytes containing the hash of the
+            blockheader in internal format.
+        '''
         self.block_header.nonce = nonce
         return self.block_header.hash
         
