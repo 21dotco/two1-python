@@ -33,7 +33,8 @@ class CPUMiner(threading.Thread):
                 print("Mining: nonce %g " % nonce)
 
             # TODO put the first condition for testing, remove when not needed
-            if self.current_work.cb.check_valid_nonce(nonce):
+            self.current_work.cb.block_header.nonce = nonce
+            if self.current_work.cb.block_header.valid:
                 # notify we have a found!!!
                 # call the callbacks on the main loop
 

@@ -4,7 +4,7 @@ from two1.bitcoin.utils import *
 
 
 class TransactionInput(object):
-    ''' See https://bitcoin.org/en/developer-reference#txin
+    """ See https://bitcoin.org/en/developer-reference#txin
 
     Args:
         outpoint (bytes): 32-byte string containing the outpoint in 
@@ -14,11 +14,11 @@ class TransactionInput(object):
         script (Script): Script object (or a raw bytes in the case
                          of a Coinbase input)
         sequence_num (uint): Sequence number. Endianness: host
-    '''
+    """
 
     @staticmethod
     def from_bytes(b):
-        ''' Deserializes a byte stream into a TransactionInput.
+        """ Deserializes a byte stream into a TransactionInput.
 
         Args:
             b (bytes): byte stream starting with the outpoint.
@@ -26,7 +26,7 @@ class TransactionInput(object):
         Returns:
             (ti, b) (tuple): First element of the tuple is the TransactionInput
                              object and the second is the remaining byte stream.
-        '''
+        """
         outpoint = b[0:32]
         outpoint_index, b1 = unpack_u32(b[32:])
         script, b1 = Script.from_bytes(b1)
@@ -46,12 +46,25 @@ class TransactionInput(object):
         self.script = script
         self.sequence_num = sequence_num
 
+    def __str__(self):
+        """ Returns a human readable formatting of this input.
+
+        Returns:
+            s (str): A string containing the human readable input.
+        """
+        return (
+            "TransactionInput(" +
+            "Outpoint: %s " % (bytes_to_str(self.outpoint)) +
+            "Outpoint Index: %d " % (self.outpoint_index) +
+            "Script: %s " % (self.script) +
+            "Sequence: %d)" % (self.sequence_num))
+        
     def __bytes__(self):
-        ''' Serializes the object into a byte stream.
+        """ Serializes the object into a byte stream.
 
         Returns:
             b (bytes): byte stream containing the serialized input.
-        '''
+        """
         return (
             self.outpoint +
             pack_u32(self.outpoint_index) +
@@ -61,7 +74,7 @@ class TransactionInput(object):
 
 
 class CoinbaseInput(TransactionInput):
-    ''' See https://bitcoin.org/en/developer-reference#coinbase
+    """ See https://bitcoin.org/en/developer-reference#coinbase
 
     Args:
         height (uint): The height of the block coinbase is part of will go into.
@@ -74,7 +87,7 @@ class CoinbaseInput(TransactionInput):
         block_version (int): The version of the block this coinbase is a part of
                              or will go into. If raw_script already contains the
                              height of the block, this must be 1.
-    '''
+    """
     NULL_OUTPOINT = bytes(32)
     MAX_INT       = 0xffffffff
 
@@ -83,7 +96,7 @@ class CoinbaseInput(TransactionInput):
         if block_version == 1:
             scr = raw_script
         else:
-            scr = pack_var_str(make_push_int(self.height)) + raw_script
+            scr = pack_var_str(Script.build_push_int(self.height)) + raw_script
 
         # Coinbase scripts are basically whatever, so we don't
         # try to create a script object from them.
@@ -93,12 +106,25 @@ class CoinbaseInput(TransactionInput):
                          scr,
                          sequence)
 
+    def __str__(self):
+        """ Returns a human readable formatting of this input.
+
+        Returns:
+            s (str): A string containing the human readable input.
+        """
+        return (
+            "CoinbaseInput(" +
+            "Outpoint: %s " % (bytes_to_str(self.outpoint)) +
+            "Outpoint Index: 0x%08x " % (self.outpoint_index) +
+            "Script: %s " % (bytes_to_str(self.script)) +
+            "Sequence: 0x%08x)" % (self.sequence_num))
+        
     def __bytes__(self):
-        ''' Serializes the object into a byte stream.
+        """ Serializes the object into a byte stream.
         
         Returns:
             b (bytes): byte stream containing the serialized coinbase input.
-        '''
+        """
         return (
             self.outpoint +
             pack_u32(self.outpoint_index) +
@@ -108,16 +134,16 @@ class CoinbaseInput(TransactionInput):
 
 
 class TransactionOutput(object):
-    ''' See https://bitcoin.org/en/developer-reference#txout
+    """ See https://bitcoin.org/en/developer-reference#txout
     
     Args:
         value (int): Number of satoshis to be spent. Endianness: host
         script (Script): A pay-out script.
-    '''
+    """
 
     @staticmethod
     def from_bytes(b):
-        ''' Deserializes a byte stream into a TransactionOutput object.
+        """ Deserializes a byte stream into a TransactionOutput object.
 
         Args:
             b (bytes): byte-stream beginning with the value.
@@ -125,40 +151,51 @@ class TransactionOutput(object):
         Returns:
             (to, b) (tuple): First element of the tuple is a TransactionOutput, the
                              second is the remainder of the byte stream.
-        '''
+        """
         value, b0 = unpack_u64(b)
         script_len, b0 = unpack_compact_int(b0)
 
-        return (TransactionOutput(value, Script(b0[:script_len], True)), b0[script_len:])
+        return (TransactionOutput(value, Script(b0[:script_len])), b0[script_len:])
 
     def __init__(self, value, script):
         self.value = value
         self.script = script
 
+    def __str__(self):
+        """ Returns a human readable formatting of this output.
+
+        Returns:
+            s (str): A string containing the human readable output.
+        """
+        return (
+            "TransactionOutput(" +
+            "Value: %d satoshis " % (self.value) +
+            "Script: %s)" % (self.script))
+
     def __bytes__(self):
-        ''' Serializes the object into a byte stream.
+        """ Serializes the object into a byte stream.
 
         Returns:
             b (bytes): byte stream containing the serialized transaction output.
-        '''
+        """
         return pack_u64(self.value) + pack_var_str(bytes(self.script))
 
     
 class Transaction(object):
-    ''' See https://bitcoin.org/en/developer-reference#raw-transaction-format
+    """ See https://bitcoin.org/en/developer-reference#raw-transaction-format
 
     Args:
         version (int): Transaction version (should always be 1). Endianness: host
         inputs (list(TransactionInput)): all the inputs that spend bitcoin.
         outputs (list(TransactionOutput)): all the outputs to which bitcoin is sent.
         lock_time (int): Time or a block number. Endianness: host
-    '''
+    """
 
     DEFAULT_TRANSACTION_VERSION = 1 # There are no other versions currently
 
     @staticmethod
     def from_bytes(b):
-        ''' Deserializes a byte stream into a Transaction.
+        """ Deserializes a byte stream into a Transaction.
 
         Args: 
             b (bytes): byte stream starting with the version.
@@ -166,7 +203,7 @@ class Transaction(object):
         Returns:
             (tx, b) (tuple): First element of the tuple is the Transaction, second
                              is the remainder of the byte stream.
-        '''
+        """
         # First 4 bytes are version
         version = struct.unpack('<I', b[:4])[0]
         b1 = b[4:]
@@ -200,22 +237,38 @@ class Transaction(object):
 
     @property
     def num_inputs(self):
-        ''' The number of inputs in the transaction.
-        '''
+        """ The number of inputs in the transaction.
+        """
         return len(self.inputs)
 
     @property
     def num_outputs(self):
-        ''' The number of outputs in the transaction.
-        '''
+        """ The number of outputs in the transaction.
+        """
         return len(self.outputs)
 
+    def __str__(self):
+        """ Returns a human readable formatting of this transaction.
+
+        Returns:
+            s (str): A string containing the human readable transaction.
+        """
+        s = "Transaction: Version: %d, lock time: %d\nInputs:\n" % (self.version, self.lock_time)
+        for i in self.inputs:
+            s += "\t%s\n" % (i)
+
+        s += "Outputs:\n"
+        for o in self.outputs:
+            s += "\t%s\n" % (o)
+            
+        return s
+    
     def __bytes__(self):
-        ''' Serializes the object into a byte stream.
+        """ Serializes the object into a byte stream.
         
         Returns:
             b (bytes): The serialized transaction.
-        '''
+        """
         return (
             pack_u32(self.version) +                      # Version
             pack_compact_int(self.num_inputs) +           # Input count
@@ -227,9 +280,9 @@ class Transaction(object):
 
     @property
     def hash(self):
-        ''' Computes the hash of the transaction.
+        """ Computes the hash of the transaction.
 
         Returns:
             dhash (bytes): Double SHA-256 hash of the serialized transaction.
-        '''
+        """
         return dhash(bytes(self))

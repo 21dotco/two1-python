@@ -1,6 +1,5 @@
 /two1/bitcoin/__pycache__/
 /two1/bitcoin/build/
-/two1/bitcoin/sha256.c
 /two1/bitcoin/tests/__pycache__/
 /two1/bitcoin/tests/blocks.json
 /two1/bitcoin/tests/txns.json

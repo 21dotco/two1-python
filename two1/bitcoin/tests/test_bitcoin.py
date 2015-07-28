@@ -113,3 +113,7 @@ def test_block(block_json):
         print("   from json:        %d" % (block_json['nonce']))
 
         raise
+
+def test_utils():
+    assert difficulty_to_target(16307.420938523983) == 0x404cb000000000000000000000000000000000000000000000000
+    assert target_to_bits(0x00000000000404CB000000000000000000000000000000000000000000000000) == 0x1b0404cb

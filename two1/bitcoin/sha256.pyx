@@ -2,6 +2,7 @@
 
 # based on: Thomas Dixon's MIT-licensed python code.
 
+import codecs
 import struct
 
 from libc.stdint cimport uint32_t, uint8_t
@@ -38,16 +39,27 @@ cdef uint32_t be_decode_uint32 (uint8_t * b):
     return n
 
 cdef class sha256:
-    cdef uint32_t* h
-    cdef uint32_t h_initial[8]
+    """ SHA-256 implementation in Cython.
+        It allows for inspection and retrieval of state in between updates.
+        This is particularly useful for obtaining the midstate - necessary
+        for efficient Bitcoin mining.
+
+    Args:
+        m (bytes): The message to be hashed. It can be a partial message with the
+                   remainder of the message added using `update()`. For no message,
+                   pass in None.
+    """
+    cdef uint32_t h[8]
     cdef bytes _buffer
+    cdef bytes _temp
     cdef uint32_t _counter
     cdef bint _locked
 
     def __init__ (self, bytes m):
         self._buffer = b''
+        self._temp = b''
         self._counter = 0
-        self.h_initial[:] = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]
+        self.h[:] = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]
         if m is not None:
             self.update(m)
         
@@ -66,7 +78,7 @@ cdef class sha256:
             s0 = rotr(w[i-15], 7) ^ rotr(w[i-15], 18) ^ (w[i-15] >> 3)
             s1 = rotr(w[i-2], 17) ^ rotr(w[i-2], 19) ^ (w[i-2] >> 10)
             w[i] = (w[i-16] + s0 + w[i-7] + s1) & 0xFFFFFFFFu
-        
+
         a = self.h[0]; b = self.h[1]; c = self.h[2]; d = self.h[3]
         e = self.h[4]; f = self.h[5]; g = self.h[6]; h = self.h[7]
         
@@ -91,14 +103,24 @@ cdef class sha256:
         self.h[4] += e; self.h[5] += f; self.h[6] += g; self.h[7] += h
         
     def update (self, bytes m):
-        self.h = self.h_initial
+        """ Updates the current message with additional bytes.
+
+        Args:
+            m (bytes): The additional portion of the message to update with.
+        """
         self._buffer += m
         self._counter += len(m)
         while len(self._buffer) >= 64:
-            self.process (self._buffer[:64])
+            self.process(self._buffer[:64])
             self._buffer = self._buffer[64:]
             
     def digest (self):
+        """ Produces the final SHA-256 digest.
+        
+        Returns:
+            h (bytes): The final hash. For Bitcoin purposes, the returned order
+                       is the natural (or internal) order.
+        """
         mdi = self._counter & 0x3F
         length = struct.pack('!Q', self._counter<<3)
         
@@ -106,14 +128,45 @@ cdef class sha256:
             padlen = 55-mdi
         else:
             padlen = 119-mdi
-        
+
         self.update (b'\x80'+(b'\x00'*padlen)+length)
-        return ''.join([struct.pack('!L', i) for i in self.h[:8]])
+        return b''.join([struct.pack('!L', i) for i in self.h[:8]])
         
-    property mid_state:
+    property state:
+        """ Sets/returns the internal state of the SHA-256 object.
+            The state is composed of the current hash value and a counter
+            containing how many bytes have been processed so far.
+        """
         def __get__ (self):
             cdef uint32_t * h = self.h
-            return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]]
+            return (struct.pack('>8I', h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]), self._counter)
+
+        def __set__(self, state):
+            if len(self._buffer) != 0:
+                raise ValueError("buffer must be empty to update state.")
+            if type(state) is not tuple:
+                raise TypeError("state is a tuple containing the midstate and number of bytes processed so far.")
+            if len(state) != 2:
+                raise ValueError("state is a 2 element tuple containing the midstate and number of bytes processed so far.")
+            if state[1] % 64 != 0:
+                raise ValueError("Number of bytes processed must be a multiple of 64 bytes (512 bits).")
+
+            hs = struct.unpack('>8I', state[0])
+
+            self.h[0] = hs[0]
+            self.h[1] = hs[1]
+            self.h[2] = hs[2]
+            self.h[3] = hs[3]
+            self.h[4] = hs[4]
+            self.h[5] = hs[5]
+            self.h[6] = hs[6]
+            self.h[7] = hs[7]
+            self._counter = state[1]
 
     def hexdigest(self):
-        return self.digest().encode('hex')
+        """ Produces the final SHA-256 digest in hex encoding.
+
+        Returns:
+            h (str): A hex-encoded string of the final digest.
+        """
+        return codecs.encode(self.digest(), 'hex_codec').decode('ascii')
