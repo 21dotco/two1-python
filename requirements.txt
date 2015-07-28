@@ -1,7 +1,5 @@
 arrow==0.6.0
 base58=0.2.2
 json
-pytest
 Cython==0.22.1
-
-
+pytest

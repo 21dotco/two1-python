@@ -12,9 +12,22 @@ MerkleNode = namedtuple('MerkleNode', ['hash', 'left_child', 'right_child'])
 
 
 class BlockHeader(object):
-    ''' See https://bitcoin.org/en/developer-reference#block-headers
+    ''' A BlockHeader object containing all fields found in a Bitcoin
+        block header.
+
+        Serialization & deserialization are done according to:
+        https://bitcoin.org/en/developer-reference#block-headers
         For definitions of hash byte order, see:
         https://bitcoin.org/en/developer-reference#hash-byte-order
+
+        Args:
+            version (uint): The block version. Endianness: host
+            prev_block_hash (bytes): SHA-256 byte string (internal byte order, i.e.
+                                    normal output of hashlib.sha256().digest())
+            merkle_root_hash (bytes): SHA-256 byte string (internal byte order)
+            time (uint): Block timestamp. Endianness: host
+            bits (uint): Compact representation of the difficulty. Endianness: host
+            nonce (uint): Endianness: host
     '''
 
     @staticmethod
@@ -25,11 +38,11 @@ class BlockHeader(object):
             the fields of the BlockHeader.
 
         Args:
-            b (list): List of bytes beginning with the (4-byte) version.
+            b (bytes): bytes beginning with the (4-byte) version.
 
         Returns:
-            two1.bitcoin.BlockHeader: A two1.bitcoin.BlockHeader object.
-            b: The remainder of the bytestream after deserialization.
+            bh, b (tuple): A tuple containing two elements: 1. A BlockHeader object
+                           and 2. the remainder of the bytestream after deserialization.
         '''
         version, b = unpack_u32(b)
         prev_block_hash, b = b[0:32], b[32:]
@@ -50,22 +63,6 @@ class BlockHeader(object):
 
     def __init__(self, version, prev_block_hash, merkle_root_hash,
                  time, bits, nonce):
-        ''' Instantiate a BlockHeader object. When serializing the
-            block, the 32-bit uints are converted to little-endian but
-            the hashes remain in internal byte order.
-
-        Args:
-            version (uint): The block version. Endianness: host
-            prev_block_hash (list): SHA-256 byte string (internal byte order, i.e.
-                                    normal output of hashlib.sha256().digest())
-            merkle_root_hash (list): SHA-256 byte string (internal byte order)
-            time (uint): Block timestamp. Endianness: host
-            bits (uint): Compact representation of the difficulty. Endianness: host
-            nonce (uint): Endianness: host
-
-        Returns:
-            two1.bitcoin.BlockHeader: A two1.bitcoin.BlockHeader object
-        '''
         self.version = version
         self.prev_block_hash = prev_block_hash
         self.merkle_root_hash = merkle_root_hash
@@ -74,6 +71,11 @@ class BlockHeader(object):
         self.nonce = nonce
 
     def __bytes__(self):
+        ''' Serializes the BlockHeader object.
+
+        Returns: 
+            byte_str (bytes): The serialized byte stream.
+        '''
         return (
             pack_u32(self.version) +
             self.prev_block_hash +
@@ -85,25 +87,29 @@ class BlockHeader(object):
 
     @property
     def hash(self):
-        ''' Returns the double SHA-256 hash of the serialized object.
-
-        Args:
-            None
+        ''' Computes the double SHA-256 hash of the serialized object.
 
         Returns:
-            dhash (list): list of 32 bytes containing the double SHA-256
-            hash in internal order
+            dhash (bytes): 32 bytes containing the double SHA-256 hash
+                           in internal order
         '''
         return dhash(bytes(self))
 
 
 class BlockBase(object):
-    ''' A ~mostly~ abstract base class for blocks. 
+    ''' A base class for blocks. 
+        This should not be used directly - only by sub-classes
+
+        Args:
+            height (uint): Block height. Endianness: host.
+            version (uint): Block version. Endianness: host.
+            prev_block_hash (bytes): 32-byte string containing the hash of
+                                    the previous block in internal order.
+            time (uint): Block timestamp. Endianness: host.
+            bits (int): Compact target representation. Endianness: host.
     '''
 
     def __init__(self, height, version, prev_block_hash, time, bits):
-        ''' Blah
-        '''
         self.height = height
 
         self.block_header = BlockHeader(version,
@@ -116,6 +122,9 @@ class BlockBase(object):
 
     @property
     def coinbase_transaction(self):
+        ''' Abstract getter/setter for coinbase_transaction.
+            Must be implemented by sub-classes.
+        '''
         pass
 
     @coinbase_transaction.setter
@@ -128,7 +137,7 @@ class BlockBase(object):
 
         Args:
             nonce (uint): Nonce to insert and compute hash with.
-            Endianness: host.
+                          Endianness: host.
 
         Returns:
             hash (list): list of 32-bytes containing the hash of the
@@ -138,6 +147,16 @@ class BlockBase(object):
         return self.block_header.hash
         
     def check_valid_nonce(self, nonce):
+        ''' Quickly check if a nonce results in a block hash that is below the target.
+
+        Args:
+            nonce (uint): Nonce to insert and check hash. Endianness: host.
+
+        Returns:
+            hash < self.target (bool): True if the nonce results in a hash that is below
+                                       the target, False otherwise.
+            
+        '''
         # Compute hash and reverse it so that it's in RPC order before
         # comparing
         h = int.from_bytes(self.compute_hash(nonce)[::-1], 'big')
@@ -145,11 +164,35 @@ class BlockBase(object):
 
     
 class Block(BlockBase):
-    ''' See https://bitcoin.org/en/developer-reference#serialized-blocks
+    ''' A Bitcoin Block object.
+
+        The merkle root is automatically computed from the transactions
+        passed in during initialization.
+    
+        Serialization and deserialization are done according to:
+        https://bitcoin.org/en/developer-reference#serialized-blocks
+
+        Args:
+            version (uint): The block version. Endianness: host
+            prev_block_hash (list): SHA-256 byte string (internal byte order, i.e.
+                                    normal output of hashlib.sha256().digest())
+            time (uint): Block timestamp. Endianness: host
+            bits (uint): Compact representation of the difficulty. Endianness: host
+            nonce (uint): Endianness: host
+            txns (list): List of Transaction objects
     '''
 
     @staticmethod
     def from_bytes(b):
+        ''' Creates a Block from a serialized byte stream.
+
+        Args:
+            b (bytes): The byte stream, starting with the block version.
+        
+        Returns:
+            block, b (tuple): A tuple. The first item is the deserialized block
+                              and the second is the remainder of the byte stream.
+        '''
         bh, b = BlockHeader.from_bytes(b)
         num_txns, b = unpack_compact_int(b)
         txns = []
@@ -161,6 +204,16 @@ class Block(BlockBase):
 
     @classmethod
     def from_blockheader(cls, bh, txns):
+        ''' Creates a Block from an existing BlockHeader object and transactions.
+
+        Args: 
+            bh (BlockHeader): A BlockHeader object.
+            txns (list): List of all transactions to be included in the block.
+
+        Returns:
+            block (Block): A Block object.
+            
+        '''
         self = cls.__new__(cls)
         self.block_header = bh
         self.transactions = txns
@@ -168,11 +221,9 @@ class Block(BlockBase):
         self.merkle_tree = None
         self.invalidate()
 
+        return self
+
     def __init__(self, height, version, prev_block_hash, time, bits, nonce, txns):
-        ''' See BlockHeader for all param definitions except txns
-            txns is a list of Transaction objects
-            The merkle root is computed from the txns
-        '''
         super().__init__(height, version, prev_block_hash, time, bits)
         self.block_header.nonce = nonce
         self.txns = txns
@@ -182,7 +233,7 @@ class Block(BlockBase):
 
     def invalidate(self):
         ''' Updates the merkle tree and block header
-            if any changes to the underlying txns were made
+            if any changes to the underlying txns were made.
         '''
         self.compute_merkle_tree()
         self.block_header.merkle_root_hash = self.merkle_tree.hash
@@ -211,6 +262,10 @@ class Block(BlockBase):
             self.block_header.merkle_hash = self.merkle_tree.hash
 
     def compute_merkle_tree(self):
+        ''' Computes the merkle tree from the transactions in self.transactions.
+            The merkle root is the top node in the tree and can be accessed as
+            self.merkle_tree.merkle_hash.
+        '''
         # Tree gets built bottom up
         level_nodes = [MerkleNode(t.hash, None, None) for t in self.txns]
         while True:
@@ -230,14 +285,14 @@ class Block(BlockBase):
 
     @property
     def coinbase_transaction(self):
+        ''' Setter/Getter for coinbase_transaction. The setter automatically
+            calls invalidate_coinbase() to ensure the merkle root is recomputed
+            based on the new coinbase transaction.
+        '''
         return self.txns[0]
 
     @coinbase_transaction.setter
     def coinbase_transaction(self, cb_txn):
-        ''' This overwrites the existing coinbase transaction
-            cb_txn: Transaction object that has a CoinbaseInput object
-                    as the only input
-        '''
         if cb_txn.num_inputs != 1:
             raise ValueError("Coinbase transaction has more than one input!")
         if not isinstance(cb_txn.inputs[0], CoinbaseInput):
@@ -250,9 +305,19 @@ class Block(BlockBase):
 
     @property
     def hash(self):
+        ''' Computes the hash of the block header.
+
+        Returns:
+            dhash (bytes): The double SHA-256 hash of the block header.
+        '''
         return self.block_header.hash
         
     def __bytes__(self):
+        ''' Serializes the Block object into a byte stream.
+
+        Returns:
+            b (bytes): The serialized byte stream.
+        '''
         return (
             bytes(self.block_header) +
             pack_compact_int(len(self.txns)) +
@@ -264,24 +329,24 @@ class CompactBlock(BlockBase):
     ''' This is a block representation that contains the minimum state
         required for mining purposes: a BlockHeader and the merkle hashes
         one-in from the left edge of the merkle tree.
+
+        Args:
+            height (uint): Block height. Endianness: host
+            version (uint): The block version. Endianness: host
+            prev_block_hash (bytes): SHA-256 byte string (internal byte order, i.e.
+                                    normal output of hashlib.sha256().digest())
+            time (uint): Block timestamp. Endianness: host
+            bits (uint): Compact representation of the difficulty. Endianness: host
+            merkle_edge (list[bytes]): a list of merkle hashes one-in from the left edge of
+                                the merkle tree. This is the minimum state required
+                                to compute the merkle_root if the coinbase txn changes.
+            cb_txn (Transaction): if provided, must contain a CoinbaseInput. If not provided,
+                                  use CompactBlock.coinbase_transaction = ...  to set the
+                                  transaction. This will ensure the merkle_root is computed
+                                  according to the new coinbase transaction.
     '''
 
     def __init__(self, height, version, prev_block_hash, time, bits, merkle_edge, cb_txn=None):
-        ''' height: 32 bit uint (host endianness)
-            version: 32 bit uint (host endianness)
-            prev_block_hash: SHA-256 byte string (internal byte order, i.e.
-                             normal output of hashlib.sha256().digest())
-            time: 32 bit uint (host endianness)
-            bits: 32 bit uint (host endianness)
-            merkle_edge: a list of merkle hashes one-in from the left edge of
-                         the merkle tree. This is the minimum state required
-                         to compute the merkle_root if the coinbase txn changes.
-            cb_txn: if provided, must be a Transaction object containing a 
-                    CoinbaseInput. If not provided, use 
-                    CompactBlock.coinbase_transaction = ... 
-                    to set the transaction. This will ensure the merkle_root is
-                    computed according to the new coinbase transaction.
-        '''
         super().__init__(height, version, prev_block_hash, time, bits)
         self.block_header = BlockHeader(version,
                                         prev_block_hash,
@@ -298,12 +363,14 @@ class CompactBlock(BlockBase):
 
     @property
     def coinbase_transaction(self):
+        '''cb_txn (Transaction): The coinbase transaction.
+           The setter takes care of recomputing the merkle edge and 
+           midstate.
+        '''
         return self._cb_txn
 
     @coinbase_transaction.setter
     def coinbase_transaction(self, cb_txn):
-        ''' cb_txn: a Transaction object that contains a CoinbaseInput
-        '''
         self._cb_txn = cb_txn
         self._complete_merkle_edge()
         self._compute_midstate()

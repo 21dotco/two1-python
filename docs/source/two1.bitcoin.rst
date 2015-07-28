@@ -17,6 +17,7 @@ two1.bitcoin.block module
 .. automodule:: two1.bitcoin.block
     :members:
     :undoc-members:
+	:special-members: __init__	   
     :show-inheritance:
 
 two1.bitcoin.exceptions module
