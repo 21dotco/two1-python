@@ -242,6 +242,23 @@ class Script(object):
             self.script = script
             self._parse()
 
+    def get_hash160(self):
+        """ Scans the script for OP_HASH160 and returns the data 
+            immediately following it.
+
+        Returns:
+            d (str or None): the hash160 (hex-encoded) or None.
+        """
+        if not self.ast:
+            self._parse()
+
+        # Scan for OP_HASH160
+        for i, opcode in enumerate(self.ast):
+            if opcode == "OP_HASH160":
+                return self.ast[i+1]
+
+        return None
+            
     def _parse(self):
         """ This is a basic Recursive Descent Parser for the Bitcoin
             script language. It will tokenize the input script to allow

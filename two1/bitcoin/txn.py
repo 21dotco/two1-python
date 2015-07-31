@@ -1,3 +1,4 @@
+from two1.bitcoin import crypto
 from two1.bitcoin.exceptions import *
 from two1.bitcoin.script import *
 from two1.bitcoin.utils import *
@@ -192,6 +193,7 @@ class Transaction(object):
     """
 
     DEFAULT_TRANSACTION_VERSION = 1 # There are no other versions currently
+    HASH_CODE_TYPE = 1
 
     @staticmethod
     def from_bytes(b):
@@ -247,6 +249,52 @@ class Transaction(object):
         """
         return len(self.outputs)
 
+    def sign(self, private_keys):
+        """ Signs the transaction.
+
+            This function assumes that the pub key script
+            (scriptPubKey) of the unspent transaction output (utxo)
+            being spent is the input script. The script for each of
+            the inputs *is modified* to contain the signature script
+            (scriptSig) only if the public key contained in the
+            scriptPubKey matches the public key derived from the
+            private key provided for that input.
+        
+        Args:
+            private_keys (list(str)): A list of Base58Check encoded 
+               private keys, one for each input, with which to sign
+               the transaction.
+        """
+        if len(private_keys) != self.num_inputs:
+            raise ValueError("len(private_keys) = %d must be equal to the number of inputs (%d) in the transaction." %
+                             (len(private_keys), self.num_inputs))
+        
+        # Since we assume that the inputs all have the correct utxo
+        # scriptPubKey, we create a template txn first to sign.
+        txn_template = bytes(self) + pack_u32(self.HASH_CODE_TYPE)
+
+        # Now let's go through each of the inputs, derive the public-key
+        # for it from the given private key and make sure that it matches
+        # the one in the scriptPubKey.
+        for i, ti in enumerate(self.inputs):
+            pub_key = crypto.get_public_key(private_keys[i])
+            address = crypto.address_from_public_key(pub_key)[1:]  # Need to strip off version byte
+
+            # Now we need the public key hash from the input script
+            script_pub_key_hash_hex = ti.script.get_hash160()
+            if script_pub_key_hash_hex is None:
+                raise ValueError("Couldn't find public key hash in input script for input %d!" % (i))
+
+            script_pub_key_hash = bytes.fromhex(script_pub_key_hash_hex[2:])  # Strip off the 0x
+            
+            if address != script_pub_key_hash_hex:
+                raise ValueError("Address derived from private key does not match scriptPubKey for input %d!" % (i))
+
+            # If we've made it this far, we can sign & update the script
+            sig = crypto.sign(dhash(txn_template), private_keys[i])
+            script_sig = pack_var_str(sig + pack_u32(self.HASH_CODE_TYPE)) + pack_var_str(pub_key)
+            ti.script = Script(script_sig)
+    
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
 

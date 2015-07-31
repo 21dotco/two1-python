@@ -14,6 +14,7 @@ Contents:
    :maxdepth: 5
 
    two1.bitcoin
+   two1.crypto   
    two1.mining
 
 Indices and tables
