@@ -8,6 +8,14 @@ two1.bitcoin.block
 	:special-members: __init__	   
     :show-inheritance:
 
+two1.bitcoin.crypto module
+------------------------------
+
+.. automodule:: two1.bitcoin.crypto
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 two1.bitcoin.exceptions module
 ------------------------------
 
