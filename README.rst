@@ -29,7 +29,7 @@ application, please see below.
 The ``two1`` app is built on the `click <http://click.pocoo.org>`_ command
 line framework and uses `setuptools
 <https://github.com/pypa/sampleproject>`_ and `virtualenv
-<click.pocoo.org/4/quickstart/#virtualenv>`_ to build a reproducible
+<http://click.pocoo.org/4/quickstart/#virtualenv>`_ to build a reproducible
 ``two1`` app environment suitable for `pip-based distribution
 <https://packaging.python.org/en/latest/distributing.html>`_.
 
