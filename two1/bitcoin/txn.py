@@ -278,7 +278,7 @@ class Transaction(object):
         # the one in the scriptPubKey.
         for i, ti in enumerate(self.inputs):
             pub_key = crypto.get_public_key(private_keys[i])
-            address = crypto.address_from_public_key(pub_key)[1:]  # Need to strip off version byte
+            address = crypto.address_from_public_key(pub_key, False)[1:]  # Need to strip off version byte
 
             # Now we need the public key hash from the input script
             script_pub_key_hash_hex = ti.script.get_hash160()
