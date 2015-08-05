@@ -295,7 +295,7 @@ def difficulty_to_bits(difficulty):
     """
     return target_to_bits(difficulty_to_target(difficulty))
 
-def address_to_key(s):
+def address_to_key_hash(s):
     """ Given a Bitcoin address decodes the version and 
         RIPEMD-160 hash of the public key.
 
