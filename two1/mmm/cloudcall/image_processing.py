@@ -3,7 +3,6 @@ import io
 from django.http import HttpResponse
 from django.core.files.uploadhandler import InMemoryUploadedFile
 from rest_framework.decorators import api_view, authentication_classes
-from textblob import TextBlob
 from PIL import Image, ImageFile
 
 from lib.djangobitcoin import PaymentRequiredAuthentication

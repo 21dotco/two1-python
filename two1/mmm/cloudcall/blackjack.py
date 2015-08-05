@@ -1,13 +1,13 @@
 import uuid
 import json
-from .models import BlackjackGame
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
+from cloudcall.models import BlackjackGame
 
 from lib.djangobitcoin import PaymentRequiredAuthentication
 from lib.blackjack import GameState
 
-    
+
 # # # # # # # # # Bets # # # # # # # # # #
 
 class BetPaymentRequired(PaymentRequiredAuthentication):
@@ -21,7 +21,7 @@ def getGameStateForToken(gameId):
 
   blob = str(rawGame.blob)
   m = json.loads( blob )
-  
+
   game = GameState()
   game.fromFullMap(m)
   return game
@@ -95,7 +95,7 @@ def hitGame(request, game_token=None):
 @api_view(['PUT'])
 def standGame(request, game_token=None):
   """
-  1. Commits the current hand 
+  1. Commits the current hand
   2. makes the dealer draw
   3. checks game state for win / loss / draw.
   ---
