@@ -164,19 +164,19 @@ class PublicKey(object):
         return PublicKey.from_point(point, testnet)
 
     @staticmethod
-    def from_bytes(b, testnet=False):
+    def from_bytes(key_bytes, testnet=False):
         key_bytes_len = len(key_bytes)
 
-        key_type = int(key[0:2])
+        key_type = key_bytes[0]
         if key_type == 0x04:
             # Uncompressed
             assert key_bytes_len == 65
-        
-            x = int.from_bytes(key_bytes[1:32], 'big')
-            y = int.from_bytes(key_bytes[32:65], 'big')
+
+            x = int.from_bytes(key_bytes[1:33], 'big')
+            y = int.from_bytes(key_bytes[33:65], 'big')
         elif key_type == 0x02 or key_type == 0x03:
             assert key_bytes_len == 33
-            x = int.from_bytes(key_bytes[1:32], 'big')
+            x = int.from_bytes(key_bytes[1:33], 'big')
             y = bitcoin_curve.y_from_x(x)
             if y % 2 != (key_type - 2):
                 y = -y % bitcoin_curve.p
@@ -237,7 +237,6 @@ class PublicKey(object):
             sig = bytes.fromhex(signature)
         else:
             raise TypeError("signature must be either 'bytes' or 'str'!")
-        
         sig_pt = der_decode_point(bitcoin_curve, sig)
     
         return bitcoin_curve.verify(message, sig_pt, self.point)
