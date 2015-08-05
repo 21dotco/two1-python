@@ -1,4 +1,6 @@
 import hashlib
+import hmac
+import math
 import random
 
 from collections import namedtuple
@@ -91,6 +93,9 @@ class ECPoint(object):
     def __add__(self, b):
         raise NotImplementedError()
 
+    def __sub__(self, b):
+        raise NotImplementedError()
+    
     def __mul__(self, k):
         raise NotImplementedError()
 
@@ -211,6 +216,11 @@ class ECPointJacobian(ECPoint):
 
         return ECPointJacobian(self.curve, x3, y3, z3)
 
+    def __sub__(self, b):
+        assert b.curve == self.curve
+        # b.curve.p - b.y is effectively -b.y % b.curve.p
+        return self + ECPointJacobian(b.curve, b.x, b.curve.p - b.y, b.z)
+
     def __mul__(self, k):
         return montgomery_ladder(k, ECPointJacobian(self.curve, self.x, self.y, self.z))
     
@@ -325,7 +335,7 @@ class ECPointAffine(ECPoint):
         super().__init__(curve, x, y, 0, infinity)
 
     def __str__(self):
-        return "O" if self.infinity else "(%d, %d)" % (self.x, self.y)
+        return "O" if self.infinity else "(%032x, %032x)" % (self.x, self.y)
 
     def __add__(self, b):
         assert b.curve == self.curve
@@ -348,6 +358,10 @@ class ECPointAffine(ECPoint):
         assert self.curve.is_on_curve(Point(xr, yr))
         
         return ECPointAffine(self.curve, xr, yr)
+
+    def __sub__(self, b):
+        assert b.curve == self.curve
+        return self + ECPointAffine(b.curve, b.x, b.curve.p - b.y)
 
     def __mul__(self, k):
         return montgomery_ladder(k, ECPointAffine(self.curve, self.x, self.y))
@@ -441,12 +455,24 @@ class EllipticCurve:
             raise ValueError
         return x % n
 
-    def __init__(self, p, a, b, n, G):
+    @staticmethod
+    def modsqrt(a, n):
+        if a == 0:
+            return 0
+        elif n == 2:
+            return n
+        elif n % 4 == 3:
+            return pow(a, (n + 1) // 4, n)
+        else:
+            raise NotImplementedError("The generalized modular square root using Tonelli-Shanks hasn't been implemented yet.")
+
+    def __init__(self, p, a, b, n, G, hash_function):
         self.a = a
         self.b = b
         self.p = p
         self.n = n
         self.G = G
+        self.hash_function = hash_function
 
     def __eq__(self, other_curve):
         return (self.a == other_curve.a) and (self.b == other_curve.b) and \
@@ -472,6 +498,29 @@ class EllipticCurve:
         '''
         return ECPointJacobian(self, self.G.x, self.G.y, 1)
         
+    def y_from_x(self, x):
+        ''' Computes the y component corresponding to x.
+
+            Since elliptic curves are symmetric about the x-axis,
+            the x component (and sign) is all that is required to determine
+            a point on the curve. Since the sign may be represented in an
+            application-defined manner, this only provides the positive y
+            value. It is left to the caller to apply the appropriate sign.
+
+        Args:
+            x (Bignum): x component of the point.
+
+        Returns:
+            y (Bignum): positive y component of the point.
+        '''
+        a = (pow(x, 3, self.p) + self.a * x + self.b) % self.p
+        y1 = self.modsqrt(a, self.p)
+        y2 = self.p - y1
+        assert self.is_on_curve(Point(x, y1))
+        assert self.is_on_curve(Point(x, y2))
+
+        return y1, y2
+
     def gen_key_pair(self):
         ''' Generates a public/private key pair.
 
@@ -497,7 +546,60 @@ class EllipticCurve:
         public_full = (public.x << self.n.bit_length()) + public.y
 
         return public_full
+
+    def recover_public_key(self, message, signature):
+        ''' Recovers possibilities for the public key associated with the
+            private key used to sign message and generate signature.
+
+            Since there are multiple possibilities (two for curves with 
+            co-factor = 1), each possibility that successfully verifies the
+            signature is returned.
+        Args:
+           message (bytes): The message that was signed.
+           signature (ECPointAffine): The point representing the signature.
+
+        Returns:
+           rv (list(ECPointAffine)): List of points representing valid public
+              keys that verify signature.
+        '''
+        r = signature.x
+        s = signature.y
+        y1, y2 = self.y_from_x(r)
+        R  = ECPointJacobian(self, r, y1, 1)
+        Rp = ECPointJacobian(self, r, y2, 1)
+
+        r_modinv = self.modinv(r, self.n)
+
+        num_bytes = math.ceil(self.n.bit_length() / 8)
+        z = int.from_bytes(self.hash_function(message).digest()[:num_bytes], 'big')
+        
+        zG = self.base_point * z
+        pub_key1 = ((R  * s - zG) * r_modinv).to_affine()
+        pub_key2 = ((Rp * s - zG) * r_modinv).to_affine()
+
+        rv = [k for k in [pub_key1, pub_key2] if self.verify(message, signature, k)]
+        return rv
     
+    def _sign(self, message, private_key, secret=None):
+        ''' DO NOT USE THIS FUNCTION DIRECTLY. Call self.sign() instead.
+        '''
+        z = int.from_bytes(self.hash_function(message).digest(), 'big')
+        
+        G = self.base_point
+        
+        r = 0
+        s = 0
+        while r == 0 or s == 0:
+            k = self._nonce_rfc6979(private_key, message) if secret is None else secret
+            
+            p = (G * k).to_affine()
+            r = p.x % self.n
+            if r == 0:
+                continue
+            s = self._make_canonical(((z + r * private_key) * self.modinv(k, self.n)) % self.n)
+
+        return ECPointAffine(self, r, s)
+
     def sign(self, message, private_key):
         ''' Signs a message with the given private key.
 
@@ -508,22 +610,7 @@ class EllipticCurve:
         Returns:
             sig (ECPointAffine): The point (r, s) representing the signature.
         '''
-        z = int.from_bytes(hashlib.sha256(message).digest(), 'big')
-        
-        G = self.base_point
-        
-        r = 0
-        s = 0
-        while r == 0 or s == 0:
-            k = random.SystemRandom().randrange(1, self.n - 1)
-            
-            p = (G * k).to_affine()
-            r = p.x % self.n
-            if r == 0:
-                continue
-            s = ((z + r * private_key) * self.modinv(k, self.n)) % self.n
-
-        return ECPointAffine(self, r, s)
+        return self._sign(message, private_key)
 
     def verify(self, message, signature, public_key):
         ''' Verifies that signature was generated with a private key corresponding
@@ -539,7 +626,7 @@ class EllipticCurve:
         r = signature.x
         s = signature.y
 
-        z = int.from_bytes(hashlib.sha256(message).digest(), 'big')
+        z = int.from_bytes(self.hash_function(message).digest(), 'big')
 
         G = self.base_point
 
@@ -554,7 +641,73 @@ class EllipticCurve:
 
         return r == (pt.x % self.n)
 
+    def _make_canonical(self, s):
+        return s
+
+    def _nonce_random(self):
+        return random.SystemRandom().randrange(1, self.n - 1)
     
+    def _nonce_rfc6979(self, private_key, message):
+        hash_bytes = 32
+        x = private_key.to_bytes(hash_bytes, 'big')
+        # Step a
+        h1 = self.hash_function(message).digest()
+
+        # Step b
+        V = bytes([0x1] * hash_bytes)
+
+        # Step c
+        K = bytes([0x0] * hash_bytes)
+
+        # Step d
+        K = hmac.new(K, V + bytes([0]) + x + h1, self.hash_function).digest()
+
+        # Step e
+        V = hmac.new(K, V, self.hash_function).digest()
+
+        # Step f
+        K = hmac.new(K, V + bytes([0x1]) + x + h1, self.hash_function).digest()
+
+        # Step g
+        V = hmac.new(K, V, self.hash_function).digest()
+
+        # Step h.1
+        T = bytes()
+
+        # Step h.2
+        while len(T) < (self.n.bit_length() / 8):
+            V = hmac.new(K, V, self.hash_function).digest()
+            T += V
+            k = int.from_bytes(T, 'big')
+            if k >= 1 and k < (self.n - 1):
+                return k
+            else:
+                K = hmac.new(K, V + bytes([0]), self.hash_function).digest()
+                V = hmac.new(K, V, self.hash_function).digest()
+
+    
+class p256(EllipticCurve):
+    ''' P-256 NIST-defined curve
+    '''
+    P  = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
+    A  = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
+    B  = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b
+    N  = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+    Gx = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296
+    Gy = 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
+
+    def __init__(self):
+        EllipticCurve.__init__(
+            self,
+            p256.P,
+            p256.A,
+            p256.B,
+            p256.N,
+            Point(p256.Gx, p256.Gy),
+            hashlib.sha256
+        )
+
+        
 class secp256k1(EllipticCurve):
     ''' Elliptic curve used in Bitcoin.
     '''
@@ -572,27 +725,15 @@ class secp256k1(EllipticCurve):
             secp256k1.A,
             secp256k1.B,
             secp256k1.N,
-            Point(secp256k1.Gx, secp256k1.Gy)
+            Point(secp256k1.Gx, secp256k1.Gy),
+            hashlib.sha256
         )
 
-    def y_from_x(self, x):
-        ''' Computes the y component corresponding to x.
-
-            Since elliptic curves are symmetric about the x-axis,
-            the x component (and sign) is all that is required to determine
-            a point on the curve. Since the sign may be represented in an
-            application-defined manner, this only provides the positive y
-            value. It is left to the caller to apply the appropriate sign.
-
-        Args:
-            x (Bignum): x component of the point.
-
-        Returns:
-            y (Bignum): positive y component of the point.
-        '''
-        a = (pow(x, 3, self.p) + self.a * x + self.b) % self.p
-        y = pow(a, (self.p + 1) // 4, self.p)
-        assert self.is_on_curve(Point(x, y))
-
-        return y
-
+    def _make_canonical(self, s):
+        # Bitcoin deals with large s, by subtracting
+        # s from the curve order. See:
+        # https://bitcointalk.org/index.php?topic=285142.30;wap2
+        if s >= (self.n // 2):
+            return self.n - s
+        else:
+            return s
