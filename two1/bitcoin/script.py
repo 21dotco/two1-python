@@ -1,7 +1,7 @@
 import struct
 
 from two1.bitcoin.exceptions import ParsingError
-from two1.bitcoin.utils import bytes_to_str, pack_var_str, unpack_var_str, address_to_key, render_int
+from two1.bitcoin.utils import bytes_to_str, pack_var_str, unpack_var_str, render_int
 
 class Script(object):
     """ Handles all Bitcoin script-related needs.
@@ -234,7 +234,7 @@ class Script(object):
 
         self.script = None
         self.raw_script = None
-        self.ast = []
+        self._ast = []
 
         if raw:
             self.raw_script = script
@@ -242,6 +242,13 @@ class Script(object):
             self.script = script
             self._parse()
 
+    @property
+    def ast(self):
+        if not self._ast:
+            self._parse()
+
+        return self._ast
+    
     def get_hash160(self):
         """ Scans the script for OP_HASH160 and returns the data 
             immediately following it.
@@ -249,13 +256,13 @@ class Script(object):
         Returns:
             d (str or None): the hash160 (hex-encoded) or None.
         """
-        if not self.ast:
+        if not self._ast:
             self._parse()
 
         # Scan for OP_HASH160
-        for i, opcode in enumerate(self.ast):
+        for i, opcode in enumerate(self._ast):
             if opcode == "OP_HASH160":
-                return self.ast[i+1]
+                return self._ast[i+1]
 
         return None
             
@@ -263,15 +270,15 @@ class Script(object):
         """ This is a basic Recursive Descent Parser for the Bitcoin
             script language. It will tokenize the input script to allow
             interpretation of that script. The resultant tokens are stored
-            in ``self.ast``.
+            in ``self._ast``.
         """
         if self.script is None and self.raw_script is not None:
             self._disassemble(self.raw_script)
         
-        self.ast = []
+        self._ast = []
         self.tokens = self.script.split()
 
-        self.ast = self._do_parse()
+        self._ast = self._do_parse()
 
     def _do_parse(self, in_if_else=False):
         if_opcode = None
@@ -377,9 +384,9 @@ class Script(object):
         """
         if self.raw_script is not None:
             return self.raw_script
-        if len(self.ast) == 0:
+        if len(self._ast) == 0:
             self._parse()
-        return Script._walk_ast(self.ast, Script._ser_dispatch_table, Script._serialize_var_data, b'')
+        return Script._walk_ast(self._ast, Script._ser_dispatch_table, Script._serialize_var_data, b'')
 
 
 if __name__ == '__main__':
