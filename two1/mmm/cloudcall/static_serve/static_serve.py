@@ -3,7 +3,6 @@ import math
 import mimetypes
 
 from django.http import HttpResponse
-from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from cloudcall.static_serve.configurations import configurations
 
@@ -55,10 +54,10 @@ def getTargetPath(rPath):
         navMethod = key
         break
 
-    
+
 
     if not isinstance(navMethod, str) or not isinstance(basePath, str):
-        e = Exception('File not found. BP: ' + str(isinstance(basePath, str)) + ' nvm: ' 
+        e = Exception('File not found. BP: ' + str(isinstance(basePath, str)) + ' nvm: '
             + str(isinstance(navMethod, str)) + ' I: ' + str(pathInfo) + ' P: ' + rPath)
         e.status_code = 404
         raise e
@@ -84,10 +83,10 @@ def getTargetPath(rPath):
         e.status_code = 404
         raise e
 
-    return { 
-            'path': compositePath, 
+    return {
+            'path': compositePath,
             'navMethod': navMethod,
-            'info': pathInfo  
+            'info': pathInfo
         };
 
 # Load the configuration info
@@ -99,7 +98,7 @@ class StaticConfigPaymentAuth(PaymentRequiredAuthentication):
      # If the request is a GET request charge more
     def getQuoteFor(self, request):
         quote = 0
-        target = getTargetPath(request.path) 
+        target = getTargetPath(request.path)
         info = target['info']
         path = target['path'];
 
@@ -115,7 +114,7 @@ class StaticConfigPaymentAuth(PaymentRequiredAuthentication):
 
         # convert to satoshi
         return math.floor(quote)
-        
+
 
 # ########## Static Serve ########## #
 

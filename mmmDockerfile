@@ -1,5 +1,7 @@
 FROM python:3-onbuild
 
+RUN python setup.py build_ext --inplace
+
 EXPOSE 8000
-WORKDIR two1/mmm/
-CMD [ "gunicorn", "cloudcall.wsgi", "--bind", "0.0.0.0:8000" ]
+
+CMD [ "gunicorn", "-pythonpath two1/mmm cloudcall.wsgi", "--bind", "0.0.0.0:8000" ]

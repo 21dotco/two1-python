@@ -102,7 +102,7 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
 
     def getTransactionFor(self, request):
         # 1. Header
-        # This will only use the Header eventually. All other accepts are for 
+        # This will only use the Header eventually. All other accepts are for
         # testing
         if request.META.get("HTTP_TXID"):
             return request.META.get("HTTP_TXID")

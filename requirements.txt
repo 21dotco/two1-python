@@ -21,3 +21,4 @@ cssselect==0.9.1
 lxml==3.4.4
 beautifulsoup4==4.4.0
 pycoin==0.52
+birdy==0.2

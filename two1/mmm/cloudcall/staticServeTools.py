@@ -4,7 +4,7 @@ import os
 
 # This is a static server configuration validation utility
 
-from static_serve.configurations import configurations
+from cloudcall.static_serve.configurations import configurations
 
 
 class colors:
