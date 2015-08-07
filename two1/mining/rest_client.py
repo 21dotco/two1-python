@@ -24,7 +24,7 @@ class MiningAuth(object):
 			utf8 = message.encode('utf-8')
 		else:
 			raise ValueError
-		return self.private_key.sign(utf8)
+		return self.private_key.sign_bitcoin(utf8)
 
 class MiningRestClient(object):
 
@@ -33,11 +33,25 @@ class MiningRestClient(object):
 		self.server_url = server_url
 		self.version = version
 
-	def _request(self,method,path,**kwargs):
+	def _request(self,signed,method,path,**kwargs):
 		url = self.server_url+"/"+self.version+path+"/"
+		headers={}
+		if "data" in kwargs:
+			headers["Content-Type"]="application/json"
+			data = kwargs["data"]
+		else:
+			data = ""
+		if signed:
+			sig = self.auth.sign(data)
+			headers["Authorization"]=sig
+		if len(headers) == 0:
+			headers = None
+		print("Request: " + str(method)+ " " + str(url)  + " " + str(headers)  + " " + str(kwargs["data"]))
 		result = requests.request(method,
 								url,
+								headers=headers,
 								**kwargs)
+		print("Result: %s %s " % (result,result.text))
 		return result
 
 	#POST /mining/account
@@ -48,9 +62,9 @@ class MiningRestClient(object):
 				"payout_address": payout_address,
 				"public_key_digest": self.auth.public_key.b58address,
 				}
-		r=self._request(method,
+		data=json.dumps(body)
+		r=self._request(True,method,
 						path,
-						headers={"Content-Type":"application/json"},
 						data=json.dumps(body)
 						);
 
@@ -62,12 +76,8 @@ class MiningRestClient(object):
 				"payout_address": payout_address,
 				}
 		data = json.dumps(body)
-		sig = self.auth.sign(data)
-		r=self._request(method,
+		r=self._request(True,method,
 						path,
-						headers={"Content-Type":"application/json",
-								"Authorization":sig.to_hex()
-								},
 						data=data
 						);
 
@@ -75,5 +85,5 @@ class MiningRestClient(object):
 if __name__=="__main__":
 	pk = PrivateKey.from_random()
 	m = MiningRestClient(pk,"http://127.0.0.1:8000")
-	m.mining_account_post("haha2","1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-	m.mining_account_payout_address_post("haha2","1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp6")
+	m.mining_account_post("testuser1","1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
+	m.mining_account_payout_address_post("testuser1","1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
