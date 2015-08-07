@@ -250,9 +250,12 @@ class ECPointJacobian(ECPoint):
         '''
         if self.z == 1:
             return ECPointAffine(self.curve, self.x, self.y)
-        
-        x = (self.x * self.curve.modinv(pow(self.z, 2, self.curve.p), self.curve.p)) % self.curve.p
-        y = (self.y * self.curve.modinv(pow(self.z, 3, self.curve.p), self.curve.p)) % self.curve.p
+
+        try:
+            x = (self.x * self.curve.modinv(pow(self.z, 2, self.curve.p), self.curve.p)) % self.curve.p
+            y = (self.y * self.curve.modinv(pow(self.z, 3, self.curve.p), self.curve.p)) % self.curve.p
+        except ValueError:
+            return ECPointAffine(self.curve, 0, 0, True)
 
         return ECPointAffine(self.curve, x, y)
 
@@ -414,6 +417,25 @@ class ECPointAffine(ECPoint):
         '''
         return ECPointJacobian(self.curve, self.x, self.y, 1, self.infinity)
 
+    @property
+    def compressed_bytes(self):
+        ''' Returns the compressed bytes for this point.
+
+            If pt.y is odd, 0x03 is pre-pended to pt.x.
+            If pt.y is even, 0x02 is pre-pended to pt.x.
+
+        Returns:
+            b (bytes): Compressed byte representation.
+        '''
+        nbytes = math.ceil(self.curve.n.bit_length() / 8)
+        return bytes([(self.y & 0x1) + 0x02]) + self.x.to_bytes(nbytes, 'big')
+    
+    def __bytes__(self):
+        ''' Returns the full-uncompressed point
+        '''
+        nbytes = math.ceil(self.curve.n.bit_length() / 8)
+        return bytes([0x04]) + self.x.to_bytes(nbytes, 'big') + self.y.to_bytes(nbytes, 'big')
+    
 class EllipticCurve:
     ''' A generic class for elliptic curves and operations on them.
 
@@ -451,8 +473,7 @@ class EllipticCurve:
         ## From http://rosettacode.org/wiki/Modular_inverse#Python
         g, x, y = EllipticCurve._extended_gcd(a, n)
         if g != 1:
-            print("g (%d) != 1, x = %d, y = %d" % (g, x, y))
-            raise ValueError
+            raise ValueError("in EllipticCurve.modinv: g (%d) != 1, x = %d, y = %d" % (g, x, y))
         return x % n
 
     @staticmethod
@@ -516,10 +537,13 @@ class EllipticCurve:
         a = (pow(x, 3, self.p) + self.a * x + self.b) % self.p
         y1 = self.modsqrt(a, self.p)
         y2 = self.p - y1
-        assert self.is_on_curve(Point(x, y1))
-        assert self.is_on_curve(Point(x, y2))
+        rv = []
+        if self.is_on_curve(Point(x, y1)):
+            rv.append(y1)
+        if self.is_on_curve(Point(x, y2)):
+            rv.append(y2)
 
-        return y1, y2
+        return rv
 
     def gen_key_pair(self):
         ''' Generates a public/private key pair.
@@ -564,20 +588,30 @@ class EllipticCurve:
         '''
         r = signature.x
         s = signature.y
-        y1, y2 = self.y_from_x(r)
-        R  = ECPointJacobian(self, r, y1, 1)
-        Rp = ECPointJacobian(self, r, y2, 1)
 
         r_modinv = self.modinv(r, self.n)
-
-        num_bytes = math.ceil(self.n.bit_length() / 8)
-        z = int.from_bytes(self.hash_function(message).digest()[:num_bytes], 'big')
         
-        zG = self.base_point * z
-        pub_key1 = ((R  * s - zG) * r_modinv).to_affine()
-        pub_key2 = ((Rp * s - zG) * r_modinv).to_affine()
+        rv = []
+        for i in range(2):
+            x = (r + self.n * i) % self.p
+            ys = self.y_from_x(x)
+            if not ys:
+                continue
 
-        rv = [k for k in [pub_key1, pub_key2] if self.verify(message, signature, k)]
+            for k in range(2):
+                R  = ECPointJacobian(self, r, ys[k % 2], 1)
+            
+                if not (R * self.n).to_affine().infinity:
+                    continue
+
+                num_bytes = math.ceil(self.n.bit_length() / 8)
+                z = int.from_bytes(self.hash_function(message).digest()[:num_bytes], 'big')
+        
+                zG = self.base_point * z
+                pub_key = ((R  * s - zG) * r_modinv).to_affine()
+
+                rv.append((pub_key, 2 * i + k))
+
         return rv
     
     def _sign(self, message, private_key, secret=None):
@@ -598,7 +632,7 @@ class EllipticCurve:
                 continue
             s = self._make_canonical(((z + r * private_key) * self.modinv(k, self.n)) % self.n)
 
-        return ECPointAffine(self, r, s)
+        return Point(r, s)
 
     def sign(self, message, private_key):
         ''' Signs a message with the given private key.
@@ -608,7 +642,7 @@ class EllipticCurve:
             private_key (Bignum): Integer that is the private key
 
         Returns:
-            sig (ECPointAffine): The point (r, s) representing the signature.
+            sig (Point): The point (r, s) representing the signature.
         '''
         return self._sign(message, private_key)
 
@@ -617,7 +651,7 @@ class EllipticCurve:
             to public key, operating on message.
         Args:
             message (bytes): The message to be signed
-            signature (ECPointAffine): ECPointAffine representing the signature
+            signature (Point): (r, s) representing the signature
             public_key (ECPointAffine): ECPointAffine of the public key
 
         Returns:
