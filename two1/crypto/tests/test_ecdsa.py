@@ -1,7 +1,14 @@
+import pytest
 import random
 
 from two1.crypto.ecdsa import ECPointAffine, ECPointJacobian, EllipticCurve, secp256k1, p256
 
+@pytest.mark.parametrize("curve,point_type", [
+    (p256(), 'affine'),
+    (p256(), 'jacobian'),
+    (secp256k1(), 'affine'),
+    (secp256k1(), 'jacobian')
+])
 def test_ecpoint(curve, point_type):
     # Test to see if n * G = point at infinity
     if point_type == 'affine':
@@ -57,7 +64,7 @@ def test_ecpoint(curve, point_type):
 
     return True
 
-def test_p256(curve):
+def test_p256(curve=p256()):
     # Test the basic operations, test vectors taken from:
     # https://www.nsa.gov/ia/_files/nist-routines.pdf, Section 4.3
     S = ECPointJacobian(curve,
@@ -118,8 +125,8 @@ def test_p256(curve):
     keys = curve.recover_public_key(message, sig_pt)
     assert len(keys) > 0
     matching_keys = 0
-    for k in keys:
-        if k.x == public_key_x and k.y == public_key_y:
+    for k, recid in keys:
+        if k is not None and k.x == public_key_x and k.y == public_key_y:
             matching_keys += 1
     assert matching_keys > 0
 
@@ -148,7 +155,7 @@ def test_p256(curve):
     assert curve.verify(message, sig_pt, ECPointAffine(curve, public_key_x, public_key_y))
 
 
-def test_secp256k1(curve):
+def test_secp256k1(curve=secp256k1()):
     private_key, public_key_int = curve.gen_key_pair()
 
     pub_key_aff = ECPointAffine.from_int(curve, public_key_int)
@@ -251,16 +258,4 @@ def test_secp256k1(curve):
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6
-    
-if __name__ == "__main__":
-    curve_p256 = p256()
-    curve_btc = secp256k1()
-    curves = [curve_p256, curve_btc]
-    #for c in curves:
-    #    for pt_type in ['affine', 'jacobian']:
-    #        test_ecpoint(c, pt_type)
-
-    test_p256(curve_p256)
-    test_secp256k1(curve_btc)
-
 
