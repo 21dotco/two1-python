@@ -211,7 +211,7 @@ def unpack_var_str(b):
     strlen, b0 = unpack_compact_int(b)
     return (b0[:strlen], b0[strlen:])
 
-def decode_compact_target(bits):
+def bits_to_target(bits):
     """ Decodes the full target from a compact representation.
         See: https://bitcoin.org/en/developer-reference#target-nbits
 
@@ -225,20 +225,6 @@ def decode_compact_target(bits):
     target = (bits & 0xffffff) * (1 << (8 * (shift - 3)))
     return target
 
-def encode_compact_target(target):
-    """ Encodes the full target to a compact representation.
-
-    Args:
-        target (Bignum): Full 256-bit target
-
-    Returns:
-        bits (int): Compact target (32 bits)
-    """
-    hex_target = '%x' % target
-    shift = (len(hex_target) + 1) // 2
-    prefix = target >> (8 * (shift - 3))
-    return (shift << 24) + prefix
-
 def bits_to_difficulty(bits):
     """ Determines the difficulty corresponding to bits.
         See: https://en.bitcoin.it/wiki/Difficulty
@@ -250,7 +236,7 @@ def bits_to_difficulty(bits):
         diff (float): Measure of how hard it is to find a solution
                       below the target represented by bits.
     """
-    target = decode_compact_target(bits)
+    target = bits_to_target(bits)
     return MAX_TARGET / target
 
 def difficulty_to_target(difficulty):
