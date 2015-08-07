@@ -42,7 +42,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.wallet'],
+    packages=['two1', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.wallet', 'two1.bitcurl'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
