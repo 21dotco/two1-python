@@ -261,9 +261,8 @@ class Transaction(object):
             private key provided for that input.
         
         Args:
-            private_keys (list(str)): A list of Base58Check encoded 
-               private keys, one for each input, with which to sign
-               the transaction.
+            private_keys (list(crypto.PrivateKey)): A list of private
+               keys, one for each input, with which to sign the transaction.
         """
         if len(private_keys) != self.num_inputs:
             raise ValueError("len(private_keys) = %d must be equal to the number of inputs (%d) in the transaction." %
@@ -277,8 +276,9 @@ class Transaction(object):
         # for it from the given private key and make sure that it matches
         # the one in the scriptPubKey.
         for i, ti in enumerate(self.inputs):
-            pub_key = crypto.get_public_key(private_keys[i])
-            address = crypto.address_from_public_key(pub_key, False)[1:]  # Need to strip off version byte
+            pub_key = private_keys[i].public_key
+            address = pub_key.address[1:]  # Need to strip off version byte
+            #print("address = %s" % address)
 
             # Now we need the public key hash from the input script
             script_pub_key_hash_hex = ti.script.get_hash160()
@@ -286,14 +286,22 @@ class Transaction(object):
                 raise ValueError("Couldn't find public key hash in input script for input %d!" % (i))
 
             script_pub_key_hash = bytes.fromhex(script_pub_key_hash_hex[2:])  # Strip off the 0x
+            #print("script_pub_key_hash = %s" % script_pub_key_hash)
             
-            if address != script_pub_key_hash_hex:
+            if address != script_pub_key_hash:
                 raise ValueError("Address derived from private key does not match scriptPubKey for input %d!" % (i))
 
             # If we've made it this far, we can sign & update the script
-            sig = crypto.sign(dhash(txn_template), private_keys[i])
-            script_sig = pack_var_str(sig + pack_u32(self.HASH_CODE_TYPE)) + pack_var_str(pub_key)
+            msg = dhash(txn_template)
+            sig = private_keys[i].sign(msg)
+            #print("sig = %s" % bytes_to_str(sig))
+            #print("pub_key = %s" % pub_key)
+            #print("sig verified: %r" % pub_key.verify(msg, sig))
+            script_sig = pack_var_str(sig.to_der() + pack_compact_int(self.HASH_CODE_TYPE)) + pack_var_str(pub_key.compressed_bytes)
+            #print("script_sig = %s" % bytes_to_str(script_sig))
             ti.script = Script(script_sig)
+            ti.script._parse()
+            #print("ti.script = %r" % ti.script.ast)
     
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
