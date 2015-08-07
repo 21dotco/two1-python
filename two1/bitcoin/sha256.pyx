@@ -55,7 +55,7 @@ cdef class sha256:
     cdef uint32_t _counter
     cdef bint _locked
 
-    def __init__ (self, bytes m):
+    def __init__ (self, bytes m=None):
         self._buffer = b''
         self._temp = b''
         self._counter = 0

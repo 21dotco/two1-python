@@ -898,7 +898,7 @@ static uint32_t __pyx_f_4two1_7bitcoin_6sha256_be_decode_uint32(uint8_t *__pyx_v
 /* "two1/bitcoin/sha256.pyx":58
  *     cdef bint _locked
  * 
- *     def __init__ (self, bytes m):             # <<<<<<<<<<<<<<
+ *     def __init__ (self, bytes m=None):             # <<<<<<<<<<<<<<
  *         self._buffer = b''
  *         self._temp = b''
  */
@@ -916,6 +916,7 @@ static int __pyx_pw_4two1_7bitcoin_6sha256_6sha256_1__init__(PyObject *__pyx_v_s
   {
     static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_m,0};
     PyObject* values[1] = {0};
+    values[0] = ((PyObject*)Py_None);
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
@@ -927,22 +928,26 @@ static int __pyx_pw_4two1_7bitcoin_6sha256_6sha256_1__init__(PyObject *__pyx_v_s
       kw_args = PyDict_Size(__pyx_kwds);
       switch (pos_args) {
         case  0:
-        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_m)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
+        if (kw_args > 0) {
+          PyObject* value = PyDict_GetItem(__pyx_kwds, __pyx_n_s_m);
+          if (value) { values[0] = value; kw_args--; }
+        }
       }
       if (unlikely(kw_args > 0)) {
         if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
-      goto __pyx_L5_argtuple_error;
     } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      switch (PyTuple_GET_SIZE(__pyx_args)) {
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
     }
     __pyx_v_m = ((PyObject*)values[0]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 0, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("two1.bitcoin.sha256.sha256.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -977,7 +982,7 @@ static int __pyx_pf_4two1_7bitcoin_6sha256_6sha256___init__(struct __pyx_obj_4tw
 
   /* "two1/bitcoin/sha256.pyx":59
  * 
- *     def __init__ (self, bytes m):
+ *     def __init__ (self, bytes m=None):
  *         self._buffer = b''             # <<<<<<<<<<<<<<
  *         self._temp = b''
  *         self._counter = 0
@@ -989,7 +994,7 @@ static int __pyx_pf_4two1_7bitcoin_6sha256_6sha256___init__(struct __pyx_obj_4tw
   __pyx_v_self->_buffer = __pyx_kp_b_;
 
   /* "two1/bitcoin/sha256.pyx":60
- *     def __init__ (self, bytes m):
+ *     def __init__ (self, bytes m=None):
  *         self._buffer = b''
  *         self._temp = b''             # <<<<<<<<<<<<<<
  *         self._counter = 0
@@ -1080,7 +1085,7 @@ static int __pyx_pf_4two1_7bitcoin_6sha256_6sha256___init__(struct __pyx_obj_4tw
   /* "two1/bitcoin/sha256.pyx":58
  *     cdef bint _locked
  * 
- *     def __init__ (self, bytes m):             # <<<<<<<<<<<<<<
+ *     def __init__ (self, bytes m=None):             # <<<<<<<<<<<<<<
  *         self._buffer = b''
  *         self._temp = b''
  */
