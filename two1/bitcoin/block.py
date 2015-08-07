@@ -70,7 +70,7 @@ class BlockHeader(object):
         self.bits = bits
         self.nonce = nonce
 
-        self.target = decode_compact_target(bits)
+        self.target = bits_to_target(bits)
 
     @property
     def valid(self):
