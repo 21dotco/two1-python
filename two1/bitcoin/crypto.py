@@ -24,23 +24,47 @@ def get_bytes(s):
     return b
     
 class PrivateKey(object):
+    """ Encapsulation of a Bitcoin ECDSA private key.
+
+        This class provides capability to generate private keys,
+        obtain the corresponding public key, sign messages and
+        serialize/deserialize into a variety of formats.
+
+    Args:
+        k (Bignum): The private key.
+        testnet (bool) (Optional): If True, changes the version that
+           is prepended to the key.
+
+    Returns:
+        pk (PrivateKey): The object representing the private key.
+    """
     TESTNET_VERSION = 0xEF
     MAINNET_VERSION = 0x80
 
     @staticmethod
     def from_int(i, testnet=False):
+        """ Initializes a private key from an integer.
+
+        Args:
+            i (Bignum): Integer that is the private key.
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PrivateKey): The object representing the private key.
+        """
         return PrivateKey(i, testnet)
 
     @staticmethod
     def from_b58check(private_key):
-        ''' Decodes a Base58Check encoded private-key.
+        """ Decodes a Base58Check encoded private-key.
 
         Args:
             private_key (str): A Base58Check encoded private key.
 
         Returns:
             pk (PrivateKey): A PrivateKey object
-        '''
+        """
         b58dec = base58.b58decode_check(private_key)
         version = b58dec[0]
         assert version in [PrivateKey.TESTNET_VERSION, PrivateKey.MAINNET_VERSION]
@@ -49,6 +73,15 @@ class PrivateKey(object):
 
     @staticmethod
     def from_random(testnet=False):
+        """ Initializes a private key from a random integer.
+
+        Args:
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PrivateKey): The object representing the private key.
+        """
         return PrivateKey(random.SystemRandom().randrange(1, bitcoin_curve.n - 1), testnet)
 
     def __init__(self, k, testnet=False):
@@ -58,21 +91,26 @@ class PrivateKey(object):
 
     @property
     def public_key(self):
+        """ Returns the public key associated with this private key.
+        
+        Returns:
+            pk (PublicKey): The PublicKey object that corresponds to this private key.
+        """
         return self._public_key
 
     def raw_sign(self, message):
-        ''' Signs message using this private key.
+        """ Signs message using this private key.
 
         Args:
             message (bytes): The message to be signed.
 
         Returns:
             pt (ECPointAffine): a raw point (r = pt.x, s = pt.y) which is the signature.
-        '''
+        """
         return bitcoin_curve.sign(message, self.key)
 
     def sign(self, message, determine_recovery_id=False):
-        ''' Signs message using this private key.
+        """ Signs message using this private key.
 
         Note:
             This differs from `raw_sign()` since it returns a Signature object.
@@ -82,7 +120,7 @@ class PrivateKey(object):
 
         Returns:
             sig (Signature): The signature corresponding to message.
-        '''
+        """
         # Some BTC things want to have the recovery id to extract the public
         # key, so we should figure that out.
         recovery_id = None
@@ -99,9 +137,19 @@ class PrivateKey(object):
         return Signature(sig_pt.x, sig_pt.y, recovery_id)
 
     def to_b58check(self):
+        """ Generates a Base58Check encoding of this private key.
+
+        Returns:
+            b (str): A Base58Check encoded string representing the key.
+        """
         return base58.b58encode_check(bytes(self))
 
     def to_hex(self):
+        """ Generates a hex encoding of the serialized key.
+
+        Returns:
+            h (str): A hex encoded string representing the key.
+        """
         return bytes_to_str(bytes(self))
 
     def __bytes__(self):
@@ -112,32 +160,95 @@ class PrivateKey(object):
 
     
 class PublicKey(object):
+    """ Encapsulation of a Bitcoin ECDSA public key.
+
+        This class provides a high-level API to using an ECDSA public
+        key, specifically for Bitcoin (secp256k1) purposes.
+
+    Args:
+        x (Bignum): The x component of the public key point.
+        y (Bignum): The y component of the public key point.
+        testnet (bool) (Optional): If True, changes the version that
+           is prepended to the key.
+
+    Returns:
+        pk (PublicKey): The object representing the public key.
+    """
+    
     TESTNET_VERSION = 0x6F
     MAINNET_VERSION = 0x00
 
     @staticmethod
     def from_point(p, testnet=False):
+        """ Generates a public key object from any object
+            containing x, y coordinates.
+
+        Args:
+            p (Point): An object containing a two-dimensional, affine
+               representation of a point on the secp256k1 curve.
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PublicKey): A PublicKey object.
+        """
         return PublicKey(p.x, p.y, testnet)
     
     @staticmethod
     def from_int(i, testnet=False):
+        """ Generates a public key object from an integer.
+
+        Note:
+            This assumes that the upper 32 bytes of the integer
+            are the x component of the public key point and the
+            lower 32 bytes are the y component.
+
+        Args:
+            i (Bignum): A 512-bit integer representing the public
+               key point on the secp256k1 curve.
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PublicKey): A PublicKey object.
+        """
         point = ECPointAffine.from_int(bitcoin_curve, i)
         return PublicKey.from_point(point, testnet)
         
     @staticmethod
     def from_bytes(key_bytes, testnet=False):
-        key_bytes_len = len(key_bytes)
+        """ Generates a public key object from a byte (or hex) string.
 
-        key_type = key_bytes[0]
+            The byte stream must begin with a single byte telling
+            what key representation follows. A full, uncompressed
+            key is represented by: 0x04 followed by 64 bytes containing
+            the x and y components of the point. For compressed keys
+            with an even y component, 0x02 is followed by 32 bytes
+            containing the x component. For compressed keys with an
+            odd y component, 0x03 is followed by 32 bytes containing
+            the x component.
+            
+        Args:
+            key_bytes (bytes or str): A byte stream that conforms to the above.
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PublicKey): A PublicKey object.
+        """
+        b = get_bytes(key_bytes)
+        key_bytes_len = len(b)
+
+        key_type = b[0]
         if key_type == 0x04:
             # Uncompressed
             assert key_bytes_len == 65
 
-            x = int.from_bytes(key_bytes[1:33], 'big')
-            y = int.from_bytes(key_bytes[33:65], 'big')
+            x = int.from_bytes(b[1:33], 'big')
+            y = int.from_bytes(b[33:65], 'big')
         elif key_type == 0x02 or key_type == 0x03:
             assert key_bytes_len == 33
-            x = int.from_bytes(key_bytes[1:33], 'big')
+            x = int.from_bytes(b[1:33], 'big')
             ys = bitcoin_curve.y_from_x(x)
 
             # Pick the one that corresponds to key_type
@@ -151,16 +262,21 @@ class PublicKey(object):
         return PublicKey(x, y, testnet)
 
     @staticmethod
-    def from_hex(h, testnet=False):
-        return PublicKey.from_bytes(bytes.fromhex(h), testnet)
-
-    @staticmethod
     def from_private_key(private_key):
+        """ Generates a public key object from a PrivateKey object.
+
+        Args:
+            private_key (PrivateKey): The private key object from
+               which to derive this object.
+
+        Returns:
+            pk (PublicKey) A PublicKey object.
+        """
         return private_key.public_key
 
     @staticmethod
     def from_signature(message, signature, testnet=False):
-        ''' Attempts to create PublicKey object by deriving it
+        """ Attempts to create PublicKey object by deriving it
             from the message and signature.
 
         Args:
@@ -171,7 +287,7 @@ class PublicKey(object):
         Returns:
             p (PublicKey): A PublicKey object derived from the
                signature, it it exists. None otherwise.
-        '''
+        """
         msg = get_bytes(message)
         pub_keys = bitcoin_curve.recover_public_key(msg, signature)
         
@@ -203,14 +319,26 @@ class PublicKey(object):
 
     @property
     def address(self):
+        """ Address property that returns the RIPEMD-160
+            hash of the SHA-256 hash of the  private key.
+
+        Returns:
+            b (bytes): version + RIPEMD-160 byte string.
+        """
         return self._address
         
     @property
     def b58address(self):
+        """ Base58Check encoded version of the address.
+
+        Returns:
+            a (str): A Base58Check encoded string containing the
+               address associated with this key.
+        """
         return self._b58address
 
     def verify(self, message, signature):
-        ''' Verifies that message was appropriately signed.
+        """ Verifies that message was appropriately signed.
 
         Args:
             message (bytes): The message to be verified.
@@ -218,11 +346,16 @@ class PublicKey(object):
 
         Returns:
             verified (bool): True if the signature is verified, False otherwise.
-        '''
+        """
         msg = get_bytes(message)
         return bitcoin_curve.verify(msg, signature, self.point)
     
     def to_hex(self):
+        """ Hex representation of the serialized byte stream.
+
+        Returns:
+            h (str): A hex-encoded string.
+        """
         return bytes_to_str(bytes(self))
 
     def __int__(self):
@@ -233,11 +366,30 @@ class PublicKey(object):
 
     @property
     def compressed_bytes(self):
+        """ Byte string corresponding to a compressed representation
+            of this public key.
+
+        Returns:
+            b (bytes): A 33-byte long byte string.
+        """
         return self.point.compressed_bytes
 
 
 class Signature(object):
+    """ Encapsulation of a ECDSA signature for Bitcoin purposes.
 
+    Args:
+        r (Bignum): r component of the signature.
+        s (Bignum): s component of the signature.
+        recovery_id (int) (Optional): Must be between 0 and 3 specifying
+           which of the public keys generated by the algorithm specified
+           in http://www.secg.org/sec1-v2.pdf Section 4.1.6 (Public Key
+           Recovery Operation) is the correct one for this signature.
+
+    Returns:
+        sig (Signature): A Signature object.
+    """
+    
     class ECDERPoint(univ.Sequence):
         componentType = namedtype.NamedTypes(
             namedtype.NamedType("r", univ.Integer()),
@@ -246,14 +398,14 @@ class Signature(object):
 
     @staticmethod
     def from_der(der):
-        ''' Decodes a Signature that was DER-encoded.
+        """ Decodes a Signature that was DER-encoded.
 
         Args:
             der (bytes or str): The DER encoding to be decoded.
 
         Returns:
             s (Signature): The deserialized signature.
-        '''
+        """
         if isinstance(der, bytes):
             d = decoder.decode(der)[0]
         elif isinstance(der, str):
@@ -268,6 +420,16 @@ class Signature(object):
 
     @staticmethod
     def from_bytes(b):
+        """ Extracts the r and s components from a byte string.
+        
+        Args:
+            b (bytes): A 64-byte long string. The first 32 bytes are
+               extracted as the r component and the second 32 bytes
+               are extracted as the s component.
+
+        Returns:
+            sig (Signature): A Signature object.
+        """
         r = b[0:32]
         s = b[33:64]
         return Signature(r, s)
@@ -279,18 +441,24 @@ class Signature(object):
 
     @property
     def x(self):
+        """ Convenience property for any method that requires
+            this object to provide a Point interface.
+        """
         return self.r
 
     @property
     def y(self):
+        """ Convenience property for any method that requires
+            this object to provide a Point interface.
+        """
         return self.s
         
     def to_der(self):
-        ''' Encodes this signature using DER
+        """ Encodes this signature using DER
 
         Returns:
             dep (bytes): The DER encoding of (self.r, self.s).
-        '''
+        """
         ep = Signature.ECDERPoint()
         ep.setComponentByName('r', self.r)
         ep.setComponentByName('s', self.s)
