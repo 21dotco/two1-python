@@ -1,4 +1,5 @@
 import base58
+import base64
 import hashlib
 import math
 import random
@@ -102,12 +103,22 @@ class PrivateKey(object):
         """ Signs message using this private key.
 
         Args:
-            message (bytes): The message to be signed.
+            message (bytes): The message to be signed. If a string is provided
+               it is assumed the encoding is 'ascii' and converted to bytes. If this is
+               not the case, it is up to the caller to convert the string to bytes
+               appropriately and pass in the bytes.
 
         Returns:
             pt (ECPointAffine): a raw point (r = pt.x, s = pt.y) which is the signature.
         """
-        return bitcoin_curve.sign(message, self.key)
+        if isinstance(message, str):
+            msg = bytes(message, 'ascii')
+        elif isinstance(message, bytes):
+            msg = message
+        else:
+            raise TypeError("message must be either str or bytes!")
+
+        return bitcoin_curve.sign(msg, self.key)
 
     def sign(self, message, determine_recovery_id=False):
         """ Signs message using this private key.
@@ -116,16 +127,18 @@ class PrivateKey(object):
             This differs from `raw_sign()` since it returns a Signature object.
 
         Args:
-            message (bytes): The message to be signed.
+            message (bytes or str): The message to be signed. If a string is provided
+               it is assumed the encoding is 'ascii' and converted to bytes. If this is
+               not the case, it is up to the caller to convert the string to bytes
+               appropriately and pass in the bytes.
 
         Returns:
             sig (Signature): The signature corresponding to message.
         """
         # Some BTC things want to have the recovery id to extract the public
         # key, so we should figure that out.
-        recovery_id = None
+        recovery_id = None            
         sig_pt = self.raw_sign(message)
-        print(sig_pt)
 
         if determine_recovery_id:
             keys = bitcoin_curve.recover_public_key(message, sig_pt)
@@ -135,6 +148,42 @@ class PrivateKey(object):
                     break
 
         return Signature(sig_pt.x, sig_pt.y, recovery_id)
+
+    def sign_bitcoin(self, message):
+        """ Signs a message using this private key such that it
+            is compatible with bitcoind, bx, and other Bitcoin
+            clients/nodes/utilities.
+
+        Note:
+            b"\x18Bitcoin Signed Message:\n" + len(message) is prepended
+            to the message before signing.
+
+        Args:
+            message (bytes or str): Message to be signed.
+
+        Returns:
+            b64 (bytes): A Base64-encoded byte string of the signed message.
+               The first byte of the encoded message contains information
+               about how to recover the public key. In bitcoind parlance,
+               this is the magic number containing the recovery ID and
+               whether or not the key was compressed or not. (This function
+               always processes full, uncompressed public-keys, so the magic
+               number will always be either 27 or 28).
+        """
+        if isinstance(message, str):
+            msg_in = bytes(message, 'ascii')
+        elif isinstance(message, bytes):
+            msg_in = message
+        else:
+            raise TypeError("message must be either str or bytes!")
+
+        msg = b"\x18Bitcoin Signed Message:\n" + bytes([len(msg_in)]) + msg_in
+        msg_hash = hashlib.sha256(msg).digest()
+
+        sig = self.sign(msg_hash, True)
+        magic = 27 + sig.recovery_id
+    
+        return base64.b64encode(bytes([magic]) + bytes(sig))
 
     def to_b58check(self):
         """ Generates a Base58Check encoding of this private key.
@@ -214,7 +263,21 @@ class PublicKey(object):
         """
         point = ECPointAffine.from_int(bitcoin_curve, i)
         return PublicKey.from_point(point, testnet)
-        
+
+    @staticmethod
+    def from_base64(b64str, testnet=False):
+        """ Generates a public key object from a Base64 encoded string.
+
+        Args:
+            b64str (str): A Base64-encoded string.
+            testnet (bool) (Optional): If True, changes the version that
+               is prepended to the key.
+
+        Returns:
+            pk (PublicKey): A PublicKey object.
+        """
+        return PublicKey.from_bytes(base64.b64decode(b64str), testnet)
+    
     @staticmethod
     def from_bytes(key_bytes, testnet=False):
         """ Generates a public key object from a byte (or hex) string.
@@ -358,6 +421,14 @@ class PublicKey(object):
         """
         return bytes_to_str(bytes(self))
 
+    def to_base64(self):
+        """ Hex representation of the serialized byte stream.
+
+        Returns:
+            b (str): A Base64-encoded string.
+        """
+        return base64.b64encode(bytes(self))
+
     def __int__(self):
         return (self.point.x << bitcoin_curve.n.bit_length()) + self.point.y
 
@@ -419,6 +490,18 @@ class Signature(object):
         return Signature(r, s)
 
     @staticmethod
+    def from_base64(b64str):
+        """ Generates a signature object from a Base64 encoded string.
+
+        Args:
+            b64str (str): A Base64-encoded string.
+
+        Returns:
+            sig (Signature): A Signature object.
+        """
+        return PublicKey.from_bytes(base64.b64decode(b64str))
+    
+    @staticmethod
     def from_bytes(b):
         """ Extracts the r and s components from a byte string.
         
@@ -430,8 +513,8 @@ class Signature(object):
         Returns:
             sig (Signature): A Signature object.
         """
-        r = b[0:32]
-        s = b[33:64]
+        r = int.from_bytes(b[0:32], 'big')
+        s = int.from_bytes(b[32:64], 'big')
         return Signature(r, s)
     
     def __init__(self, r, s, recovery_id=None):
@@ -464,6 +547,22 @@ class Signature(object):
         ep.setComponentByName('s', self.s)
 
         return encoder.encode(ep)
+
+    def to_hex(self):
+        """ Hex representation of the serialized byte stream.
+
+        Returns:
+            h (str): A hex-encoded string.
+        """
+        return bytes_to_str(bytes(self))
+    
+    def to_base64(self):
+        """ Hex representation of the serialized byte stream.
+
+        Returns:
+            b (str): A Base64-encoded string.
+        """
+        return base64.b64encode(bytes(self))
 
     def __bytes__(self):
         nbytes = math.ceil(bitcoin_curve.n.bit_length() // 8)
