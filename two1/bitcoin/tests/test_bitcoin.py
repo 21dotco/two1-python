@@ -4,6 +4,7 @@ import json
 import pytest
 from two1.bitcoin.utils import *
 from two1.bitcoin.block import Block, BlockHeader
+from two1.bitcoin.crypto import PublicKey, PrivateKey
 from two1.bitcoin.script import Script
 from two1.bitcoin.txn import CoinbaseInput, Transaction, TransactionInput, TransactionOutput
 
@@ -114,6 +115,24 @@ def test_block(block_json):
 
         raise
 
+def test_crypto():
+    pts = ((0x50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352,
+            0x2cd470243453a299fa9e77237716103abc11a1df38855ed6f2ee187e9c582ba6),
+           (0xa83b8de893467d3a88d959c0eb4032d9ce3bf80f175d4d9e75892a3ebb8ab7e5,
+            0x370f723328c24b7a97fe34063ba68f253fb08f8645d7c8b9a4ff98e3c29e7f0d),
+           (0xf680556678e25084a82fa39e1b1dfd0944f7e69fddaa4e03ce934bd6b291dca0,
+            0x52c10b721d34447e173721fb0151c68de1106badb089fb661523b8302a9097f5),
+           (0x241febb8e23cbd77d664a18f66ad6240aaec6ecdc813b088d5b901b2e285131f,
+            0x513378d9ff94f8d3d6c420bd13981df8cd50fd0fbd0cb5afabb3e66f2750026d))
+
+    for pt in pts:
+        b = bytes([(pt[1] & 0x1) + 0x2]) + pt[0].to_bytes(32, 'big')
+        b_full = bytes([0x04]) + pt[0].to_bytes(32, 'big') + pt[1].to_bytes(32, 'big')
+        pk = PublicKey.from_bytes(b)
+        assert pk.point.y == pt[1]
+        assert b == pk.compressed_bytes
+        assert b_full == bytes(pk)
+    
 def test_utils():
     assert difficulty_to_target(16307.420938523983) == 0x404cb000000000000000000000000000000000000000000000000
     assert target_to_bits(0x00000000000404CB000000000000000000000000000000000000000000000000) == 0x1b0404cb
