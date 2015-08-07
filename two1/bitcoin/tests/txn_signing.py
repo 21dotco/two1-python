@@ -1,14 +1,16 @@
 import base64
 import hashlib
 
+from two1.bitcoin import crypto, script, txn, utils
 
 # Let's create a txn trying to spend one of Satoshi's coins: block 1
 # We make the (false) assertion that we own the private key (private_key1)
 # and for a raw txn, we put the scriptPubKey associated with that private key
 prev_txn_hash = bytes.fromhex('0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098')
+prev_script_pub_key = script.Script.build_p2pkh(utils.address_to_key_hash(address1)[1]),
 txn_input = txn.TransactionInput(prev_txn_hash,
                                  0,
-                                 script.Script.build_p2pkh(utils.address_to_key_hash(address1)[1]),
+                                 prev_script_pub_key,
                                  0xffffffff)
 
 # Build the output so that it pays out to address2
