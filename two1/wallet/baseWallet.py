@@ -28,6 +28,7 @@ class BaseWallet(object):
 			(number): The current confirmed balance.
 		"""
 		raise NotImplementedError('Abstract class `confirmed_balance` must be overridden')
+		
 	@property
 	def unconfirmed_balance(self):
 		""" Gets the current unconfirmed balance of the wallet.
