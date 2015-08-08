@@ -26,3 +26,4 @@ argh==0.26.1
 requests==2.7.0
 path.py==7.4
 click==4.1
+numpy=1.9.2

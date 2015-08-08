@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from cloudcall import views, language, barcode, speech, face_detect, phone, charts, weather, image_processing, \
-    scraper, blackjack, twitter
+    scraper, blackjack, twitter, scipy
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from cloudcall.static_serve import static_serve
 
@@ -41,11 +41,11 @@ urlpatterns = [
     url(r'^weather/radar', weather.radar),
     url(r'^serve/*', static_serve.index),
     url(r'^image/resize', image_processing.resize),
+    url(r'^scipy/', include(scipy.get_urls())),
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^blackjack/$', blackjack.createGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/$', blackjack.getGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/hit$', blackjack.hitGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/stand$', blackjack.standGame),
-
 ]
 urlpatterns += staticfiles_urlpatterns()
