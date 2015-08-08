@@ -1,3 +1,6 @@
+import copy
+import hashlib
+
 from two1.bitcoin import crypto
 from two1.bitcoin.exceptions import *
 from two1.bitcoin.script import *
@@ -193,7 +196,11 @@ class Transaction(object):
     """
 
     DEFAULT_TRANSACTION_VERSION = 1 # There are no other versions currently
-    HASH_CODE_TYPE = 1
+    SIG_HASH_OLD = 0x00 # Acts the same as SIG_HASH_ALL
+    SIG_HASH_ALL = 0x01
+    SIG_HASH_NONE = 0x02
+    SIG_HASH_SINGLE = 0x03
+    SIG_HASH_ANY = 0x80
 
     @staticmethod
     def from_bytes(b):
@@ -249,59 +256,89 @@ class Transaction(object):
         """
         return len(self.outputs)
 
-    def sign(self, private_keys):
-        """ Signs the transaction.
+    def _copy_for_sig(self, input_index, hash_type, sub_script):
+        """ Returns a copy of this txn appropriate for signing, based
+            on hash_type.
+        """
+        new_txn = copy.deepcopy(self)
 
-            This function assumes that the pub key script
-            (scriptPubKey) of the unspent transaction output (utxo)
-            being spent is the input script. The script for each of
-            the inputs *is modified* to contain the signature script
-            (scriptSig) only if the public key contained in the
-            scriptPubKey matches the public key derived from the
-            private key provided for that input.
+        # First deal w/the inputs
+        
+        # For the SIG_HASH_ANY case, we only care about
+        # self.inputs[input_index]
+        if hash_type == self.SIG_HASH_ANY:
+            ti = new_txn.inputs[input_index]
+            new_txn.inputs = [ti]
+        else:
+            for i, inp in enumerate(new_txn.inputs):
+                inp.script = sub_script if i == input_index else Script("")
+            
+                if hash_type & 0x1f in [self.SIG_HASH_NONE, self.SIG_HASH_SINGLE] and input_index != i:
+                    # Sequence numbers (nSequence) must be set to 0 for all but
+                    # the input we care about.
+                    inp.sequence_num = 0
+
+        # Now deal with outputs
+                    
+        if hash_type & 0x1f == self.SIG_HASH_NONE:
+            new_txn.outputs = []
+        elif hash_type & 0x1f == self.SIG_HASH_SINGLE:
+            # Resize output vector to input_index + 1
+            new_txn.outputs = new_txn.outputs[:input_index+1]
+            # All outputs except outputs[i] have a value of -1 (0xffffffff)
+            # and a blank script
+            for i, out in enumerate(new_txn.outputs):
+                if i != input_index:
+                    out.script = Script("")
+                    out.value = 0xffffffff
+
+        return new_txn
+            
+    def sign_input(self, input_index, hash_type, private_key, sub_script):
+        """ Signs an input.
         
         Args:
-            private_keys (list(crypto.PrivateKey)): A list of private
-               keys, one for each input, with which to sign the transaction.
+            input_index (int): The index of the input to sign.
+            hash_type (int): What kind of signature hash to do.
+            private_key (crypto.PrivateKey): private key with which
+               to sign the transaction.
+            sub_script (Script): the scriptPubKey of the corresponding
+               utxo being spent.
         """
-        if len(private_keys) != self.num_inputs:
-            raise ValueError("len(private_keys) = %d must be equal to the number of inputs (%d) in the transaction." %
-                             (len(private_keys), self.num_inputs))
+        if input_index < 0 or input_index >= len(self.inputs):
+            raise ValueError("Invalid input index.")
+
+        inp = self.inputs[input_index]
         
-        # Since we assume that the inputs all have the correct utxo
-        # scriptPubKey, we create a template txn first to sign.
-        txn_template = bytes(self) + pack_u32(self.HASH_CODE_TYPE)
+        if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
+            # This is to deal with the bug where specifying an index that is out
+            # of range (wrt outputs) results in a signature hash of 0x1 (little-endian)
+            msg_to_sign = 0x1.to_bytes(32, 'little')
+        else:
+            txn_copy = self._copy_for_sig(input_index, hash_type, sub_script)
 
-        # Now let's go through each of the inputs, derive the public-key
-        # for it from the given private key and make sure that it matches
-        # the one in the scriptPubKey.
-        for i, ti in enumerate(self.inputs):
-            pub_key = private_keys[i].public_key
-            address = pub_key.address[1:]  # Need to strip off version byte
-            #print("address = %s" % address)
+            # Before signing we should verify that the address in the sub_script
+            # corresponds to that of the private key
+            h160 = private_key.public_key.address[1:] # Need to strip off version byte
+            script_pub_key_h160_hex = sub_script.get_hash160()
+            if script_pub_key_h160_hex is None:
+                raise ValueError("Couldn't find public key hash in sub_script!")
 
-            # Now we need the public key hash from the input script
-            script_pub_key_hash_hex = ti.script.get_hash160()
-            if script_pub_key_hash_hex is None:
-                raise ValueError("Couldn't find public key hash in input script for input %d!" % (i))
+            if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
+                raise ValueError("Address derived from private key does not match sub_script!")
 
-            script_pub_key_hash = bytes.fromhex(script_pub_key_hash_hex[2:])  # Strip off the 0x
-            #print("script_pub_key_hash = %s" % script_pub_key_hash)
+            msg_to_hash = bytes(txn_copy) + pack_u32(hash_type)
+            msg_to_sign = hashlib.sha256(msg_to_hash).digest()
             
-            if address != script_pub_key_hash:
-                raise ValueError("Address derived from private key does not match scriptPubKey for input %d!" % (i))
+        sig = private_key.sign(msg_to_sign)
 
-            # If we've made it this far, we can sign & update the script
-            msg = dhash(txn_template)
-            sig = private_keys[i].sign(msg)
-            #print("sig = %s" % bytes_to_str(sig))
-            #print("pub_key = %s" % pub_key)
-            #print("sig verified: %r" % pub_key.verify(msg, sig))
-            script_sig = pack_var_str(sig.to_der() + pack_compact_int(self.HASH_CODE_TYPE)) + pack_var_str(pub_key.compressed_bytes)
-            #print("script_sig = %s" % bytes_to_str(script_sig))
-            ti.script = Script(script_sig)
-            ti.script._parse()
-            #print("ti.script = %r" % ti.script.ast)
+        if not private_key.public_key.verify(msg_to_sign, sig):
+            return False
+
+        script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pack_var_str(bytes(private_key.public_key))
+        inp.script = Script(script_sig)
+
+        return True
     
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
