@@ -43,11 +43,11 @@ class ClientMessageHandler(object):
     def _state_authorize(self):
         self.logger.info('Authenticating')
 
-        obj = self._message_factory.create_bitsplit_auth_request(
+        obj = self._message_factory.create_bitshare_auth_request(
             version=0,
-            user=self.user,
-            worker=self.worker,
-            protocol=0,
+            username=self.user,
+            mac=self.worker,
+            wallet_index=0,
             numerator=3,
             denominator=4
         )
@@ -65,9 +65,9 @@ class ClientMessageHandler(object):
     def _state_handle_msg(self):
 
         msg = yield from self._message_factory.read_object(self.reader)
-        msg_type = msg.value.__class__.__name__
-        if msg_type == "Notify":
-            self._handle_notification(msg.value)
+        msg_type = msg.__class__.__name__
+        if msg_type == "WorkNotification":
+            self._handle_notification(msg)
         return STATE_HANDLE_MSG
 
     def _handle_notification(self, data):

@@ -2,7 +2,7 @@ from client_task_factory import ClientTaskFactory
 import logging.config
 import asyncio
 import configs
-from mining.message_factory import ASNLaminarMessageFactory
+from mining.message_factory import ProtobufMessageFactory
 
 configs.load_configs()
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ worker = '000000010203'
 host = '127.0.0.1'
 port = '8008'
 
-message_factory = ASNLaminarMessageFactory()
+message_factory = ProtobufMessageFactory()
 tasks = [
     ClientTaskFactory.create_message_handler_task(user_id=user, worker_id=worker, host=host, port=port,
                                                   message_factory=message_factory),

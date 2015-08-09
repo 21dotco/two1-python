@@ -62,7 +62,7 @@ class CPUWorkMaster(object):
     # previously running work will be stopped and new work will be reloaded
     # calls notify_cb on notify_loop when something is found
     def load_work(self, notify_msg, event_loop, notify_cb):
-        print("*** Client starting on new work *** job_id %g " % notify_msg.jobid)
+        print("*** Client starting on new work *** job_id %g " % notify_msg.job_id)
         # must be of type laminar.Notify
         if len(self.worker) > 0:
             for th in self.worker:
@@ -71,7 +71,7 @@ class CPUWorkMaster(object):
             self.worker = []
 
         outputs = [TransactionOutput.from_bytes(
-            x.value)[0] for x in notify_msg.outputs]
+            x)[0] for x in notify_msg.outputs]
         # The pool iscript0 includes the height and enonce length bytes so
         # slice those off prior to creating the CoinbaseTransaction.
         # This will get fixed in pool2
@@ -87,11 +87,11 @@ class CPUWorkMaster(object):
             cb_txn = cb_builder.build(self.enonce1, enonce2)
             print(bytes_to_str(cb_txn.client_serialize()))
 
-            edge = [e.value for e in notify_msg.edge]
+            edge = [e for e in notify_msg.edge]
 
             cb = CompactBlock(notify_msg.height,
                               notify_msg.block_version,
-                              notify_msg.prev.value,
+                              notify_msg.prev,
                               notify_msg.itime,
                               0x1dffffff,  # lower difficulty work for testing
                               edge,
@@ -99,7 +99,7 @@ class CPUWorkMaster(object):
             # print(notify_msg)
             print([bytes_to_str(e) for e in edge])
             # Append the work to the queue for the worker
-            work = Work(job_id=notify_msg.jobid,
+            work = Work(job_id=notify_msg.job_id,
                         enonce2=enonce2,
                         cb=cb)
 
