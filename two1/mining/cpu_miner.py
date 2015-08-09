@@ -30,15 +30,11 @@ class CPUMiner(threading.Thread):
                     self.stop = False
                     print("Exiting Worker....")
                     break
-                print("Mining: nonce %g " % nonce)
 
-            # TODO put the first condition for testing, remove when not needed
-            self.current_work.cb.block_header.nonce = nonce
-            if self.current_work.cb.block_header.valid:
+            if nonce % int(2 * 1e6) == 0 or self.current_work.cb.check_valid_nonce(nonce):
                 # notify we have a found!!!
                 # call the callbacks on the main loop
 
-                # @veer: not sure obj whether I am creating the share correctly
                 share = Share(
                     enonce2=self.current_work.enonce2,
                     nonce=nonce,
@@ -100,7 +96,7 @@ class CPUWorkMaster(object):
                               0x1dffffff,  # lower difficulty work for testing
                               edge,
                               cb_txn)
-            print(notify_msg)
+            # print(notify_msg)
             print([bytes_to_str(e) for e in edge])
             # Append the work to the queue for the worker
             work = Work(job_id=notify_msg.jobid,

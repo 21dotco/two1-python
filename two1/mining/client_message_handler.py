@@ -1,13 +1,7 @@
 import asyncio
-import codecs
 import logging
 import time
 import cpu_miner
-import laminar_message_factory
-
-import gen.laminar_ber as laminar
-
-decode_hex = codecs.getdecoder("hex_codec")
 
 STATE_CONNECT = "connect"
 STATE_RECONNECT = "reconnect"
@@ -16,7 +10,8 @@ STATE_HANDLE_MSG = "handle_msg"
 
 
 class ClientMessageHandler(object):
-    def __init__(self, host, port, user, worker):
+    def __init__(self, host, port, user, worker, message_factory):
+        self._message_factory = message_factory
         self.host = host
         self.port = int(port)
         self.user = user
@@ -48,47 +43,32 @@ class ClientMessageHandler(object):
     def _state_authorize(self):
         self.logger.info('Authenticating')
 
-        laminar_obj = laminar.BitsplitAuthRequest(
+        obj = self._message_factory.create_bitsplit_auth_request(
             version=0,
-            uuid=decode_hex(self.user)[0],
-            mac=decode_hex(self.worker)[0],
+            user=self.user,
+            worker=self.worker,
             protocol=0,
             numerator=3,
             denominator=4
         )
 
-        auth_msg = laminar_message_factory.encode_laminar_object(laminar_obj)
+        auth_msg = self._message_factory.encode_object(obj)
 
         yield from self._send_to_server(auth_msg)
-        msg = yield from laminar_message_factory.read_server_message_from_connection(self.reader)
-        if not isinstance(msg.value, laminar.AuthReply):
-            return STATE_RECONNECT
-        data = msg.value
-        if isinstance(data.value, laminar.AuthReplyYes):
-            self.logger.info('Authentication Successful')
-            return STATE_HANDLE_MSG
-        elif isinstance(data.value, laminar.AuthReplyNo):
-            self.logger.info('Authentication Failed')
-            return STATE_RECONNECT
-        else:
-            return STATE_RECONNECT
+
+        # ignore the auth result for now
+        yield from self._message_factory.read_object(self.reader)
+
+        return STATE_HANDLE_MSG
 
     @asyncio.coroutine
     def _state_handle_msg(self):
 
-        msg = yield from laminar_message_factory.read_server_message_from_connection(self.reader)
-        data = msg.value
-        if isinstance(data, laminar.Notify):
-            self._handle_notification(data)
-            return STATE_HANDLE_MSG
-        elif isinstance(data, laminar.SetDifficulty):
-            yield from self._handle_set_difficulty(data)
-            return STATE_HANDLE_MSG
-        elif isinstance(msg.value, laminar.SubmitReply):
-            yield from self._handle_submit_reply(data)
-            return STATE_HANDLE_MSG
-        else:
-            return STATE_HANDLE_MSG
+        msg = yield from self._message_factory.read_object(self.reader)
+        msg_type = msg.value.__class__.__name__
+        if msg_type == "Notify":
+            self._handle_notification(msg.value)
+        return STATE_HANDLE_MSG
 
     def _handle_notification(self, data):
         self.logger.info('Notification/Work Received')
@@ -120,11 +100,18 @@ class ClientMessageHandler(object):
     def _submit_request_to_server(self, message_id, job_id, enonce2, otime, nonce):
         """
         """
-        laminar_obj = laminar.SubmitRequest(message_id=message_id, jobid=job_id, enonce2=enonce2, otime=otime,
-                                            nonce=nonce)
+        try:
+            obj = self._message_factory.create_submit_request(
+                message_id=message_id,
+                job_id=job_id,
+                enonce2=enonce2,
+                otime=otime,
+                nonce=nonce)
+        except Exception as e:
+            print(e)
 
-        msg = laminar_message_factory.encode_laminar_object(laminar_obj)
-        self.logger.info('Sending Shares to the server %g ',job_id)
+        msg = self._message_factory.encode_object(obj)
+        self.logger.info('Sending Shares to the server %g ', job_id)
         yield from self._send_to_server(msg)
 
     @asyncio.coroutine
