@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+//TODO is there a way to set length constraints ?
+message LaminarClientMessage {
+
+    message BitshareAuthRequest {
+        int32 version = 1;
+        string username = 2;
+        string mac = 3;
+        int32 wallet_index = 4;
+        int32 numerator = 5;
+        int32 denominator = 6;
+    }
+
+    message SubmitShareRequest {
+        int32 message_id = 1;
+        int32 job_id = 2;
+        string enonce2 = 3;
+        int32 otime = 4;
+        int32 nonce = 5;
+    }
+
+    oneof clientmessages {
+        BitshareAuthRequest bitshare_auth_request = 1;
+        SubmitShareRequest submit_request = 2;
+    }
+}
+message LaminarServerMessage {
+
+    message AuthReply {
+
+        message AuthReplyYes {
+            string enonce1 = 1;
+            int32 enonce2_size = 2;
+        }
+
+        message AuthReplyNo {
+            string error = 1;
+        }
+
+        message AuthReplyPoolDown{
+            string message = 1;
+            int32 retry_seconds = 2;
+        }
+
+        oneof authreplies {
+            AuthReplyYes auth_reply_yes = 1;
+            AuthReplyNo auth_reply_no = 2;
+            AuthReplyPoolDown auth_reply_pool_down = 3;
+        }
+    }
+
+    message SubmitShareReply {
+
+        enum SubmitStatus {
+            bad = 0;
+            good = 1;
+            stale = 2;
+            duplicate = 3;
+        }
+
+        int32 message_id = 1;
+        SubmitStatus submit_status = 2;
+    }
+
+    message WorkNotification {
+
+        int32 job_id = 1;
+        int32 block_Version = 2;
+        string prev = 3;
+        int32 height = 4;
+        int32 bits = 5;
+        int32 itime = 6;
+        int32 iscript0 = 7;
+        int32 iscript1 = 8;
+        repeated string output = 9;
+        repeated string edge = 10;
+        bool clear = 11;
+    }
+
+    oneof servermessages {
+        AuthReply auth_reply = 1;
+        SubmitShareReply submit_reply = 2;
+        WorkNotification work_notification = 3;
+    }
+}
