@@ -9,8 +9,8 @@ class ClientTaskFactory:
     """
 
     @staticmethod
-    def create_message_handler_task(user_id, worker_id, host, port):
-        handler = ClientMessageHandler(host, port, user_id, worker_id)
+    def create_message_handler_task(user_id, worker_id, host, port, message_factory):
+        handler = ClientMessageHandler(host, port, user_id, worker_id, message_factory=message_factory)
         yield from handler.start()
 
     @staticmethod
