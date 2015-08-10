@@ -327,12 +327,11 @@ class Transaction(object):
             if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
                 raise ValueError("Address derived from private key does not match sub_script!")
 
-            msg_to_hash = bytes(txn_copy) + pack_u32(hash_type)
-            msg_to_sign = hashlib.sha256(msg_to_hash).digest()
+            msg_to_sign = dhash(bytes(txn_copy) + pack_u32(hash_type))
             
-        sig = private_key.sign(msg_to_sign)
+        sig = private_key.sign(msg_to_sign, False)
 
-        if not private_key.public_key.verify(msg_to_sign, sig):
+        if not private_key.public_key.verify(msg_to_sign, sig, False):
             return False
 
         script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pack_var_str(bytes(private_key.public_key))

@@ -116,7 +116,7 @@ def test_p256(curve=p256()):
 
     assert k == 0xA6E3C57DD01ABE90086538398355DD4C3B17AA873382B0F24D6129493D8AAD60
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
 
     derived_ys = curve.y_from_x(sig_pt.x)
     assert sig_pt.x == 0xEFD48B2AACB6A8FD1140DD9CD45E81D69D2C877B56AAF991C34D0EA84EAF3716
@@ -147,7 +147,7 @@ def test_p256(curve=p256()):
     assert curve.modinv(k, curve.n) == modinv_k
 
     message = b'This is only a test message. It is 48 bytes long'
-    sig_pt = curve._sign(message, private_key, k)
+    sig_pt = curve._sign(message, private_key, True, k)
 
     assert sig_pt.x == 0x7214bc9647160bbd39ff2f80533f5dc6ddd70ddf86bb815661e805d5d4e6f27c
     assert sig_pt.y == 0x7d1ff961980f961bdaa3233b6209f4013317d3e3f9e1493592dbeaa1af2bc367
@@ -210,7 +210,7 @@ def test_secp256k1(curve=secp256k1()):
     
     assert k == 0x8F8A276C19F4149656B280621E358CCE24F5F52542772691EE69063B74F15D15
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0x934b1ea10a4b3c1757e2b0c017d0b6143ce3c9a7e6a4a49860d7a6ab210ee3d82442ce9d2b916064108014783e923ec36b49743e2ffa1c4496f01a512aafd9e5
@@ -221,7 +221,7 @@ def test_secp256k1(curve=secp256k1()):
     
     assert k == 0x38AA22D72376B4DBC472E06C3BA403EE0A394DA63FC58D88686C611ABA98D6B3
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0x8600dbd41e348fe5c9465ab92d23e3db8b98b873beecd930736488696438cb6b547fe64427496db33bf66019dacbf0039c04199abb0122918601db38a72cfc21
@@ -232,7 +232,7 @@ def test_secp256k1(curve=secp256k1()):
     
     assert k == 0x33A19B60E25FB6F4435AF53A3D42D493644827367E6453928554F43E49AA6F90
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0xfd567d121db66e382991534ada77a6bd3106f0a1098c231e47993447cd6af2d06b39cd0eb1bc8603e159ef5c20a5c8ad685a45b06ce9bebed3f153d10d93bed5
@@ -243,7 +243,7 @@ def test_secp256k1(curve=secp256k1()):
     
     assert k == 0x525A82B70E67874398067543FD84C83D30C175FDC45FDEEE082FE13B1D7CFDF1
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0x7063ae83e7f62bbb171798131b4a0564b956930092b33b07b395615d9ec7e15c58dfcc1e00a35e1572f366ffe34ba0fc47db1e7189759b9fb233c5b05ab388ea
@@ -254,7 +254,7 @@ def test_secp256k1(curve=secp256k1()):
     
     assert k == 0x1F4B84C23A86A221D233F2521BE018D9318639D5B8BBD6374A8A59232D16AD3D
 
-    sig_pt = curve.sign(message, private_key)
+    sig_pt, _ = curve.sign(message, private_key)
     sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
 
     assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6

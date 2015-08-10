@@ -1,3 +1,4 @@
+import codecs
 import hashlib
 import hmac
 import math
@@ -614,45 +615,65 @@ class EllipticCurve:
 
         return rv
     
-    def _sign(self, message, private_key, secret=None):
+    def _sign(self, message, private_key, do_hash=True, secret=None):
         ''' DO NOT USE THIS FUNCTION DIRECTLY. Call self.sign() instead.
         '''
-        z = int.from_bytes(self.hash_function(message).digest(), 'big')
+        hashed = self.hash_function(message).digest() if do_hash else message
+        z = int.from_bytes(hashed, 'big')
         
         G = self.base_point
         
         r = 0
         s = 0
+        recovery_id = 0
         while r == 0 or s == 0:
-            k = self._nonce_rfc6979(private_key, message) if secret is None else secret
+            k = self._nonce_rfc6979(private_key, hashed) if secret is None else secret
             
             p = (G * k).to_affine()
+            # This works if self.h = 1. For curves with a larger
+            # co-factor (nearly none), this will be insufficient.
+            recovery_id = 2 if p.x > self.n else 0
+            recovery_id |= (p.y & 0x1)
             r = p.x % self.n
             if r == 0:
                 continue
-            s = self._make_canonical(((z + r * private_key) * self.modinv(k, self.n)) % self.n)
 
-        return Point(r, s)
+            sp = ((z + r * private_key) * self.modinv(k, self.n)) % self.n
+            s = self._make_canonical(sp)
+            if s != sp:
+                recovery_id ^= 0x1
 
-    def sign(self, message, private_key):
+        return (Point(r, s), recovery_id)
+
+    def sign(self, message, private_key, do_hash=True):
         ''' Signs a message with the given private key.
 
         Args:
             message (bytes): The message to be signed
             private_key (Bignum): Integer that is the private key
+            do_hash (bool): True if the message should be hashed prior
+               to signing, False if not. This should always be left as
+               True except in special situations which require doing
+               the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
-            sig (Point): The point (r, s) representing the signature.
+            sig, recovery_id (Point, int): The point (r, s) representing the signature
+               and the ID representing which public key possibility is associated
+               with the private key being used to sign.
         '''
-        return self._sign(message, private_key)
+        return self._sign(message, private_key, do_hash)
 
-    def verify(self, message, signature, public_key):
+    def verify(self, message, signature, public_key, do_hash=True):
         ''' Verifies that signature was generated with a private key corresponding
             to public key, operating on message.
         Args:
             message (bytes): The message to be signed
             signature (Point): (r, s) representing the signature
             public_key (ECPointAffine): ECPointAffine of the public key
+            do_hash (bool): True if the message should be hashed prior
+               to signing, False if not. This should always be left as
+               True except in special situations which require doing
+               the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             b (Bool): True if the signature is verified, False otherwise.
@@ -660,7 +681,8 @@ class EllipticCurve:
         r = signature.x
         s = signature.y
 
-        z = int.from_bytes(self.hash_function(message).digest(), 'big')
+        hashed = self.hash_function(message).digest() if do_hash else message
+        z = int.from_bytes(hashed, 'big')
 
         G = self.base_point
 
@@ -682,11 +704,23 @@ class EllipticCurve:
         return random.SystemRandom().randrange(1, self.n - 1)
     
     def _nonce_rfc6979(self, private_key, message):
+        """ Computes a deterministic nonce (k) for use when signing
+            according to RFC6979 (https://tools.ietf.org/html/rfc6979),
+            Section 3.2.
+
+        Args:
+            private_key (Bignum): The private key.
+            message (bytes): A hash of the input message.
+
+        Returns:
+            k (Bignum): A deterministic nonce.
+        """
         hash_bytes = 32
         x = private_key.to_bytes(hash_bytes, 'big')
-        # Step a
-        h1 = self.hash_function(message).digest()
-
+        # Message should already be hashed by the time it gets here,
+        # so don't bother doing another hash.
+        x_msg = x + message
+        
         # Step b
         V = bytes([0x1] * hash_bytes)
 
@@ -694,13 +728,13 @@ class EllipticCurve:
         K = bytes([0x0] * hash_bytes)
 
         # Step d
-        K = hmac.new(K, V + bytes([0]) + x + h1, self.hash_function).digest()
+        K = hmac.new(K, V + bytes([0]) + x_msg, self.hash_function).digest()
 
         # Step e
         V = hmac.new(K, V, self.hash_function).digest()
 
         # Step f
-        K = hmac.new(K, V + bytes([0x1]) + x + h1, self.hash_function).digest()
+        K = hmac.new(K, V + bytes([0x1]) + x_msg, self.hash_function).digest()
 
         # Step g
         V = hmac.new(K, V, self.hash_function).digest()

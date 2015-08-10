@@ -99,7 +99,7 @@ class PrivateKey(object):
         """
         return self._public_key
 
-    def raw_sign(self, message):
+    def raw_sign(self, message, do_hash=True):
         """ Signs message using this private key.
 
         Args:
@@ -107,6 +107,10 @@ class PrivateKey(object):
                it is assumed the encoding is 'ascii' and converted to bytes. If this is
                not the case, it is up to the caller to convert the string to bytes
                appropriately and pass in the bytes.
+            do_hash (bool): True if the message should be hashed prior
+               to signing, False if not. This should always be left as
+               True except in special situations which require doing
+               the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             pt (ECPointAffine): a raw point (r = pt.x, s = pt.y) which is the signature.
@@ -118,9 +122,9 @@ class PrivateKey(object):
         else:
             raise TypeError("message must be either str or bytes!")
 
-        return bitcoin_curve.sign(msg, self.key)
+        return bitcoin_curve.sign(msg, self.key, do_hash)
 
-    def sign(self, message, determine_recovery_id=False):
+    def sign(self, message, do_hash=True):
         """ Signs message using this private key.
 
         Note:
@@ -131,6 +135,10 @@ class PrivateKey(object):
                it is assumed the encoding is 'ascii' and converted to bytes. If this is
                not the case, it is up to the caller to convert the string to bytes
                appropriately and pass in the bytes.
+            do_hash (bool): True if the message should be hashed prior
+               to signing, False if not. This should always be left as
+               True except in special situations which require doing
+               the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             sig (Signature): The signature corresponding to message.
@@ -138,16 +146,9 @@ class PrivateKey(object):
         # Some BTC things want to have the recovery id to extract the public
         # key, so we should figure that out.
         recovery_id = None            
-        sig_pt = self.raw_sign(message)
+        sig_pt, rec_id = self.raw_sign(message, do_hash)
 
-        if determine_recovery_id:
-            keys = bitcoin_curve.recover_public_key(message, sig_pt)
-            for k, recid in keys:
-                if k.x == self.public_key.point.x and k.y == self.public_key.point.y:
-                    recovery_id = recid
-                    break
-
-        return Signature(sig_pt.x, sig_pt.y, recovery_id)
+        return Signature(sig_pt.x, sig_pt.y, rec_id)
 
     def sign_bitcoin(self, message):
         """ Signs a message using this private key such that it
@@ -180,7 +181,7 @@ class PrivateKey(object):
         msg = b"\x18Bitcoin Signed Message:\n" + bytes([len(msg_in)]) + msg_in
         msg_hash = hashlib.sha256(msg).digest()
 
-        sig = self.sign(msg_hash, True)
+        sig = self.sign(msg_hash)
         magic = 27 + sig.recovery_id
     
         return base64.b64encode(bytes([magic]) + bytes(sig))
@@ -359,6 +360,33 @@ class PublicKey(object):
                 return PublicKey(k.x, k.y, testnet)
 
         return None
+
+    @staticmethod
+    def verify_bitcoin(message, signature):
+        """ Verifies a message signed using PrivateKey.sign_bitcoin()
+            or any of the bitcoin utils (e.g. bitcoin-cli, bx, etc.)
+
+        Args:
+            signature (bytes): A Base64 encoded signature
+
+        Returns:
+            verified (bool): True if the signature verified properly,
+               False otherwise.
+        """
+        sig_bytes = get_bytes(signature)
+        magic_sig = base64.b64decode(signature)
+
+        magic = magic_sig[0]
+        sig = Signature.from_bytes(magic_sig[1:])
+        sig.recovery_id = magic - 27
+
+        # Build the message that was signed
+        msg = b"\x18Bitcoin Signed Message:\n" + bytes([len(message)]) + message
+        msg_hash = hashlib.sha256(msg).digest()
+
+        derived_public_key = PublicKey.from_signature(msg_hash, sig)
+
+        return derived_public_key.verify(msg_hash, sig)
     
     def __init__(self, x, y, testnet=False):
         p = ECPointAffine(bitcoin_curve, x, y)
@@ -367,29 +395,45 @@ class PublicKey(object):
         self.point = p
         self.testnet = testnet
 
-        pk_sha = hashlib.sha256(bytes(self)).digest()
-    
         # RIPEMD-160 of SHA-256
         r = hashlib.new('ripemd160')
-        r.update(pk_sha)
+        r.update(hashlib.sha256(bytes(self)).digest())
         ripe = r.digest()
 
-        # Put the version byte in front, 0x00 for Mainnet, 0x6F for testnet
-        version = bytes([self.TESTNET_VERSION]) if self.testnet else bytes([self.MAINNET_VERSION])
+        r = hashlib.new('ripemd160')
+        r.update(hashlib.sha256(self.compressed_bytes).digest())
+        ripe_compressed = r.digest()
 
-        self._address = version + ripe
+        # Put the version byte in front, 0x00 for Mainnet, 0x6F for testnet
+        self.version = bytes([self.TESTNET_VERSION]) if self.testnet else bytes([self.MAINNET_VERSION])
+
+        self._address = self.version + ripe
+        self._compressed_address = self.version + ripe_compressed
         self._b58address = base58.b58encode_check(self._address)
+        self._compressed_b58address = base58.b58encode_check(self._compressed_address)
 
     @property
     def address(self):
         """ Address property that returns the RIPEMD-160
-            hash of the SHA-256 hash of the  private key.
+            hash of the SHA-256 hash of the uncompressed
+            public key.
 
         Returns:
             b (bytes): version + RIPEMD-160 byte string.
         """
         return self._address
-        
+
+    @property
+    def compressed_address(self):
+        """ Address property that returns the RIPEMD-160
+            hash of the SHA-256 hash of the compressed
+            public key.
+
+        Returns:
+            b (bytes): version + RIPEMD-160 byte string.
+        """
+        return self._compressed_address
+    
     @property
     def b58address(self):
         """ Base58Check encoded version of the address.
@@ -400,18 +444,32 @@ class PublicKey(object):
         """
         return self._b58address
 
-    def verify(self, message, signature):
+    @property
+    def compressed_b58address(self):
+        """ Base58Check encoded version of the compressed_address.
+
+        Returns:
+            a (str): A Base58Check encoded string containing the
+               address associated with this key.
+        """
+        return self._compressed_b58address
+    
+    def verify(self, message, signature, do_hash=True):
         """ Verifies that message was appropriately signed.
 
         Args:
             message (bytes): The message to be verified.
             signature (Signature): A signature object.
+            do_hash (bool): True if the message should be hashed prior
+               to signing, False if not. This should always be left as
+               True except in special situations which require doing
+               the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             verified (bool): True if the signature is verified, False otherwise.
         """
         msg = get_bytes(message)
-        return bitcoin_curve.verify(msg, signature, self.point)
+        return bitcoin_curve.verify(msg, signature, self.point, do_hash)
     
     def to_hex(self):
         """ Hex representation of the serialized byte stream.

@@ -21,30 +21,20 @@ def test_key_addresses(key):
     (b"Hello, World!!", keys[0], "G1axea+IdcHXdLH6mO5RLLFpwfLHq0aeCio2IBkntGPrBYKuLybWBoF/ZUivx179qGUU9/1kv9GND9sLvsSBlzw="),
     (b"Hello, World!!!", keys[0], "HF9Q4TQMXGhjPeugn852A1WogZOGx2MOL5eMgHryTdkMZCKmCNzjHk4Lmi+sUWv9ekimLtBSiqkfjmoyUo1qzgM="),
     (b"The dog is brown.", keys[0], "HNiO1y7/h+Y+YfKfmubK40jnwraR3FDA7R3Ne42lML1MfIdcXMNvCrUMsONjDSuOqvft8YmIE8sQ/9S2pb+rL7Y="),
+    (b"blah blah blah", keys[0], "G4IYxSa+GyV+yzxOrJw7hhc/QyWjaC0fhHx0FQhyfdfLWc4JURK1c23naiX+X1uuPA7PHLfbSaKKoHujbdLqS+Y="),
     ])
 def test_bitcoin_message_signing(message, key, exp_sig):
     private_key, public_key = key
 
     sig_b64 = private_key.sign_bitcoin(message)
-    assert sig_b64.decode('ascii') == exp_sig
-
-    # Check to make sure the recovered public key is correct
-    tmp = base64.b64decode(sig_b64)
-    magic = tmp[0]
-    sig = crypto.Signature.from_bytes(tmp[1:])
-    sig.recovery_id = magic - 27
-
-    # Build the message that was signed
-    msg = b"\x18Bitcoin Signed Message:\n" + bytes([len(message)]) + message
-    msg_hash = hashlib.sha256(msg).digest()
-
-    derived_public_key = crypto.PublicKey.from_signature(msg_hash, sig)
-    assert derived_public_key.verify(msg_hash, sig)
-    assert derived_public_key.b58address == public_key.b58address
-
     print("Verify with bx:")
     print("bx message-validate %s %s '%s'" % (public_key.b58address, sig_b64.decode('ascii'), message.decode('ascii')))
     print()
+    
+    assert sig_b64.decode('ascii') == exp_sig
+    
+    # Check to make sure the recovered public key is correct
+    assert crypto.PublicKey.verify_bitcoin(message, sig_b64)
     
 def test_sign_txn():
     # Let's create a txn trying to spend one of Satoshi's coins: block 1
