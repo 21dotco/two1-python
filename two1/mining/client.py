@@ -2,7 +2,7 @@ from client_task_factory import ClientTaskFactory
 import logging.config
 import asyncio
 import configs
-from mining.message_factory import ProtobufMessageFactory
+from message_factory import ProtobufMessageFactory
 
 configs.load_configs()
 logger = logging.getLogger(__name__)
