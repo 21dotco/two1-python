@@ -305,6 +305,8 @@ class Transaction(object):
             sub_script (Script): the scriptPubKey of the corresponding
                utxo being spent.
         """
+        sub_scr = sub_script.remove_op("OP_CODESEPARATOR")
+        
         if input_index < 0 or input_index >= len(self.inputs):
             raise ValueError("Invalid input index.")
 
@@ -315,12 +317,12 @@ class Transaction(object):
             # of range (wrt outputs) results in a signature hash of 0x1 (little-endian)
             msg_to_sign = 0x1.to_bytes(32, 'little')
         else:
-            txn_copy = self._copy_for_sig(input_index, hash_type, sub_script)
+            txn_copy = self._copy_for_sig(input_index, hash_type, sub_scr)
 
             # Before signing we should verify that the address in the sub_script
             # corresponds to that of the private key
             h160 = private_key.public_key.address[1:] # Need to strip off version byte
-            script_pub_key_h160_hex = sub_script.get_hash160()
+            script_pub_key_h160_hex = sub_scr.get_hash160()
             if script_pub_key_h160_hex is None:
                 raise ValueError("Couldn't find public key hash in sub_script!")
 
