@@ -1,23 +1,22 @@
 syntax = "proto3";
 
-//TODO is there a way to set length constraints ?
 message LaminarClientMessage {
 
     message BitshareAuthRequest {
-        int32 version = 1;
+        uint32 version = 1;
         bytes username = 2;
         bytes mac = 3;
-        int32 wallet_index = 4;
-        int32 numerator = 5;
-        int32 denominator = 6;
+        uint32 wallet_index = 4;
+        uint32 numerator = 5;
+        uint32 denominator = 6;
     }
 
     message SubmitShareRequest {
-        int32 message_id = 1;
-        int32 job_id = 2;
+        uint32 message_id = 1;
+        uint32 job_id = 2;
         bytes enonce2 = 3;
-        int32 otime = 4;
-        int32 nonce = 5;
+        uint32 otime = 4;
+        uint32 nonce = 5;
     }
 
     oneof clientmessages {
@@ -31,7 +30,7 @@ message LaminarServerMessage {
 
         message AuthReplyYes {
             bytes enonce1 = 1;
-            int32 enonce2_size = 2;
+            uint32 enonce2_size = 2;
         }
 
         message AuthReplyNo {
@@ -40,7 +39,7 @@ message LaminarServerMessage {
 
         message AuthReplyPoolDown{
             string message = 1;
-            int32 retry_seconds = 2;
+            uint32 retry_seconds = 2;
         }
 
         oneof authreplies {
@@ -59,18 +58,18 @@ message LaminarServerMessage {
             duplicate = 3;
         }
 
-        int32 message_id = 1;
+        uint32 message_id = 1;
         SubmitStatus submit_status = 2;
     }
 
     message WorkNotification {
 
-        int32 job_id = 1;
-        int32 block_version = 2;
+        uint32 job_id = 1;
+        uint32 block_version = 2;
         bytes prev = 3;
-        int32 height = 4;
-        int32 bits = 5;
-        int32 itime = 6;
+        uint32 height = 4;
+        uint32 bits = 5;
+        uint32 itime = 6;
         bytes iscript0 = 7;
         bytes iscript1 = 8;
         repeated bytes outputs = 9;
