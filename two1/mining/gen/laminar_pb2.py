@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='laminar.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\rlaminar.proto\"\xa7\x03\n\x14LaminarClientMessage\x12J\n\x15\x62itshare_auth_request\x18\x01 \x01(\x0b\x32).LaminarClientMessage.BitshareAuthRequestH\x00\x12\x42\n\x0esubmit_request\x18\x02 \x01(\x0b\x32(.LaminarClientMessage.SubmitShareRequestH\x00\x1a\x83\x01\n\x13\x42itshareAuthRequest\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\x10\n\x08username\x18\x02 \x01(\x0c\x12\x0b\n\x03mac\x18\x03 \x01(\x0c\x12\x14\n\x0cwallet_index\x18\x04 \x01(\x05\x12\x11\n\tnumerator\x18\x05 \x01(\x05\x12\x13\n\x0b\x64\x65nominator\x18\x06 \x01(\x05\x1ag\n\x12SubmitShareRequest\x12\x12\n\nmessage_id\x18\x01 \x01(\x05\x12\x0e\n\x06job_id\x18\x02 \x01(\x05\x12\x0f\n\x07\x65nonce2\x18\x03 \x01(\x0c\x12\r\n\x05otime\x18\x04 \x01(\x05\x12\r\n\x05nonce\x18\x05 \x01(\x05\x42\x10\n\x0e\x63lientmessages\"\xef\x07\n\x14LaminarServerMessage\x12\x35\n\nauth_reply\x18\x01 \x01(\x0b\x32\x1f.LaminarServerMessage.AuthReplyH\x00\x12>\n\x0csubmit_reply\x18\x02 \x01(\x0b\x32&.LaminarServerMessage.SubmitShareReplyH\x00\x12\x43\n\x11work_notification\x18\x03 \x01(\x0b\x32&.LaminarServerMessage.WorkNotificationH\x00\x1a\x8d\x03\n\tAuthReply\x12\x46\n\x0e\x61uth_reply_yes\x18\x01 \x01(\x0b\x32,.LaminarServerMessage.AuthReply.AuthReplyYesH\x00\x12\x44\n\rauth_reply_no\x18\x02 \x01(\x0b\x32+.LaminarServerMessage.AuthReply.AuthReplyNoH\x00\x12Q\n\x14\x61uth_reply_pool_down\x18\x03 \x01(\x0b\x32\x31.LaminarServerMessage.AuthReply.AuthReplyPoolDownH\x00\x1a\x35\n\x0c\x41uthReplyYes\x12\x0f\n\x07\x65nonce1\x18\x01 \x01(\x0c\x12\x14\n\x0c\x65nonce2_size\x18\x02 \x01(\x05\x1a\x1c\n\x0b\x41uthReplyNo\x12\r\n\x05\x65rror\x18\x01 \x01(\t\x1a;\n\x11\x41uthReplyPoolDown\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x15\n\rretry_seconds\x18\x02 \x01(\x05\x42\r\n\x0b\x61uthreplies\x1a\xaf\x01\n\x10SubmitShareReply\x12\x12\n\nmessage_id\x18\x01 \x01(\x05\x12J\n\rsubmit_status\x18\x02 \x01(\x0e\x32\x33.LaminarServerMessage.SubmitShareReply.SubmitStatus\";\n\x0cSubmitStatus\x12\x07\n\x03\x62\x61\x64\x10\x00\x12\x08\n\x04good\x10\x01\x12\t\n\x05stale\x10\x02\x12\r\n\tduplicate\x10\x03\x1a\xc6\x01\n\x10WorkNotification\x12\x0e\n\x06job_id\x18\x01 \x01(\x05\x12\x15\n\rblock_version\x18\x02 \x01(\x05\x12\x0c\n\x04prev\x18\x03 \x01(\x0c\x12\x0e\n\x06height\x18\x04 \x01(\x05\x12\x0c\n\x04\x62its\x18\x05 \x01(\x05\x12\r\n\x05itime\x18\x06 \x01(\x05\x12\x10\n\x08iscript0\x18\x07 \x01(\x0c\x12\x10\n\x08iscript1\x18\x08 \x01(\x0c\x12\x0f\n\x07outputs\x18\t \x03(\x0c\x12\x0c\n\x04\x65\x64ge\x18\n \x03(\x0c\x12\r\n\x05\x63lear\x18\x0b \x01(\x08\x42\x10\n\x0eservermessagesb\x06proto3')
+  serialized_pb=_b('\n\rlaminar.proto\"\xa7\x03\n\x14LaminarClientMessage\x12J\n\x15\x62itshare_auth_request\x18\x01 \x01(\x0b\x32).LaminarClientMessage.BitshareAuthRequestH\x00\x12\x42\n\x0esubmit_request\x18\x02 \x01(\x0b\x32(.LaminarClientMessage.SubmitShareRequestH\x00\x1a\x83\x01\n\x13\x42itshareAuthRequest\x12\x0f\n\x07version\x18\x01 \x01(\r\x12\x10\n\x08username\x18\x02 \x01(\x0c\x12\x0b\n\x03mac\x18\x03 \x01(\x0c\x12\x14\n\x0cwallet_index\x18\x04 \x01(\r\x12\x11\n\tnumerator\x18\x05 \x01(\r\x12\x13\n\x0b\x64\x65nominator\x18\x06 \x01(\r\x1ag\n\x12SubmitShareRequest\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12\x0e\n\x06job_id\x18\x02 \x01(\r\x12\x0f\n\x07\x65nonce2\x18\x03 \x01(\x0c\x12\r\n\x05otime\x18\x04 \x01(\r\x12\r\n\x05nonce\x18\x05 \x01(\rB\x10\n\x0e\x63lientmessages\"\xef\x07\n\x14LaminarServerMessage\x12\x35\n\nauth_reply\x18\x01 \x01(\x0b\x32\x1f.LaminarServerMessage.AuthReplyH\x00\x12>\n\x0csubmit_reply\x18\x02 \x01(\x0b\x32&.LaminarServerMessage.SubmitShareReplyH\x00\x12\x43\n\x11work_notification\x18\x03 \x01(\x0b\x32&.LaminarServerMessage.WorkNotificationH\x00\x1a\x8d\x03\n\tAuthReply\x12\x46\n\x0e\x61uth_reply_yes\x18\x01 \x01(\x0b\x32,.LaminarServerMessage.AuthReply.AuthReplyYesH\x00\x12\x44\n\rauth_reply_no\x18\x02 \x01(\x0b\x32+.LaminarServerMessage.AuthReply.AuthReplyNoH\x00\x12Q\n\x14\x61uth_reply_pool_down\x18\x03 \x01(\x0b\x32\x31.LaminarServerMessage.AuthReply.AuthReplyPoolDownH\x00\x1a\x35\n\x0c\x41uthReplyYes\x12\x0f\n\x07\x65nonce1\x18\x01 \x01(\x0c\x12\x14\n\x0c\x65nonce2_size\x18\x02 \x01(\r\x1a\x1c\n\x0b\x41uthReplyNo\x12\r\n\x05\x65rror\x18\x01 \x01(\t\x1a;\n\x11\x41uthReplyPoolDown\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x15\n\rretry_seconds\x18\x02 \x01(\rB\r\n\x0b\x61uthreplies\x1a\xaf\x01\n\x10SubmitShareReply\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12J\n\rsubmit_status\x18\x02 \x01(\x0e\x32\x33.LaminarServerMessage.SubmitShareReply.SubmitStatus\";\n\x0cSubmitStatus\x12\x07\n\x03\x62\x61\x64\x10\x00\x12\x08\n\x04good\x10\x01\x12\t\n\x05stale\x10\x02\x12\r\n\tduplicate\x10\x03\x1a\xc6\x01\n\x10WorkNotification\x12\x0e\n\x06job_id\x18\x01 \x01(\r\x12\x15\n\rblock_version\x18\x02 \x01(\r\x12\x0c\n\x04prev\x18\x03 \x01(\x0c\x12\x0e\n\x06height\x18\x04 \x01(\r\x12\x0c\n\x04\x62its\x18\x05 \x01(\r\x12\r\n\x05itime\x18\x06 \x01(\r\x12\x10\n\x08iscript0\x18\x07 \x01(\x0c\x12\x10\n\x08iscript1\x18\x08 \x01(\x0c\x12\x0f\n\x07outputs\x18\t \x03(\x0c\x12\x0c\n\x04\x65\x64ge\x18\n \x03(\x0c\x12\r\n\x05\x63lear\x18\x0b \x01(\x08\x42\x10\n\x0eservermessagesb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -65,7 +65,7 @@ _LAMINARCLIENTMESSAGE_BITSHAREAUTHREQUEST = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='version', full_name='LaminarClientMessage.BitshareAuthRequest.version', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      number=1, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -86,21 +86,21 @@ _LAMINARCLIENTMESSAGE_BITSHAREAUTHREQUEST = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='wallet_index', full_name='LaminarClientMessage.BitshareAuthRequest.wallet_index', index=3,
-      number=4, type=5, cpp_type=1, label=1,
+      number=4, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='numerator', full_name='LaminarClientMessage.BitshareAuthRequest.numerator', index=4,
-      number=5, type=5, cpp_type=1, label=1,
+      number=5, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='denominator', full_name='LaminarClientMessage.BitshareAuthRequest.denominator', index=5,
-      number=6, type=5, cpp_type=1, label=1,
+      number=6, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -130,14 +130,14 @@ _LAMINARCLIENTMESSAGE_SUBMITSHAREREQUEST = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='message_id', full_name='LaminarClientMessage.SubmitShareRequest.message_id', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      number=1, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='job_id', full_name='LaminarClientMessage.SubmitShareRequest.job_id', index=1,
-      number=2, type=5, cpp_type=1, label=1,
+      number=2, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -151,14 +151,14 @@ _LAMINARCLIENTMESSAGE_SUBMITSHAREREQUEST = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='otime', full_name='LaminarClientMessage.SubmitShareRequest.otime', index=3,
-      number=4, type=5, cpp_type=1, label=1,
+      number=4, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='nonce', full_name='LaminarClientMessage.SubmitShareRequest.nonce', index=4,
-      number=5, type=5, cpp_type=1, label=1,
+      number=5, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -236,7 +236,7 @@ _LAMINARSERVERMESSAGE_AUTHREPLY_AUTHREPLYYES = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='enonce2_size', full_name='LaminarServerMessage.AuthReply.AuthReplyYes.enonce2_size', index=1,
-      number=2, type=5, cpp_type=1, label=1,
+      number=2, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -303,7 +303,7 @@ _LAMINARSERVERMESSAGE_AUTHREPLY_AUTHREPLYPOOLDOWN = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='retry_seconds', full_name='LaminarServerMessage.AuthReply.AuthReplyPoolDown.retry_seconds', index=1,
-      number=2, type=5, cpp_type=1, label=1,
+      number=2, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -380,7 +380,7 @@ _LAMINARSERVERMESSAGE_SUBMITSHAREREPLY = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='message_id', full_name='LaminarServerMessage.SubmitShareReply.message_id', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      number=1, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -418,14 +418,14 @@ _LAMINARSERVERMESSAGE_WORKNOTIFICATION = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='job_id', full_name='LaminarServerMessage.WorkNotification.job_id', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      number=1, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='block_version', full_name='LaminarServerMessage.WorkNotification.block_version', index=1,
-      number=2, type=5, cpp_type=1, label=1,
+      number=2, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -439,21 +439,21 @@ _LAMINARSERVERMESSAGE_WORKNOTIFICATION = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='height', full_name='LaminarServerMessage.WorkNotification.height', index=3,
-      number=4, type=5, cpp_type=1, label=1,
+      number=4, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='bits', full_name='LaminarServerMessage.WorkNotification.bits', index=4,
-      number=5, type=5, cpp_type=1, label=1,
+      number=5, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='itime', full_name='LaminarServerMessage.WorkNotification.itime', index=5,
-      number=6, type=5, cpp_type=1, label=1,
+      number=6, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
