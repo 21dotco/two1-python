@@ -1,3 +1,4 @@
+import hashlib
 import pytest
 import random
 
@@ -112,7 +113,7 @@ def test_p256(curve=p256()):
     assert curve.public_key(private_key) == public_key_full
 
     message = b'sample'
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
 
     assert k == 0xA6E3C57DD01ABE90086538398355DD4C3B17AA873382B0F24D6129493D8AAD60
 
@@ -147,7 +148,7 @@ def test_p256(curve=p256()):
     assert curve.modinv(k, curve.n) == modinv_k
 
     message = b'This is only a test message. It is 48 bytes long'
-    sig_pt = curve._sign(message, private_key, True, k)
+    sig_pt, _ = curve._sign(message, private_key, True, k)
 
     assert sig_pt.x == 0x7214bc9647160bbd39ff2f80533f5dc6ddd70ddf86bb815661e805d5d4e6f27c
     assert sig_pt.y == 0x7d1ff961980f961bdaa3233b6209f4013317d3e3f9e1493592dbeaa1af2bc367
@@ -206,7 +207,7 @@ def test_secp256k1(curve=secp256k1()):
     # https://bitcointalk.org/index.php?topic=285142.25;wap2
     private_key = 0x1
     message = b"Satoshi Nakamoto"
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
     
     assert k == 0x8F8A276C19F4149656B280621E358CCE24F5F52542772691EE69063B74F15D15
 
@@ -217,7 +218,7 @@ def test_secp256k1(curve=secp256k1()):
 
     private_key = 0x1
     message = b"All those moments will be lost in time, like tears in rain. Time to die..."
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
     
     assert k == 0x38AA22D72376B4DBC472E06C3BA403EE0A394DA63FC58D88686C611ABA98D6B3
 
@@ -228,7 +229,7 @@ def test_secp256k1(curve=secp256k1()):
     
     private_key = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140
     message = b"Satoshi Nakamoto"
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
     
     assert k == 0x33A19B60E25FB6F4435AF53A3D42D493644827367E6453928554F43E49AA6F90
 
@@ -239,7 +240,7 @@ def test_secp256k1(curve=secp256k1()):
 
     private_key = 0xf8b8af8ce3c7cca5e300d33939540c10d45ce001b8f252bfbc57ba0342904181
     message = b"Alan Turing"
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
     
     assert k == 0x525A82B70E67874398067543FD84C83D30C175FDC45FDEEE082FE13B1D7CFDF1
 
@@ -250,7 +251,7 @@ def test_secp256k1(curve=secp256k1()):
 
     private_key = 0xe91671c46231f833a6406ccbea0e3e392c76c167bac1cb013f6f1013980455c2
     message = b"There is a computer disease that anybody who works with computers knows about. It's a very serious disease and it interferes completely with the work. The trouble with computers is that you 'play' with them!"
-    k = curve._nonce_rfc6979(private_key, message)
+    k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
     
     assert k == 0x1F4B84C23A86A221D233F2521BE018D9318639D5B8BBD6374A8A59232D16AD3D
 
