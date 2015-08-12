@@ -23,30 +23,6 @@ class BaseWallet(object):
 		raise NotImplementedError('Abstract class, `current_address` must be overridden')
 
 	@property
-	def balance(self):
-		""" Gets the confirmed balance of the wallet.
-		Returns:
-			(number): The current confirmed balance.
-		"""
-		return self.confirmed_balance()
-
-	@property
-	def confirmed_balance(self):
-		""" Gets the current confirmed balance of the wallet.
-		Returns:
-			(number): The current confirmed balance.
-		"""
-		raise NotImplementedError('Abstract class `confirmed_balance` must be overridden')
-		
-	@property
-	def unconfirmed_balance(self):
-		""" Gets the current unconfirmed balance of the wallet.
-		Returns:
-			(number): The current unconfirmed balance.
-		"""
-		raise NotImplementedError('Abstract class, `unconfirmed_balance` must be overridden')
-
-	@property
 	def is_configured(self):
 		""" Returns the configuration/initialization status of the wallet. 
 		Returns:
@@ -63,6 +39,27 @@ class BaseWallet(object):
 			e.g. {key_style: ["HD","Brain","Simple"], ....}
 		"""
 		raise NotImplementedError('Abstract class, `is_configured` must be overridden')
+		
+	def balance(self):
+		""" Gets the confirmed balance of the wallet in Satoshi.
+		Returns:
+			(number): The current confirmed balance.
+		"""
+		return self.confirmed_balance()
+
+	def confirmed_balance(self):
+		""" Gets the current confirmed balance of the wallet in Satoshi.
+		Returns:
+			(number): The current confirmed balance.
+		"""
+		raise NotImplementedError('Abstract class `confirmed_balance` must be overridden')
+		
+	def unconfirmed_balance(self):
+		""" Gets the current unconfirmed balance of the wallet in Satoshi.
+		Returns:
+			(number): The current unconfirmed balance.
+		"""
+		raise NotImplementedError('Abstract class, `unconfirmed_balance` must be overridden')
 
 	def configure(self, config_options):
 		""" Automatically configures the wallet with the provided configuration options
