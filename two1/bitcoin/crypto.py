@@ -350,7 +350,7 @@ class PublicKey(object):
                signature, it it exists. None otherwise.
         """
         msg = get_bytes(message)
-        pub_keys = bitcoin_curve.recover_public_key(msg, signature)
+        pub_keys = bitcoin_curve.recover_public_key(msg, signature, signature.recovery_id)
         
         for k, recid in pub_keys:
             if signature.recovery_id is not None and recid == signature.recovery_id:

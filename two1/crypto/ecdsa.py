@@ -328,8 +328,8 @@ class ECPointAffine(ECPoint):
         Returns:
             p (ECPointAffine): point on curve.
         '''
-        x = i >> curve.n.bit_length()
-        y = i & (2 ** curve.n.bit_length() - 1)
+        x = i >> curve.nlen
+        y = i & (2 ** curve.nlen - 1)
 
         assert curve.is_on_curve(Point(x, y))
 
@@ -428,13 +428,13 @@ class ECPointAffine(ECPoint):
         Returns:
             b (bytes): Compressed byte representation.
         '''
-        nbytes = math.ceil(self.curve.n.bit_length() / 8)
+        nbytes = math.ceil(self.curve.nlen / 8)
         return bytes([(self.y & 0x1) + 0x02]) + self.x.to_bytes(nbytes, 'big')
     
     def __bytes__(self):
         ''' Returns the full-uncompressed point
         '''
-        nbytes = math.ceil(self.curve.n.bit_length() / 8)
+        nbytes = math.ceil(self.curve.nlen / 8)
         return bytes([0x04]) + self.x.to_bytes(nbytes, 'big') + self.y.to_bytes(nbytes, 'big')
     
 class EllipticCurve:
@@ -495,6 +495,9 @@ class EllipticCurve:
         self.n = n
         self.G = G
         self.hash_function = hash_function
+
+        self.nlen = self.n.bit_length()
+        self.plen = self.p.bit_length()
 
     def __eq__(self, other_curve):
         return (self.a == other_curve.a) and (self.b == other_curve.b) and \
@@ -568,11 +571,11 @@ class EllipticCurve:
                as the LSBs.
         '''
         public = (self.base_point * private_key).to_affine()
-        public_full = (public.x << self.n.bit_length()) + public.y
+        public_full = (public.x << self.nlen) + public.y
 
         return public_full
 
-    def recover_public_key(self, message, signature):
+    def recover_public_key(self, message, signature, recovery_id=None):
         ''' Recovers possibilities for the public key associated with the
             private key used to sign message and generate signature.
 
@@ -582,6 +585,8 @@ class EllipticCurve:
         Args:
            message (bytes): The message that was signed.
            signature (ECPointAffine): The point representing the signature.
+           recovery_id (int) (Optional): If provided, limits the valid x and y
+              point to only that described by the recovery_id. 
 
         Returns:
            rv (list(ECPointAffine)): List of points representing valid public
@@ -591,21 +596,28 @@ class EllipticCurve:
         s = signature.y
 
         r_modinv = self.modinv(r, self.n)
+
+        if recovery_id is not None:
+            i_list = [recovery_id >> 1]
+            k_list = [recovery_id & 0x1]
+        else:
+            i_list = range(2)
+            k_list = range(2)
         
         rv = []
-        for i in range(2):
+        for i in i_list:
             x = (r + self.n * i) % self.p
             ys = self.y_from_x(x)
             if not ys:
                 continue
 
-            for k in range(2):
+            for k in k_list:
                 R  = ECPointJacobian(self, r, ys[k % 2], 1)
             
                 if not (R * self.n).to_affine().infinity:
                     continue
 
-                num_bytes = math.ceil(self.n.bit_length() / 8)
+                num_bytes = math.ceil(self.nlen / 8)
                 z = int.from_bytes(self.hash_function(message).digest()[:num_bytes], 'big')
         
                 zG = self.base_point * z
@@ -743,7 +755,7 @@ class EllipticCurve:
         T = bytes()
 
         # Step h.2
-        while len(T) < (self.n.bit_length() / 8):
+        while len(T) < (self.nlen / 8):
             V = hmac.new(K, V, self.hash_function).digest()
             T += V
             k = int.from_bytes(T, 'big')
