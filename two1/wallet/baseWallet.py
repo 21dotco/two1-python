@@ -1,7 +1,8 @@
 satoshi_to_btc = 1e8
 
 class BaseWallet(object):
-	""" An abstract wallet class. """
+	""" An abstract wallet class.
+	"""
 	def __init__(self):
 		super(BaseWallet, self).__init__()
 
@@ -36,6 +37,37 @@ class BaseWallet(object):
 			(number): The current unconfirmed balance.
 		"""
 		raise NotImplementedError('Abstract class, `unconfirmed_balance` must be overridden')
+
+	@property
+	def is_configured(self):
+		""" Returns the configuration/initialization status of the wallet. 
+		Returns:
+			(bool): Returns True if the wallet has been configured and ready to use otherwise False
+		"""
+		raise NotImplementedError('Abstract class, `is_configured` must be overridden')
+
+	@property
+	def config_options(self):
+		""" Returns the configuration options available for the wallet. 
+		Returns:
+			(dict): The keys of this dictionary are the available configuration settings/options
+			for the wallet. The value for each key represents the possible values for each option.
+			e.g. {key_style: ["HD","Brain","Simple"], ....}
+		"""
+		raise NotImplementedError('Abstract class, `is_configured` must be overridden')
+
+	def configure(self, config_options):
+		""" Automatically configures the wallet with the provided configuration options
+
+		"""
+		raise NotImplementedError('Abstract class, `auto_configure` must be overridden')
+
+	def sign_transaction(self, tx):
+		""" Signs the inputted transaction.
+		Returns:
+			(tx): The signed transaction object.
+		"""
+		raise NotImplementedError('Abstract class, `sign_transaction` must be overridden')
 
 	def sign_transaction(self, tx):
 		""" Signs the inputted transaction.

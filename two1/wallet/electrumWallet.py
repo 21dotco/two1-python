@@ -1,7 +1,7 @@
 from subprocess import check_output
 import json
 import copy
-from baseWallet import BaseWallet, satoshi_to_btc
+from two1.wallet.baseWallet import BaseWallet, satoshi_to_btc
 
 def _type_check( name, var, typeN ):
 	""" Type check validation utility.

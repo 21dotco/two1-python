@@ -34,7 +34,7 @@ class MiningRestClient(object):
 		self.version = version
 
 	def _request(self,signed,method,path,**kwargs):
-		url = self.server_url+"/"+self.version+path+"/"
+		url = self.server_url+path+"/"
 		headers={}
 		if "data" in kwargs:
 			headers["Content-Type"]="application/json"
@@ -54,11 +54,11 @@ class MiningRestClient(object):
 		print("Result: %s %s " % (result,result.text))
 		return result
 
-	#POST /mining/account
+	#POST /v0/mining/account
 	def mining_account_post(self,username,payout_address):
 		method = "POST"
-		path = "/mining/account"
-		body = {"username": username,
+		path = "/v0/mining/account/" + username
+		body = {
 				"payout_address": payout_address,
 				"public_key_digest": self.auth.public_key.b58address,
 				}
@@ -68,10 +68,10 @@ class MiningRestClient(object):
 						data=json.dumps(body)
 						);
 
-	#POST /mining/account/payout_address/{username}
+	#POST /v0/mining/account/payout_address/{username}
 	def mining_account_payout_address_post(self,username,payout_address):
 		method = "POST"
-		path = "/mining/account/payout_address/" + username
+		path = "/v0/mining/account/payout_address/" + username
 		body = {
 				"payout_address": payout_address,
 				}
@@ -83,7 +83,10 @@ class MiningRestClient(object):
 
 
 if __name__=="__main__":
-	pk = PrivateKey.from_random()
-	m = MiningRestClient(pk,"http://127.0.0.1:8000")
-	m.mining_account_post("testuser1","1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-	m.mining_account_payout_address_post("testuser1","1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+#	pk = PrivateKey.from_random()
+#	m = MiningRestClient(pk,"http://127.0.0.1:8000")
+	for n in range(10):
+		pk = PrivateKey.from_random()
+		m = MiningRestClient(pk,"http://127.0.0.1:8000")
+		m.mining_account_post("testuser0_"+str(n),"1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
+		m.mining_account_payout_address_post("testuser0_"+str(n),"1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
