@@ -4,7 +4,6 @@ import hashlib
 from two1.bitcoin import crypto, script, txn, utils
 
 # The first key in this list had 10000 satoshis sent to it in block 369023
-# Do not remove it.
 keys = [(crypto.PrivateKey.from_b58check('5JcjcDkFZ3Dz4RjnK3n9cyLVmNS3FzGdNRtNMGFBfJKgzM8eAhH'),
          crypto.PublicKey(0xe674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf,
                           0x62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbef)),
@@ -12,23 +11,25 @@ keys = [(crypto.PrivateKey.from_b58check('5JcjcDkFZ3Dz4RjnK3n9cyLVmNS3FzGdNRtNMG
          crypto.PublicKey(0x5866260447c0adfdb26dbe5060a7a298e17d051008ce1677d19fe3d3373284b9,
                           0xc384a3445dd96f96c11d3b33d82083e9ecc27d0abfa9fd433afaa5006186bf61))]
 
-@pytest.mark.parametrize("key", keys)
-def test_key_addresses(key):
-    private_key, public_key = key
+@pytest.mark.parametrize("keypair", keys)
+def test_key_addresses(keypair):
+    private_key, public_key = keypair
     assert private_key.public_key.point == public_key.point
 
-@pytest.mark.parametrize("message, key, exp_sig", [
+@pytest.mark.parametrize("message, keypair, exp_sig", [
     (b"Hello, World!!", keys[0], "G1axea+IdcHXdLH6mO5RLLFpwfLHq0aeCio2IBkntGPrBYKuLybWBoF/ZUivx179qGUU9/1kv9GND9sLvsSBlzw="),
     (b"Hello, World!!!", keys[0], "HF9Q4TQMXGhjPeugn852A1WogZOGx2MOL5eMgHryTdkMZCKmCNzjHk4Lmi+sUWv9ekimLtBSiqkfjmoyUo1qzgM="),
     (b"The dog is brown.", keys[0], "HNiO1y7/h+Y+YfKfmubK40jnwraR3FDA7R3Ne42lML1MfIdcXMNvCrUMsONjDSuOqvft8YmIE8sQ/9S2pb+rL7Y="),
     (b"blah blah blah", keys[0], "G4IYxSa+GyV+yzxOrJw7hhc/QyWjaC0fhHx0FQhyfdfLWc4JURK1c23naiX+X1uuPA7PHLfbSaKKoHujbdLqS+Y="),
     ])
-def test_bitcoin_message_signing(message, key, exp_sig):
-    private_key, public_key = key
+def test_bitcoin_message_signing(message, keypair, exp_sig):
+    private_key, public_key = keypair
 
     sig_b64 = private_key.sign_bitcoin(message)
     print("Verify with bx:")
-    print("bx message-validate %s %s '%s'" % (public_key.b58address, sig_b64.decode('ascii'), message.decode('ascii')))
+    print("bx message-validate %s %s '%s'" % (public_key.address(compressed=False),
+                                              sig_b64.decode('ascii'),
+                                              message.decode('ascii')))
     print()
     
     assert sig_b64.decode('ascii') == exp_sig
@@ -40,8 +41,8 @@ def test_sign_txn():
     # Let's create a txn trying to spend one of Satoshi's coins: block 1
     # We make the (false) assertion that we own the private key (private_key1)
     # and for a raw txn, we put the scriptPubKey associated with that private key
-    address1 = keys[0][1].b58address
-    address2 = keys[1][1].b58address
+    address1 = keys[0][1].address(compressed=False)
+    address2 = keys[1][1].address(compressed=False)
 
     prev_txn = '205607fb482a03600b736fb0c257dfd4faa49e45db3990e2c4994796031eae6e' # Real txn in block 369023 to keys[0]
     prev_txn_hash = bytes.fromhex(prev_txn)
@@ -82,10 +83,10 @@ def test_sign_txn():
 
     # OP_HASH160
     pub_key = crypto.PublicKey.from_bytes(stack.pop())
-    hash160 = pub_key.address[1:]
+    hash160 = pub_key.hash160(compressed=False)
 
     # OP_EQUALVERIFY - this pub key has to match the one in the previous tx output.
-    assert pub_key.b58address == address1
+    assert pub_key.address(compressed=False) == address1
 
     # OP_CHECKSIG
     # Here we need to restructure the txn

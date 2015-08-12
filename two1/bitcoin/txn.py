@@ -321,7 +321,7 @@ class Transaction(object):
 
             # Before signing we should verify that the address in the sub_script
             # corresponds to that of the private key
-            h160 = private_key.public_key.address[1:] # Need to strip off version byte
+            h160 = private_key.public_key.hash160(False) # Use uncompressed keys for now
             script_pub_key_h160_hex = sub_scr.get_hash160()
             if script_pub_key_h160_hex is None:
                 raise ValueError("Couldn't find public key hash in sub_script!")
