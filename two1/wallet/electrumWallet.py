@@ -17,12 +17,12 @@ class ElectrumWallet(BaseWallet):
 			(list): The current list of addresses in this wallet.
 		"""
 		normalized = []
-		resp = _electrum_call_with_simple_error(['listaddresses'], 'Failed to get addresses')
+		resp = self._electrum_call_with_simple_error(['listaddresses'], 'Failed to get addresses')
 
 		# Validate Response
-		_type_check('Response', resp, list)
+		self._type_check('Response', resp, list)
 		for item in resp:
-			_type_check('address', item, str)
+			self._type_check('address', item, str)
 			normalized.append(str(item))
 
 		# Return normalized
@@ -42,11 +42,11 @@ class ElectrumWallet(BaseWallet):
 		"""
 		resp = self._electrum_call_with_simple_error(['getbalance'], 'Failed to get balance')
 		normalized = {}
-		_type_check('Response', resp, object )
+		self._type_check('Response', resp, object )
 		balance = 0
 		if 'confirmed' in resp:
-			_type_check('confirmed', resp['confirmed'], str)
-			balance = float(resp['confirmed']) * satoshi_to_btc
+			self._type_check('confirmed', resp['confirmed'], str)
+			balance = int(float(resp['confirmed']) * satoshi_to_btc)
 
 		return balance
 
@@ -57,11 +57,11 @@ class ElectrumWallet(BaseWallet):
 		"""
 		resp = self._electrum_call_with_simple_error(['getbalance'], 'Failed to get balance')
 		normalized = {}
-		_type_check('Response', resp, object )
+		self._type_check('Response', resp, object )
 		balance = 0
 		if 'unconfirmed' in resp:
-			_type_check('unconfirmed', resp['unconfirmed'], str)
-			balance = float(resp['unconfirmed']) * satoshi_to_btc
+			self._type_check('unconfirmed', resp['unconfirmed'], str)
+			balance = int(float(resp['unconfirmed']) * satoshi_to_btc)
 
 		return balance
 
@@ -70,7 +70,7 @@ class ElectrumWallet(BaseWallet):
 		Returns:
 			(tx): The signed transaction object.
 		"""
-		return _normalize_tx_resp(_electrum_call_with_simple_error(['signtransaction', tx], 'Failed to sign transaction.') )['hex']
+		return self._normalize_tx_resp(self._electrum_call_with_simple_error(['signtransaction', tx], 'Failed to sign transaction.') )['hex']
 
 	def broadcast_transaction(self, tx):
 		""" Broadcasts the transaction to the Bitcoin network.
@@ -79,7 +79,7 @@ class ElectrumWallet(BaseWallet):
 		Returns:
 			(str): The name of the transaction that was broadcasted.
 		"""
-		return str(_electrum_call_with_simple_error(['broadcast', tx], 'Failed to broadcasts transaction.'))
+		return str(self._electrum_call_with_simple_error(['broadcast', tx], 'Failed to broadcasts transaction.'))
 
 	def make_signed_transaction_for(self, address, amount):
 		""" Makes a raw signed unbrodcasted transaction for the specified amount.
@@ -89,9 +89,9 @@ class ElectrumWallet(BaseWallet):
 		Returns:
 			(dictionary): A dictionary containing the transaction name and the raw transaction object.
 		"""
-		_type_check('address', address, str)
-		_type_check('amount', amount, int)
-		return _normalize_tx_resp( _electrum_call_with_simple_error([ 'payto', str(address), str(amount/satoshi_to_btc)], 'Failed to make transaction') )['hex']
+		self._type_check('address', address, str)
+		self._type_check('amount', amount, int)
+		return self._normalize_tx_resp(self._electrum_call_with_simple_error([ 'payto', str(address), str(amount/satoshi_to_btc)], 'Failed to make transaction') )['hex']
 
 	def send_to(self, address, amount):
 		""" Sends Bitcoin to the provided address for the specified amount.
