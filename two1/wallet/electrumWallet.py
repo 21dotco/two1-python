@@ -3,97 +3,6 @@ import json
 import copy
 from two1.wallet.baseWallet import BaseWallet, satoshi_to_btc
 
-def _type_check( name, var, typeN ):
-	""" Type check validation utility.
-	Args:
-		name (string): The name of the variable to put in the error message.
-		var (*): The value to type check.
-		typeN (type): The type to validate the value with.
-	"""
-	if isinstance(var, typeN):
-		return
-	raise ValueError( name + ' was of an unexpected type (got \"' + str(var.__class__) + '\" expected \"' + str(typeN) + '\")' )
-
-def _normalize_tx_resp(resp):
-	""" Normalizes the inputted transaction response.
-	Args:
-		resp:
-	Returns:
-        (list): List of address in the wallet.
-	"""
-	if not all(name in ['hex','complete'] for name in resp):
-		raise ValueError('Missing expected value in CLI response.')
-
-	return {
-		'hex': str(resp['hex']),
-		'complete': bool(resp['complete'])
-	}
-
-def _call_electrum(args):
-	""" Calls and retrieves the parsed output of the electrum CLI wallet using the provided arguments.
-	Args:
-        args (list): list of arguments to call on electrum.
-    Returns:
-        (*): The parsed foundation object.
-	"""
-	_args = [ 'electrum' ];
-
-	# Add arguments
-	for item in args:
-		_args.append( item )
-
-	# Call and get output
-	output = check_output( _args ).decode("utf-8")
-
-	# Try to decode output
-	try:
-		resp = json.loads( output ) 
-	except Exception as e:
-		# Add the payload to the error.
-		print(output)
-		e.payload = output
-		raise e
-
-	# Return Output
-	return resp
-
-def _electrum_call_with_simple_error( args, errMsg ):
-	""" Calls the electrum CLI and substitutes any errors with the given message.
-
-	Args:
-        args (list): list of arguments to call on electrum.
-        errMsg (str): The message to replace caught messages.
-
-    Returns:
-        (*): The parsed foundation object.
-	"""
-	try:
-		return _call_electrum(args);
-	except Exception as e:
-		raise ValueError(errMsg);
-
-
-def _get_balance_object():
-	""" Gets the current balance of the wallet keys.
-	Returns:
-        normalized (list): List of address in the wallet.
-	"""
-	resp = _electrum_call_with_simple_error(['getbalance'], 'Failed to get balance')
-	normalized = {}
-	_type_check('Response', resp, object )
-
-	# Convert the confirmed and unconfirmed inputs to numbers
-	if 'confirmed' in resp:
-		_type_check('confirmed', resp['confirmed'], str)
-		normalized['confirmed'] = float(resp['confirmed'])
-
-	# Convert the confirmed and unconfirmed inputs to numbers
-	if 'unconfirmed' in resp:
-		_type_check('unconfirmed', resp['unconfirmed'], str)
-		normalized['unconfirmed'] = float(resp['unconfirmed'])
-
-	# Return our normalized input.
-	return normalized
 
 
 class ElectrumWallet(BaseWallet):
@@ -131,22 +40,30 @@ class ElectrumWallet(BaseWallet):
 		Returns:
 			(number): The current confirmed balance.
 		"""
-		bal = _get_balance_object();
-		if 'confirmed' in bal:
-			return bal[ 'confirmed' ] * satoshi_to_btc
-		else:
-			return 0
+		resp = self._electrum_call_with_simple_error(['getbalance'], 'Failed to get balance')
+		normalized = {}
+		_type_check('Response', resp, object )
+		balance = 0
+		if 'confirmed' in resp:
+			_type_check('confirmed', resp['confirmed'], str)
+			balance = float(resp['confirmed']) * satoshi_to_btc
+
+		return balance
 
 	def unconfirmed_balance(self):
 		""" Gets the current unconfirmed balance of the wallet.
 		Returns:
 			(number): The current unconfirmed balance.
 		"""
-		bal = _get_balance_object();
-		if 'unconfirmed' in bal:
-			return bal[ 'unconfirmed' ] * satoshi_to_btc
-		else:
-			return 0
+		resp = self._electrum_call_with_simple_error(['getbalance'], 'Failed to get balance')
+		normalized = {}
+		_type_check('Response', resp, object )
+		balance = 0
+		if 'unconfirmed' in resp:
+			_type_check('unconfirmed', resp['unconfirmed'], str)
+			balance = float(resp['unconfirmed']) * satoshi_to_btc
+
+		return balance
 
 	def sign_transaction(self, tx):
 		""" Signs the inputted transaction.
@@ -186,3 +103,75 @@ class ElectrumWallet(BaseWallet):
 		"""
 		return self.broadcast_raw_transaction( self.make_raw_signed_transaction(address, amount) );
 	
+	@staticmethod
+	def _type_check( name, var, typeN ):
+		""" Type check validation utility.
+		Args:
+			name (string): The name of the variable to put in the error message.
+			var (*): The value to type check.
+			typeN (type): The type to validate the value with.
+		"""
+		if isinstance(var, typeN):
+			return
+		raise ValueError( name + ' was of an unexpected type (got \"' + str(var.__class__) + '\" expected \"' + str(typeN) + '\")' )
+
+	@staticmethod
+	def _normalize_tx_resp(resp):
+		""" Normalizes the inputted transaction response.
+		Args:
+			resp:
+		Returns:
+	        (list): List of address in the wallet.
+		"""
+		if not all(name in ['hex','complete'] for name in resp):
+			raise ValueError('Missing expected value in CLI response.')
+
+		return {
+			'hex': str(resp['hex']),
+			'complete': bool(resp['complete'])
+		}
+
+	@staticmethod
+	def _call_electrum(args):
+		""" Calls and retrieves the parsed output of the electrum CLI wallet using the provided arguments.
+		Args:
+	        args (list): list of arguments to call on electrum.
+	    Returns:
+	        (*): The parsed foundation object.
+		"""
+		_args = [ 'electrum' ];
+
+		# Add arguments
+		for item in args:
+			_args.append( item )
+
+		# Call and get output
+		output = check_output( _args ).decode("utf-8")
+
+		# Try to decode output
+		try:
+			resp = json.loads( output ) 
+		except Exception as e:
+			# Add the payload to the error.
+			print(output)
+			e.payload = output
+			raise e
+
+		# Return Output
+		return resp
+
+	@staticmethod
+	def _electrum_call_with_simple_error( args, errMsg ):
+		""" Calls the electrum CLI and substitutes any errors with the given message.
+
+		Args:
+	        args (list): list of arguments to call on electrum.
+	        errMsg (str): The message to replace caught messages.
+
+	    Returns:
+	        (*): The parsed foundation object.
+		"""
+		try:
+			return ElectrumWallet._call_electrum(args);
+		except Exception as e:
+			raise ValueError(errMsg);
