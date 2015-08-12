@@ -108,9 +108,10 @@ def test_p256(curve=p256()):
     private_key = 0xC9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721
     public_key_x = 0x60FED4BA255A9D31C961EB74C6356D68C049B8923B61FA6CE669622E60F29FB6
     public_key_y = 0x7903FE1008B8BC99A41AE9E95628BC64F2F1B20C2D7E9F5177A3C294D4462299
-    public_key_full = (public_key_x << curve.n.bit_length()) + public_key_y
 
-    assert curve.public_key(private_key) == public_key_full
+    pub_key = curve.public_key(private_key)
+    assert pub_key.x == public_key_x
+    assert pub_key.y == public_key_y
 
     message = b'sample'
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
@@ -137,9 +138,10 @@ def test_p256(curve=p256()):
     private_key = 0x70a12c2db16845ed56ff68cfc21a472b3f04d7d6851bf6349f2d7d5b3452b38a
     public_key_x = 0x8101ece47464a6ead70cf69a6e2bd3d88691a3262d22cba4f7635eaff26680a8
     public_key_y = 0xd8a12ba61d599235f67d9cb4d58f1783d3ca43e78f0a5abaa624079936c0c3a9
-    public_key_full = (public_key_x << curve.n.bit_length()) + public_key_y
 
-    assert curve.public_key(private_key) == public_key_full
+    pub_key = curve.public_key(private_key)
+    assert pub_key.x == public_key_x
+    assert pub_key.y == public_key_y
 
     # Test modular inverse (for signing)
     k = 0x580ec00d856434334cef3f71ecaed4965b12ae37fa47055b1965c7b134ee45d0
@@ -157,9 +159,7 @@ def test_p256(curve=p256()):
 
 
 def test_secp256k1(curve=secp256k1()):
-    private_key, public_key_int = curve.gen_key_pair()
-
-    pub_key_aff = ECPointAffine.from_int(curve, public_key_int)
+    private_key, pub_key_aff = curve.gen_key_pair()
 
     pub_key_jac = ECPointJacobian.from_affine(pub_key_aff)
     pub_key_jac_2 = pub_key_jac * 2
@@ -204,7 +204,7 @@ def test_secp256k1(curve=secp256k1()):
     assert y1 == 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
     
     # test the nonce generation, these test-vectors are taken from:
-    # https://bitcointalk.org/index.php?topic=285142.25;wap2
+    # https://bitcointalk.org/index.php?topic=285142.25
     private_key = 0x1
     message = b"Satoshi Nakamoto"
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
@@ -212,7 +212,7 @@ def test_secp256k1(curve=secp256k1()):
     assert k == 0x8F8A276C19F4149656B280621E358CCE24F5F52542772691EE69063B74F15D15
 
     sig_pt, _ = curve.sign(message, private_key)
-    sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
+    sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0x934b1ea10a4b3c1757e2b0c017d0b6143ce3c9a7e6a4a49860d7a6ab210ee3d82442ce9d2b916064108014783e923ec36b49743e2ffa1c4496f01a512aafd9e5
 
@@ -223,7 +223,7 @@ def test_secp256k1(curve=secp256k1()):
     assert k == 0x38AA22D72376B4DBC472E06C3BA403EE0A394DA63FC58D88686C611ABA98D6B3
 
     sig_pt, _ = curve.sign(message, private_key)
-    sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
+    sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0x8600dbd41e348fe5c9465ab92d23e3db8b98b873beecd930736488696438cb6b547fe64427496db33bf66019dacbf0039c04199abb0122918601db38a72cfc21
     
@@ -234,7 +234,7 @@ def test_secp256k1(curve=secp256k1()):
     assert k == 0x33A19B60E25FB6F4435AF53A3D42D493644827367E6453928554F43E49AA6F90
 
     sig_pt, _ = curve.sign(message, private_key)
-    sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
+    sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0xfd567d121db66e382991534ada77a6bd3106f0a1098c231e47993447cd6af2d06b39cd0eb1bc8603e159ef5c20a5c8ad685a45b06ce9bebed3f153d10d93bed5
 
@@ -245,7 +245,7 @@ def test_secp256k1(curve=secp256k1()):
     assert k == 0x525A82B70E67874398067543FD84C83D30C175FDC45FDEEE082FE13B1D7CFDF1
 
     sig_pt, _ = curve.sign(message, private_key)
-    sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
+    sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0x7063ae83e7f62bbb171798131b4a0564b956930092b33b07b395615d9ec7e15c58dfcc1e00a35e1572f366ffe34ba0fc47db1e7189759b9fb233c5b05ab388ea
 
@@ -256,7 +256,7 @@ def test_secp256k1(curve=secp256k1()):
     assert k == 0x1F4B84C23A86A221D233F2521BE018D9318639D5B8BBD6374A8A59232D16AD3D
 
     sig_pt, _ = curve.sign(message, private_key)
-    sig_full = (sig_pt.x << curve.n.bit_length()) + sig_pt.y
+    sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6
 
