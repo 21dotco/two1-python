@@ -23,6 +23,14 @@ class BaseWallet(object):
 		raise NotImplementedError('Abstract class, `current_address` must be overridden')
 
 	@property
+	def balance(self):
+		""" Gets the confirmed balance of the wallet.
+		Returns:
+			(number): The current confirmed balance.
+		"""
+		return self.confirmed_balance()
+
+	@property
 	def confirmed_balance(self):
 		""" Gets the current confirmed balance of the wallet.
 		Returns:
