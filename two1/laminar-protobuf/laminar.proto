@@ -4,16 +4,14 @@ message LaminarClientMessage {
 
     message BitshareAuthRequest {
         uint32 version = 1;
-        bytes username = 2;
-        bytes mac = 3;
-        uint32 wallet_index = 4;
-        uint32 numerator = 5;
-        uint32 denominator = 6;
+        uint32 hw_version = 2;
+        string username = 3;
+        string worker_uuid = 4;
     }
 
     message SubmitShareRequest {
         uint32 message_id = 1;
-        uint32 job_id = 2;
+        uint32 work_id = 2;
         bytes enonce2 = 3;
         uint32 otime = 4;
         uint32 nonce = 5;
@@ -24,6 +22,7 @@ message LaminarClientMessage {
         SubmitShareRequest submit_request = 2;
     }
 }
+
 message LaminarServerMessage {
 
     message AuthReply {
@@ -37,8 +36,8 @@ message LaminarServerMessage {
             string error = 1;
         }
 
-        message AuthReplyPoolDown{
-            string message = 1;
+        message AuthReplyPoolDown {
+            string reason = 1;
             uint32 retry_seconds = 2;
         }
 
@@ -64,17 +63,17 @@ message LaminarServerMessage {
 
     message WorkNotification {
 
-        uint32 job_id = 1;
+        uint32 work_id = 1;
         uint32 block_version = 2;
-        bytes prev = 3;
-        uint32 height = 4;
+        bytes prev_block_hash = 3;
+        uint32 block_height = 4;
         uint32 bits = 5;
         uint32 itime = 6;
         bytes iscript0 = 7;
         bytes iscript1 = 8;
         repeated bytes outputs = 9;
         repeated bytes edge = 10;
-        bool clear = 11;
+        bool new_block = 11;
     }
 
     oneof servermessages {
@@ -83,4 +82,3 @@ message LaminarServerMessage {
         WorkNotification work_notification = 3;
     }
 }
-
