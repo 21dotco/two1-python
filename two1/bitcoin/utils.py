@@ -52,18 +52,7 @@ def hex_str_to_bytes(h):
         b (bytes): bytes corresponding to h.
     """
     return bytes.fromhex(h)
-
-def dhash(s):
-    """ Computes the double SHA-256 hash of the input.
-
-    Args:
-        s (bytes): bytes to hash.
-
-    Returns:
-        h (bytes): Double SHA-256 hash of s.
-    """
-    return hashlib.sha256(hashlib.sha256(s).digest()).digest()
-
+    
 # Is there a better way of doing this?
 def render_int(n):
     """ Renders an int in the shortest possible form.

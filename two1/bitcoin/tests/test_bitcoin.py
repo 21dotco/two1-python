@@ -5,6 +5,7 @@ import pytest
 from two1.bitcoin.utils import *
 from two1.bitcoin.block import Block, BlockHeader
 from two1.bitcoin.crypto import PublicKey, PrivateKey
+from two1.bitcoin.hash import Hash
 from two1.bitcoin.script import Script
 from two1.bitcoin.txn import CoinbaseInput, Transaction, TransactionInput, TransactionOutput
 
@@ -13,7 +14,7 @@ def txn_from_json(txn_json):
     inputs = []
     for i in txn_json['inputs']:
         if 'output_hash' in i:
-            outpoint = bytes.fromhex(i['output_hash'])[::-1] # In RPC order, need to make it internal
+            outpoint = Hash(i['output_hash'])
             script = Script(bytes.fromhex(i['script_signature_hex']))
             inp = TransactionInput(outpoint,
                                    i['output_index'],
@@ -55,7 +56,7 @@ def test_txn(txn_json):
     try:
         assert txn.num_inputs == len(txn_json['inputs'])
         assert txn.num_outputs == len(txn_json['outputs'])
-        assert txn_hash == bytes.fromhex(txn_json['hash'])[::-1], \
+        assert str(txn_hash) == txn_json['hash'], \
             "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (txn_json['hash'],
                                                                                                         txn_json['hex'],
                                                                                                         bytes_to_str(txn_bytes),
@@ -77,7 +78,7 @@ def test_block(block_json):
     # Create a new Block object
     block = Block(block_json['height'],
                   block_json['version'],
-                  bytes.fromhex(block_json['previous_block_hash'])[::-1], # To internal order
+                  Hash(block_json['previous_block_hash']),
                   time,
                   int(block_json['bits'], 16),
                   block_json['nonce'],
@@ -89,12 +90,13 @@ def test_block(block_json):
         assert len(block.txns) == len(block_json['transactions'])
         assert block.height == block_json['height']
         assert block.block_header.version == block_json['version']
-        assert block.block_header.prev_block_hash == bytes.fromhex(block_json['previous_block_hash'])[::-1]
-        assert block.block_header.merkle_root_hash == bytes.fromhex(block_json['merkle_root'])[::-1]
+        assert block.block_header.prev_block_hash == Hash(block_json['previous_block_hash'])
+        assert block.block_header.merkle_root_hash == Hash(block_json['merkle_root'])
         assert block.block_header.time == time
         assert block.block_header.bits == int(block_json['bits'], 16)
         assert block.block_header.nonce == block_json['nonce']
-        assert block_hash == bytes.fromhex(block_json['hash'])[::-1]
+        assert block_hash == Hash(block_json['hash'])
+        assert block.block_header.valid
 
     except AssertionError as e:
         print(e)
@@ -102,10 +104,10 @@ def test_block(block_json):
         print("   from json:        %d" % (block_json['height']))
         print("     version:        %d" % (block.block_header.version))
         print("   from json:        %d" % (block_json['version']))
-        print("   prev_block_hash:  %s" % (bytes_to_str(block.block_header.prev_block_hash)))
-        print("   from json:        %s" % (bytes_to_str(bytes.fromhex(block_json['previous_block_hash'])[::-1])))
-        print("   merkle_root_hash: %s" % (bytes_to_str(block.block_header.merkle_root_hash)))
-        print("   from json:        %s" % (bytes_to_str(bytes.fromhex(block_json['merkle_root'])[::-1])))
+        print("   prev_block_hash:  %s" % (block.block_header.prev_block_hash))
+        print("   from json:        %s" % (block_json['previous_block_hash']))
+        print("   merkle_root_hash: %s" % (block.block_header.merkle_root_hash))
+        print("   from json:        %s" % (block_json['merkle_root']))
         print("        time:        %d" % (block.block_header.time))
         print("   from json:        %d" % (time))
         print("        bits:        %d" % (block.block_header.bits))

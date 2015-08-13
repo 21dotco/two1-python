@@ -3,6 +3,7 @@ import hashlib
 
 from two1.bitcoin import crypto
 from two1.bitcoin.exceptions import *
+from two1.bitcoin.hash import Hash
 from two1.bitcoin.script import *
 from two1.bitcoin.utils import *
 
@@ -11,12 +12,11 @@ class TransactionInput(object):
     """ See https://bitcoin.org/en/developer-reference#txin
 
     Args:
-        outpoint (bytes): 32-byte string containing the outpoint in 
-                          internal byte order
+        outpoint (Hash): A Hash object of the UTXO hash.
         outpoint_index (uint): Index of the specific output to spend
-                               the transaction from. Endianness: host
-        script (Script): Script object (or a raw bytes in the case
-                         of a Coinbase input)
+           the transaction from. Endianness: host
+        script (Script): Script object (or a raw bytes in the case of
+           a Coinbase input)
         sequence_num (uint): Sequence number. Endianness: host
     """
 
@@ -37,7 +37,7 @@ class TransactionInput(object):
         sequence_num, b1 = unpack_u32(b1)
 
         return (
-            TransactionInput(outpoint,
+            TransactionInput(Hash(outpoint),
                              outpoint_index,
                              script,
                              sequence_num),
@@ -45,6 +45,8 @@ class TransactionInput(object):
         )
 
     def __init__(self, outpoint, outpoint_index, script, sequence_num):
+        if not isinstance(outpoint, Hash):
+            raise TypeError("outpoint must be a Hash object.")
         self.outpoint = outpoint
         self.outpoint_index = outpoint_index
         self.script = script
@@ -58,7 +60,7 @@ class TransactionInput(object):
         """
         return (
             "TransactionInput(" +
-            "Outpoint: %s " % (bytes_to_str(self.outpoint)) +
+            "Outpoint: %s " % (self.outpoint) +
             "Outpoint Index: %d " % (self.outpoint_index) +
             "Script: %s " % (self.script) +
             "Sequence: %d)" % (self.sequence_num))
@@ -70,7 +72,7 @@ class TransactionInput(object):
             b (bytes): byte stream containing the serialized input.
         """
         return (
-            self.outpoint +
+            bytes(self.outpoint) +
             pack_u32(self.outpoint_index) +
             pack_var_str(bytes(self.script)) +
             pack_u32(self.sequence_num)
@@ -92,7 +94,7 @@ class CoinbaseInput(TransactionInput):
                              or will go into. If raw_script already contains the
                              height of the block, this must be 1.
     """
-    NULL_OUTPOINT = bytes(32)
+    NULL_OUTPOINT = Hash(bytes(32))
     MAX_INT       = 0xffffffff
 
     def __init__(self, height, raw_script, sequence=MAX_INT, block_version=3):
@@ -118,7 +120,7 @@ class CoinbaseInput(TransactionInput):
         """
         return (
             "CoinbaseInput(" +
-            "Outpoint: %s " % (bytes_to_str(self.outpoint)) +
+            "Outpoint: %s " % (self.outpoint) +
             "Outpoint Index: 0x%08x " % (self.outpoint_index) +
             "Script: %s " % (bytes_to_str(self.script)) +
             "Sequence: 0x%08x)" % (self.sequence_num))
@@ -130,7 +132,7 @@ class CoinbaseInput(TransactionInput):
             b (bytes): byte stream containing the serialized coinbase input.
         """
         return (
-            self.outpoint +
+            bytes(self.outpoint) +
             pack_u32(self.outpoint_index) +
             pack_var_str(self.script) +
             pack_u32(self.sequence_num)
@@ -329,7 +331,7 @@ class Transaction(object):
             if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
                 raise ValueError("Address derived from private key does not match sub_script!")
 
-            msg_to_sign = dhash(bytes(txn_copy) + pack_u32(hash_type))
+            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) + pack_u32(hash_type)))
             
         sig = private_key.sign(msg_to_sign, False)
 
@@ -379,4 +381,4 @@ class Transaction(object):
         Returns:
             dhash (bytes): Double SHA-256 hash of the serialized transaction.
         """
-        return dhash(bytes(self))
+        return Hash.dhash(bytes(self))
