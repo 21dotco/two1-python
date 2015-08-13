@@ -27,7 +27,7 @@ def main():
         print("--------------------")
         print("Running the tests...")
         print("--------------------")
-        shell("docker run -i " + image_name + ' bash -c " py.test two1 "')
+        shell("docker run --rm -i " + image_name + ' bash -c " py.test two1 "')
         print("--------------------")
         print("Success!")
         print("--------------------")
