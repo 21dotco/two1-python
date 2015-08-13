@@ -4,7 +4,7 @@ import asyncio
 import codecs
 import logging
 import struct
-from gen import laminar_pb2
+from gen import swirl_pb2
 from gen.laminar_ber import LaminarClientMessage, LaminarServerMessage, BitsplitAuthRequest, SubmitRequest
 
 decode_hex = codecs.getdecoder("hex_codec")
@@ -41,19 +41,19 @@ class ProtobufMessageFactory(AbstractMessageFactory):
 
     @staticmethod
     def create_bitshare_auth_request(version, username, mac, wallet_index, numerator, denominator):
-        req = laminar_pb2.LaminarClientMessage()
-        req.bitshare_auth_request.version = version
-        req.bitshare_auth_request.username = decode_hex(username)[0]
+        req = swirl_pb2.SwirlClientMessage()
+        req.auth_request.version = version
+        req.auth_request.username = username
         hw_version = str(wallet_index) + str(numerator) + str(denominator)
-        req.bitshare_auth_request.hw_version = decode_hex(hw_version)[0]
-        req.bitshare_auth_request.worker_uuid = mac
+        req.auth_request.hw_version = int(hw_version)
+        req.auth_request.worker_uuid = mac
         return req
 
     @staticmethod
     def create_submit_request(message_id, job_id, enonce2, otime, nonce):
-        req = laminar_pb2.LaminarClientMessage()
+        req = swirl_pb2.SwirlClientMessage()
         req.submit_request.message_id = message_id
-        req.submit_request.job_id = job_id
+        req.submit_request.work_id = job_id
         req.submit_request.enonce2 = enonce2
         req.submit_request.otime = otime
         req.submit_request.nonce = nonce
@@ -68,7 +68,7 @@ class ProtobufMessageFactory(AbstractMessageFactory):
 
         size, = struct.unpack('>H', head_buffer)
         pkt = yield from _read_exact(size, reader)
-        client_message = laminar_pb2.LaminarServerMessage()
+        client_message = swirl_pb2.SwirlServerMessage()
         client_message.ParseFromString(pkt)
         # take a look at the protobuf file to see what this means.
         message_type = client_message.WhichOneof("servermessages")
