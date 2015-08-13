@@ -13,6 +13,22 @@ from two1.bitcoin.utils import bytes_to_str
 Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'job_id'])
 Work = namedtuple('Work', ['job_id', 'enonce2', 'cb'])
 
+"""
+
+Client:
+    1. The client receives work from the pool server, either via stratum or
+       laminar.
+    2. A CompactBlock object is created from the received work.
+    3. The mining application creates a coinbase transaction, using
+       CoinbaseTransactionBuilder.
+    4. The coinbase transaction is provided to the CompactBlock object which
+       will complete the merkle edge and provide a merkle_root_hash. It will
+       also compute the "midstate" of the block (useful only if not Bitshare).
+    5. Mining application sends work to a hasher and waits for "founds".
+    6. Upon receiving a "found", the validity can be determined by calling
+       CompactBlock.check_valid_nonce(nonce)
+    7. If valid, the share is submitted to the pool server.
+"""
 
 class CPUMiner(threading.Thread):
 
@@ -31,7 +47,7 @@ class CPUMiner(threading.Thread):
                     print("Exiting Worker....")
                     break
 
-            if nonce % int(2 * 1e6) == 0 or self.current_work.cb.check_valid_nonce(nonce):
+            if (nonce % int(2 * 1e6)) == 1 or self.current_work.cb.check_valid_nonce(nonce):
                 # notify we have a found!!!
                 # call the callbacks on the main loop
 
@@ -62,7 +78,7 @@ class CPUWorkMaster(object):
     # previously running work will be stopped and new work will be reloaded
     # calls notify_cb on notify_loop when something is found
     def load_work(self, notify_msg, event_loop, notify_cb):
-        print("*** Client starting on new work *** job_id %g " % notify_msg.job_id)
+        print("*** Client starting on new work *** job_id %g " % notify_msg.work_id)
         # must be of type laminar.Notify
         if len(self.worker) > 0:
             for th in self.worker:
@@ -77,7 +93,7 @@ class CPUWorkMaster(object):
         # This will get fixed in pool2
         iscript0 = notify_msg.iscript0[4:-1]
         cb_builder = CoinbaseTransactionBuilder(
-            notify_msg.height, iscript0, notify_msg.iscript1,
+            notify_msg.block_height, iscript0, notify_msg.iscript1,
             len(self.enonce1), self.enonce2_size, outputs, 0
         )
 
@@ -89,9 +105,9 @@ class CPUWorkMaster(object):
 
             edge = [e for e in notify_msg.edge]
 
-            cb = CompactBlock(notify_msg.height,
+            cb = CompactBlock(notify_msg.block_height,
                               notify_msg.block_version,
-                              notify_msg.prev,
+                              notify_msg.prev_block_hash,
                               notify_msg.itime,
                               0x1dffffff,  # lower difficulty work for testing
                               edge,
@@ -99,7 +115,7 @@ class CPUWorkMaster(object):
             # print(notify_msg)
             print([bytes_to_str(e) for e in edge])
             # Append the work to the queue for the worker
-            work = Work(job_id=notify_msg.job_id,
+            work = Work(job_id=notify_msg.work_id,
                         enonce2=enonce2,
                         cb=cb)
 
