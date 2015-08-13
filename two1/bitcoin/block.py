@@ -1,4 +1,5 @@
 from collections import namedtuple
+from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import CoinbaseInput, Transaction
 from two1.bitcoin.sha256 import sha256 as sha256_midstate
 from two1.bitcoin.utils import *
@@ -22,9 +23,9 @@ class BlockHeader(object):
 
         Args:
             version (uint): The block version. Endianness: host
-            prev_block_hash (bytes): SHA-256 byte string (internal byte order, i.e.
-                                    normal output of hashlib.sha256().digest())
-            merkle_root_hash (bytes): SHA-256 byte string (internal byte order)
+            prev_block_hash (Hash): a Hash object containing the
+                previous block hash.
+            merkle_root_hash (Hash): The merkle root hash.
             time (uint): Block timestamp. Endianness: host
             bits (uint): Compact representation of the difficulty. Endianness: host
             nonce (uint): Endianness: host
@@ -45,8 +46,8 @@ class BlockHeader(object):
                            and 2. the remainder of the bytestream after deserialization.
         """
         version, b = unpack_u32(b)
-        prev_block_hash, b = b[0:32], b[32:]
-        merkle_root_hash, b = b[0:32], b[32:]
+        prev_block_hash, b = Hash(b[0:32]), b[32:]
+        merkle_root_hash, b = Hash(b[0:32]), b[32:]
         time, b = unpack_u32(b)
         bits, b = unpack_u32(b)
         nonce, b = unpack_u32(b)
@@ -63,6 +64,10 @@ class BlockHeader(object):
 
     def __init__(self, version, prev_block_hash, merkle_root_hash,
                  time, bits, nonce):
+        if not isinstance(prev_block_hash, Hash):
+            raise TypeError('prev_block_hash must be a Hash object')
+        if not isinstance(merkle_root_hash, Hash):
+            raise TypeError('merkle_root hash must be a Hash object')
         self.version = version
         self.prev_block_hash = prev_block_hash
         self.merkle_root_hash = merkle_root_hash
@@ -79,8 +84,7 @@ class BlockHeader(object):
         Returns:
             valid (bool): True if hash < target, False otherwise.
         """
-        h = int.from_bytes(self.hash[::-1], 'big')
-        return h < self.target
+        return self.hash.to_int('little') < self.target
         
     def __bytes__(self):
         """ Serializes the BlockHeader object.
@@ -90,8 +94,8 @@ class BlockHeader(object):
         """
         return (
             pack_u32(self.version) +
-            self.prev_block_hash +
-            self.merkle_root_hash +
+            bytes(self.prev_block_hash) +
+            bytes(self.merkle_root_hash) +
             pack_u32(self.time) +
             pack_u32(self.bits) +
             pack_u32(self.nonce)
@@ -102,10 +106,9 @@ class BlockHeader(object):
         """ Computes the double SHA-256 hash of the serialized object.
 
         Returns:
-            dhash (bytes): 32 bytes containing the double SHA-256 hash
-                           in internal order
+            Hash: object containing the hash
         """
-        return dhash(bytes(self))
+        return Hash.dhash(bytes(self))
 
     
 class Block(object):
@@ -120,8 +123,8 @@ class Block(object):
     Args:
         height (uint): Block height
         version (uint): The block version. Endianness: host
-        prev_block_hash (list): SHA-256 byte string (internal byte order, i.e.
-                                normal output of hashlib.sha256().digest())
+        prev_block_hash (Hash): a Hash object containing the
+            previous block hash.
         time (uint): Block timestamp. Endianness: host
         bits (uint): Compact representation of the difficulty. Endianness: host
         nonce (uint): Endianness: host
@@ -172,7 +175,7 @@ class Block(object):
     def __init__(self, height, version, prev_block_hash, time, bits, nonce, txns):
         self.block_header = BlockHeader(version,
                                         prev_block_hash,
-                                        bytes(32),        # Fake merkle_root for now
+                                        Hash(bytes(32)),  # Fake merkle_root for now
                                         time,
                                         bits,
                                         nonce)            # Fake nonce also
@@ -209,8 +212,8 @@ class Block(object):
         else:
             self.invalidate_coinbase(merkle_node.left_child)
 
-        merkle_node.merkle_hash = dhash(merkle_node.left_child.hash +
-                                        merkle_node.right_child.hash)
+        merkle_node.merkle_hash = Hash.dhash(bytes(merkle_node.left_child.hash) +
+                                             bytes(merkle_node.right_child.hash))
 
         # If we're back at the root, update the blockheader
         if merkle_node is self.merkle_tree:
@@ -234,7 +237,7 @@ class Block(object):
             for i in range(0, len(level_nodes), 2):
                 left = level_nodes[i]
                 right = level_nodes[i+1]
-                n = MerkleNode(dhash(left.hash + right.hash), left, right)
+                n = MerkleNode(Hash.dhash(bytes(left.hash) + bytes(right.hash)), left, right)
                 new_level.append(n)
             level_nodes = new_level
 
@@ -258,9 +261,9 @@ class Block(object):
         r = node.right_child
         if r.left_child is None and r.right_child is None:
             # Leaf, so just return right_childs hash
-            return [node.right_child.hash]
+            return [bytes(node.right_child.hash)]
         else:
-            return self.get_merkle_edge(node.left_child) + [node.right_child.hash]
+            return self.get_merkle_edge(node.left_child) + [bytes(node.right_child.hash)]
 
 
     @property
@@ -313,23 +316,25 @@ class CompactBlock(object):
         Args:
             height (uint): Block height. Endianness: host
             version (uint): The block version. Endianness: host
-            prev_block_hash (bytes): SHA-256 byte string (internal byte order, i.e.
-                                    normal output of hashlib.sha256().digest())
+            prev_block_hash (Hash): a Hash object containing the
+                previous block hash.
             time (uint): Block timestamp. Endianness: host
             bits (uint): Compact representation of the difficulty. Endianness: host
-            merkle_edge (list[bytes]): a list of merkle hashes one-in from the left edge of
-                                the merkle tree. This is the minimum state required
-                                to compute the merkle_root if the coinbase txn changes.
-            cb_txn (Transaction): if provided, must contain a CoinbaseInput. If not provided,
-                                  use CompactBlock.coinbase_transaction = ...  to set the
-                                  transaction. This will ensure the merkle_root is computed
-                                  according to the new coinbase transaction.
+            merkle_edge (list(Hash)): a list of merkle hashes one-in
+                from the left edge of the merkle tree. This is the
+                minimum state required to compute the merkle_root if
+                the coinbase txn changes.
+            cb_txn (Transaction): if provided, must contain a
+                CoinbaseInput. If not provided, use
+                CompactBlock.coinbase_transaction = ...  to set the
+                transaction. This will ensure the merkle_root is
+                computed according to the new coinbase transaction.
     """
 
     def __init__(self, height, version, prev_block_hash, time, bits, merkle_edge, cb_txn=None):
         self.block_header = BlockHeader(version,
                                         prev_block_hash,
-                                        bytes(32),        # Fake merkle_root for now
+                                        Hash(bytes(32)),  # Fake merkle_root for now
                                         time,
                                         bits,
                                         0)                # Fake nonce also
@@ -366,7 +371,7 @@ class CompactBlock(object):
         cur_hash = self._cb_txn.hash
 
         for e in self.merkle_edge:
-            cur_hash = dhash(cur_hash + e)
+            cur_hash = Hash.dhash(bytes(cur_hash) + bytes(e))
             
         self.block_header.merkle_root_hash = cur_hash
 

@@ -1,7 +1,7 @@
 import base64
 import pytest
 import hashlib
-from two1.bitcoin import crypto, script, txn, utils
+from two1.bitcoin import crypto, hash, script, txn, utils
 
 # The first key in this list had 10000 satoshis sent to it in block 369023
 keys = [(crypto.PrivateKey.from_b58check('5JcjcDkFZ3Dz4RjnK3n9cyLVmNS3FzGdNRtNMGFBfJKgzM8eAhH'),
@@ -44,8 +44,7 @@ def test_sign_txn():
     address1 = keys[0][1].address(compressed=False)
     address2 = keys[1][1].address(compressed=False)
 
-    prev_txn = '205607fb482a03600b736fb0c257dfd4faa49e45db3990e2c4994796031eae6e' # Real txn in block 369023 to keys[0]
-    prev_txn_hash = bytes.fromhex(prev_txn)
+    prev_txn_hash = hash.Hash('6eae1e03964799c4e29039db459ea4fad4df57c2b06f730b60032a48fb075620') # Real txn in block 369023 to keys[0]
     prev_script_pub_key = script.Script.build_p2pkh(utils.address_to_key_hash(address1)[1])
     txn_input = txn.TransactionInput(prev_txn_hash,
                                      0,
@@ -111,4 +110,4 @@ def test_sign_txn():
     sig = crypto.Signature.from_der(script_sig)
     assert pub_key.verify(hashlib.sha256(new_txn_bytes + utils.pack_u32(hash_code_type)).digest(), sig)
 
-    assert not pub_key.verify(utils.dhash(new_txn_bytes), sig)
+    assert not pub_key.verify(bytes(hash.Hash.dhash(new_txn_bytes)), sig)
