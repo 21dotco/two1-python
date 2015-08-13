@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-message LaminarClientMessage {
+message SwirlClientMessage {
 
-    message BitshareAuthRequest {
+    message AuthRequest {
         uint32 version = 1;
         uint32 hw_version = 2;
         string username = 3;
@@ -18,12 +18,12 @@ message LaminarClientMessage {
     }
 
     oneof clientmessages {
-        BitshareAuthRequest bitshare_auth_request = 1;
+        AuthRequest auth_request = 1;
         SubmitShareRequest submit_request = 2;
     }
 }
 
-message LaminarServerMessage {
+message SwirlServerMessage {
 
     message AuthReply {
 

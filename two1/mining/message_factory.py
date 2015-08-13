@@ -44,10 +44,9 @@ class ProtobufMessageFactory(AbstractMessageFactory):
         req = laminar_pb2.LaminarClientMessage()
         req.bitshare_auth_request.version = version
         req.bitshare_auth_request.username = decode_hex(username)[0]
-        req.bitshare_auth_request.mac = decode_hex(mac)[0]
-        req.bitshare_auth_request.wallet_index = wallet_index
-        req.bitshare_auth_request.numerator = numerator
-        req.bitshare_auth_request.denominator = denominator
+        hw_version = str(wallet_index) + str(numerator) + str(denominator)
+        req.bitshare_auth_request.hw_version = decode_hex(hw_version)[0]
+        req.bitshare_auth_request.worker_uuid = mac
         return req
 
     @staticmethod
