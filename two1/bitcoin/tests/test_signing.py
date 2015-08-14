@@ -26,8 +26,9 @@ def test_bitcoin_message_signing(message, keypair, exp_sig):
     private_key, public_key = keypair
 
     sig_b64 = private_key.sign_bitcoin(message)
+    address = public_key.address(compressed=False)
     print("Verify with bx:")
-    print("bx message-validate %s %s '%s'" % (public_key.address(compressed=False),
+    print("bx message-validate %s %s '%s'" % (address,
                                               sig_b64.decode('ascii'),
                                               message.decode('ascii')))
     print()
@@ -35,7 +36,7 @@ def test_bitcoin_message_signing(message, keypair, exp_sig):
     assert sig_b64.decode('ascii') == exp_sig
     
     # Check to make sure the recovered public key is correct
-    assert crypto.PublicKey.verify_bitcoin(message, sig_b64)
+    assert crypto.PublicKey.verify_bitcoin(message, sig_b64, address)
     
 def test_sign_txn():
     # Let's create a txn trying to spend one of Satoshi's coins: block 1

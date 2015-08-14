@@ -14,11 +14,12 @@ errors = 0
 for i in range(100000):
     # Generate a random private key
     pk = crypto.PrivateKey.from_random()
+    address = pk.public_key.address(compressed=False)
     string = get_random_string()
 
     # Sign the random string
     sig_b64 = pk.sign_bitcoin(string)
-    validate_cmd = "bx message-validate %s %s '%s'" % (pk.public_key.address(compressed=False), sig_b64.decode('ascii'), string.decode('ascii'))
+    validate_cmd = "bx message-validate %s %s '%s'" % (address, sig_b64.decode('ascii'), string.decode('ascii'))
     retcode = subprocess.call(validate_cmd, shell=True, stdout=subprocess.DEVNULL)
     if retcode:
         errors += 1
@@ -26,7 +27,7 @@ for i in range(100000):
 
     sign_cmd = "bx message-sign %s '%s'" % (pk.to_b58check(), string.decode('ascii'))
     bx_sig = subprocess.check_output(sign_cmd, shell=True)[:-1]
-    if not crypto.PublicKey.verify_bitcoin(string, bx_sig):
+    if not crypto.PublicKey.verify_bitcoin(string, bx_sig, address):
         errors += 1
         print("bx sig did not verify for %s" % string)
         
