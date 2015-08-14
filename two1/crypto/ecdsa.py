@@ -577,10 +577,16 @@ class EllipticCurve:
         y1 = self.modsqrt(a, self.p)
         y2 = self.p - y1
         rv = []
+
+        
         if self.is_on_curve(Point(x, y1)):
             rv.append(y1)
         if self.is_on_curve(Point(x, y2)):
-            rv.append(y2)
+            # Put the even parity one first.
+            if y2 & 0x1 == 1:
+                rv.append(y2)
+            else:
+                rv.insert(0, y2)
 
         return rv
 
@@ -647,7 +653,11 @@ class EllipticCurve:
                 continue
 
             for k in k_list:
-                R  = ECPointJacobian(self, r, ys[k % 2], 1)
+                # if k == 0, we want even parity, else odd
+                y = ys[k]
+                if y & 0x1 != k:
+                    y = ys[k ^ 1]
+                R  = ECPointJacobian(self, r, y, 1)
             
                 if not (R * self.n).to_affine().infinity:
                     continue

@@ -348,12 +348,15 @@ class PublicKey(object):
         return None
 
     @staticmethod
-    def verify_bitcoin(message, signature):
+    def verify_bitcoin(message, signature, address):
         """ Verifies a message signed using PrivateKey.sign_bitcoin()
             or any of the bitcoin utils (e.g. bitcoin-cli, bx, etc.)
 
         Args:
+            message(bytes): The message that the signature corresponds to.
             signature (bytes or str): A Base64 encoded signature
+            address (str): Base58Check encoded address corresponding to the
+               uncompressed key.
 
         Returns:
             bool: True if the signature verified properly, False otherwise.
@@ -372,6 +375,12 @@ class PublicKey(object):
         derived_public_key = PublicKey.from_signature(msg_hash, sig)
         if derived_public_key is None:
             raise ValueError("Could not recover public key from the provided signature.")
+
+        ver, h160 = address_to_key_hash(address)
+        hash160 = derived_public_key.hash160(False)
+        if hash160 != h160:
+            print("Returning false, %s != %s" % (bytes_to_str(hash160), bytes_to_str(h160)))
+            return False
 
         return derived_public_key.verify(msg_hash, sig)
     
