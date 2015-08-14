@@ -18,7 +18,7 @@ for i in range(100000):
 
     # Sign the random string
     sig_b64 = pk.sign_bitcoin(string)
-    validate_cmd = "bx message-validate %s %s '%s'" % (pk.public_key.b58address, sig_b64.decode('ascii'), string.decode('ascii'))
+    validate_cmd = "bx message-validate %s %s '%s'" % (pk.public_key.address(compressed=False), sig_b64.decode('ascii'), string.decode('ascii'))
     retcode = subprocess.call(validate_cmd, shell=True, stdout=subprocess.DEVNULL)
     if retcode:
         errors += 1
