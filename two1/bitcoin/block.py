@@ -263,7 +263,7 @@ class Block(object):
             # Leaf, so just return right_childs hash
             return [bytes(node.right_child.hash)]
         else:
-            return self.get_merkle_edge(node.left_child) + [bytes(node.right_child.hash)]
+            return self._get_merkle_edge(node.left_child) + [bytes(node.right_child.hash)]
 
 
     @property
