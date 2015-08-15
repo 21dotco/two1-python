@@ -6,11 +6,17 @@ from codecs import open
 
 import click
 from path import path
-
+from two1.wallet import electrumWallet
+from two1.bitcoin.crypto import PrivateKey
 from two1.debug import dlog
 TWO1_CONFIG_FILE = path("~/.two1/two1.json")
 TWO1_VERSION = "0.1"
+TWO1_HOST = "127.0.0.1:8000"
 
+'''Primary use case for the following class is the singleton that holds
+   all the state & config data required to run commands and subcommands 
+   for two1 app
+'''
 class Config(object):
 
     def __init__(self, config_file=TWO1_CONFIG_FILE, config=None):
@@ -21,6 +27,10 @@ class Config(object):
         if config is not None:
             for key, value in config:
                 setattr(self, key, value)
+
+        #add wallet object
+        self.wallet = electrumWallet.ElectrumWallet()          
+
 
     def save(self):
         """Save config file, handling various edge cases."""
@@ -35,8 +45,11 @@ class Config(object):
 
     def load(self):
         """Load config from (1) self.file if extant or (2) from defaults."""
-        if not self.file.exists() or not self.file.isfile():
-            self.defaults = dict(username=getpass.getuser(),
+        if self.file.exists() and self.file.isfile():
+            with open(self.file, mode="r", encoding='utf-8') as fh:
+                self.defaults = json.load(fh)
+
+        defaults = dict(username=getpass.getuser(),
                                  sellprice=10000,
                                  contact="two1@21.co",
                                  stdout=".two1/two1.stdout",
@@ -45,13 +58,22 @@ class Config(object):
                                  bitout=".bitcoin/wallet.dat",
                                  sortby="price",
                                  maxspend=20000,
-                                 verbose=False)
+                                 verbose=False,
+                                 mining_auth_pubkey=None)
+
+
+        save_config = False
+        for key,default_value in defaults.items():
+            if key not in self.defaults:
+                self.defaults[key]=default_value
+                save_config=True
+
+        if save_config:
             self.save()
-        else:
-            with open(self.file, mode="r", encoding='utf-8') as fh:
-                self.defaults = json.load(fh)
+
         for kk, vv in self.defaults.items():
             setattr(self, kk, vv)
+
         return self
 
     def log(self, msg, *args):
