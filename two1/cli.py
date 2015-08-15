@@ -2,9 +2,10 @@ import os
 import sys
 import json
 import getpass
+import base64
 from codecs import open
 from path import path
-
+import keyring
 import requests
 import click
 
@@ -12,7 +13,12 @@ from two1.debug import dlog
 from two1.config import Config
 from two1.config import TWO1_CONFIG_FILE
 from two1.config import TWO1_VERSION
+from two1.config import TWO1_HOST
 from two1.config import pass_config
+from two1.wallet import electrumWallet
+from two1.mining import rest_client
+from two1.bitcoin.crypto import PrivateKey
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -64,8 +70,9 @@ $ two1
 \b
 Full documentation: github.com/21dotco/two1"""
     dlog("two1.main")
-    ctx.obj = Config(config_file, config)
 
+    ctx.obj = Config(config_file, config)
+    first_time_setup(ctx.obj)
 
 from two1.commands.buy import buy
 main.add_command(buy)
@@ -90,3 +97,46 @@ main.add_command(sell)
 
 from two1.commands.status import status
 main.add_command(status)
+    
+
+
+def first_time_setup(config):
+  #check if wallet is ready to use
+    #if not config.wallet.is_configured:
+    #    #configure wallet with default options
+    #    config.wallet.configure(config.wallet.config_options)
+    
+    #check if mining a/c has been setup
+    if not config.mining_auth_pubkey:
+        username = create_twentyone_account(config)
+        if not username:
+            click.echo("Could not create 21.co account")
+            return False  
+
+
+def create_twentyone_account(config):
+    #mining a/c setup
+    #simple key generation
+    #TODO: this can be replaced with a process where the user
+    #can hit a few random keystrokes to generate a private
+    #key
+    mining_auth_key = PrivateKey.from_random()
+
+    config.mining_auth_pubkey = base64.b64encode(
+                               mining_auth_key.public_key.compressed_bytes)
+
+    #store the username -> private key into the system keychain
+    click.echo("Creating 21.co account. Username: %s " % config.username)
+    mining_rest_client = rest_client.MiningRestClient(mining_auth_key,TWO1_HOST)
+    bitcoin_payout_address = config.wallet.current_address()
+    click.echo("Payout address:",bitcoin_payout_address)
+    try:
+        r = mining_rest_client.account_post(config.username,bitcoin_payout_address)
+        #if r.status_code == 400:
+    except requests.exceptions.ConnectionError:
+        click.echo("Cannot connect to ",TWO1_HOST)
+    except requests.expcetions.Timeout:
+        click.echo("Connection to ",TWO1_HOST," timed out")
+
+
+
