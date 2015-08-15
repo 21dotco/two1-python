@@ -33,7 +33,7 @@ class ElectrumWallet(BaseWallet):
 		Returns:
 			(str): The current preferred payment address. 
 		"""
-		return self.addresses[ len(self.addresses()) - 1 ]
+		return self.addresses()[ len(self.addresses()) - 1 ]
 
 	def confirmed_balance(self):
 		""" Gets the current confirmed balance of the wallet.
