@@ -3,7 +3,10 @@
 # Create a/c
 # Set payout addresses etc.
 from two1.bitcoin.crypto import PrivateKey
+from two1.bitcoin.crypto import PublicKey
+from two1.bitcoin.crypto import Signature
 from two1.bitcoin.utils import bytes_to_str, address_to_key_hash
+import base64
 import requests
 import json
 from urllib.parse import urljoin
@@ -24,7 +27,18 @@ class MiningAuth(object):
 			utf8 = message.encode('utf-8')
 		else:
 			raise ValueError
-		return self.private_key.sign_bitcoin(utf8)
+		signature = self.private_key.sign(utf8).to_base64()
+		return signature
+
+#		compressed_bytes = base64.b64encode(self.public_key.compressed_bytes)
+##		signature = signature.to_base64()
+
+#		print("Things",compressed_bytes,signature,utf8)
+
+#		signature = Signature.from_base64(signature)
+#		pubk = PublicKey.from_base64(compressed_bytes)
+#		print("VERIFICATION RESULT: %g " % pubk.verify(utf8, signature))
+
 
 class MiningRestClient(object):
 
@@ -43,7 +57,7 @@ class MiningRestClient(object):
 			data = ""
 		if signed:
 			sig = self.auth.sign(data)
-			headers["Authorization"]=sig
+			headers["Authorization"]=sig.decode()
 		if len(headers) == 0:
 			headers = None
 		print("Request: " + str(method)+ " " + str(url)  + " " + str(headers)  + " " + str(kwargs["data"]))
@@ -60,7 +74,7 @@ class MiningRestClient(object):
 		path = "/v0/mining/account/" + username
 		body = {
 				"payout_address": payout_address,
-				"public_key_digest": self.auth.public_key.b58address,
+				"public_key_digest": base64.b64encode(self.auth.public_key.compressed_bytes).decode(),
 				}
 		data=json.dumps(body)
 		r=self._request(True,method,
@@ -85,8 +99,8 @@ class MiningRestClient(object):
 if __name__=="__main__":
 #	pk = PrivateKey.from_random()
 #	m = MiningRestClient(pk,"http://127.0.0.1:8000")
-	for n in range(10):
+	for n in range(1):
 		pk = PrivateKey.from_random()
 		m = MiningRestClient(pk,"http://127.0.0.1:8000")
-		m.mining_account_post("testuser0_"+str(n),"1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-		m.mining_account_payout_address_post("testuser0_"+str(n),"1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+		m.mining_account_post("testuser210_"+str(n),"1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
+		m.mining_account_payout_address_post("testuser210_"+str(n),"1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
