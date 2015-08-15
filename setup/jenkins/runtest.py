@@ -31,14 +31,16 @@ def main():
         print("--------------------")
         print("Success!")
         print("--------------------")
+        shell("docker tag -f " + image_name + " two1:latest-success")
     except Exception as e:
         print("--------------------")
         print("FAILURE!")
         print("--------------------")
+        shell("docker tag -f " + image_name + " two1:latest-failure")
         raise e
     finally:
         # Cleanup
-        shell("docker rmi -f " + image_name)
+        shell("docker rmi " + image_name) #since we tagged the image, rmi only untags.
 
 if __name__ == "__main__":
     main()

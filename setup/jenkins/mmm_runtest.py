@@ -27,18 +27,20 @@ def main():
         print("--------------------")
         print("Running the tests...")
         print("--------------------")
-        shell("docker run --rm -i " + image_name + ' bash -c " python two1/mmm/manage.py test "')
+        shell("docker run --rm -i " + image_name + ' bash -c " python two1/djangobitcoin/manage.py test "')
         print("--------------------")
         print("Success!")
         print("--------------------")
+        shell("docker tag -f " + image_name + " djangobitcoin:latest-success")
     except Exception as e:
         print("--------------------")
         print("FAILURE!")
         print("--------------------")
+        shell("docker tag -f " + image_name + " djangobitcoin:latest-failure")
         raise e
     finally:
         # Cleanup
-        shell("docker rmi -f " + image_name)
+        shell("docker rmi " + image_name)
 
 if __name__ == "__main__":
     main()
