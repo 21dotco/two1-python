@@ -1,0 +1,6 @@
+{
+  "barcode":[
+    "generate_qr",
+    "upc_lookup"
+  ]
+}
