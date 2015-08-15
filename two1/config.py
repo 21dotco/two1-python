@@ -7,11 +7,10 @@ from codecs import open
 import click
 from path import path
 from two1.wallet import electrumWallet
-from two1.bitcoin.crypto import PrivateKey
 from two1.debug import dlog
 TWO1_CONFIG_FILE = path("~/.two1/two1.json")
 TWO1_VERSION = "0.1"
-TWO1_HOST = "127.0.0.1:8000"
+TWO1_HOST = "http://127.0.0.1:8000"
 
 '''Primary use case for the following class is the singleton that holds
    all the state & config data required to run commands and subcommands 

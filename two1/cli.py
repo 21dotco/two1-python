@@ -18,6 +18,7 @@ from two1.config import pass_config
 from two1.wallet import electrumWallet
 from two1.mining import rest_client
 from two1.bitcoin.crypto import PrivateKey
+from two1.uxstring import UxString 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -110,7 +111,7 @@ def first_time_setup(config):
     if not config.mining_auth_pubkey:
         username = create_twentyone_account(config)
         if not username:
-            click.echo("Could not create 21.co account")
+            click.echo(UxString.account_failed)
             return False  
 
 
@@ -126,17 +127,19 @@ def create_twentyone_account(config):
                                mining_auth_key.public_key.compressed_bytes)
 
     #store the username -> private key into the system keychain
-    click.echo("Creating 21.co account. Username: %s " % config.username)
+    click.echo(UxString.creating_account % config.username)
     mining_rest_client = rest_client.MiningRestClient(mining_auth_key,TWO1_HOST)
     bitcoin_payout_address = config.wallet.current_address()
-    click.echo("Payout address:",bitcoin_payout_address)
+    click.echo(UxString.payout_address % bitcoin_payout_address)
     try:
         r = mining_rest_client.account_post(config.username,bitcoin_payout_address)
+        if r.status_code==201:
+          config
         #if r.status_code == 400:
     except requests.exceptions.ConnectionError:
-        click.echo("Cannot connect to ",TWO1_HOST)
+        click.echo(UxString.Error.connection % TWO1_HOST)
     except requests.expcetions.Timeout:
-        click.echo("Connection to ",TWO1_HOST," timed out")
+        click.echo(UxString.Error.timeout % TWO1_HOST)
 
 
 
