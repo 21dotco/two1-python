@@ -69,7 +69,7 @@ class MiningRestClient(object):
 		return result
 
 	#POST /v0/mining/account
-	def mining_account_post(self,username,payout_address):
+	def account_post(self,username,payout_address):
 		method = "POST"
 		path = "/v0/mining/account/" + username
 		body = {
@@ -77,20 +77,20 @@ class MiningRestClient(object):
 				"public_key_digest": base64.b64encode(self.auth.public_key.compressed_bytes).decode(),
 				}
 		data=json.dumps(body)
-		r=self._request(True,method,
+		return self._request(True,method,
 						path,
 						data=json.dumps(body)
 						);
 
 	#POST /v0/mining/account/payout_address/{username}
-	def mining_account_payout_address_post(self,username,payout_address):
+	def account_payout_address_post(self,username,payout_address):
 		method = "POST"
 		path = "/v0/mining/account/payout_address/" + username
 		body = {
 				"payout_address": payout_address,
 				}
 		data = json.dumps(body)
-		r=self._request(True,method,
+		return self._request(True,method,
 						path,
 						data=data
 						);
@@ -99,8 +99,16 @@ class MiningRestClient(object):
 if __name__=="__main__":
 #	pk = PrivateKey.from_random()
 #	m = MiningRestClient(pk,"http://127.0.0.1:8000")
-	for n in range(1):
+	host = "http://127.0.0.1:8000"
+	for n in range(100):
 		pk = PrivateKey.from_random()
-		m = MiningRestClient(pk,"http://127.0.0.1:8000")
-		m.mining_account_post("testuser210_"+str(n),"1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-		m.mining_account_payout_address_post("testuser210_"+str(n),"1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+		m = MiningRestClient(pk,host)
+		try:
+			m.account_post("testuser11210_"+str(n),"1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
+			m.account_payout_address_post("testuser11210_"+str(n),"1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+
+		except requests.exceptions.ConnectionError:
+			print("Error: cannot connect to ",host)
+
+
+
