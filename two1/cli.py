@@ -144,12 +144,15 @@ def create_twentyone_account(config):
             elif r.status_code == 201:
                 config.update_key("username",try_username)
                 #save the auth keys
-                keyring.set_password("system","21dotco_key"+try_username,mining_auth_key_b58)
+                keyring.set_password("twentyone","mining_auth_key",mining_auth_key_b58)
                 config.update_key("mining_auth_pubkey",mining_auth_pubkey)
+
                 config.save()
                 break
             elif r.status_code == 400:
                 click.echo(UxString.username_exists % try_username)
+                try_username = None
+            else:
                 try_username = None
 
         return try_username
@@ -159,5 +162,5 @@ def create_twentyone_account(config):
     except requests.expcetions.Timeout:
         click.echo(UxString.Error.timeout % TWO1_HOST)
 
-
+    return None
 
