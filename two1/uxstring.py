@@ -1,6 +1,7 @@
 
 
 class UxString:
+
 	#account creation
 	creating_account = "Creating 21.co account. Username %s."
 	payout_address   = "Payout address: %s."
@@ -12,4 +13,7 @@ class UxString:
 		#network errors
 		connection = "Cannot connect to %s."
 		timeout    = "Connection to %s timed out."
+
+		#file io errors
+		file_load = "Failed to load file %s."
 
