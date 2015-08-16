@@ -23,13 +23,16 @@ class Config(object):
         self.dir = self.file.parent
         self.load()
         dlog("Manual config = %s" % str(config))
-        if config is not None:
-            for key, value in config:
-                setattr(self, key, value)
-
         #add wallet object
         self.wallet = electrumWallet.ElectrumWallet()          
 
+    #pulls attributes from the self.defaults dict
+    def __getattr__(self, name):
+        if name in self.defaults:
+            return self.defaults[name]
+        else:
+            # Default behaviour
+            raise AttributeError
 
     def save(self):
         """Save config file, handling various edge cases."""
@@ -70,10 +73,14 @@ class Config(object):
         if save_config:
             self.save()
 
-        for kk, vv in self.defaults.items():
-            setattr(self, kk, vv)
-
         return self
+
+    def update_key(self,key,value):
+        self.defaults[key] = value
+        #might be better to switch to local sqlite for persisting 
+        #the config
+        #self.save()
+
 
     def log(self, msg, *args):
         """Logs a message to stderr."""
