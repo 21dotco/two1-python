@@ -57,7 +57,7 @@ class Config(object):
                 with open(self.file, mode="r", encoding='utf-8') as fh:
                     self.defaults = json.load(fh)
             except:
-                print(UxString.Error.file_load % self.file)
+                print(UxString.Errorself.file_load % self.file)
                 self.defaults = {}
 
         defaults = dict(username=getpass.getuser(),
@@ -105,11 +105,11 @@ class Config(object):
     def fmt(self):
         pairs = []
         for key in sorted(self.defaults.keys()):
-            pairs.append("%s: %s" % (key, getattr(self, key)))
+            pairs.append("%s: %s" % (key, self.defaults[key]))
         out = "file: %s\n%s\n""" % (self.file, "\n".join(sorted(pairs)))
         return out
 
     def __repr__(self):
         return "<Config\n%s>" % self.fmt()
 
-pass_config = click.make_pass_decorator(Config, ensure=True)
+pass_config = click.make_pass_decorator(Config, ensure=False)
