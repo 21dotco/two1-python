@@ -122,8 +122,9 @@ def create_twentyone_account(config):
     #can hit a few random keystrokes to generate a private
     #key
     mining_auth_key = PrivateKey.from_random()
-
-    config.mining_auth_pubkey = base64.b64encode(
+    mining_auth_key_b58 = mining_auth_key.to_b58check()
+    #base64 converted public key
+    mining_auth_pubkey = base64.b64encode(
                                mining_auth_key.public_key.compressed_bytes)
 
     #store the username -> private key into the system keychain
@@ -132,9 +133,26 @@ def create_twentyone_account(config):
     bitcoin_payout_address = config.wallet.current_address()
     click.echo(UxString.payout_address % bitcoin_payout_address)
     try:
-        r = mining_rest_client.account_post(config.username,bitcoin_payout_address)
-        if r.status_code==201:
-          config
+        try_username = config.username
+        while True:
+            if try_username == "" or try_username == None:
+                try_username = click.prompt(UxString.enter_username,type=click.STRING)
+
+            r = mining_rest_client.account_post(try_username,bitcoin_payout_address)
+            if r.status_code == 200:
+                break
+            elif r.status_code == 201:
+                config.update_key("username",try_username)
+                #save the auth keys
+                keyring.set_password("system","21dotco_key"+try_username,mining_auth_key_b58)
+                config.update_key("mining_auth_pubkey",mining_auth_pubkey)
+                config.save()
+                break
+            elif r.status_code == 400:
+                click.echo(UxString.username_exists % try_username)
+                try_username = None
+
+        return try_username
         #if r.status_code == 400:
     except requests.exceptions.ConnectionError:
         click.echo(UxString.Error.connection % TWO1_HOST)
