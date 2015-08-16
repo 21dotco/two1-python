@@ -12,7 +12,7 @@ def status(config, private):
     """View earned Bitcoin and configuration"""
     dlog("Entered status")
     foo = config.fmt()
-    print("\nConfig\n------\n" + foo)
+    click.echo("\nConfig\n------\n" + foo)
     config.log("Invoked config.log")
     click.echo("config.verbose = %s" % config.verbose)
     config.vlog("Invoked config.vlog")
