@@ -69,9 +69,9 @@ class CPUMiner(threading.Thread):
 
 class CPUWorkMaster(object):
 
-    def __init__(self, num_workers=1):
-        self.enonce1 = b'0000'  # For now, gets set during an AuthReplyYes msg
-        self.enonce2_size = 4  # Actually gets set during an AuthReplyYes msg
+    def __init__(self, enonce1, enonce2_size, num_workers=1):
+        self.enonce1 = enonce1  # For now, gets set during an AuthReplyYes msg
+        self.enonce2_size = enonce2_size  # Actually gets set during an AuthReplyYes msg
         self.num_workers = num_workers
         self.worker = []
 
