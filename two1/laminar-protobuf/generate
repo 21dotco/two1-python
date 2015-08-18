@@ -1,4 +1,0 @@
-#!/bin/bash
-rm -rf ./python ./java ./cpp ./ruby ./javanano
-mkdir ./python ./java ./cpp ./ruby ./javanano
-protoc --proto_path=. --cpp_out=./cpp --java_out=./java --python_out=./python --ruby_out=./ruby --javanano_out=./javanano swirl.proto

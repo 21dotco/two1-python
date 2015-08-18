@@ -17,7 +17,6 @@ class ClientMessageHandler(object):
         self.user = user
         self.worker = worker
         self.logger = logging.getLogger(__name__)
-        self.cpu_work_master = cpu_miner.CPUWorkMaster()
 
     @asyncio.coroutine
     def start(self):
@@ -28,7 +27,8 @@ class ClientMessageHandler(object):
 
     def _state_connect(self):
         self.logger.info('Connecting')
-        self.reader, self.writer = yield from asyncio.open_connection(host=self.host, port=self.port)
+        self.reader, self.writer = yield from asyncio.open_connection(host=self.host,
+                                                                      port=self.port)
         return STATE_AUTHORIZE
 
     @asyncio.coroutine
@@ -57,7 +57,13 @@ class ClientMessageHandler(object):
         yield from self._send_to_server(auth_msg)
 
         # ignore the auth result for now
-        yield from self._message_factory.read_object(self.reader)
+        auth_msg = yield from self._message_factory.read_object(self.reader)
+        auth_type = auth_msg.WhichOneof("authreplies")
+        auth_resp = getattr(auth_msg, auth_type)
+
+        enonce1 = auth_resp.enonce1
+        enonce2_size = auth_resp.enonce2_size
+        self.cpu_work_master = cpu_miner.CPUWorkMaster(enonce1, enonce2_size)
 
         return STATE_HANDLE_MSG
 
