@@ -41,6 +41,9 @@ inform "Updating apt..."
 sudo rm -f /etc/apt/sources.list.d/unstable.list
 (sudo apt-get update &&  sudo apt-get -y upgrade) || abort 'Failed to update apt.'
 
+# Install zerotier
+(sudo apt-get install -y zerotier) || abort 'Failed to install zerotier'
+
 # Install Python Dependencies
 inform "Installing python dependencies..."
 (sudo apt-get install -y python-qt4 python-pip) || abort 'Failed to install python-pip'
