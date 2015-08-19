@@ -25,6 +25,8 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'misc/static'),
 )
 
+ENDPOINTS_FILE = 'endpoints.json'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 

@@ -1,7 +1,9 @@
 import json
 import os
 from django.test import Client, TestCase
+from django.conf import settings
 
+settings.ENDPOINTS_FILE = 'endpoints_test.json'
 
 def response2json(response):
     j = json.loads(response.content.decode("utf-8"))

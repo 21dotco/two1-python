@@ -188,7 +188,7 @@ def bitcurl(
 		allow_redirects=False, 
 		timeout=30, 
 		max_request_price=DEFAULT_MAX_REQUEST_PRICE,
-		backoff_delay=DEFAULT_BASE_BACKOFF_DELAY
+		backoff_delay=DEFAULT_BASE_BACKOFF_DELAY,
 		backoff_max_delay=DEFAULT_MAX_RETRY_DELAY,
 		goal_price=0
 	):
