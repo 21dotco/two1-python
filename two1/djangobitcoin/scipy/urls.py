@@ -1,3 +1,3 @@
-from scipy import scipy
+from . import scipy
 
 urlpatterns = scipy.get_urls()

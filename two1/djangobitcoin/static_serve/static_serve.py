@@ -4,9 +4,9 @@ import mimetypes
 
 from django.http import HttpResponse
 from rest_framework.decorators import api_view, authentication_classes
-from static_serve.configurations import configurations
+from . import configurations
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 from django.conf import settings
 
 def loadConfig(filePath):
@@ -90,7 +90,8 @@ def getTargetPath(rPath):
         };
 
 # Load the configuration info
-config = loadConfig(getattr(settings, 'STATIC_SERVE_CONFIG'))
+# TODO revisit for sell command. Needs to be loaded outside of Django context
+#config = loadConfig(getattr(settings, 'STATIC_SERVE_CONFIG'))
 
 # ########## Custom Payment Class ########## #
 

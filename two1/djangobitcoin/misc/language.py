@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from textblob import TextBlob
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 
 
 def get_text_to_be_processed(request):

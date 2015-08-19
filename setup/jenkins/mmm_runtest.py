@@ -20,7 +20,7 @@ def shell(cmd, output=False):
 def main():
     # Build our Dockerfile
     image_name = "djangobitcoin:" + str(int(time.time()))
-    shell("docker build -t " + image_name + " -f mmmDockerfile "+ repo_root)
+    shell("docker build -t " + image_name + " -f Dockerfile "+ repo_root)
 
     try:
         # Run the tests:

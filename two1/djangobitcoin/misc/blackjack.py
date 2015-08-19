@@ -1,12 +1,15 @@
 import uuid
 import json
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, authentication_classes
-from .models import BlackjackGame
+from rest_framework.decorators import api_view
+from django.db import models
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 from .blackjack_game import GameState
 
+class BlackjackGame(models.Model):
+     identifier = models.CharField(max_length=512, primary_key=True)
+     blob = models.CharField(max_length=8096)
 
 # # # # # # # # # Bets # # # # # # # # # #
 

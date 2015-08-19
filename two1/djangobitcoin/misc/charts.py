@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 import sys
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 
 """
 {

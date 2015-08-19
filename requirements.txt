@@ -28,3 +28,4 @@ path.py==7.4
 click==4.1
 numpy=1.9.2
 keyring==5.4
+scipy==0.16.0

@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 
 
 @api_view(['GET'])
@@ -33,6 +33,6 @@ def text_to_speech(request):
 
     text = request.QUERY_PARAMS.get("text", None)
     if not text:
-        return Response("Must provide value for Text parameter", code=400)
+        return Response("Must provide value for Text parameter", 400)
     response = requests.get("http://tts-api.com/tts.mp3?q=" + urllib.parse.quote_plus(text))
     return HttpResponse(response.content, content_type=response.headers["content-type"])
