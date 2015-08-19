@@ -20,7 +20,7 @@ def my_get(self, request):
 
 
 def generate_wrapper(source):
-    path = r'^{0}/$'.format(source.__name__)
+    path = r'^scipy/{0}/$'.format(source.__name__)
     wrapper = type(source.__name__, (views.APIView,), {})
     wrapper.get = types.FunctionType(my_get.__code__, globals=my_get.__globals__, closure=my_get.__closure__)
     wrapper.get.__doc__ = source.__doc__ + param_desc

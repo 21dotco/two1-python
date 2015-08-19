@@ -1,0 +1,11 @@
+[
+  {
+    "package": "misc"
+  },
+  {
+    "package": "scipy"
+  },
+  {
+    "package": "static_serve"
+  }
+]
