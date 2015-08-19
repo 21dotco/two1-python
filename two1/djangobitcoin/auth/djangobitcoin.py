@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from auth.chain import BitcoinInterface
+from lib.chain   import BitcoinInterface
 from django.conf import settings
 # import qrcode
 # import base64
@@ -108,8 +108,8 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
         # 1. Header
         # This will only use the Header eventually. All other accepts are for
         # testing
-        if request.META.get("HTTP_BITCOIN-TRANSACTION"):
-            return request.META.get("HTTP_BITCOIN-TRANSACTION")
+        if request.META.get("HTTP_BITCOIN_TRANSACTION"):
+            return request.META.get("HTTP_BITCOIN_TRANSACTION")
 
         # 2. Query
         elif "tx" in request.GET:

@@ -32,10 +32,10 @@ class BitcoinInterface(object):
 
         return False
 
-    def check_tx(self, tx, address, amount):
+    def check_tx(self, tx_hex, address, amount):
         # check if parses as a transaction
         try:
-            parsed_tx = tx.Tx.tx_from_hex(tx)
+            parsed_tx = tx.Tx.tx_from_hex(tx_hex)
             for out in parsed_tx.txs_out:
                 if out.bitcoin_address() == address:
                     if out.coin_value >= amount:

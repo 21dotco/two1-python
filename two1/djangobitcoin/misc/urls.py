@@ -1,6 +1,6 @@
 from django.conf.urls import url
-from misc import barcode, charts, language, speech, face_detect, phone, charts, weather, image_processing, \
-    scraper, blackjack, twitter
+from . import barcode, charts, language, speech, face_detect, phone, weather, image_processing, \
+    scraper, twitter, blackjack
 
 urlpatterns = [
     url(r'^barcode/generate-qr', barcode.generate_qr),

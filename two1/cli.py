@@ -93,5 +93,6 @@ main.add_command(sell)
 from two1.commands.status import status
 main.add_command(status)
     
-
+if __name__ == "__main__":
+    main()
 

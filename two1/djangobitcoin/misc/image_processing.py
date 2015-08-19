@@ -5,7 +5,7 @@ from django.core.files.uploadhandler import InMemoryUploadedFile
 from rest_framework.decorators import api_view, authentication_classes
 from PIL import Image, ImageFile
 
-from auth.djangobitcoin import PaymentRequiredAuthentication
+from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 
 def getImage(req):
   return req.FILES.get("image", None)
