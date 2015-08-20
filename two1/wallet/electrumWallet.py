@@ -106,6 +106,33 @@ class ElectrumWallet(BaseWallet):
         """
         return self.broadcast_raw_transaction(self.make_raw_signed_transaction(address, amount));
 
+    @property
+    def is_configured(self):
+        """ Returns the configuration/initialization status of the wallet. 
+        Returns:
+            (bool): Returns True if the wallet has been configured and ready to use otherwise False
+        """
+        # Check for wallet file
+        return os.path.isfile( os.path.expanduser('~/.electrum/wallets/default_wallet') );
+
+    @property
+    def config_options(self):
+        """ Returns the configuration options available for the wallet. 
+        Returns:
+            (dict): The keys of this dictionary are the available configuration settings/options
+            for the wallet. The value for each key represents the possible values for each option.
+            e.g. {key_style: ["HD","Brain","Simple"], ....}
+        """
+        return {
+            "key_style": ["HD","Brain","Simple", "Multi_Signiture"],
+            "varsion": self._electrum_call_with_simple_error(['version', 'Failed to get version'])
+        }
+
+    def configure(self, config_options):
+        """ Automatically configures the wallet with the provided configuration options
+        """
+        self._electrum_call_with_simple_error(['create');
+
     @staticmethod
     def _type_check(name, var, typeN):
         """ Type check validation utility.
