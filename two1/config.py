@@ -9,10 +9,16 @@ from path import path
 from two1.wallet import electrumWallet
 from two1.debug import dlog
 from two1.uxstring import UxString
+import pkg_resources 
 
 TWO1_CONFIG_FILE = path("~/.two1/two1.json")
-TWO1_VERSION = "0.1"
-TWO1_HOST = "http://127.0.0.1:8000"
+TWO1_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
+
+try:
+    TWO1_VERSION = pkg_resources.require("two1")[0].version
+except:
+    TWO1_VERSION = "undefined"
+    
 
 '''Primary use case for the following class is the singleton that holds
    all the state & config data required to run commands and subcommands 
