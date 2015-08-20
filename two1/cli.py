@@ -87,8 +87,8 @@ main.add_command(rate)
 from two1.commands.search import search
 main.add_command(search)
 
-from two1.commands.sell import sell
-main.add_command(sell)
+#from two1.commands.sell import sell
+#main.add_command(sell)
 
 from two1.commands.status import status
 main.add_command(status)
