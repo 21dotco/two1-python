@@ -43,7 +43,12 @@ def create_twentyone_account(config):
     #store the username -> private key into the system keychain
     click.echo(UxString.creating_account % config.username)
     mining_rest_client = rest_client.MiningRestClient(mining_auth_key,TWO1_HOST)
-    bitcoin_payout_address = config.wallet.current_address()
+
+    #use the same key for the payout address as well.
+    #this will come from the wallet
+#    bitcoin_payout_address = config.wallet.current_address()
+    bitcoin_payout_address = mining_auth_key.public_key.address()
+
     click.echo(UxString.payout_address % bitcoin_payout_address)
     try:
         try_username = config.username

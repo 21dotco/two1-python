@@ -17,4 +17,5 @@ def status(config, private):
     click.echo("config.verbose = %s" % config.verbose)
     config.vlog("Invoked config.vlog")
     
-    click.echo("Bitcoin Balance: %g Satoshi" % config.wallet.confirmed_balance())    
+    #comment this until the wallet is stable
+    #click.echo("Bitcoin Balance: %g Satoshi" % config.wallet.confirmed_balance())    
