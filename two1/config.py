@@ -13,6 +13,7 @@ import pkg_resources
 
 TWO1_CONFIG_FILE = path("~/.two1/two1.json")
 TWO1_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
+#TWO1_HOST = "http://127.0.0.1:8000"
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
