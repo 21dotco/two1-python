@@ -5,10 +5,11 @@ import threading
 import queue
 import time
 
-from two1.bitcoin.block import CompactBlock
+from two1.bitcoin.block import CompactBlock, BlockHeader
 from coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.hash import Hash
 
 Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'job_id'])
 Work = namedtuple('Work', ['job_id', 'enonce2', 'cb'])
@@ -47,7 +48,14 @@ class CPUMiner(threading.Thread):
                     print("Exiting Worker....")
                     break
 
-            if (nonce % int(2 * 1e6)) == 1 or self.current_work.cb.check_valid_nonce(nonce):
+            # block_header = BlockHeader(version = notify_msg.block_version,
+            #                            prev_block_hash=Hash(notify_msg.prev_block_hash),
+            #                            merkle_root_hash="x",
+            #                            time=notify_msg.itime,
+            #                            bits=0x1dffffff,
+            #                            nonce="x")
+            self.current_work.cb.block_header.nonce = nonce
+            if (nonce % int(2 * 1e6)) == 1 or self.current_work.cb.block_header.valid:
                 # notify we have a found!!!
                 # call the callbacks on the main loop
 
@@ -107,7 +115,7 @@ class CPUWorkMaster(object):
 
             cb = CompactBlock(notify_msg.block_height,
                               notify_msg.block_version,
-                              notify_msg.prev_block_hash,
+                              Hash(notify_msg.prev_block_hash),
                               notify_msg.itime,
                               0x1dffffff,  # lower difficulty work for testing
                               edge,

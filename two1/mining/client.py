@@ -8,7 +8,8 @@ from message_factory import ProtobufMessageFactory
 configs.load_configs()
 logger = logging.getLogger(__name__)
 
-DEFAULT_USER = "b6d75d34732d41c096302bb866a36c1e"
+DEFAULT_USER = "corentin"
+#DEFAULT_USER = "b6d75d34732d41c096302bb866a36c1e"
 DEFAULT_WORKER = "000000010203"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8008"

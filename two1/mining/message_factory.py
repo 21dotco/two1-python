@@ -46,7 +46,7 @@ class ProtobufMessageFactory(AbstractMessageFactory):
         req.auth_request.username = username
         hw_version = str(wallet_index) + str(numerator) + str(denominator)
         req.auth_request.hw_version = int(hw_version)
-        req.auth_request.worker_uuid = mac
+        req.auth_request.worker_uuid = int(mac)
         return req
 
     @staticmethod
