@@ -5,8 +5,9 @@ import threading
 import queue
 import time
 
+
+from .coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.block import CompactBlock, BlockHeader
-from coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.utils import bytes_to_str
 from two1.bitcoin.hash import Hash
@@ -31,6 +32,7 @@ Client:
     7. If valid, the share is submitted to the pool server.
 """
 
+
 class CPUMiner(threading.Thread):
 
     def __init__(self, work, event_loop, handle_found_cb):
@@ -50,7 +52,7 @@ class CPUMiner(threading.Thread):
             #                            bits=0x1dffffff,
             #                            nonce="x")
             self.current_work.cb.block_header.nonce = nonce
-            if (nonce % int(2 * 1e6)) == 1 or self.current_work.cb.block_header.valid:
+            if self.current_work.cb.block_header.valid:
                 # notify we have a found!!!
                 # call the callbacks on the main loop
 
@@ -112,7 +114,7 @@ class CPUWorkMaster(object):
                               notify_msg.block_version,
                               Hash(notify_msg.prev_block_hash),
                               notify_msg.itime,
-                              0x1dffffff,  # lower difficulty work for testing
+                              notify_msg.bits,  # lower difficulty work for testing
                               edge,
                               cb_txn)
             # print(notify_msg)
