@@ -74,7 +74,7 @@ class MiningRestClient(object):
 		path = "/v0/mining/account/" + username
 		body = {
 				"payout_address": payout_address,
-				"public_key_digest": base64.b64encode(self.auth.public_key.compressed_bytes).decode(),
+				"public_key": base64.b64encode(self.auth.public_key.compressed_bytes).decode(),
 				}
 		data=json.dumps(body)
 		return self._request(True,method,
