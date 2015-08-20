@@ -3,6 +3,7 @@ from two1.bitcoin.script import Script
 
 
 class BitshareCoinbaseTransaction(Transaction):
+
     """ This class is identical to Transaction except provides an additional
         method to serialize specifically for the client, meaning it removes
         the last output (assumes the last one is the Bitshare output) and the
@@ -34,6 +35,7 @@ class BitshareCoinbaseTransaction(Transaction):
 
 
 class CoinbaseTransactionBuilder(object):
+
     """ See: https://bitcoin.org/en/developer-reference#coinbase
         Builds a coinbase txn:
         Creates a single input with no outpoint. The input script is defined as
@@ -75,7 +77,7 @@ class CoinbaseTransactionBuilder(object):
     def build_input(self, enonce1, enonce2, padding=None):
         """ Builds a CoinbaseInput, creating the script from the passed-in enonce1 and
             enonce2.
-        
+
         Args:
             enonce1 (bytes): byte stream to place in the coinbase input script. Must be
                              enonce1_len bytes long.

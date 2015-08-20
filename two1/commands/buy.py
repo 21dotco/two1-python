@@ -1,34 +1,73 @@
 import click
+import re
 from two1.config import pass_config
 from two1.debug import dlog
+from two1.bitcurl.bitcurl import bitcurl
 import time
 import datetime
 
+DEFAULT_SELLER_NAME = "---"
+URL_REGEXP = re.compile(
+    r'^(?:http)s?://'  # http:// or https://
+    # domain...
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+    r'localhost|'  # localhost...
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+    r'(?::\d+)?'  # optional port
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+
 @click.command()
-@click.argument('resource',nargs=1)
-@click.option('--data', default="{}", help="The data/body to send to the seller")
+@click.argument('resource', nargs=1)
+@click.option('--data', default=None, help="The data/body to send to the seller")
 @click.option('--max_price',  default=5000, help="The max amount to pay for the resource")
 @pass_config
-def buy(config,resource,data,max_price):
+def buy(config, resource, data, max_price):
     """Buy internet services with Bitcoin
-    	resource - The digital resource to buy from.
+        resource - The digital resource to buy from.
 
-    	example: two1 buy en2cn --data {'text':'This is SPARTA'}
+        example: two1 buy en2cn --data {'text':'This is SPARTA'}
     """
-    #dlog("two1.buy" + str(type(resource)) + str(resource))
-    config.log("Looking for best price for {}...".format(resource))
-    time.sleep(1.0)
-    seller = "peaceful_beast"
-    price = 4000
-    config.log("Best price from seller: {} price: {}".format(seller,price))
-    if price > max_price:
-    	config.log("Best price:{} exceeds maximum price: {}".format(price,max_price))
+    # TODO: Kill logger on non verbose?
+    method = "GET"
+
+    # If resource is a URL string then bypass bulk search
+    if bool(URL_REGEXP.match(resource)):
+        # Direct From ClI
+        target_url = resource
+
+        # TODO: Perform search for exact meta data.
+        seller = DEFAULT_SELLER_NAME
     else:
-    	config.log("Fetching resource {}/{}...".format(seller,resource))
-    	time.sleep(1.0)
-    	config.log("Success.")
-    	config.log_purchase(s=seller,r=resource,p=price,d=str(datetime.datetime.today()))
+        raise ValueError('Endpoint lookup is not implemented!')
+        # Run a search
+        config.log("Looking for best price for {}...".format(resource))
 
+        # Extract Data from the search results
+        target_url = ""
+        seller = ""
 
-    
+    # Detect Detect Data is raw or file ref
+    target_data = None
+    if isinstance(data, str):
+        method = 'POST'
+        try:
+            # NOTE: I/O bound?
+            target_data = open(data, 'r')
+        except OSError:
+            target_data = data
 
+    # Catch Error?
+    try:
+        res = bitcurl(target_url, config.wallet, method=method,
+                      data=target_data, max_request_price=max_price, logger=config.log)
+    except Exception as e:
+        config.log( str(e), fg="red")
+        return
+
+    # Output the response text to the console
+    config.log(res.text)
+
+    # Record the transaction
+    config.log_purchase(
+        s=seller, r=resource, p=res.paid_amount, d=str(datetime.datetime.today()))
