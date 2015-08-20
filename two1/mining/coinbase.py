@@ -1,6 +1,5 @@
-from two1.bitcoin.utils import *
-from two1.bitcoin.script import Script
 from two1.bitcoin.txn import CoinbaseInput, TransactionInput, TransactionOutput, Transaction
+from two1.bitcoin.script import Script
 
 
 class BitshareCoinbaseTransaction(Transaction):

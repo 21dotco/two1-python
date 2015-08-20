@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='swirl.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0bswirl.proto\"\xe6\x02\n\x12SwirlClientMessage\x12\x37\n\x0c\x61uth_request\x18\x01 \x01(\x0b\x32\x1f.SwirlClientMessage.AuthRequestH\x00\x12@\n\x0esubmit_request\x18\x02 \x01(\x0b\x32&.SwirlClientMessage.SubmitShareRequestH\x00\x1aY\n\x0b\x41uthRequest\x12\x0f\n\x07version\x18\x01 \x01(\r\x12\x12\n\nhw_version\x18\x02 \x01(\r\x12\x10\n\x08username\x18\x03 \x01(\t\x12\x13\n\x0bworker_uuid\x18\x04 \x01(\t\x1ah\n\x12SubmitShareRequest\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12\x0f\n\x07work_id\x18\x02 \x01(\r\x12\x0f\n\x07\x65nonce2\x18\x03 \x01(\x0c\x12\r\n\x05otime\x18\x04 \x01(\r\x12\r\n\x05nonce\x18\x05 \x01(\rB\x10\n\x0e\x63lientmessages\"\xf4\x07\n\x12SwirlServerMessage\x12\x33\n\nauth_reply\x18\x01 \x01(\x0b\x32\x1d.SwirlServerMessage.AuthReplyH\x00\x12<\n\x0csubmit_reply\x18\x02 \x01(\x0b\x32$.SwirlServerMessage.SubmitShareReplyH\x00\x12\x41\n\x11work_notification\x18\x03 \x01(\x0b\x32$.SwirlServerMessage.WorkNotificationH\x00\x1a\x86\x03\n\tAuthReply\x12\x44\n\x0e\x61uth_reply_yes\x18\x01 \x01(\x0b\x32*.SwirlServerMessage.AuthReply.AuthReplyYesH\x00\x12\x42\n\rauth_reply_no\x18\x02 \x01(\x0b\x32).SwirlServerMessage.AuthReply.AuthReplyNoH\x00\x12O\n\x14\x61uth_reply_pool_down\x18\x03 \x01(\x0b\x32/.SwirlServerMessage.AuthReply.AuthReplyPoolDownH\x00\x1a\x35\n\x0c\x41uthReplyYes\x12\x0f\n\x07\x65nonce1\x18\x01 \x01(\x0c\x12\x14\n\x0c\x65nonce2_size\x18\x02 \x01(\r\x1a\x1c\n\x0b\x41uthReplyNo\x12\r\n\x05\x65rror\x18\x01 \x01(\t\x1a:\n\x11\x41uthReplyPoolDown\x12\x0e\n\x06reason\x18\x01 \x01(\t\x12\x15\n\rretry_seconds\x18\x02 \x01(\rB\r\n\x0b\x61uthreplies\x1a\xad\x01\n\x10SubmitShareReply\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12H\n\rsubmit_status\x18\x02 \x01(\x0e\x32\x31.SwirlServerMessage.SubmitShareReply.SubmitStatus\";\n\x0cSubmitStatus\x12\x07\n\x03\x62\x61\x64\x10\x00\x12\x08\n\x04good\x10\x01\x12\t\n\x05stale\x10\x02\x12\r\n\tduplicate\x10\x03\x1a\xdc\x01\n\x10WorkNotification\x12\x0f\n\x07work_id\x18\x01 \x01(\r\x12\x15\n\rblock_version\x18\x02 \x01(\r\x12\x17\n\x0fprev_block_hash\x18\x03 \x01(\x0c\x12\x14\n\x0c\x62lock_height\x18\x04 \x01(\r\x12\x0c\n\x04\x62its\x18\x05 \x01(\r\x12\r\n\x05itime\x18\x06 \x01(\r\x12\x10\n\x08iscript0\x18\x07 \x01(\x0c\x12\x10\n\x08iscript1\x18\x08 \x01(\x0c\x12\x0f\n\x07outputs\x18\t \x03(\x0c\x12\x0c\n\x04\x65\x64ge\x18\n \x03(\x0c\x12\x11\n\tnew_block\x18\x0b \x01(\x08\x42\x10\n\x0eservermessagesb\x06proto3')
+  serialized_pb=_b('\n\x0bswirl.proto\"\xe6\x02\n\x12SwirlClientMessage\x12\x37\n\x0c\x61uth_request\x18\x64 \x01(\x0b\x32\x1f.SwirlClientMessage.AuthRequestH\x00\x12@\n\x0esubmit_request\x18\x65 \x01(\x0b\x32&.SwirlClientMessage.SubmitShareRequestH\x00\x1aY\n\x0b\x41uthRequest\x12\x0f\n\x07version\x18\x01 \x01(\r\x12\x12\n\nhw_version\x18\x02 \x01(\r\x12\x10\n\x08username\x18\x03 \x01(\t\x12\x13\n\x0bworker_uuid\x18\x04 \x01(\r\x1ah\n\x12SubmitShareRequest\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12\x0f\n\x07work_id\x18\x02 \x01(\r\x12\x0f\n\x07\x65nonce2\x18\x03 \x01(\x0c\x12\r\n\x05otime\x18\x04 \x01(\r\x12\r\n\x05nonce\x18\x05 \x01(\rB\x10\n\x0e\x63lientmessages\"\x8a\x08\n\x12SwirlServerMessage\x12\x34\n\nauth_reply\x18\xc8\x01 \x01(\x0b\x32\x1d.SwirlServerMessage.AuthReplyH\x00\x12=\n\x0csubmit_reply\x18\xc9\x01 \x01(\x0b\x32$.SwirlServerMessage.SubmitShareReplyH\x00\x12\x42\n\x11work_notification\x18\xca\x01 \x01(\x0b\x32$.SwirlServerMessage.WorkNotificationH\x00\x1a\x86\x03\n\tAuthReply\x12\x44\n\x0e\x61uth_reply_yes\x18\x01 \x01(\x0b\x32*.SwirlServerMessage.AuthReply.AuthReplyYesH\x00\x12\x42\n\rauth_reply_no\x18\x02 \x01(\x0b\x32).SwirlServerMessage.AuthReply.AuthReplyNoH\x00\x12O\n\x14\x61uth_reply_pool_down\x18\x03 \x01(\x0b\x32/.SwirlServerMessage.AuthReply.AuthReplyPoolDownH\x00\x1a\x35\n\x0c\x41uthReplyYes\x12\x0f\n\x07\x65nonce1\x18\x01 \x01(\x0c\x12\x14\n\x0c\x65nonce2_size\x18\x02 \x01(\r\x1a\x1c\n\x0b\x41uthReplyNo\x12\r\n\x05\x65rror\x18\x01 \x01(\t\x1a:\n\x11\x41uthReplyPoolDown\x12\x0e\n\x06reason\x18\x01 \x01(\t\x12\x15\n\rretry_seconds\x18\x02 \x01(\rB\r\n\x0b\x61uthreplies\x1a\xad\x01\n\x10SubmitShareReply\x12\x12\n\nmessage_id\x18\x01 \x01(\r\x12H\n\rsubmit_status\x18\x02 \x01(\x0e\x32\x31.SwirlServerMessage.SubmitShareReply.SubmitStatus\";\n\x0cSubmitStatus\x12\x07\n\x03\x62\x61\x64\x10\x00\x12\x08\n\x04good\x10\x01\x12\t\n\x05stale\x10\x02\x12\r\n\tduplicate\x10\x03\x1a\xef\x01\n\x10WorkNotification\x12\x0f\n\x07work_id\x18\x01 \x01(\r\x12\x15\n\rblock_version\x18\x02 \x01(\r\x12\x17\n\x0fprev_block_hash\x18\x03 \x01(\x0c\x12\x14\n\x0c\x62lock_height\x18\x04 \x01(\r\x12\x0c\n\x04\x62its\x18\x05 \x01(\r\x12\r\n\x05itime\x18\x06 \x01(\r\x12\x10\n\x08iscript0\x18\x07 \x01(\x0c\x12\x10\n\x08iscript1\x18\x08 \x01(\x0c\x12\x0f\n\x07outputs\x18\t \x03(\x0c\x12\x0c\n\x04\x65\x64ge\x18\n \x03(\x0c\x12\x11\n\tnew_block\x18\x0b \x01(\x08\x12\x11\n\tbits_pool\x18\x0c \x01(\rB\x10\n\x0eservermessagesb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -50,8 +50,8 @@ _SWIRLSERVERMESSAGE_SUBMITSHAREREPLY_SUBMITSTATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1089,
-  serialized_end=1148,
+  serialized_start=1092,
+  serialized_end=1151,
 )
 _sym_db.RegisterEnumDescriptor(_SWIRLSERVERMESSAGE_SUBMITSHAREREPLY_SUBMITSTATUS)
 
@@ -86,8 +86,8 @@ _SWIRLCLIENTMESSAGE_AUTHREQUEST = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='worker_uuid', full_name='SwirlClientMessage.AuthRequest.worker_uuid', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      number=4, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -174,14 +174,14 @@ _SWIRLCLIENTMESSAGE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='auth_request', full_name='SwirlClientMessage.auth_request', index=0,
-      number=1, type=11, cpp_type=10, label=1,
+      number=100, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='submit_request', full_name='SwirlClientMessage.submit_request', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      number=101, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -239,8 +239,8 @@ _SWIRLSERVERMESSAGE_AUTHREPLY_AUTHREPLYYES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=814,
-  serialized_end=867,
+  serialized_start=817,
+  serialized_end=870,
 )
 
 _SWIRLSERVERMESSAGE_AUTHREPLY_AUTHREPLYNO = _descriptor.Descriptor(
@@ -269,8 +269,8 @@ _SWIRLSERVERMESSAGE_AUTHREPLY_AUTHREPLYNO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=869,
-  serialized_end=897,
+  serialized_start=872,
+  serialized_end=900,
 )
 
 _SWIRLSERVERMESSAGE_AUTHREPLY_AUTHREPLYPOOLDOWN = _descriptor.Descriptor(
@@ -306,8 +306,8 @@ _SWIRLSERVERMESSAGE_AUTHREPLY_AUTHREPLYPOOLDOWN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=899,
-  serialized_end=957,
+  serialized_start=902,
+  serialized_end=960,
 )
 
 _SWIRLSERVERMESSAGE_AUTHREPLY = _descriptor.Descriptor(
@@ -353,8 +353,8 @@ _SWIRLSERVERMESSAGE_AUTHREPLY = _descriptor.Descriptor(
       name='authreplies', full_name='SwirlServerMessage.AuthReply.authreplies',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=582,
-  serialized_end=972,
+  serialized_start=585,
+  serialized_end=975,
 )
 
 _SWIRLSERVERMESSAGE_SUBMITSHAREREPLY = _descriptor.Descriptor(
@@ -391,8 +391,8 @@ _SWIRLSERVERMESSAGE_SUBMITSHAREREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=975,
-  serialized_end=1148,
+  serialized_start=978,
+  serialized_end=1151,
 )
 
 _SWIRLSERVERMESSAGE_WORKNOTIFICATION = _descriptor.Descriptor(
@@ -479,6 +479,13 @@ _SWIRLSERVERMESSAGE_WORKNOTIFICATION = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='bits_pool', full_name='SwirlServerMessage.WorkNotification.bits_pool', index=11,
+      number=12, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -491,8 +498,8 @@ _SWIRLSERVERMESSAGE_WORKNOTIFICATION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1151,
-  serialized_end=1371,
+  serialized_start=1154,
+  serialized_end=1393,
 )
 
 _SWIRLSERVERMESSAGE = _descriptor.Descriptor(
@@ -504,21 +511,21 @@ _SWIRLSERVERMESSAGE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='auth_reply', full_name='SwirlServerMessage.auth_reply', index=0,
-      number=1, type=11, cpp_type=10, label=1,
+      number=200, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='submit_reply', full_name='SwirlServerMessage.submit_reply', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      number=201, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='work_notification', full_name='SwirlServerMessage.work_notification', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      number=202, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -539,7 +546,7 @@ _SWIRLSERVERMESSAGE = _descriptor.Descriptor(
       index=0, containing_type=None, fields=[]),
   ],
   serialized_start=377,
-  serialized_end=1389,
+  serialized_end=1411,
 )
 
 _SWIRLCLIENTMESSAGE_AUTHREQUEST.containing_type = _SWIRLCLIENTMESSAGE
