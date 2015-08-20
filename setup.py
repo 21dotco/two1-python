@@ -16,6 +16,30 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
+install_requires = [
+                    'arrow', 
+                    'base58',
+                    'Cython',
+                    'pytest',
+                    'requests',
+                    'gunicorn',
+                    'textblob',
+                    'simplejson',
+                    'django-filter',
+                    'django-rest-swagger',
+                    'djangorestframework',
+                    'Markdown',
+                    'PyYAML',
+                    'cssselect',
+                    'lxml',
+                    'beautifulsoup4',
+                    'pycoin',
+                    'birdy',
+                    'path.py',
+                    'click',
+                    'keyring',
+                    ]
+
 setup(
     name='two1',
 
@@ -42,15 +66,16 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.wallet', 'two1.crypto',
-              'two1.bitcurl', 'two1.djangobitcoin.auth', 'two1.djangobitcoin.misc', 
-              'two1.djangobitcoin.scipy', 'two1.djangobitcoin.static_serve'],
+    packages=['two1', 'two1.lib', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.wallet', 
+            'two1.crypto','two1.bitcurl', 'two1.djangobitcoin.auth', 'two1.djangobitcoin.misc', 
+            'two1.djangobitcoin.scipy', 'two1.djangobitcoin.static_serve'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['click', 'cython'],
+    install_requires=install_requires,
+
     ext_modules=extensions,
 
     # List additional groups of dependencies here (e.g. development
