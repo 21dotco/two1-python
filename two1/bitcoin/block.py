@@ -9,7 +9,11 @@ from two1.bitcoin.utils import *
     left_child: MerkleNode object
     right_child: MerkleNode object
 """
-MerkleNode = namedtuple('MerkleNode', ['hash', 'left_child', 'right_child'])
+class MerkleNode:
+    def __init__(self, hash=None, left_child=None, right_child=None):
+        self.left_child = left_child
+        self.right_child = right_child
+        self.hash = hash
 
 
 class BlockHeader(object):
@@ -85,7 +89,7 @@ class BlockHeader(object):
             valid (bool): True if hash < target, False otherwise.
         """
         return self.hash.to_int('little') < self.target
-        
+
     def __bytes__(self):
         """ Serializes the BlockHeader object.
 
@@ -110,7 +114,7 @@ class BlockHeader(object):
         """
         return Hash.dhash(bytes(self))
 
-    
+
 class Block(object):
     """ A Bitcoin Block object.
 
@@ -149,7 +153,7 @@ class Block(object):
             t, b = Transaction.from_bytes(b)
             txns.append(t)
 
-        return (Block.from_blockheader(bh, txns), b)
+        return Block.from_blockheader(bh, txns), b
 
     @classmethod
     def from_blockheader(cls, bh, txns):
@@ -207,10 +211,10 @@ class Block(object):
         if(merkle_node.left_child is None and
            merkle_node.right_child is None):
             # This is the node corresponding to the coinbase, update hash
-            merkle_node.merkle_hash = self.coinbase_tranaction.hash
+            merkle_node.hash = self.coinbase_transaction.hash
             return
         else:
-            self.invalidate_coinbase(merkle_node.left_child)
+            self._invalidate_coinbase(merkle_node.left_child)
 
         merkle_node.merkle_hash = Hash.dhash(bytes(merkle_node.left_child.hash) +
                                              bytes(merkle_node.right_child.hash))
@@ -250,7 +254,7 @@ class Block(object):
             edge (List(bytes)): List of hashes corresponding to the merkle edge
         """
         return self._get_merkle_edge()
-            
+
     def _get_merkle_edge(self, node=None):
         # Start at root node and head recurse
         if node is None:
@@ -294,7 +298,7 @@ class Block(object):
             dhash (bytes): The double SHA-256 hash of the block header.
         """
         return self.block_header.hash
-        
+
     def __bytes__(self):
         """ Serializes the Block object into a byte stream.
 
@@ -367,12 +371,12 @@ class CompactBlock(object):
         if self._cb_txn is None:
             # TODO: raise an error?
             return
-        
+
         cur_hash = self._cb_txn.hash
 
         for e in self.merkle_edge:
             cur_hash = Hash.dhash(bytes(cur_hash) + bytes(e))
-            
+
         self.block_header.merkle_root_hash = cur_hash
 
     # Private function to compute midstate.
