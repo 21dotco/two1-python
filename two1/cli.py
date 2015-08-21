@@ -64,7 +64,7 @@ $ two1
 
 \b
 Full documentation: github.com/21dotco/two1"""
-    dlog("two1.main")
+    #dlog("two1.main")
     cfg = Config(config_file, config)
     check_setup_twentyone_account(cfg)
     ctx.obj = cfg 

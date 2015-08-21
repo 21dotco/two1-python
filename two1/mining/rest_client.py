@@ -60,12 +60,12 @@ class MiningRestClient(object):
 			headers["Authorization"]=sig.decode()
 		if len(headers) == 0:
 			headers = None
-		print("Request: " + str(method)+ " " + str(url)  + " " + str(headers)  + " " + str(kwargs["data"]))
+		#print("Request: " + str(method)+ " " + str(url)  + " " + str(headers)  + " " + str(kwargs["data"]))
 		result = requests.request(method,
 								url,
 								headers=headers,
 								**kwargs)
-		print("Result: %s %s " % (result,result.text))
+		#print("Result: %s %s " % (result,result.text))
 		return result
 
 	#POST /v0/mining/account
