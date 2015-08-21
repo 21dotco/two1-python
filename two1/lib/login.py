@@ -61,9 +61,11 @@ def create_twentyone_account(config):
                 break
             elif r.status_code == 201:
                 config.update_key("username",try_username)
+                config.update_key("bitcoin_address",bitcoin_payout_address)
                 #save the auth keys
                 keyring.set_password("twentyone","mining_auth_key",mining_auth_key_b58)
                 config.update_key("mining_auth_pubkey",mining_auth_pubkey)
+                
                 config.save()
                 break
             elif r.status_code == 400:
