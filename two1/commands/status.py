@@ -12,11 +12,12 @@ def status(config):
     """View earned Bitcoin and configuration"""
 
     foo = config.fmt()
-    config.log(
-      '''
-21.co Account: {}'''
-         .format(config.username)
-      )
+    config.log('''
+21.co Account''', fg='magenta')
+    config.log('''\
+    Username              : {}'''
+         .format(config.username))
+
     time.sleep(1.0)
 
     b_seed = ord(config.username[0])
@@ -24,7 +25,8 @@ def status(config):
     balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
 
     config.log('''
-Wallet
+Wallet''',fg='magenta')
+    config.log('''\
     Balance (confirmed)   : {} Satoshi
     Balance (unconfirmed) : {} Satoshi
     Payout Address        : {}'''
@@ -35,7 +37,8 @@ Wallet
     shares = int(time.time() / 1.0)
 
     config.log('''
-Mining Proceeds
+Mining Proceeds''',fg='magenta')
+    config.log('''\
     Mining Status         : Live
     Mining Proceeds       : {}
     Shares Sent           : {}'''
@@ -63,7 +66,7 @@ def status_endpoints(config):
               ("misc/cn2en",2000,"No","Chinese to English",2,4000),
     ]
     dundee_data = ["" for n in range(len(headers))]
-    config.log("\nMMM Endpoints")
+    config.log("\nMMM Endpoints",fg="magenta")
     config.log(dundee1_format.format(*dundee_data))
     config.log(header_format.format(*headers))
     config.log(dundee2_format.format(*dundee_data))

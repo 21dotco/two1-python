@@ -105,12 +105,16 @@ class Config(object):
         #the config
         #self.save()
 
-
-    def log(self, msg, *args):
+    # kwargs is styling parameters
+    def log(self, msg, *args,**kwargs):
         """Logs a message to stderr."""
         if args:
             msg %= args
-        click.echo(msg, file=sys.stderr)
+        if len(kwargs) > 0:
+            out = click.style(msg,**kwargs)
+        else:
+            out = msg
+        click.echo(out, file=sys.stderr)
 
     def vlog(self, msg, *args):
         """Logs a message to stderr only if verbose is enabled."""
