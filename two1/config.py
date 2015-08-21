@@ -32,7 +32,15 @@ class Config(object):
         self.dir = self.file.parent
         self.defaults = {}
         self.load()
-        dlog("Manual config = %s" % str(config))
+        #override config variables
+        for k,v in config:
+            self.defaults[k]=v
+
+        if self.verbose:
+            self.vlog("Applied manual config.")
+            for k,v in config:
+                self.vlog("  {}={}".format(k,v))
+
         #add wallet object
         self.wallet = electrumWallet.ElectrumWallet()          
 
