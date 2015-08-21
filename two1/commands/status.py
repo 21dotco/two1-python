@@ -24,13 +24,18 @@ def status(config):
     balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
     balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
 
+    try:
+      bitcoin_address = config.bitcoin_address
+    except AttributeError:
+      bitcoin_address = "Not Set"
+
     config.log('''
 Wallet''',fg='magenta')
     config.log('''\
     Balance (confirmed)   : {} Satoshi
     Balance (unconfirmed) : {} Satoshi
     Payout Address        : {}'''
-      .format(balance_c,balance_u,config.bitcoin_address)
+      .format(balance_c,balance_u,bitcoin_address)
       )
 
     mining_p = int(time.time() / 9.0)
