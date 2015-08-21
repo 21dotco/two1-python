@@ -46,6 +46,7 @@ Mining Proceeds''',fg='magenta')
       )
 
     status_endpoints(config)
+    status_bought_endpoints(config)
 
 def status_endpoints(config):
 
@@ -72,5 +73,29 @@ def status_endpoints(config):
     config.log(dundee2_format.format(*dundee_data))
     for edata in endpoint_data:
       config.log(data_format.format(*edata))
+    config.log(dundee2_format.format(*dundee_data))
+    config.log("")
+
+
+def status_bought_endpoints(config):
+
+    time.sleep(1.0)
+
+    headers =  \
+           ("Seller","Resource","Price","Date")
+    header_format = "{:^15}|{:^15}|{:^12}|{:^25}"
+    data_format   = "{:<15.15}|{:<15.15}|{:>12}|{:^25.25}"
+    dundee1_format = "{:_^16}{:_^16}{:_^13}{:_^26}"
+    dundee2_format = "{:_^15}|{:_^15}|{:_^12}|{:_^25}"
+
+    purchases = config.get_purchases()
+
+    dundee_data = ["" for n in range(len(headers))]
+    config.log("\nMMM Purchases",fg="magenta")
+    config.log(dundee1_format.format(*dundee_data))
+    config.log(header_format.format(*headers))
+    config.log(dundee2_format.format(*dundee_data))
+    for edata in purchases:
+      config.log(data_format.format(edata["s"],edata["r"],edata["p"],edata["d"]))
     config.log(dundee2_format.format(*dundee_data))
     config.log("")
