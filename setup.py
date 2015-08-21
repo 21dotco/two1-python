@@ -30,7 +30,7 @@ install_requires = [
 
 setup(
     name='two1',
-    version='0.2.0',
+    version='0.2.1',
     description='Buy and sell anything on the internet with Bitcoin.',
     long_description=long_description,
     url='https://github.com/21dotco/two1',
