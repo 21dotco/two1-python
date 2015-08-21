@@ -12,6 +12,7 @@ from two1.uxstring import UxString
 import pkg_resources 
 
 TWO1_CONFIG_FILE = path("~/.two1/two1.json")
+TWO1_PURCHASES_FILE = path("~/.two1/purchases.json")
 TWO1_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
 #TWO1_HOST = "http://127.0.0.1:8000"
 
@@ -43,6 +44,14 @@ class Config(object):
 
         #add wallet object
         self.wallet = electrumWallet.ElectrumWallet()          
+
+        #create an empty purchases file if it does not exist
+        self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()
+        if self.purchases_file.exists() and self.purchases_file.isfile():
+            pass
+        else:
+            with open(self.purchases_file, mode='w', encoding='utf-8') as f:
+                pass
 
     #pulls attributes from the self.defaults dict
     def __getattr__(self, name):
@@ -120,6 +129,25 @@ class Config(object):
         """Logs a message to stderr only if verbose is enabled."""
         if self.verbose:
             self.log(msg, *args)
+
+    def log_purchase(self,**kwargs):
+        #simple logging to file
+        #this can be replaced with pickle/sqlite
+        with open(self.purchases_file, mode='a', encoding='utf-8') as pjson:
+            pjson.write(json.dumps(kwargs)+"\n")
+
+    def get_purchases(self):
+        #read all right now. TODO: read the most recent ones only
+        try:
+            with open(self.purchases_file, mode='r', encoding='utf-8') as pjson:
+                content = pjson.readlines()
+            return [json.loads(n) for n in content]
+        except:
+            dlog("Error: Could not load purchases.")
+            return []
+
+        
+
 
     def fmt(self):
         pairs = []
