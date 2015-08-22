@@ -2,7 +2,7 @@ from subprocess import check_output
 import json
 import copy
 from two1.wallet.baseWallet import BaseWallet, satoshi_to_btc
-
+import os
 
 class ElectrumWallet(BaseWallet):
     """ A simplified interface to the python wallet.
@@ -131,7 +131,7 @@ class ElectrumWallet(BaseWallet):
     def configure(self, config_options):
         """ Automatically configures the wallet with the provided configuration options
         """
-        self._electrum_call_with_simple_error(['create');
+        self._electrum_call_with_simple_error(['create'])
 
     @staticmethod
     def _type_check(name, var, typeN):
