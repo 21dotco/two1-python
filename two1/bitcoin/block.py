@@ -1,8 +1,7 @@
-from collections import namedtuple
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import CoinbaseInput, Transaction
 from two1.bitcoin.sha256 import sha256 as sha256_midstate
-from two1.bitcoin.utils import *
+from two1.bitcoin.utils import pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
 """ merkle_hash: SHA-256 byte string (internal byte order)
@@ -216,12 +215,12 @@ class Block(object):
         else:
             self._invalidate_coinbase(merkle_node.left_child)
 
-        merkle_node.merkle_hash = Hash.dhash(bytes(merkle_node.left_child.hash) +
-                                             bytes(merkle_node.right_child.hash))
+        merkle_node.hash = Hash.dhash(bytes(merkle_node.left_child.hash) +
+                                      bytes(merkle_node.right_child.hash))
 
         # If we're back at the root, update the blockheader
         if merkle_node is self.merkle_tree:
-            self.block_header.merkle_hash = self.merkle_tree.hash
+            self.block_header.merkle_root_hash = self.merkle_tree.hash
 
     def _compute_merkle_tree(self):
         """ Computes the merkle tree from the transactions in self.transactions.
