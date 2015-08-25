@@ -4,7 +4,8 @@ import keyring
 import requests
 import click
 from two1.config import TWO1_HOST
-from two1.lib import rest_client
+from two1.wallet import electrumWallet
+from two1.lib.rest_client import TwentyOneRestClient
 from two1.bitcoin.crypto import PrivateKey
 from two1.uxstring import UxString
 
@@ -38,7 +39,7 @@ def create_twentyone_account(config):
 
     #store the username -> private key into the system keychain
     click.echo(UxString.creating_account % config.username)
-    mining_rest_client = rest_client.MiningRestClient(mining_auth_key,TWO1_HOST)
+    mining_rest_client = TwentyOneRestClient(TWO1_HOST,mining_auth_key)
 
     #use the same key for the payout address as well.
     #this will come from the wallet
