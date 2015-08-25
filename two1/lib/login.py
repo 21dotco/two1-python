@@ -11,9 +11,9 @@ from two1.uxstring import UxString
 
 def check_setup_twentyone_account(config):
   #check if wallet is ready to use
-    #if not config.wallet.is_configured:
+    if not config.wallet.is_configured:
     #    #configure wallet with default options
-    #    config.wallet.configure(config.wallet.config_options)
+        config.wallet.configure(config.wallet.config_options)
     
     #check if mining a/c has been setup
     if not config.mining_auth_pubkey:
