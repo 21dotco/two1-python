@@ -11,9 +11,13 @@ class UxString:
 
 	class Error:
 		#network errors
-		connection = "Cannot connect to %s."
-		timeout    = "Connection to %s timed out."
+		connection = "Error: Cannot connect to %s."
+		timeout    = "Error: Connection to %s timed out."
 
 		#file io errors
-		file_load = "Failed to load file %s."
+		file_load = "Error: Failed to load file %s."
+
+		#wallet errors
+		electrum_missing = "Error: Could not find ElectrumWallet application."
+
 

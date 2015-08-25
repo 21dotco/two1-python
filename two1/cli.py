@@ -66,9 +66,12 @@ $ two1
 \b
 Full documentation: github.com/21dotco/two1"""
     #dlog("two1.main")
-    cfg = Config(config_file, config)
-    check_setup_twentyone_account(cfg)
-    ctx.obj = cfg 
+    try:
+        cfg = Config(config_file, config)
+        check_setup_twentyone_account(cfg)
+        ctx.obj = cfg 
+    except:
+        sys.exit(1)
 
 from two1.commands.buy import buy
 main.add_command(buy)

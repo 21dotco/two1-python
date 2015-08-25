@@ -50,7 +50,13 @@ class Config(object):
                 self.vlog("  {}={}".format(k, v))
 
         # add wallet object
-        self.wallet = electrumWallet.ElectrumWallet()
+        try:
+            self.wallet = electrumWallet.ElectrumWallet(TWO1_PATH)
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+            # handle file not found error.
+                click.echo(UxString.Error.electrum_missing)
+            raise
 
         # create an empty purchases file if it does not exist
         self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()
