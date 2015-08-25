@@ -20,9 +20,12 @@ def status(config):
 
     time.sleep(1.0)
 
+
     b_seed = ord(config.username[0])
     balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
     balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
+
+#    balance_c = config.wallet.confirmed_balance()
 
     try:
       bitcoin_address = config.bitcoin_address
