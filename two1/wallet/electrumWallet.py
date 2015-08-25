@@ -8,8 +8,18 @@ class ElectrumWallet(BaseWallet):
     """ A simplified interface to the python wallet.
     """
 
-    def __init__(self):
+    def __init__(self,TWO1_PATH=None):
         super(ElectrumWallet, self).__init__()
+        # check if electrum wallet is installed and available
+        self.electrumPath = ""
+        if TWO1_PATH:
+            try_electrum_path = os.path.join(TWO1_PATH,"electrum")
+            self.electrumPath = try_electrum_path if os.path.isfile(try_electrum_path) else ""
+
+        # check if electrum is works
+        # will throw an OSError if electrum does not work
+        output = check_output([os.path.join(self.electrumPath,"electrum"),"--help"]).decode("utf-8")
+
 
     def addresses(self):
         """ Gets the address list for the current wallet.
@@ -170,6 +180,7 @@ class ElectrumWallet(BaseWallet):
         Returns:
             (*): The parsed foundation object.
         """
+
         _args = ['electrum'];
 
         # Add arguments
