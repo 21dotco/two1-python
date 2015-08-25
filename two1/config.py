@@ -21,6 +21,11 @@ try:
 except:
     TWO1_VERSION = "undefined"
 
+try:
+    TWO1_PATH = os.path.dirname(sys.argv[0])
+except:
+    TWO1_PATH = None
+
 
 '''Primary use case for the following class is the singleton that holds
    all the state & config data required to run commands and subcommands
