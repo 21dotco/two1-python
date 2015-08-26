@@ -1,4 +1,5 @@
 from subprocess import check_output
+import subprocess
 import json
 import copy
 from two1.wallet.baseWallet import BaseWallet, satoshi_to_btc
@@ -19,6 +20,13 @@ class ElectrumWallet(BaseWallet):
         # check if electrum is works
         # will throw an OSError if electrum does not work
         output = check_output([os.path.join(self.electrumPath,"electrum"),"--help"]).decode("utf-8")
+        # start daemon
+        try:
+            output = check_output([os.path.join(self.electrumPath,"electrum"),"daemon","start"])
+        except subprocess.CalledProcessError as e:
+            if e.returncode != 1:
+                #raise if returncode is not 1. This is a the case when there was trouble in starting the daemon
+                raise
 
 
     def addresses(self):
