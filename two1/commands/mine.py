@@ -7,6 +7,7 @@ from two1.bitcoin.block import CompactBlock
 from two1.mining.coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.utils import bytes_to_str
+from two1.lib import login
 import time
 import random
 import datetime
@@ -29,9 +30,13 @@ def mine(config):
         # do minertop
         pass
     else:
-        pk = PrivateKey.from_random()
-        mining_rest_client = rest_client.TwentyOneRestClient(private_key=pk,
-                                                             server_url=cmd_config.TWO1_HOST)
+        rest_client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
+                                                        login.get_auth_key())
+
+        payout_address = config.wallet.current_address()
+        config.log("Setting payout_address to {}".format(payout_address))
+        # set a new address from the HD wallet for payouts
+        rest_client.account_payout_address_post(config.username,payout_address)
 
         work_msg = mining_rest_client.get_work(username=config.username)
         msg_factory = message_factory.SwirlMessageFactory()
