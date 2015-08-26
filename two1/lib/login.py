@@ -14,7 +14,12 @@ def check_setup_twentyone_account(config):
   #check if wallet is ready to use
     if not config.wallet.is_configured:
     #    #configure wallet with default options
+        click.pause(UxString.create_wallet)
+        
         config.wallet.configure(config.wallet.config_options)
+        config.wallet.start_daemon()
+
+        click.pause(UxString.create_wallet_done)
     
     #check if mining a/c has been setup
     if not config.mining_auth_pubkey:
@@ -23,6 +28,9 @@ def check_setup_twentyone_account(config):
             click.echo(UxString.account_failed)
             return False  
 
+def get_auth_key():
+    mining_auth_key_b58 = keyring.get_password("twentyone","mining_auth_key")
+    return PrivateKey.from_b58check(mining_auth_key_b58)
 
 def create_twentyone_account(config):
     #mining a/c setup
@@ -43,8 +51,8 @@ def create_twentyone_account(config):
 
     #use the same key for the payout address as well.
     #this will come from the wallet
-#    bitcoin_payout_address = config.wallet.current_address()
-    bitcoin_payout_address = mining_auth_key.public_key.address()
+    bitcoin_payout_address = config.wallet.current_address()
+#    bitcoin_payout_address = mining_auth_key.public_key.address()
 
     click.echo(UxString.payout_address % bitcoin_payout_address)
     try:
