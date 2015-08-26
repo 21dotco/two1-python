@@ -1,21 +1,2 @@
 [
-  {
-    "urls": [
-      "^barcode/generate-qr",
-      "^barcode/upc-lookup"
-    ],
-    "package": "two1.djangobitcoin.misc"
-  },
-  {
-    "package": "two1.djangobitcoin.scipy_aas"
-  },
-  {
-    "package": "two1.djangobitcoin.static_serve"
-  },
-  {
-    "urls": [
-      "^foo/func1"
-    ],
-    "package": "foo"
-  }
 ]

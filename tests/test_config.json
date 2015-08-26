@@ -1,0 +1,13 @@
+{
+  "bitin": ".bitcoin/wallet.dat",
+  "bitout": ".bitcoin/wallet.dat",
+  "contact": "two1@21.co",
+  "maxspend": 20000,
+  "mining_auth_pubkey": "i_haz_key",
+  "sellprice": 10000,
+  "sortby": "price",
+  "stderr": ".two1/two1.stderr",
+  "stdout": ".two1/two1.stdout",
+  "username": "satoshi",
+  "verbose": false
+}

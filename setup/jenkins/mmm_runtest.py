@@ -27,7 +27,7 @@ def main():
         print("--------------------")
         print("Running the tests...")
         print("--------------------")
-        shell("docker run --rm -i " + image_name + ' bash -c " python two1/djangobitcoin/manage.py test "')
+        shell("docker run --rm -i " + image_name + ' bash -c "cd two1/djangobitcoin && python manage.py test "')
         print("--------------------")
         print("Success!")
         print("--------------------")

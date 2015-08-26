@@ -240,7 +240,7 @@ def generate_wrapper(source, group):
         url (url): The composed URL object.
     """
     # url will match function name
-    path = r'^scipy-{0}/{1}/$'.format(group, source.__name__)
+    path = r'^scipy-{0}/{1}$'.format(group, source.__name__)
 
     # make a copy of the APIView class to hold the code and doc
     wrapper = type(source.__name__, (views.APIView,), {})

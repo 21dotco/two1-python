@@ -136,7 +136,7 @@ REST_FRAMEWORK = {
     ),
 
     # Set the exeption handler so we can send 402 requests.
-    'EXCEPTION_HANDLER': 'lib.djangobitcoin.PaymentRequiredExceptionHandler'
+    'EXCEPTION_HANDLER': 'auth.djangobitcoin.PaymentRequiredExceptionHandler'
 }
 
 
