@@ -1,7 +1,6 @@
 import click
 from two1.config import pass_config
 from two1.debug import dlog
-
 import time
 import datetime
 from random import randint
@@ -18,22 +17,21 @@ def status(config):
     Username              : {}'''
          .format(config.username))
 
-    time.sleep(1.0)
-
+    config.log('''
+Wallet''',fg='magenta')
 
     b_seed = ord(config.username[0])
-    balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
-    balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
+    #balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
+    #balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
+    balance_c = config.wallet.confirmed_balance()
+    balance_u = config.wallet.unconfirmed_balance()
 
 #    balance_c = config.wallet.confirmed_balance()
-
     try:
-      bitcoin_address = config.bitcoin_address
+      bitcoin_address = config.current_address
     except AttributeError:
       bitcoin_address = "Not Set"
 
-    config.log('''
-Wallet''',fg='magenta')
     config.log('''\
     Balance (confirmed)   : {} Satoshi
     Balance (unconfirmed) : {} Satoshi
@@ -57,8 +55,6 @@ Mining Proceeds''',fg='magenta')
     status_bought_endpoints(config)
 
 def status_endpoints(config):
-
-    time.sleep(1.0)
 
     headers =  \
            ("URL","Price","MMM?","Description","# Requests","Earnings")
@@ -86,8 +82,6 @@ def status_endpoints(config):
 
 
 def status_bought_endpoints(config):
-
-    time.sleep(1.0)
 
     headers =  \
            ("Seller","Resource","Price","Date")
