@@ -4,7 +4,7 @@ json
 Cython==0.22.1
 protobuf==3.0.0a3
 pytest
-Django==1.8.2
+Django==1.8.3
 requests==2.7.0
 gunicorn==19.3.0
 nltk==3.0.3

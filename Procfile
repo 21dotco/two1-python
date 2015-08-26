@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath two1.djngobitcoin djangobitcoin.wsgi --log-file -
+web: gunicorn --pythonpath two1.djangobitcoin djangobitcoin.wsgi --log-file -

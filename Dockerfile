@@ -15,4 +15,9 @@ RUN python setup.py build_ext --inplace
 
 EXPOSE 8000
 
-CMD [ "gunicorn", "-pythonpath two1/djangobitcoin djangobitcoin.wsgi", "--bind", "0.0.0.0:8000" ]
+ENV PORT 8000
+ENV PYTHONUNBUFFERED true
+
+RUN rm Procfile
+
+CMD [ "gunicorn", "--pythonpath", "two1/djangobitcoin", "djangobitcoin.wsgi", "--worker-class", "tornado"]
