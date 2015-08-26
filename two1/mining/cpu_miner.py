@@ -42,11 +42,6 @@ class CPUMiner(threading.Thread):
 
     def run(self):
         for nonce in range(0xffffffff):
-            if nonce % int(1e5) == 0:
-                if self.stop:
-                    self.stop = False
-                    print("Exiting Worker....")
-                    break
 
             # block_header = BlockHeader(version = notify_msg.block_version,
             #                            prev_block_hash=Hash(notify_msg.prev_block_hash),
@@ -62,7 +57,7 @@ class CPUMiner(threading.Thread):
                 share = Share(
                     enonce2=self.current_work.enonce2,
                     nonce=nonce,
-                    job_id=self.current_work.job_id,
+                    job_id=self.current_work.work_id,
                     otime=int(time.time()))
 
                 # TODO investigate: Maybe BaseEventLoop.run_in_executor() is better
