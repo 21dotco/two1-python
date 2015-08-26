@@ -71,7 +71,8 @@ Full documentation: github.com/21dotco/two1"""
         check_setup_twentyone_account(cfg)
         ctx.obj = cfg 
     except:
-        sys.exit(1)
+        raise
+        #sys.exit(1)
 
 from two1.commands.buy import buy
 main.add_command(buy)
