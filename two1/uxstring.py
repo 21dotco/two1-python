@@ -19,5 +19,6 @@ class UxString:
 
 		#wallet errors
 		electrum_missing = "Error: Could not find ElectrumWallet application."
+		electrum_daemon = "Error: Could not start electrum daemon."
 
 

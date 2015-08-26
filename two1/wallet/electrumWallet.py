@@ -21,13 +21,16 @@ class ElectrumWallet(BaseWallet):
         # will throw an OSError if electrum does not work
         output = check_output([os.path.join(self.electrumPath,"electrum"),"--help"]).decode("utf-8")
         # start daemon
+
+    def start_daemon(self):
         try:
             output = check_output([os.path.join(self.electrumPath,"electrum"),"daemon","start"])
         except subprocess.CalledProcessError as e:
             if e.returncode != 1:
-                #raise if returncode is not 1. This is a the case when there was trouble in starting the daemon
-                raise
-
+                # raise if returncode is not 1. 
+                # This is a the case when there was trouble in starting the daemon
+                return False 
+        return True
 
     def addresses(self):
         """ Gets the address list for the current wallet.
