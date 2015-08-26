@@ -58,6 +58,10 @@ class Config(object):
                 click.echo(UxString.Error.electrum_missing)
             raise
 
+        if not self.wallet.start_daemon():
+            click.echo(UxString.Error.electrum_daemon)
+            raise 
+
         # create an empty purchases file if it does not exist
         self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()
         if self.purchases_file.exists() and self.purchases_file.isfile():
