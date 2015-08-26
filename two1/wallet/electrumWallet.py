@@ -133,8 +133,13 @@ class ElectrumWallet(BaseWallet):
         Returns:
             (bool): Returns True if the wallet has been configured and ready to use otherwise False
         """
+        # create wallet config file if not present
+        config_file = self._electrum_data_path("config")
+        if not os.path.isfile(config_file):
+            self._electrum_create_default_config(config_file)
+
         # Check for wallet file
-        return os.path.isfile( os.path.expanduser('~/.electrum/wallets/default_wallet') )
+        return os.path.isfile( self._electrum_data_path("wallets","default_wallet") )
 
     @property
     def config_options(self):
@@ -146,13 +151,13 @@ class ElectrumWallet(BaseWallet):
         """
         return {
             "key_style": ["HD","Brain","Simple", "Multi_Signiture"],
-            "varsion": self._electrum_call_with_simple_error(['version', 'Failed to get version'], "I fail")
+            #"version": self._electrum_call_with_simple_error(['version', 'Failed to get version'], "I fail")
         }
 
     def configure(self, config_options):
         """ Automatically configures the wallet with the provided configuration options
         """
-        self._electrum_call_with_simple_error(['create'])
+        self._electrum_call_with_nonjson(['create'],"Could not create wallet.")
 
     @staticmethod
     def _type_check(name, var, typeN):
@@ -192,7 +197,7 @@ class ElectrumWallet(BaseWallet):
             (*): The parsed foundation object.
         """
 
-        _args = ['electrum'];
+        _args = ['electrum']
 
         # Add arguments
         for item in args:
@@ -228,3 +233,49 @@ class ElectrumWallet(BaseWallet):
             return ElectrumWallet._call_electrum(args)
         except Exception as e:
             raise ValueError(errMsg)
+
+    @staticmethod
+    def _electrum_call_with_nonjson(args, errMsg):
+        """ Calls the electrum CLI where the expected output from Electrum is non-json.
+
+        Args:
+            args (list): list of arguments to call on electrum.
+            errMsg (str): The message to replace caught messages.
+
+        Returns:
+            (*): The parsed foundation object.
+        """
+        try:
+            _args = ['electrum']
+
+            for item in args:
+                _args.append(item)
+            subprocess.call(_args)
+        except Exception as e:
+            raise ValueError(errMsg)
+
+    @staticmethod
+    def _electrum_data_path(*args):
+        return os.path.join(os.path.expanduser("~"),".electrum",*args)
+
+    @staticmethod
+    def _electrum_create_default_config(config_file):
+        with open(config_file, mode="w") as fh:
+            fh.write('''
+                {
+                    "auto_connect": true,
+                    "console-history": [],
+                    "gui_show_history": false,
+                    "gui_show_receiving": false,
+                    "is_maximized": false,
+                    "lite_mode": false,
+                    "winpos-qt": [
+                    173,
+                    117,
+                    840,
+                    429
+                    ]
+                }
+                ''')
+
+
