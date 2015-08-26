@@ -81,6 +81,19 @@ class MiningRestClient(object):
                              data=data
                              )
 
+    # GET /v0/mining/work/{username}
+    def get_work(self, username):
+
+        method = "GET"
+        path = "/v0/mining/work/" + username
+        return self._request(True, method, path)
+
+    # POST /v0/mining/work/{username}
+    def send_work(self, username, data):
+        method = "POST"
+        path = "/v0/mining/work/" + username
+        return self._request(False, method, path, data=data)
+
     # POST /v0/mining/account/payout_address/{username}
     def account_payout_address_post(self, username, payout_address):
         method = "POST"
