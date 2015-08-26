@@ -134,7 +134,7 @@ if __name__ == "__main__":
     host = "http://127.0.0.1:8000"
     for n in range(100):
         pk = PrivateKey.from_random()
-        m = MiningRestClient(pk, host)
+        m = TwentyOneRestClient(pk, host)
         try:
             m.account_post("testuser11210_" + str(n), 
                 "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
