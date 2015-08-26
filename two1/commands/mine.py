@@ -14,7 +14,7 @@ from two1.lib import rest_client, message_factory
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
 
-from gen import swirl_pb2 as swirl
+from two1.gen import swirl_pb2 as swirl
 
 
 @click.command()
@@ -29,8 +29,9 @@ def mine(config):
         # do minertop
         pass
     else:
-        mining_rest_client = rest_client.MiningRestClient(PrivateKey.from_random(),
-                                                          cmd_config.TWO1_HOST)
+        pk = PrivateKey.from_random()
+        mining_rest_client = rest_client.TwentyOneRestClient(private_key=pk,
+                                                             server_url=cmd_config.TWO1_HOST)
 
         work_msg = mining_rest_client.get_work(username=config.username)
         msg_factory = message_factory.SwirlMessageFactory()
@@ -82,8 +83,10 @@ def get_enonces(username):
     enonce2_size = 4
     return enonce1, enonce2_size
 
+
 Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'job_id'])
 Work = namedtuple('Work', ['job_id', 'enonce2', 'cb'])
+
 
 def find_valid_nonce(config, work_msg):
     '''Find valid nonce for given problem'''
@@ -115,25 +118,29 @@ def find_valid_nonce(config, work_msg):
 
     print("starting to mine for %s" % work.cb.block_header.target)
     start = int(time.time())
-    for nonce in range(0xffffffff):
-        work.cb.block_header.nonce = nonce
-        if work.cb.block_header.valid:
-            duration = int(time.time()) - start
-            print("found in %d secs" % duration)
-            share = Share(
-                enonce2=enonce2,
-                nonce=nonce,
-                job_id=work_msg.work_id,
-                otime=int(time.time()))
-            return share
+    # for nonce in range(0xffffffff):
+    #     work.cb.block_header.nonce = nonce
+    #     if work.cb.block_header.valid:
+    #         duration = int(time.time()) - start
+    #         print("found in %d secs" % duration)
+    #         share = Share(
+    #             enonce2=enonce2,
+    #             nonce=nonce,
+    #             job_id=work_msg.work_id,
+    #             otime=int(time.time()))
+    #         return share
 
     rotate = "+-"
     char = 0
     mining_message = "You are about to get Bitcoin! {}"
-    max_nonce = 0xffff
-    with click.progressbar(length=max_nonce, label='Mining...',
-                           bar_template='%(label)s | %(bar)s | %(info)s',
-                           fill_char=click.style(u'█', fg='cyan'),
-                           empty_char=' ', show_eta=False) as bar:
-        for item in bar:
+    max_nonce = 100000
+    x = range(0, 0xffffffff)
+    with click.progressbar(x) as bar:
+        for user in bar:
             pass
+    # with click.progressbar(length=max_nonce, label='Mining...',
+    #                        bar_template='%(label)s | %(bar)s | %(info)s',
+    #                        fill_char=click.style(u'█', fg='cyan'),
+    #                        empty_char=' ', show_eta=False) as bar:
+    #     for nonce in bar:
+    #         pass

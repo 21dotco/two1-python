@@ -125,7 +125,7 @@ class ElectrumWallet(BaseWallet):
         Returns:
             (dictionary): A dictionary containing the transaction name and the raw transaction object.
         """
-        return self.broadcast_raw_transaction(self.make_raw_signed_transaction(address, amount));
+        return self.broadcast_raw_transaction(self.make_raw_signed_transaction(address, amount))
 
     @property
     def is_configured(self):
@@ -134,7 +134,7 @@ class ElectrumWallet(BaseWallet):
             (bool): Returns True if the wallet has been configured and ready to use otherwise False
         """
         # Check for wallet file
-        return os.path.isfile( os.path.expanduser('~/.electrum/wallets/default_wallet') );
+        return os.path.isfile( os.path.expanduser('~/.electrum/wallets/default_wallet') )
 
     @property
     def config_options(self):
@@ -146,7 +146,7 @@ class ElectrumWallet(BaseWallet):
         """
         return {
             "key_style": ["HD","Brain","Simple", "Multi_Signiture"],
-            "varsion": self._electrum_call_with_simple_error(['version', 'Failed to get version'])
+            "varsion": self._electrum_call_with_simple_error(['version', 'Failed to get version'], "I fail")
         }
 
     def configure(self, config_options):
@@ -225,6 +225,6 @@ class ElectrumWallet(BaseWallet):
             (*): The parsed foundation object.
         """
         try:
-            return ElectrumWallet._call_electrum(args);
+            return ElectrumWallet._call_electrum(args)
         except Exception as e:
-            raise ValueError(errMsg);
+            raise ValueError(errMsg)
