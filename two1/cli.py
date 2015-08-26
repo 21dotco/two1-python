@@ -1,3 +1,4 @@
+import locale
 import os
 import sys
 import json
@@ -94,5 +95,6 @@ from two1.commands.status import status
 main.add_command(status)
     
 if __name__ == "__main__":
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     main()
 

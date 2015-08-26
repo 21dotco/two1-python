@@ -1,7 +1,7 @@
 import click
 from two1.config import pass_config
 from two1.config import TWO1_HOST
-from two1.mining import rest_client
+from two1.lib import rest_client
 from two1.bitcoin.crypto import PrivateKey
 
 @click.command()

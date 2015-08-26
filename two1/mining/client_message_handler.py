@@ -43,21 +43,17 @@ class ClientMessageHandler(object):
     def _state_authorize(self):
         self.logger.info('Authenticating')
 
-        obj = self._message_factory.create_bitshare_auth_request(
+        auth_msg = self._message_factory.create_auth_request(
             version=0,
+            hw_version=123,
             username=self.user,
-            mac=self.worker,
-            wallet_index=0,
-            numerator=3,
-            denominator=4
+            worker_uuid=self.worker,
         )
-
-        auth_msg = self._message_factory.encode_object(obj)
 
         yield from self._send_to_server(auth_msg)
 
         # ignore the auth result for now
-        auth_msg = yield from self._message_factory.read_object(self.reader)
+        auth_msg = yield from self._message_factory.read_object_async(self.reader)
         auth_type = auth_msg.WhichOneof("authreplies")
         auth_resp = getattr(auth_msg, auth_type)
 
@@ -70,7 +66,7 @@ class ClientMessageHandler(object):
     @asyncio.coroutine
     def _state_handle_msg(self):
 
-        msg = yield from self._message_factory.read_object(self.reader)
+        msg = yield from self._message_factory.read_object_async(self.reader)
         msg_type = msg.__class__.__name__
         if msg_type == "WorkNotification":
             self._handle_notification(msg)
@@ -106,17 +102,13 @@ class ClientMessageHandler(object):
     def _submit_request_to_server(self, message_id, job_id, enonce2, otime, nonce):
         """
         """
-        try:
-            obj = self._message_factory.create_submit_request(
-                message_id=message_id,
-                job_id=job_id,
-                enonce2=enonce2,
-                otime=otime,
-                nonce=nonce)
-        except Exception as e:
-            print(e)
+        msg = self._message_factory.create_submit_request(
+            message_id=message_id,
+            work_id=job_id,
+            enonce2=enonce2,
+            otime=otime,
+            nonce=nonce)
 
-        msg = self._message_factory.encode_object(obj)
         self.logger.info('Sending Shares to the server %g ', job_id)
         yield from self._send_to_server(msg)
 

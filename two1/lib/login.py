@@ -1,16 +1,12 @@
 import base64
+
 import keyring
 import requests
 import click
-
-from two1.debug import dlog
-from two1.config import Config
-from two1.config import TWO1_VERSION
 from two1.config import TWO1_HOST
-from two1.wallet import electrumWallet
-from two1.mining import rest_client
+from two1.lib import rest_client
 from two1.bitcoin.crypto import PrivateKey
-from two1.uxstring import UxString 
+from two1.uxstring import UxString
 
 
 def check_setup_twentyone_account(config):
