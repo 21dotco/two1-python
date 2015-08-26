@@ -24,7 +24,9 @@ class configurations(object):
         # Set the current node to the root node
         info = {}
         currentNode = (self.raw['paths'], {})
+        pathItems.append('')
         for component in pathItems:
+
             # Inherit attributes of current node
             for key in self._infoKeysToInherit():
                 if key not in currentNode[1]:

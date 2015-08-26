@@ -7,14 +7,16 @@ from codecs import open
 import click
 from path import path
 from two1.wallet import electrumWallet
+from two1.wallet import testWallet
 from two1.debug import dlog
 from two1.uxstring import UxString
 import pkg_resources
 
-TWO1_CONFIG_FILE = path("~/.two1/two1.json")
-TWO1_PURCHASES_FILE = path("~/.two1/purchases.json")
-#TWO1_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
-TWO1_HOST = "http://127.0.0.1:8000"
+TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
+TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
+TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
+TWO1_HOST = 'http://twentyone-devel-1d3c.herokuapp.com'
+# TWO1_HOST = "http://127.0.0.1:8000"
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
@@ -36,6 +38,8 @@ except:
 class Config(object):
 
     def __init__(self, config_file=TWO1_CONFIG_FILE, config=None):
+        if not os.path.exists(TWO1_USER_FOLDER):
+            os.makedirs(TWO1_USER_FOLDER)
         self.file = path(config_file).expand().abspath()
         self.dir = self.file.parent
         self.defaults = {}
@@ -51,7 +55,10 @@ class Config(object):
 
         # add wallet object
         try:
-            self.wallet = electrumWallet.ElectrumWallet(TWO1_PATH)
+            if self.defaults.get('testwallet', None) == 'y':
+                self.wallet = testWallet.TestWallet()
+            else:
+                self.wallet = electrumWallet.ElectrumWallet(TWO1_PATH)
         except OSError as e:
             if e.errno == os.errno.ENOENT:
             # handle file not found error.
