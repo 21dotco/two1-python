@@ -10,8 +10,8 @@ class UxString:
 	enter_username   = "Enter Username for the account:"
 
 	# wallet
-	create_wallet = "You do not have a Bitcoin wallet configured. Let's create one. Press any key to continue ...\n"
-	create_wallet_done = "\nWallet successfully created. Press any key to continue..."
+	create_wallet = "You do not have a Bitcoin wallet configured. Let's create one. Press any key ...\n"
+	create_wallet_done = "\nWallet successfully created. Press any key ..."
 	payout_address = "Setting mining payout address: %s."
 
 	class Error:
