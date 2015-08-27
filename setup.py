@@ -27,6 +27,8 @@ install_requires = [
                     'path.py',
                     'click',
                     'keyring',
+                    'mnemonic',
+                    'protobuf >= 3.0.0a3'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/

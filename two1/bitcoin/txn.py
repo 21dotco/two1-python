@@ -186,6 +186,34 @@ class TransactionOutput(object):
         """
         return pack_u64(self.value) + pack_var_str(bytes(self.script))
 
+
+class UnspentTransactionOutput(object):
+    """ Container class for compactly describing unspent transaction outputs.
+
+    Args:
+        transaction_hash (Hash): Hash of the transaction containing the unspent output.
+        outpoint_index (int): Index of the output.
+        value (int): Number of satoshis in the output.
+        scr (Script): The scriptPubKey of the output.
+        confirmations (int): Number of confirmations for the transaction.
+    """
+
+    def __init__(self, transaction_hash, outpoint_index, value, scr, confirmations):
+        if not isinstance(transaction_hash, Hash):
+            raise TypeError("transaction_hash must be a Hash object.")
+        if not isinstance(scr, Script):
+            raise TypeError("scr must be a Script object.")
+
+        self.transaction_hash = transaction_hash
+        self.outpoint_index = outpoint_index
+        self.value = value
+        self.script = scr
+        self.num_confirmations = confirmations
+
+    @property
+    def confirmed(self):
+        return self.num_confirmations >= 6
+    
     
 class Transaction(object):
     """ See https://bitcoin.org/en/developer-reference#raw-transaction-format

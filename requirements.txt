@@ -32,3 +32,6 @@ sha256
 simplejson==3.7.3
 textblob==0.9.1
 tornado
+keyring==5.4
+tornado
+mnemonic==0.12
