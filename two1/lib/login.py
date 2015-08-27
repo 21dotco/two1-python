@@ -38,7 +38,13 @@ def create_twentyone_account(config):
     #TODO: this can be replaced with a process where the user
     #can hit a few random keystrokes to generate a private
     #key
-    mining_auth_key = PrivateKey.from_random()
+    # check if a key already exists and use it
+    existing_key = keyring.get_password("twentyone","mining_auth_key")
+    if existing_key:
+        mining_auth_key = PrivateKey.from_b58check(existing_key) 
+    else:
+        mining_auth_key = PrivateKey.from_random()
+
     mining_auth_key_b58 = mining_auth_key.to_b58check()
     #base64 converted public key
     mining_auth_pubkey = base64.b64encode(
@@ -66,7 +72,6 @@ def create_twentyone_account(config):
                 break
             elif r.status_code == 201:
                 config.update_key("username",try_username)
-                config.update_key("bitcoin_address",bitcoin_payout_address)
                 #save the auth keys
                 keyring.set_password("twentyone","mining_auth_key",mining_auth_key_b58)
                 config.update_key("mining_auth_pubkey",mining_auth_pubkey)
