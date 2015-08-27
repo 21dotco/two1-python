@@ -18,6 +18,8 @@ class UxString:
 		# network errors
 		connection = "Error: Cannot connect to %s."
 		timeout    = "Error: Connection to %s timed out."
+		# 500 unknown error
+		server_err = "Error: You have experienced a Technical Error. We are working to correct this issue."
 
 		# file io errors
 		file_load = "Error: Failed to load file %s."
