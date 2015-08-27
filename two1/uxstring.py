@@ -1,12 +1,12 @@
 class UxString:
     # account creation
-    creating_account = "Creating 21.co account. Username %s."
-    payout_address = "Payout address: %s."
-    account_failed = "Failed to create 21.co account."
-    username_exists = "Username %s already exists."
-    enter_username = "Enter Username for the account"
-    enter_username_retry = "Create a new username and retry."
+    creating_account = "Creating 21.co account. Username: %s."
+    missing_account = "Looks like you do not have a 21.co account. Let's create one..."
 
+    account_failed = "Failed to create 21.co account."
+    username_exists = "User %s already exists."
+    enter_username = "Choose username for your account"
+    enter_username_retry = "Create a new username and retry."
     # wallet
     create_wallet = "You do not have a Bitcoin wallet configured."\
         "Let's create one. Press any key ...\n"

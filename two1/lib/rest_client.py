@@ -1,55 +1,24 @@
 
 # This is the 21.co/mining REST client
-# Create a/c
-# Set payout addresses etc.
-from two1.bitcoin.crypto import PrivateKey
-from two1.bitcoin.utils import bytes_to_str, address_to_key_hash
 import base64
 import requests
 import json
 from urllib.parse import urljoin
-
-
-class MachineAuth(object):
-
-    def __init__(self, private_key):
-        if private_key:
-            self.private_key = private_key
-            self.public_key = private_key.public_key
-        else:
-            self.private_key = None
-            self.public_key = None
-
-    def create(self):
-        pass
-
-    def load(self):
-        pass
-
-    def sign(self, message):
-        if self.private_key:
-            if isinstance(message, str):
-                utf8 = message.encode('utf-8')
-            else:
-                raise ValueError
-            signature = self.private_key.sign(utf8).to_base64()
-            return signature
-        else:
-            return None
-        # compressed_bytes = base64.b64encode(self.public_key.compressed_bytes)
-        # signature = signature.to_base64()
-
-        # print("Things",compressed_bytes,signature,utf8)
-
-        # signature = Signature.from_base64(signature)
-        # pubk = PublicKey.from_base64(compressed_bytes)
-        # print("VERIFICATION RESULT: %g " % pubk.verify(utf8, signature))
+from two1.bitcoin.crypto import PrivateKey
+from two1.bitcoin.utils import bytes_to_str, address_to_key_hash
+from two1.lib.machine_auth import MachineAuth
 
 
 class TwentyOneRestClient(object):
 
-    def __init__(self, server_url, private_key=None, username=None, version="v0"):
-        self.auth = MachineAuth(private_key)
+    def __init__(self, server_url, machine_auth=None, username=None, version="0"):
+        self.auth = machine_auth
+        self.server_url = server_url
+        self.version = version
+        self.username = username
+
+    def from_keyring(self, server_url, username=None, version="0"):
+        self.auth = MachineAuth.from_keyring()
         self.server_url = server_url
         self.version = version
         self.username = username
@@ -127,7 +96,8 @@ class TwentyOneRestClient(object):
     def mmm_search(self, query, page_num=1):
         method = "GET"
         path = "/mmm/sells/search/"
-        r = self._request(False, method, path, params={"q": query, "page": page_num})
+        r = self._request(
+            False, method, path, params={"q": query, "page": page_num})
         if r.status_code == 200:
             return json.loads(r.content.decode())
         else:
@@ -138,15 +108,16 @@ class TwentyOneRestClient(object):
         method = "POST"
         path = "/mmm/{}/sells".format(self.username)
         body = {
-            "name"          : name,
-            "description"   : description,
-            "price"         : price
+            "name": name,
+            "description": description,
+            "price": price
         }
         data = json.dumps(body)
         return self._request(True, method,
                              path,
                              data=data
                              )
+
 
 if __name__ == "__main__":
     # pk = PrivateKey.from_random()
@@ -156,10 +127,10 @@ if __name__ == "__main__":
         pk = PrivateKey.from_random()
         m = TwentyOneRestClient(pk, host)
         try:
-            m.account_post("testuser11210_" + str(n), 
-                "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-            m.account_payout_address_post("testuser11210_" + str(n), 
-                "1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+            m.account_post("testuser11210_" + str(n),
+                           "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
+            m.account_payout_address_post("testuser11210_" + str(n),
+                                          "1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
 
         except requests.exceptions.ConnectionError:
             print("Error: cannot connect to ", host)
