@@ -1,4 +1,6 @@
 from collections import namedtuple
+import json
+import sys
 from two1.bitcoin.crypto import PrivateKey
 from path import path
 import click
@@ -58,18 +60,17 @@ def mine(config):
         msg = getattr(client_message, message_type)
         mining_rest_client.send_work(username=config.username, data=req_msg)
 
-        satoshi = random.randint(10000, 100000)
-        config.log("You mined {} Satoshi".format(satoshi))
+        config.log("Waiting for Bitcoin to arrive...")
+        payment_details = json.loads(payment_result.text)
+        satoshi = payment_details["amount"]
+        config.log("You mined {} Satoshi".format(satoshi), fg="yellow")
         try:
             bitcoin_address = config.bitcoin_address
         except AttributeError:
             bitcoin_address = "Not Set"
 
-        b_seed = ord(config.username[0])
-        balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
-        balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute + 1) * 8000)
-        config.log("Waiting for Bitcoin to arrive...")
-        time.sleep(3.0)
+        balance_c = config.wallet.confirmed_balance()
+        balance_u = config.wallet.unconfirmed_balance() + satoshi
         config.log('''Wallet''', fg='magenta')
         config.log('''\
     Balance (confirmed)   : {} Satoshi
@@ -123,29 +124,37 @@ def find_valid_nonce(config, work_msg):
 
     print("starting to mine for %s" % work.cb.block_header.target)
     start = int(time.time())
-    # for nonce in range(0xffffffff):
-    #     work.cb.block_header.nonce = nonce
-    #     if work.cb.block_header.valid:
-    #         duration = int(time.time()) - start
-    #         print("found in %d secs" % duration)
-    #         share = Share(
-    #             enonce2=enonce2,
-    #             nonce=nonce,
-    #             job_id=work_msg.work_id,
-    #             otime=int(time.time()))
-    #         return share
+    for nonce in range(0xffffffff):
+        if nonce % 6e3 == 0:
+            click.echo(click.style(u'█', fg='green'), nl=False)
+        work.cb.block_header.nonce = nonce
+        if work.cb.block_header.valid:
+            share = Share(
+                enonce2=enonce2,
+                nonce=nonce,
+                work_id=work_msg.work_id,
+                otime=int(time.time()))
+            #adds a new line at the end of progress bar
+            click.echo("")
+            return share
 
-    rotate = "+-"
-    char = 0
-    mining_message = "You are about to get Bitcoin! {}"
-    max_nonce = 100000
-    x = range(0, 0xffffffff)
-    with click.progressbar(x) as bar:
-        for user in bar:
-            pass
-    # with click.progressbar(length=max_nonce, label='Mining...',
-    #                        bar_template='%(label)s | %(bar)s | %(info)s',
-    #                        fill_char=click.style(u'█', fg='cyan'),
-    #                        empty_char=' ', show_eta=False) as bar:
-    #     for nonce in bar:
-    #         pass
+
+def get_enonces(username):
+    enonce1_size = 8
+    enonce1 = username[-1 * enonce1_size:].encode()
+    if len(enonce1) != enonce1_size:
+        enonce1 = enonce1 + ((enonce1_size - len(enonce1)) * b"0")
+    enonce2_size = 4
+    return enonce1, enonce2_size
+
+
+def save_work(client, share, username):
+    message_id = random.randint(1, 1e5)
+    msg_factory = message_factory.SwirlMessageFactory()
+    req_msg = msg_factory.create_submit_request(message_id=message_id,
+                                                work_id=share.work_id,
+                                                enonce2=share.enonce2,
+                                                otime=share.otime,
+                                                nonce=share.nonce)
+
+    return client.send_work(username=username, data=req_msg)
