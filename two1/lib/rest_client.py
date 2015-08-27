@@ -48,10 +48,11 @@ class MachineAuth(object):
 
 class TwentyOneRestClient(object):
 
-    def __init__(self, server_url, private_key=None, version="v0"):
+    def __init__(self, server_url, private_key=None, username=None, version="v0"):
         self.auth = MachineAuth(private_key)
         self.server_url = server_url
         self.version = version
+        self.username = username
 
     def _request(self, signed, method, path, **kwargs):
         url = self.server_url + path + "/"
@@ -121,12 +122,21 @@ class TwentyOneRestClient(object):
             return json.loads(r.content.decode())
         else:
             raise
-            
 
-            print("Error contacting server.  Server response code is {}.  Body is {}".format(
-                r.status_code, r.content.decode()))
-            return False
-
+    # POST /mmm/{username}/sells
+    def mmm_create_sell(self, name, description, price):
+        method = "POST"
+        path = "/mmm/{}/sells".format(self.username)
+        body = {
+            "name"          : name,
+            "description"   : description,
+            "price"         : price
+        }
+        data = json.dumps(body)
+        return self._request(True, method,
+                             path,
+                             data=data
+                             )
 
 if __name__ == "__main__":
     # pk = PrivateKey.from_random()
