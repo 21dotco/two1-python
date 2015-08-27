@@ -1,8 +1,5 @@
 from collections import namedtuple
 import json
-import sys
-from two1.bitcoin.crypto import PrivateKey
-from path import path
 import click
 from two1.config import pass_config
 from two1.bitcoin.block import CompactBlock
@@ -12,11 +9,10 @@ from two1.bitcoin.utils import bytes_to_str
 from two1.lib import login
 import time
 import random
-import datetime
-from two1.lib import rest_client, message_factory
+from two1.lib import rest_client, message_factory, login
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
-from uxstring import UxString
+from two1.uxstring import UxString
 
 from two1.gen import swirl_pb2 as swirl
 
@@ -130,9 +126,14 @@ def find_valid_nonce(config, work_msg):
 
     print("starting to mine for %s" % work.cb.block_header.target)
     start = int(time.time())
+    row_counter = 0
     for nonce in range(0xffffffff):
         if nonce % 6e3 == 0:
             click.echo(click.style(u'█', fg='green'), nl=False)
+            row_counter += 1
+            if row_counter > 40:
+                row_counter = 0
+                click.echo("")
         work.cb.block_header.nonce = nonce
         if work.cb.block_header.valid:
             share = Share(
