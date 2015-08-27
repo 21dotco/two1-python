@@ -26,7 +26,7 @@ def mine(config):
     """Fastest way to get Bitcoin!"""
     # detect if hat is present
     bitcoinkit_present = False
-    config.log("\nYou are about to get Bitcoin!")
+    config.log("\nMining...")
 
     if bitcoinkit_present:
         # do minertop
@@ -60,15 +60,16 @@ def mine(config):
         msg = getattr(client_message, message_type)
         mining_rest_client.send_work(username=config.username, data=req_msg)
 
-        config.log("Waiting for Bitcoin to arrive...")
+        config.log("Mining Complete")
         payment_details = json.loads(payment_result.text)
         satoshi = payment_details["amount"]
-        config.log("You mined {} Satoshi".format(satoshi), fg="yellow")
+        config.log("You mined {} ฿\n".format(satoshi), fg="yellow")
         try:
             bitcoin_address = config.bitcoin_address
         except AttributeError:
             bitcoin_address = "Not Set"
 
+        config.log("Setting your payout address to {}\n".format(payout_address))
         balance_c = config.wallet.confirmed_balance()
         balance_u = config.wallet.unconfirmed_balance() + satoshi
         config.log('''Wallet''', fg='magenta')
