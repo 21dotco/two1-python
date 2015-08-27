@@ -98,7 +98,7 @@ class Config(object):
                 with open(self.file, mode="r", encoding='utf-8') as fh:
                     self.defaults = json.load(fh)
             except:
-                print(UxString.Errorself.file_load % self.file)
+                print(UxString.Error.file_load % self.file)
                 self.defaults = {}
 
         defaults = dict(username=getpass.getuser(),
