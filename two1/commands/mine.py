@@ -16,6 +16,7 @@ import datetime
 from two1.lib import rest_client, message_factory
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
+from uxstring import UxString
 
 from two1.gen import swirl_pb2 as swirl
 
@@ -59,6 +60,10 @@ def mine(config):
         message_type = client_message.WhichOneof("clientmessages")
         msg = getattr(client_message, message_type)
         mining_rest_client.send_work(username=config.username, data=req_msg)
+
+        if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
+            click.echo(UxString.Error.server_err)
+            return
 
         config.log("Mining Complete")
         payment_details = json.loads(payment_result.text)
@@ -135,7 +140,7 @@ def find_valid_nonce(config, work_msg):
                 nonce=nonce,
                 work_id=work_msg.work_id,
                 otime=int(time.time()))
-            #adds a new line at the end of progress bar
+            # adds a new line at the end of progress bar
             click.echo("")
             return share
 
