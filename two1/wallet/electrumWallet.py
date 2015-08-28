@@ -11,20 +11,14 @@ class ElectrumWallet(BaseWallet):
 
     def __init__(self,TWO1_PATH=None):
         super(ElectrumWallet, self).__init__()
-        # check if electrum wallet is installed and available
-        self.electrumPath = ""
-        if TWO1_PATH:
-            try_electrum_path = os.path.join(TWO1_PATH,"electrum")
-            self.electrumPath = try_electrum_path if os.path.isfile(try_electrum_path) else ""
-
         # check if electrum is works
         # will throw an OSError if electrum does not work
-        output = check_output([os.path.join(self.electrumPath,"electrum"),"--help"]).decode("utf-8")
+        output = check_output(["electrum","--help"]).decode("utf-8")
         # start daemon
 
     def start_daemon(self):
         try:
-            output = check_output([os.path.join(self.electrumPath,"electrum"),"daemon","start"])
+            output = check_output(["electrum","daemon","start"])
         except subprocess.CalledProcessError as e:
             if e.returncode != 1:
                 # raise if returncode is not 1. 
