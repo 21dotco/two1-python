@@ -1,7 +1,7 @@
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import CoinbaseInput, Transaction
 from two1.bitcoin.sha256 import sha256 as sha256_midstate
-from two1.bitcoin.utils import pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
+from two1.bitcoin.utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
 """ merkle_hash: SHA-256 byte string (internal byte order)
@@ -89,6 +89,14 @@ class BlockHeader(object):
         """
         return self.hash.to_int('little') < self.target
 
+    def __str__(self):
+        """ Gives the hex-encoded serialization of the header.
+
+        Returns:
+            str: hex-encoded string.
+        """
+        return bytes_to_str(bytes(self))
+    
     def __bytes__(self):
         """ Serializes the BlockHeader object.
 
