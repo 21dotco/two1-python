@@ -45,6 +45,8 @@ def find_endpoint(endpoint, package_name):
 
 
 def find_process_by_attribute(attribute):
+    # TODO: https://pypi.python.org/pypi/psutil/
+    # http://stackoverflow.com/questions/682446/splitting-out-the-output-of-ps-using-python
     process_list = []
     sub_proc_ps = Popen(['ps', 'auxw', ], stdout=PIPE)
     sub_proc = Popen(['grep', attribute, ], stdin=sub_proc_ps.stdout, stdout=PIPE)
@@ -60,7 +62,8 @@ def find_process_by_attribute(attribute):
 
 
 def find_process():
-    # gunicorn process is started gunicorn --pythonpath two1/djangobitcoin djangobitcoin.wsgi --bind 127.0.0.1:8000
+    # Assumes gunicorn process is started via:
+    # gunicorn --pythonpath two1/djangobitcoin djangobitcoin.wsgi --bind 127.0.0.1:8000
     # built-in django server is started python manage.py runserver 127.0.0.1:8000
     gunicorn_pid = find_process_by_attribute('djangobitcoin.wsgi')
     if gunicorn_pid:
