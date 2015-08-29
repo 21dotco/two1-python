@@ -50,7 +50,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.lib', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.mining.gen', 
+    packages=['two1', 'two1.lib', 'two1.commands', 'two1.bitcoin', 'two1.mining', 'two1.gen', 
             'two1.wallet', 'two1.crypto','two1.bitcurl', 
             'two1.djangobitcoin.djangobitcoin','two1.djangobitcoin.auth', 
             'two1.djangobitcoin.misc', 
