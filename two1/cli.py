@@ -36,11 +36,7 @@ def main(ctx, config_file, config):
 \b
 Examples
 --------
-Get Bitcoin from the 21.co faucet
-$ two1 get
-
-\b
-Mine Bitcoin continuously in background (requires a 21 Bitcoin Node; see 21.co)
+Instantly get some Bitcoin by mining (get more with a 21 Bitcoin Computer; see 21.co/buy)
 $ two1 mine
 
 \b
@@ -76,9 +72,6 @@ Full documentation: github.com/21dotco/two1"""
 
 from two1.commands.buy import buy
 main.add_command(buy)
-
-from two1.commands.get import get
-main.add_command(get)
 
 from two1.commands.mine import mine
 main.add_command(mine)
