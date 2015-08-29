@@ -15,6 +15,9 @@ import two1.djangobitcoin.djangobitcoin as dj_bt
 @click.argument('items', nargs=-1)
 @pass_config
 def sell(config, items, port=8000, builtin=False):
+    """
+    Set up a new machine-payable endpoint
+    """
     if builtin:
         show_builtins()
         return
