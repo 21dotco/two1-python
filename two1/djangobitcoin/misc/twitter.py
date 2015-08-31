@@ -3,6 +3,11 @@ from two1.djangobitcoin.auth.djangobitcoin import PaymentRequiredAuthentication
 from rest_framework.response import Response
 from birdy.twitter import UserClient
 
+CONSUMER_KEY = "CONSUMER_KEY"
+CONSUMER_SECRET = "CONSUMER_SECRET"
+ACCESS_TOKEN = "ACCESS_TOKEN"
+ACCESS_TOKEN_SECRET = "ACCESS_TOKEN_SECRET"
+
 
 @api_view(['POST'])
 @authentication_classes([PaymentRequiredAuthentication])
@@ -30,10 +35,7 @@ def post_update(request):
     if not update:
         return Response("Must provide value for Update parameter", 400)
 
-    client = UserClient("awgIGlQRJOjuR2tL38f472tZi",
-                        "VGycVOMNk6tSKep1Bp89cvwsBmzNjyRchoxtGvkVrxrmZU2wyy",
-                        "3307300213-rtaEZv9cvjioUoq4nhvqTzUrfLX9qjZQI2IZa2h",
-                        "nwKVaOyNgESeRG6ieKHiRFrQ1XdtrcdhVaiXug6VEBMUD")
+    client = UserClient(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
     response = client.api.statuses.update.post(status=update)
     return Response(response.data)
