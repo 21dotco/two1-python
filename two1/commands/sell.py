@@ -1,6 +1,7 @@
 import json
 import signal
 from subprocess import Popen, PIPE
+import sys
 
 from re import split
 import click
@@ -22,27 +23,38 @@ def sell(config, args, port=8000, builtin=False):
         if builtin:
             show_builtins()
             return
-        items, params = process_parameters(args)
-        sell_items(items, params, port)
+        # since we allow --builtin option without arguments, we have to process arguments manually
+        try:
+            path, package, config = process_args(args)
+        except Exception:
+            click.echo('Usage: two1 sell [OPTIONS] PATH PACKAGE')
+            return
+        sell_item(path, package, config, port)
     except Exception as e:
         raise ClickException(e)
 
 
-def process_parameters(args):
-    items = []
-    params = {}
-    last_arg = None
-    for arg in args:
-        if arg.startswith('--'):
-            last_arg = arg[2:]
-            params[last_arg] = None
-        else:
-            if last_arg:
-                params[last_arg] = arg
-                last_arg = None
-            else:
-                items.append(arg)
-    return items, params
+def pop_option(args):
+    i_opt = next(((i, x) for i, x in enumerate(args) if x.startswith('--')), None)
+    if not i_opt:
+        return None
+    idx, opt = i_opt
+    val = args[idx + 1]
+    del args[idx:idx + 2]
+    return opt[2:], val
+
+
+def process_args(args):
+    config = {}
+    args = list(args)
+    while True:
+        opt_value = pop_option(args)
+        if not opt_value:
+            break
+        config[opt_value[0]] = opt_value[1]
+    path = args[0]
+    package = args[1]
+    return path, package, config
 
 
 def try_config_django():
@@ -89,7 +101,7 @@ def find_endpoint(endpoint, package_name):
         urls = getattr(package, 'urls')
         match = next((x.regex.pattern for x in urls.urlpatterns if match_endpoint(endpoint, x.regex)), None)
         if match:
-            return package_name, match, urls.configurator
+            return match, urls.configurator
         else:
             return None
     except Exception as e:
@@ -97,10 +109,12 @@ def find_endpoint(endpoint, package_name):
         return None
 
 
-def update_config(ep_json, package_name, pattern):
+def update_config(ep_json, package_name, package_path, pattern):
     package_element = next((x for x in ep_json if x['package'] == package_name), None)
     if not package_element:
         package_element = {'package': package_name, 'urls': []}
+        if package_path:
+            package_element['path'] = package_path
         ep_json.append(package_element)
     else:
         urls = package_element.get('urls', None)
@@ -128,36 +142,32 @@ def save_config(endpoints_path, ep_json):
         click.echo('Restart the server')
 
 
-def sell_item(item, params, port):
+def sell_item(path, package_name, config, port):
     '''
     :param item: a string indicating which endpint to sell (f.e. 'language/translate' or 'serve/kittens')
     :param params: extra parameters from the 'sell' command to be passed to the endpoint's configurator
                    they are endpoint-specific, f.e for 'serve' it can be --path ~/foo.txt
     '''
-    endpoints_path = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
-    ep_json = json.load(open(endpoints_path))
-    # try to find our endpoint within builtins
-    ep_found = find_endpoint(item, 'two1.djangobitcoin.static_serve') or \
-               find_endpoint(item, 'two1.djangobitcoin.misc') or \
-               find_endpoint(item, 'two1.djangobitcoin.scipy_aas')
-    if not ep_found:
-        click.echo('Endpoint {0} not found'.format(item))
-        return
-    package_name, pattern, configurator = ep_found
-    click.echo('Selling %s on http://127.0.0.1:%d/' % (item, port))
-    # Configure endpoint passing passthrough parameters to configurator
-    click.echo('Configuring {0} with {1}'.format(item, params))
-    configurator(item, params)
-    # If the endpoint is not up yet, make it so
-    if update_config(ep_json, package_name, pattern):
-        save_config(endpoints_path, ep_json)
-
-
-def sell_items(items, params, port):
     if not try_config_django():
         return
-    for item in items:
-        sell_item(item, params, port)
+    endpoints_path = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
+    ep_json = json.load(open(endpoints_path))
+    package_path = config.get('packagepath', None)
+    if package_path:
+        sys.path.append(package_path)
+        del config['packagepath']
+    ep_found = find_endpoint(path, package_name)
+    if not ep_found:
+        click.echo('Endpoint {0} not found'.format(path))
+        return
+    pattern, configurator = ep_found
+    click.echo('Selling %s on http://127.0.0.1:%d/' % (path, port))
+    # Configure endpoint passing passthrough parameters to configurator
+    click.echo('Configuring {0} with {1}'.format(path, config))
+    configurator(path, config)
+    # If the endpoint is not up yet, make it so
+    if update_config(ep_json, package_name, package_path, pattern):
+        save_config(endpoints_path, ep_json)
 
 
 def try_url_imports(package_name):
