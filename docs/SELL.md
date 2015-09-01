@@ -16,22 +16,22 @@ serve/*
 
 ```
 
-To publish one of the built-in endpoints, specify its name:
+To publish one of the built-in endpoints, specify its url path and a package name:
 
 ```bash
 
-$ two1 sell barcode/generate-qr
+$ two1 sell barcode/generate-qr two1.djangobitcoin.misc
 Selling language/translate on http://127.0.0.1:8000/
 Configuring language/translate with {}
 Endpoints configuration updated.
 
 ```
 
-If you want to start selling a folder, call **two1 sell** specifying **serve** endpoint:
+If you want to start selling a folder, call **two1 sell** specifying **serve** endpoint and static_serve built-in package:
 
 ```bash
 
-$ two1 sell serve/kittens --path ~/Documents/Kittens --price 10000
+$ two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
 Selling serve/kittens on http://127.0.0.1:8000/
 Configuring serve/kittens with {'price': '10000', 'path': '~/Documents/Kittens'}
 Endpoints configuration updated.
@@ -40,7 +40,7 @@ Endpoints configuration updated.
 It is possible to sell a single file, too:
 ```bash
 
-$ two1 sell serve/kittens/kitty.jpg --path ~/Documents/Kittens/red.jpeg --price 10000
+$ two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpeg --price 10000
 Selling serve/kittens/kitty.jpg on http://127.0.0.1:8000/
 Configuring serve/kittens/kitty.jpg with {'path': '~/Documents/Kittens/red.jpeg', 'price': '10000'}
 Endpoint ^serve/* is already selling
