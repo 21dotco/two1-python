@@ -32,7 +32,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_folder(self):
         runner = CliRunner()
-        # two1 sell serve/kittens --path ~/Documents/Kittens --price 10000
+        # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FOLDER, '--price', '10000'))
@@ -40,7 +40,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_file(self):
         runner = CliRunner()
-        # two1 sell serve/kittens/kitty.jpg --path ~/Documents/Kittens/red.jpeg --price 10000
+        # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpeg --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens/kitty/kitty.jpg', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FILE, '--price', '10000'))
@@ -48,7 +48,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_folder_with_file_fail(self):
         runner = CliRunner()
-        # two1 sell serve/kittens --path ~/Documents/Kittens/red.jpg --price 10000
+        # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpg --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FILE, '--price', '10000'))
@@ -56,7 +56,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_file_with_folder_fail(self):
         runner = CliRunner()
-        # two1 sell serve/kittens/kitty.jpg --path ~/Documents/Kittens --price 10000
+        # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens/kitty.jpg', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FOLDER, '--price', '10000'))
@@ -64,7 +64,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_folder_no_folder_fail(self):
         runner = CliRunner()
-        # two1 sell serve/kittens --path ~/Documents/Kittens --price 10000
+        # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FOLDER + 'X', '--price', '10000'))
@@ -72,7 +72,7 @@ class TestSell(unittest.TestCase):
 
     def test_sell_static_file_no_file_fail(self):
         runner = CliRunner()
-        # two1 sell serve/kittens/kitty.jpg --path ~/Documents/Kittens/red.jpeg --price 10000
+        # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpeg --price 10000
         result = runner.invoke(cli.main,
                                get_args('sell', 'serve/kittens/kitty/kitty.jpg', 'two1.djangobitcoin.static_serve',
                                         '--path', TEST_FILE + 'X', '--price', '10000'))
