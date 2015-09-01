@@ -33,6 +33,8 @@ ENDPOINTS_FILE = 'endpoints.json'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '6+y)pxr9jy$7f4kjk1@zk*6lem0$4=^4xekew@7r32=sukb&a!'
 
+BLOCKSPRING_API_KEY = os.environ.get('BLOCKSPRING_API_KEY')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -50,7 +52,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_swagger',
-    'misc'
 )
 
 MIDDLEWARE_CLASSES = (

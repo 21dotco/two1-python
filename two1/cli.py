@@ -6,6 +6,7 @@ import getpass
 from codecs import open
 from path import path
 import click
+import platform
 
 from two1.debug import dlog
 from two1.config import Config
@@ -92,6 +93,6 @@ from two1.commands.status import status
 main.add_command(status)
     
 if __name__ == "__main__":
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    locale.setlocale(locale.LC_ALL, 'us' if platform.system() == 'Windows' else 'en_US.UTF-8')
     main()
 

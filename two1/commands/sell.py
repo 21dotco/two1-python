@@ -11,6 +11,8 @@ from two1.config import pass_config
 from two1.djangobitcoin.djangobitcoin.settings import ENDPOINTS_FILE
 import two1.djangobitcoin.djangobitcoin as dj_bt
 
+ENDPOINTS_PATH = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
+
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
@@ -21,7 +23,7 @@ import two1.djangobitcoin.djangobitcoin as dj_bt
 def sell(config, args, port=8000, builtin=False):
     try:
         if builtin:
-            show_builtins()
+            show_builtins(config)
             return
         # since we allow --builtin option without arguments, we have to process arguments manually
         try:
@@ -109,7 +111,11 @@ def find_endpoint(endpoint, package_name):
         return None
 
 
-def update_config(ep_json, package_name, package_path, pattern):
+def update_config(package_name, package_path, pattern):
+    try:
+        ep_json = json.load(open(ENDPOINTS_PATH))
+    except:
+        ep_json = []
     package_element = next((x for x in ep_json if x['package'] == package_name), None)
     if not package_element:
         package_element = {'package': package_name, 'urls': []}
@@ -121,16 +127,16 @@ def update_config(ep_json, package_name, package_path, pattern):
         if urls:
             if pattern in urls:
                 click.echo('Endpoint {0} is already selling'.format(pattern))
-                return False
+                return None
         else:
             package_element['urls'] = []
     package_element['urls'].append(pattern)
-    return True
+    return ep_json
 
 
-def save_config(endpoints_path, ep_json):
+def save_config(ep_json):
     # Save the file
-    with open(endpoints_path, 'w') as outfile:
+    with open(ENDPOINTS_PATH, 'w') as outfile:
         json.dump(ep_json, outfile, indent=2)
     click.echo('Endpoints configuration updated.')
     # Check if we can restart the server
@@ -150,8 +156,6 @@ def sell_item(path, package_name, config, port):
     '''
     if not try_config_django():
         return
-    endpoints_path = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
-    ep_json = json.load(open(endpoints_path))
     package_path = config.get('packagepath', None)
     if package_path:
         sys.path.append(package_path)
@@ -166,8 +170,9 @@ def sell_item(path, package_name, config, port):
     click.echo('Configuring {0} with {1}'.format(path, config))
     configurator(path, config)
     # If the endpoint is not up yet, make it so
-    if update_config(ep_json, package_name, package_path, pattern):
-        save_config(endpoints_path, ep_json)
+    ep_json = update_config(package_name, package_path, pattern)
+    if ep_json:
+        save_config(ep_json)
 
 
 def try_url_imports(package_name):
@@ -179,13 +184,25 @@ def try_url_imports(package_name):
         return []
 
 
-def show_builtins():
-    click.echo("\nBUILTINS\n")
+def _show_builtins(config, package):
+    data_format = "{:<50}|   {:<50}"
+    urls = try_url_imports('two1.djangobitcoin.misc')
+    for u in urls:
+        config.log(data_format.format(u.regex.pattern.strip('^$'), package))
+
+
+def show_builtins(config):
+    dundee1_format = "{:_^50}{:_^50}"
+    dundee2_format = "{:_^50}|{:_^49}"
+    header_format = "{:<50}|{:<50}"
+    headers = ("PATH", "   PACKAGE")
+    config.log("\nBUILTINS\n")
     if not try_config_django():
         return
-    misc_urls = try_url_imports('two1.djangobitcoin.misc')
-    scipy_urls = try_url_imports('two1.djangobitcoin.scipy_aas')
-    static_urls = try_url_imports('two1.djangobitcoin.static_serve')
-    urls = misc_urls + scipy_urls + static_urls
-    for u in urls:
-        click.echo(u.regex.pattern)
+    dundee_data = ['' for n in range(len(headers))]
+    config.log(dundee1_format.format(*dundee_data))
+    config.log(header_format.format(*headers))
+    config.log(dundee2_format.format(*dundee_data))
+    _show_builtins(config, 'two1.djangobitcoin.misc')
+    _show_builtins(config, 'two1.djangobitcoin.scipy_aas')
+    _show_builtins(config, 'two1.djangobitcoin.static_serve')
