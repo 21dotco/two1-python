@@ -1,5 +1,4 @@
-from two1.bitcoin.txn import CoinbaseInput, TransactionInput, TransactionOutput, Transaction
-from two1.bitcoin.script import Script
+from two1.bitcoin.txn import CoinbaseInput, Transaction
 
 
 class BitshareCoinbaseTransaction(Transaction):
@@ -43,8 +42,9 @@ class CoinbaseTransactionBuilder(object):
 
     Args:
         height (int): block height.
-        iscript0 (bytes): random bytes provided by the caller.
-        iscript1 (bytes): random bytes provided by the caller.
+        script_prefix (bytes): bytes provided by the caller to be placed in the
+            script after the packed coinbase and before the enonce1. This can be
+            completely random bytes or a combination of data and random bytes.
         enonce1_len (int): Length of enonce1 (in bytes). This is usually given
                            by the pool server.
         enonce2_len (int): Length of enonce2 (in bytes). This is usually given
@@ -53,26 +53,18 @@ class CoinbaseTransactionBuilder(object):
         lock_time (int): Time or a block number. Endianness: host
     """
 
-    def __init__(self, height, iscript0, iscript1, enonce1_len, enonce2_len, outputs, lock_time):
+    def __init__(self, height, script_prefix, enonce1_len, enonce2_len, outputs, lock_time):
         self.height = height
-        self.script_prefix = iscript0
-        self.script_postfix = iscript1
+        self.script_prefix = script_prefix
         self.enonce1_len = enonce1_len
         self.enonce2_len = enonce2_len
         self.outputs = outputs
         self.lock_time = lock_time
 
+        self._enonce1_placeholder = b'\xee' * self.enonce1_len
+        self._enonce2_placeholder = b'\xdd' * self.enonce2_len
+
         self.bitshare_padding = self.required_padding_for_bitshare()
-
-    def build_placeholder_input(self):
-        """ Builds a placeholder input using placeholder enonce1 and enonce2 values.
-
-        Returns:
-            cb_inp (CoinbaseInput): the placeholder coinbase input.
-        """
-        enonce1 = b'\xee' * self.enonce1_len
-        enonce2 = b'\xdd' * self.enonce2_len
-        return self.build_input(enonce1, enonce2)
 
     def build_input(self, enonce1, enonce2, padding=None):
         """ Builds a CoinbaseInput, creating the script from the passed-in enonce1 and
@@ -88,7 +80,7 @@ class CoinbaseTransactionBuilder(object):
                                         Coinbase size without the last output and lock-time to be
                                         a multiple of 512 bits.
          """
-        script = self.script_prefix + Script.build_push_str(enonce1 + enonce2) + self.script_postfix
+        script = self.script_prefix + enonce1 + enonce2
         if padding is not None:
             script += padding
         return CoinbaseInput(self.height, script)
@@ -106,13 +98,13 @@ class CoinbaseTransactionBuilder(object):
             padding (bytes): The necessary padding for 21 Bitshare devices.
         """
         # build the whole thing including the last output
-        placeholder_input = self.build_placeholder_input()
+        placeholder_input = self.build_input(self._enonce1_placeholder, self._enonce2_placeholder)
         cb_txn = BitshareCoinbaseTransaction(Transaction.DEFAULT_TRANSACTION_VERSION,
                                              [placeholder_input],
                                              self.outputs,
                                              self.lock_time)
 
-        cb1_len_bits = (len(bytes(cb_txn)) - cb_txn.bitshare_output_length - 4) * 8  # 4 is lock_time length in bytes
+        cb1_len_bits = len(cb_txn.client_serialize()) * 8
         num_bits_padding = (512 - (cb1_len_bits % 512)) % 512
         if num_bits_padding % 8 != 0:
             raise ValueError("Required padding for coinbase input is not a multiple of 8")
@@ -127,6 +119,30 @@ class CoinbaseTransactionBuilder(object):
             padding = bytes([num_bytes_padding - 1]) + bytes(num_bytes_padding - 1)
 
         return padding
+
+    def build_work_parts(self, bitshare=True):
+        """ Build coinb1 and coinb2 for pool work distribution.
+
+        Args:
+            bitshare (bool): True if this will be used for a 21 Bitshare device, False
+                             otherwise.
+
+        Returns:
+            tuple: (coinb1, coinb2) to send to pool clients
+        """
+        txn = self.build(self._enonce1_placeholder, self._enonce2_placeholder, bitshare)
+        packed_txn = bytes(txn)
+        packed_cb_input = bytes(txn.inputs[0])
+
+        # Find the enonce1 start
+        enonce1_start = 5 + (len(packed_cb_input) - (self.enonce1_len + self.enonce2_len + 4))
+        enonce2_end = enonce1_start + self.enonce1_len + self.enonce2_len
+        # coinb1 is everything up to enonce1
+        coinb1 = packed_txn[:enonce1_start]
+        # coinb2 is everything after enonce2
+        coinb2 = packed_txn[enonce2_end:]
+
+        return (coinb1, coinb2)
 
     def build(self, enonce1, enonce2, bitshare=True):
         """ Builds a coinbase txn and returns it. If bitshare == True,
