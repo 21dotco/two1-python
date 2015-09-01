@@ -122,7 +122,10 @@ def sanitize_local_path(path, new):
 
 
 def add_static_serve_item(path, config):
-    parsed = yaml.load(open(STATIC_SERVE_CONFIG).read())
+    try:
+        parsed = yaml.load(open(STATIC_SERVE_CONFIG).read())
+    except:
+        parsed = {'paths': {}}
 
     if path[0] != '/':
         path = '/' + path

@@ -3,6 +3,11 @@
 /two1/bitcoin/tests/__pycache__/
 /two1/bitcoin/tests/blocks.json
 /two1/bitcoin/tests/txns.json
+/two1/bitcoin/sha256.so
+/two1/djangobitcoin/djangobitcoin/endpoints.json
+two1/djangobitcoin/static_serve/ss_config.yaml
+
+# misc?
 /build/
 /two1/bitcoin/sha256.so
 .idea/

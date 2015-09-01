@@ -1,5 +1,4 @@
 import unittest
-import click
 
 import os
 import two1.cli as cli
@@ -22,7 +21,7 @@ class TestSell(unittest.TestCase):
         # two1 sell --builtin
         result = runner.invoke(cli.main, get_args('sell', '--builtin'))
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn('^barcode/generate-qr$', result.output, result.output)
+        self.assertIn('barcode/generate-qr', result.output, result.output)
 
     def test_sell_builtins(self):
         runner = CliRunner()
