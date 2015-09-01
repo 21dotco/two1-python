@@ -94,11 +94,11 @@ class BarcodeTests(TestCase):
         response = Client().get("/barcode/upc-lookup?upc=07114200050&tx=paid")
         self.assertEqual(response.status_code, 200)
 
-class SpeechTests(TestCase):
-    def test_text_to_speech(self):
-        response = Client().get("/speech/text-to-speech?text=hello%20bitcoin&tx=paid")
-        #self.assertEqual(response.status_code, 200)
-        #self.assertGreater(len(response.content), 4000)
+# class SpeechTests(TestCase):
+#     def test_text_to_speech(self):
+#         response = Client().get("/speech/text-to-speech?text=hello%20bitcoin&tx=paid")
+#         #self.assertEqual(response.status_code, 200)
+#         #self.assertGreater(len(response.content), 4000)
 
 
 class WeatherTests(TestCase):
