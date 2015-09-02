@@ -4,7 +4,7 @@ import asyncio
 import codecs
 import logging
 import struct
-from .gen import swirl_pb2
+from .gen import swirl_pb3
 from .gen.laminar_ber import LaminarClientMessage, LaminarServerMessage, BitsplitAuthRequest, SubmitRequest
 
 decode_hex = codecs.getdecoder("hex_codec")
@@ -43,7 +43,7 @@ class ProtobufMessageFactory(AbstractMessageFactory):
 
     @staticmethod
     def create_bitshare_auth_request(version, username, mac, wallet_index, numerator, denominator):
-        req = swirl_pb2.SwirlClientMessage()
+        req = swirl_pb3.SwirlClientMessage()
         req.auth_request.version = version
         req.auth_request.username = username
         hw_version = str(wallet_index) + str(numerator) + str(denominator)
@@ -53,7 +53,7 @@ class ProtobufMessageFactory(AbstractMessageFactory):
 
     @staticmethod
     def create_submit_request(message_id, job_id, enonce2, otime, nonce):
-        req = swirl_pb2.SwirlClientMessage()
+        req = swirl_pb3.SwirlClientMessage()
         req.submit_request.message_id = message_id
         req.submit_request.work_id = job_id
         req.submit_request.enonce2 = enonce2
@@ -70,7 +70,7 @@ class ProtobufMessageFactory(AbstractMessageFactory):
 
         size, = struct.unpack('>H', head_buffer)
         pkt = yield from _read_exact(size, reader)
-        client_message = swirl_pb2.SwirlServerMessage()
+        client_message = swirl_pb3.SwirlServerMessage()
         client_message.ParseFromString(pkt)
         # take a look at the protobuf file to see what this means.
         message_type = client_message.WhichOneof("servermessages")

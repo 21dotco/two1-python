@@ -3,7 +3,7 @@ import codecs
 import logging
 import struct
 
-from two1.gen import swirl_pb2
+from two1.gen import swirl_pb3
 
 decode_hex = codecs.getdecoder("hex_codec")
 
@@ -17,7 +17,7 @@ class SwirlMessageFactory():
 
     @staticmethod
     def create_auth_request(version, username, worker_uuid, hw_version):
-        req = swirl_pb2.SwirlClientMessage()
+        req = swirl_pb3.SwirlClientMessage()
         req.auth_request.version = version
         req.auth_request.username = username
         req.auth_request.hw_version = hw_version
@@ -26,7 +26,7 @@ class SwirlMessageFactory():
 
     @staticmethod
     def create_submit_request(message_id, work_id, enonce2, otime, nonce):
-        req = swirl_pb2.SwirlClientMessage()
+        req = swirl_pb3.SwirlClientMessage()
         req.submit_request.message_id = message_id
         req.submit_request.work_id = work_id
         req.submit_request.enonce2 = enonce2
@@ -43,7 +43,7 @@ class SwirlMessageFactory():
 
         size, = struct.unpack('>H', head_buffer)
         pkt = yield from _read_exact_async(size, reader)
-        client_message = swirl_pb2.SwirlServerMessage()
+        client_message = swirl_pb3.SwirlServerMessage()
         client_message.ParseFromString(pkt)
         # take a look at the protobuf file to see what this means.
         message_type = client_message.WhichOneof("servermessages")
@@ -60,7 +60,7 @@ class SwirlMessageFactory():
             raise ValueError("invalid content from server")
 
         pkt = content[2:]
-        client_message = swirl_pb2.SwirlServerMessage()
+        client_message = swirl_pb3.SwirlServerMessage()
         client_message.ParseFromString(pkt)
         # take a look at the protobuf file to see what this means.
         message_type = client_message.WhichOneof("servermessages")
