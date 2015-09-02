@@ -1,12 +1,13 @@
 import logging.config
 import asyncio
 import argparse
+import os
+import warnings
+from client_message_handler import ClientMessageHandler
 
-from client_task_factory import ClientTaskFactory
-import configs
 from two1.lib.message_factory import SwirlMessageFactory
+import yaml
 
-configs.load_configs()
 logger = logging.getLogger(__name__)
 
 DEFAULT_USER = "corentin"
@@ -29,11 +30,38 @@ def parse():
 
     return parser.parse_args()
 
+
+def create_message_handler_task(user_id, worker_id, host, port, message_factory):
+    handler = ClientMessageHandler(host, port, user_id, worker_id,
+                                   message_factory=message_factory)
+    yield from handler.start()
+
+
+def load_configs():
+    # set configs based on the server mode
+    TEST_MODE = False
+    IS_DEBUG = True
+
+    script_dir = os.path.dirname(__file__)
+    log_config_path = os.path.join(script_dir, "logger_config.yaml")
+    with open(log_config_path, 'rt') as f:
+        config = yaml.load(f.read())
+
+    config["handlers"]["file_handler"]["filename"] = os.path.join(script_dir,
+                                                                  "logs/app.log")
+    logging.config.dictConfig(config)
+    if IS_DEBUG:
+        # os.environ['PYTHONASYNCIODEBUG'] = '1'
+        # logging.basicConfig(level=logging.DEBUG)
+        warnings.filterwarnings("default", category=ResourceWarning, append=True)
+
+    return TEST_MODE
 if __name__ == "__main__":
+    load_configs()
     args = parse()
     message_factory = SwirlMessageFactory()
     tasks = [
-        ClientTaskFactory.create_message_handler_task(
+        create_message_handler_task(
             user_id=args.user,
             worker_id=args.worker,
             host=args.host,
