@@ -1,9 +1,10 @@
 class UxString:
     # account creation
     creating_account = "Creating 21.co account. Username %s."
+    payout_address = "Payout address: %s."
     account_failed = "Failed to create 21.co account."
     username_exists = "Username %s already exists."
-    enter_username = "Enter Username for the account:"
+    enter_username = "Enter Username for the account"
     enter_username_retry = "Create a new username and retry."
 
     class Error:
