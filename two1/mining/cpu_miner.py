@@ -6,7 +6,7 @@ import queue
 import time
 
 
-from .coinbase import CoinbaseTransactionBuilder
+from coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.block import CompactBlock, BlockHeader
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.utils import bytes_to_str
