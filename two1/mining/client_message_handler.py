@@ -44,10 +44,8 @@ class ClientMessageHandler(object):
         self.logger.info('Authenticating')
 
         auth_msg = self._message_factory.create_auth_request(
-            version=0,
-            hw_version=123,
             username=self.user,
-            worker_uuid=self.worker,
+            uuid=self.worker,
         )
 
         yield from self._send_to_server(auth_msg)
