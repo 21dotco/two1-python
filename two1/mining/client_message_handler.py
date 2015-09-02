@@ -4,7 +4,6 @@ import time
 import cpu_miner
 
 STATE_CONNECT = "connect"
-STATE_RECONNECT = "reconnect"
 STATE_AUTHORIZE = "authorize"
 STATE_HANDLE_MSG = "handle_msg"
 
@@ -32,14 +31,6 @@ class ClientMessageHandler(object):
         return STATE_AUTHORIZE
 
     @asyncio.coroutine
-    def _state_reconnect(self):
-        self.logger.info('Reconnecting')
-        yield from self.writer.close()
-        # sleep for a bit before reconnecting - should have better backoff
-        time.sleep(3)
-        return STATE_CONNECT
-
-    @asyncio.coroutine
     def _state_authorize(self):
         self.logger.info('Authenticating')
 
@@ -51,10 +42,11 @@ class ClientMessageHandler(object):
         yield from self._send_to_server(auth_msg)
 
         # ignore the auth result for now
-        auth_msg = yield from self._message_factory.read_object_async(self.reader)
+        auth_msg = yield from self._message_factory.read_object(self.reader)
         auth_type = auth_msg.WhichOneof("authreplies")
         auth_resp = getattr(auth_msg, auth_type)
 
+        self.logger.info('Auth Success')
         enonce1 = auth_resp.enonce1
         enonce2_size = auth_resp.enonce2_size
         self.cpu_work_master = cpu_miner.CPUWorkMaster(enonce1, enonce2_size)
@@ -64,14 +56,14 @@ class ClientMessageHandler(object):
     @asyncio.coroutine
     def _state_handle_msg(self):
 
-        msg = yield from self._message_factory.read_object_async(self.reader)
+        msg = yield from self._message_factory.read_object(self.reader)
         msg_type = msg.__class__.__name__
         if msg_type == "WorkNotification":
             self._handle_notification(msg)
         return STATE_HANDLE_MSG
 
     def _handle_notification(self, data):
-        self.logger.info('Notification/Work Received')
+        self.logger.info('Work Notification Received')
         event_loop = asyncio.get_event_loop()
         # TODO we need to find a way to gracefully shutdown this thread
         # incase the main loop stops
@@ -87,10 +79,6 @@ class ClientMessageHandler(object):
             enonce2=share.enonce2,
             otime=share.otime,
             nonce=share.nonce)
-
-    @asyncio.coroutine
-    def _handle_set_difficulty(self, data):
-        self.logger.info('SetDifficulty Received')
 
     @asyncio.coroutine
     def _handle_submit_reply(self, data):
@@ -113,7 +101,7 @@ class ClientMessageHandler(object):
     @asyncio.coroutine
     def _send_to_server(self, msg):
         """
-        sends a laminar encoded message to the server.
+        sends a swirl encoded message to the server.
         """
         try:
             self.writer.write(msg)
