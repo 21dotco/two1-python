@@ -17,7 +17,6 @@ class SwirlMessageFactory:
         req.auth_request.username = username
         req.auth_request.uuid = uuid
         req.auth_request.hardware = req.auth_request.generic
-        # todo set hardware type
         return SwirlMessageFactory.encode_object(req)
 
     @staticmethod
