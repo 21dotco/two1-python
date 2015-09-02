@@ -1,8 +1,7 @@
 import asyncio
-from collections import deque, namedtuple
+from collections import namedtuple
 import random
 import threading
-import queue
 import time
 
 
