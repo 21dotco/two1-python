@@ -290,8 +290,6 @@ class Block(object):
     def coinbase_transaction(self, cb_txn):
         if cb_txn.num_inputs != 1:
             raise ValueError("Coinbase transaction has more than one input!")
-        if not isinstance(cb_txn.inputs[0], CoinbaseInput):
-            raise TypeError("First input of Coinbase transaction is not of type CoinbaseInput")
 
         self.txns[0] = cb_txn
 
