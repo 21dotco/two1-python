@@ -16,22 +16,21 @@ class SwirlMessageFactory():
         return header + msg_str
 
     @staticmethod
-    def create_auth_request(version, username, worker_uuid, hw_version):
+    def create_auth_request(username, uuid):
         req = swirl_pb3.SwirlClientMessage()
-        req.auth_request.version = version
         req.auth_request.username = username
-        req.auth_request.hw_version = hw_version
-        req.auth_request.worker_uuid = worker_uuid
+        req.auth_request.uuid = uuid
+        req.auth_request.hardware = req.auth_request.generic
         return SwirlMessageFactory._encode_object(req)
 
     @staticmethod
-    def create_submit_request(message_id, work_id, enonce2, otime, nonce):
+    def create_submit_share_request(message_id, work_id, enonce2, otime, nonce):
         req = swirl_pb3.SwirlClientMessage()
-        req.submit_request.message_id = message_id
-        req.submit_request.work_id = work_id
-        req.submit_request.enonce2 = enonce2
-        req.submit_request.otime = otime
-        req.submit_request.nonce = nonce
+        req.submit_share_request.message_id = message_id
+        req.submit_share_request.work_id = work_id
+        req.submit_share_request.enonce2 = enonce2
+        req.submit_share_request.otime = otime
+        req.submit_share_request.nonce = nonce
         return SwirlMessageFactory._encode_object(req)
 
     @staticmethod

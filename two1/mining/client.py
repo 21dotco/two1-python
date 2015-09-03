@@ -4,7 +4,7 @@ import argparse
 import os
 import warnings
 from client_message_handler import ClientMessageHandler
-from message_factory import SwirlMessageFactory
+from two1.lib.message_factory import SwirlMessageFactory
 import yaml
 
 logger = logging.getLogger(__name__)
