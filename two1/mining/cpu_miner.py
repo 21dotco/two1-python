@@ -49,7 +49,7 @@ class CPUMiner(threading.Thread):
                         enonce2=enonce2,
                         nonce=nonce,
                         work_id=self.notify_msg.work_id,
-                        otime=int(time.time()))
+                        otime=self.notify_msg.ntime)
                     self.event_loop.call_soon_threadsafe(
                         asyncio.async,
                         self.handle_found_cb(share)
