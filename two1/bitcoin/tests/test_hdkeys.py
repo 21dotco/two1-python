@@ -93,3 +93,66 @@ def test_hdkeys(vector):
             assert pair[0].index == pair[1].index
             assert pair[0].depth == pair[1].depth
             assert pair[0].parent_fingerprint == pair[1].parent_fingerprint
+
+def test_mnemonic_key_generation():
+    mnemonic = "tuna object element cancel hard nose faculty noble swear net subway offer"
+
+    m = crypto.HDPrivateKey.master_key_from_mnemonic(mnemonic)
+
+    assert m.to_b58check() == "xprv9s21ZrQH143K3But1Hju6Ga2H7dn9CyWz7nfAtdEWLhQZ7GGad7qKm4Btg9yfWgBW1xtfjqimL3zHe3TYQaPPXsQDNWSMinX1HdVG4axX5p"
+
+    keys = crypto.HDKey.from_path(m, "m/44'/0'/0'")
+    ext_chain_key = crypto.HDPrivateKey.from_parent(keys[-1], 0)
+    int_chain_key = crypto.HDPrivateKey.from_parent(keys[-1], 1)
+
+    assert int_chain_key.to_b58check() == "xprvA1fFrEZ8jPQTDp6b8qLAPJPXEDmWwCQqUq7R6vFkSDBs7SvKW3m9bCpXjD8v29Cof7zrf1QNyEHgtgPZS5AymTz1m15196CoAbnv1nGm9gB"
+    assert int_chain_key.public_key.to_b58check() == "xpub6EecFk62ZkxkSJB4ErsAkSLFnFc1Lf8gr431uJfMzYiqzFFU3b5Q9191aWqrjJxq2kS9unmEyBCLZpm9X1dBikzJpASak5XiHfUKChD8kT2"
+
+    int_addresses = ["12q2xjqTh6ZNHUTQLWSs9uSyDkGHNpQAzu",
+                     "1NpksrEeUpMcbw6ekWPZfPd3qAhEL5ygJ4",
+                     "1BruaiE6VNXQdeDdhGKhB1x8sq2NcJrDBX",
+                     "1ECsMhxMnHR7mMjaP1yBRhUNaUszZUYQUj",
+                     "1KbGXnyg1gXx4CA3YnCmpKH252jw8pR9C1",
+                     "1DVfjTiL4mQMui188i615q4ybZRuT65DqS",
+                     "1MhKGVuRN6jxFSLU3LNmAEu8gMwG4zWE18",
+                     "1756Kxj3LRVB8cHe9yRCpppSmeRqGVXZxP",
+                     "1PWMMrZM356ggUrmTTN7ZHpUb3Uic3VaPz",
+                     "1GJ1nDUhyBDB2xtWPV3hXcQyii5Ao7FuGV",
+                     "12Xb9HW6VijputQGYrA3PsxJZnSqf3p8rJ",
+                     "1GEntRhFbgNSmnS8zZKNXsT2tGoYreSwL5",
+                     "1Bn6U6YUNr46nmgro2ujqpWWDZbgquKAyq",
+                     "193fqpFGNbrV83uKFA5TuFRBBpHbTZoWj5",
+                     "1EyU9mFWwkHwSmAfu5QBs4FVFwwAVdyft8",
+                     "13bT9WXLEpadRzj31VgoRzSB8KpHp8nk7d",
+                     "1PWsee2bHn8BGbKTMMdWScQ1BtggJ2T7s3",
+                     "12NCpy5sVk9ZZVLdhrH19na6nqW3Bpj4Wk",
+                     "1MxSrzVmbZABSH5ei7hgNbrApngPeCPA9y",
+                     "1TJqdM2Hfw8SM26NdrBT1yVbqVcXoKdBQ"]
+
+    assert [crypto.HDPublicKey.from_parent(int_chain_key, i).address() for i in range(20)] == int_addresses
+    
+    assert ext_chain_key.to_b58check() == "xprvA1fFrEZ8jPQTA6nguZQauChJ8ubexZhRbyowy1kzi7WiAodkwWxM9w8NaCzhEWqMukV7zXwAdzRZJ5mVCwG8NmhVBkZfrjEa1aZUTnvzSDL"
+    assert ext_chain_key.public_key.to_b58check() == "xpub6EecFk62ZkxkNasA1awbGLe2gwS9N2RGyCjYmQAcGT3h3bxuV4GbhjSrRTJBzbkmu8fMzoUDAixdHSuso7aw2BEPVfUh6R4AFJWLjps2JX6"
+
+    ext_addresses = ["1Lqf8UgzG3SWWTe9ab8YPwgm6gzkJCZMX6",
+                     "1KuwentNouJBjKZgfrcPidSBELyXkpvpDa",
+                     "1DgSD3feEKysnre6bL2xQAUyza4cdShVX1",
+                     "1JefJedKMWX4NowgGujdhr7Lq3EFHtwDjQ",
+                     "1A994BxdSc5HzNeQ8vUUrZJ7X1azjvkQ9",
+                     "1G2q6e5zvQuxakJmeZuTM2QVuwxXmRff2n",
+                     "1DDXZK4riAhNHW2AUAKcyphFmJQy2i1V8z",
+                     "16fb3HunUPcLc5sh5iiDNpbhLv9B2DQVN5",
+                     "1JckLjeHzphmCxx6jyCRctkfAF4Ak5RhRZ",
+                     "1FSa872pSXMF3dSaXK4BgaFsJSBSaAFuHj",
+                     "1DXWGJz3aW2miZdqZzKjtriHCVLdBchVHk",
+                     "1KYwjXTfWUW3SujyuwxU3fuGS2gzhkz9xY",
+                     "1LYNKZSBsAUScADJ4w8KaG26CQvcKLE5sF",
+                     "15U6sh5Q1QMXrHov86u8YSfnHMGSgXL8wi",
+                     "19prymRW7LWk7aZeSXdqaUkEfHQLALWYi4",
+                     "169QZnRqzNoQC6gcLFdTNfYPTRx4VkZn89",
+                     "18h8kPb4RFJL1gMyVaKSoKz4LmBRsMsdD6",
+                     "1GazoWKznZnkJs2rgUoADBfNoHcxWR6uS8",
+                     "14AEZEacXmnBojoBcS9Er2Ma4sUG7Ey1pU",
+                     "1LjBL9rDSNWqDZMyGr3h1H7XrSTxzLYhAu"]
+    
+    assert [crypto.HDPublicKey.from_parent(ext_chain_key, i).address() for i in range(20)] == ext_addresses
