@@ -937,17 +937,30 @@ class HDKey(object):
         """
         p = HDKey.parse_path(path)
 
-        k = root_key
-        for i in p:
-            klass = k.__class__
-            k = klass.from_parent(k, i)
+        if p[0] == "m":
+            if root_key.master:
+                p = p[1:]
+            else:
+                raise ValueError("root_key must be a master key if 'm' is the first element of the path.")
 
-        return k
+        keys = [root_key]
+        for i in p:
+            if isinstance(i, str):
+                hardened = i[-1] == "'"
+                base = 16 if i.startswith("0x") else 10
+                index = int(i[:-1], base) | 0x80000000 if hardened else int(i, base)
+            k = keys[-1]
+            klass = k.__class__
+            keys.append(klass.from_parent(k, index))
+
+        return keys
 
     @staticmethod
     def parse_path(path):
         if isinstance(path, str):
             p = path.split("/")
+        elif isinstance(path, bytes):
+            p = path.decode('utf-8').split("/")
         else:
             p = list(path)
 
