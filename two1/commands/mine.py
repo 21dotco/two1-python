@@ -3,16 +3,14 @@ import json
 import click
 from two1.config import pass_config
 from two1.bitcoin.block import CompactBlock
-from two1.mining.coinbase import CoinbaseTransactionBuilder
-from two1.bitcoin.txn import TransactionOutput
-from two1.bitcoin.utils import bytes_to_str
-from two1.lib import login
+from two1.bitcoin.txn import Transaction
 import time
 import random
 from two1.lib import rest_client, message_factory, login
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
 from two1.uxstring import UxString
+import two1.bitcoin.utils as utils
 
 from two1.gen import swirl_pb2 as swirl
 
@@ -66,7 +64,7 @@ def mine(config):
         satoshi = payment_details["amount"]
         config.log("You mined {} ฿\n".format(satoshi), fg="yellow")
         try:
-            bitcoin_address = config.bitcoin_address
+            bitcoin_address = config.wallet.current_address()
         except AttributeError:
             bitcoin_address = "Not Set"
 
@@ -83,68 +81,65 @@ def mine(config):
                    )
 
 
-def get_enonces(username):
-    enonce1_size = 8
-    enonce1 = username[-1 * enonce1_size:].encode()
-    if len(enonce1) != enonce1_size:
-        enonce1 = enonce1 + ((enonce1_size - len(enonce1)) * b"0")
-    enonce2_size = 4
-    return enonce1, enonce2_size
+def get_work(config, client):
+    username = config.username
+    work_msg = client.get_work(username=username)
+    if work_msg.status_code == 200:
+        msg_factory = message_factory.SwirlMessageFactory()
+        work = msg_factory.read_object(work_msg.content)
+        return work
+    elif work_msg.status_code == 400:
+        click.echo(UxString.Error.non_existing_user % username)
+        click.echo(UxString.enter_username_retry)
+        login.create_username(config=config, username=None)
+    else:
+        click.echo(UxString.Error.server_err)
 
 
-Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'job_id'])
-Work = namedtuple('Work', ['job_id', 'enonce2', 'cb'])
+Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'work_id'])
+Work = namedtuple('Work', ['work_id', 'enonce2', 'cb'])
 
 
-def find_valid_nonce(config, work_msg):
-    '''Find valid nonce for given problem'''
+def mine_work(work_msg, username):
+    enonce1, enonce2_size = get_enonces(username=username)
 
-    enonce1, enonce2_size = get_enonces(username=config.username)
-    outputs = [TransactionOutput.from_bytes(x)[0] for x in work_msg.outputs]
-    iscript0 = work_msg.iscript0[4:-1]
-    cb_builder = CoinbaseTransactionBuilder(
-        work_msg.block_height, iscript0, work_msg.iscript1,
-        len(enonce1), enonce2_size, outputs, 0
-    )
+    pool_target = utils.bits_to_target(work_msg.bits_pool)
+    for enonce2_num in range(0, 2 ** (enonce2_size * 8)):
+        enonce2 = enonce2_num.to_bytes(enonce2_size, byteorder="big")
 
-    enonce2 = bytes([random.randrange(0, 256) for n in range(enonce2_size)])
-    cb_txn = cb_builder.build(enonce1, enonce2)
+        cb_txn, _ = Transaction.from_bytes(
+            work_msg.coinb1 + enonce1 + enonce2 + work_msg.coinb2)
+        cb = CompactBlock(work_msg.height,
+                          work_msg.version,
+                          Hash(work_msg.prev_block_hash),
+                          work_msg.ntime,
+                          work_msg.nbits,  # lower difficulty work for testing
+                          work_msg.merkle_edge,
+                          cb_txn)
 
-    edge = [e for e in work_msg.edge]
+        row_counter = 0
+        for nonce in range(0xffffffff):
 
-    cb = CompactBlock(work_msg.block_height,
-                      work_msg.block_version,
-                      Hash(work_msg.prev_block_hash),
-                      work_msg.itime,
-                      work_msg.bits_pool,  # lower difficulty work_msg for testing
-                      edge,
-                      cb_txn)
-
-    work = Work(job_id=work_msg.work_id,
-                enonce2=enonce2,
-                cb=cb)
-
-    print("starting to mine for %s" % work.cb.block_header.target)
-    start = int(time.time())
-    row_counter = 0
-    for nonce in range(0xffffffff):
-        if nonce % 6e3 == 0:
-            click.echo(click.style(u'█', fg='green'), nl=False)
-            row_counter += 1
+            if nonce % 6e3 == 0:
+                click.echo(click.style(u'█', fg='green'), nl=False)
+                row_counter += 1
             if row_counter > 40:
                 row_counter = 0
                 click.echo("")
-        work.cb.block_header.nonce = nonce
-        if work.cb.block_header.valid:
-            share = Share(
-                enonce2=enonce2,
-                nonce=nonce,
-                work_id=work_msg.work_id,
-                otime=int(time.time()))
-            # adds a new line at the end of progress bar
-            click.echo("")
-            return share
 
+            cb.block_header.nonce = nonce
+            h = cb.block_header.hash.to_int('little')
+            if h < pool_target:
+                share = Share(
+                    enonce2=enonce2,
+                    nonce=nonce,
+                    work_id=work_msg.work_id,
+                    otime=int(time.time()))
+                # adds a new line at the end of progress bar
+                click.echo("")
+                return share
+
+        click.echo("Exhausted enonce1 space. Changing enonce2")
 
 def get_enonces(username):
     enonce1_size = 8
@@ -158,10 +153,10 @@ def get_enonces(username):
 def save_work(client, share, username):
     message_id = random.randint(1, 1e5)
     msg_factory = message_factory.SwirlMessageFactory()
-    req_msg = msg_factory.create_submit_request(message_id=message_id,
-                                                work_id=share.work_id,
-                                                enonce2=share.enonce2,
-                                                otime=share.otime,
-                                                nonce=share.nonce)
+    req_msg = msg_factory.create_submit_share_request(message_id=message_id,
+                                                      work_id=share.work_id,
+                                                      enonce2=share.enonce2,
+                                                      otime=share.otime,
+                                                      nonce=share.nonce)
 
     return client.send_work(username=username, data=req_msg)
