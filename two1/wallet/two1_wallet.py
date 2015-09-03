@@ -50,7 +50,7 @@ class Two1Wallet(BaseWallet):
     @staticmethod
     def import_from_mnemonic(txn_provider, mnemonic, passphrase='', testnet=False):
         master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic, passphrase)
-        config = { "master_key": master_key.to_b58_check(testnet),
+        config = { "master_key": master_key.to_b58check(testnet),
                    "master_seed": mnemonic,
                }
         wallet = Two1Wallet(config, txn_provider)
@@ -92,16 +92,18 @@ class Two1Wallet(BaseWallet):
 
     def discover_accounts(self):
         # We follow the account discovery procedure in BIP44
-        has_txn = True
+        has_txns = True
         i = 0
         while has_txns:
             if i >= len(self._accounts):
                 self._init_account(i)
-            has_txn = self._accounts[i]
+            has_txns = self._accounts[i].has_txns()
             i += 1
 
-        # The last one will not have txns, so remove it
-        del self._accounts[-1]
+        # The last one will not have txns, so remove it unless it's the
+        # default one.
+        if len(self._accounts) > 1:
+            del self._accounts[-1]
             
     def _init_account(self, index, name=""):
         # Account keys use hardened deriviation, so make sure the MSB is set
