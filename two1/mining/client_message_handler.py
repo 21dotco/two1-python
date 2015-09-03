@@ -74,8 +74,8 @@ class ClientMessageHandler(object):
 
         # TODO: not sure what to put for message_id. fix when get info
         yield from self._submit_request_to_server(
-            message_id=share.job_id,
-            job_id=share.job_id,
+            message_id=share.work_id,
+            work_id=share.work_id,
             enonce2=share.enonce2,
             otime=share.otime,
             nonce=share.nonce)
@@ -85,17 +85,17 @@ class ClientMessageHandler(object):
         self.logger.info('SubmitReply Received')
 
     @asyncio.coroutine
-    def _submit_request_to_server(self, message_id, job_id, enonce2, otime, nonce):
+    def _submit_request_to_server(self, message_id, work_id, enonce2, otime, nonce):
         """
         """
-        msg = self._message_factory.create_submit_request(
+        msg = self._message_factory.create_submit_share_request(
             message_id=message_id,
-            work_id=job_id,
+            work_id=work_id,
             enonce2=enonce2,
             otime=otime,
             nonce=nonce)
 
-        self.logger.info('Sending Shares to the server %g ', job_id)
+        self.logger.info('Sending Shares to the server %g ', work_id)
         yield from self._send_to_server(msg)
 
     @asyncio.coroutine
