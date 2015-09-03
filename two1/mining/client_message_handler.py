@@ -42,7 +42,7 @@ class ClientMessageHandler(object):
         yield from self._send_to_server(auth_msg)
 
         # ignore the auth result for now
-        auth_msg = yield from self._message_factory.read_object(self.reader)
+        auth_msg = yield from self._message_factory.read_object_async(self.reader)
         auth_type = auth_msg.WhichOneof("authreplies")
         auth_resp = getattr(auth_msg, auth_type)
 
@@ -56,7 +56,7 @@ class ClientMessageHandler(object):
     @asyncio.coroutine
     def _state_handle_msg(self):
 
-        msg = yield from self._message_factory.read_object(self.reader)
+        msg = yield from self._message_factory.read_object_async(self.reader)
         msg_type = msg.__class__.__name__
         if msg_type == "WorkNotification":
             self._handle_notification(msg)
