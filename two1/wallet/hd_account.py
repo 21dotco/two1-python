@@ -1,7 +1,7 @@
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 
-class BIP44Account(object):
-    """ An implemenation of a single BIP44 account to be used in an HD
+class HDAccount(object):
+    """ An implemenation of a single HD account to be used in an HD
         wallet.
 
         This class handles key generation/management for both internal
@@ -28,7 +28,6 @@ class BIP44Account(object):
         txn_provider (TransactionDataProvider): A compatible data provider.
         testnet (bool): Whether or not this account will be used on testnet.
     """
-    REQUIRED_DEPTH = 3
     PAYOUT_CHAIN = 0
     CHANGE_CHAIN = 1
     GAP_LIMIT = 20
@@ -36,12 +35,9 @@ class BIP44Account(object):
     def __init__(self, hd_key, name, index, txn_provider, testnet=False):
         # Take in either public or private key for this account as we can derive
         # everything from it.
-        # It must be depth = 3 following BIP44
         if not isinstance(hd_key, HDKey):
             raise TypeError("hd_key must be a HDKey object")
 
-        assert hd_key.depth == self.REQUIRED_DEPTH
-        
         self.key = hd_key
         self.name = name
         self.index = index

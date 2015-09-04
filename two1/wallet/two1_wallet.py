@@ -4,9 +4,11 @@ from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.bitcoin.script import Script
 from two1.bitcoin.txn import Transaction, TransactionInput, TransactionOutput
 from two1.bitcoin import utils
-from two1.wallet.bip44_account import BIP44Account
+from two1.wallet.account_types import account_types
+from two1.wallet.hd_account import HDAccount
 from two1.wallet.baseWallet import BaseWallet
 
+DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
 class Two1Wallet(BaseWallet):
     """ utxo_selector should be a filtering function with prototype:
@@ -28,9 +30,6 @@ class Two1Wallet(BaseWallet):
         number of inputs, oldest UTXOs first, newest UTXOs first, minimize change
         amount, etc.
     """
-    PURPOSE_CONSTANT = 0x8000002C
-    BITCOIN_MAINNET = 0x80000000
-    BITCOIN_TESTNET = 0x80000001
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
 
     @staticmethod
@@ -39,19 +38,26 @@ class Two1Wallet(BaseWallet):
         # 1. master key seed + mnemonic
         # 2. First account
         # Store info to file
+        account_type = "BIP44Testnet" if testnet else DEFAULT_ACCOUNT_TYPE
         master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
         config = { "master_key": master_key.to_b58check(testnet),
                    "master_seed": mnemonic,
+                   "account_type": account_type
                }
         wallet = Two1Wallet(config, txn_provider)
 
         return wallet
 
     @staticmethod
-    def import_from_mnemonic(txn_provider, mnemonic, passphrase='', testnet=False):
+    def import_from_mnemonic(txn_provider, mnemonic, passphrase='', account_type=DEFAULT_ACCOUNT_TYPE):
+        if account_type not in account_types:
+            raise ValueError("account_type must be one of %r" % account_types.keys())
+
+        testnet = account_type == "BIP44Testnet"
         master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic, passphrase)
         config = { "master_key": master_key.to_b58check(testnet),
                    "master_seed": mnemonic,
+                   "account_type": account_type
                }
         wallet = Two1Wallet(config, txn_provider)
         wallet.discover_accounts()
@@ -68,15 +74,17 @@ class Two1Wallet(BaseWallet):
             self._master_seed = config.get('master_seed')
             assert isinstance(self._master_key, HDPrivateKey)
             assert self._master_key.master
-
-            if m.startswith("t"):
-                self._testnet = True
         else:
             raise ValueError("config does not have a required key: 'master_key'")
 
-        coin_const = self.BITCOIN_TESTNET if self._testnet else self.BITCOIN_MAINNET
-        self._purpose_priv_key = HDPrivateKey.from_parent(self._master_key, self.PURPOSE_CONSTANT)
-        self._coin_priv_key = HDPrivateKey.from_parent(self._purpose_priv_key, coin_const)
+        acct_type = config.get('account_type', None)
+        if acct_type is not None:
+            self.account_type = account_types[acct_type]
+            self._testnet = self.account_type == 'BIP44Testnet'
+        else:
+            raise ValueError("config does not have a required key: 'account_type'")
+
+        self._root_keys = HDKey.from_path(self._master_key, self.account_type.account_derivation_prefix)
 
         self._accounts = []
         self._account_map = {}
@@ -109,8 +117,8 @@ class Two1Wallet(BaseWallet):
         # Account keys use hardened deriviation, so make sure the MSB is set
         acct_index = index | 0x80000000
         
-        acct_priv_key = HDPrivateKey.from_parent(self._coin_priv_key, acct_index)
-        acct = BIP44Account(acct_priv_key, name, index, self.txn_provider, self._testnet)
+        acct_priv_key = HDPrivateKey.from_parent(self._root_keys[-1], acct_index)
+        acct = HDAccount(acct_priv_key, name, acct_index, self.txn_provider, self._testnet)
         self._accounts.insert(index, acct)
         self._account_map[name] = index
         
@@ -124,7 +132,7 @@ class Two1Wallet(BaseWallet):
 
             # Make sure that the key serialization in the config matches
             # that from our init
-            if v["public_key"] != self.accounts[i].private_key.public_key.to_b58check(self._testnet):
+            if a["public_key"] != self.accounts[i].key.public_key.to_b58check(self._testnet):
                 raise ValueError("Account config inconsistency detected: pub key for account %d (%s) does not match expected." % (i, name))
 
     def _check_and_get_accounts(self, accounts):
@@ -140,8 +148,8 @@ class Two1Wallet(BaseWallet):
                         accts.append(self._accounts[a])
                 elif isinstance(a, str):
                     account_index = self._account_map.get(a, None)
-                    if account_index:
-                        accounts = [self._accounts[account_index]]
+                    if account_index is not None:
+                        accts.append(self._accounts[account_index])
                     else:
                         raise ValueError("Specified account (%s) does not exist." % a)
                 else:
@@ -172,8 +180,11 @@ class Two1Wallet(BaseWallet):
             # Remove any found addresses so we don't keep searching for them
             remove_indices = sorted(list(acct_found.keys()), reverse=True)
             for r in remove_indices:
-                del addrs[r]
+                addrs.remove(r)
 
+        # Do we also check 1 account up, just in case this was imported somewhere
+        # else and that created the next account? That could go on forever though...
+                
         return found
     
     def address_belongs(self, address):
@@ -181,14 +192,11 @@ class Two1Wallet(BaseWallet):
         """
         found = self.find_addresses([address])
 
-        coin_constant = self.BITCOIN_TESTNET if self._testnet else self.BITCOIN_MAINNET
         if address in found:
-            return "/".join([str(x) for x in ["m",
-                                              self.PURPOSE_CONSTANT,
-                                              coin_constant,
-                                              found[addr][0],
-                                              found[addr][1],
-                                              found[addr][2]]])
+            return self.account_type.account_derivation_prefix + "/" + \
+                HDKey.path_from_indices([found[address][0],
+                                         found[address][1],
+                                         found[address][2]])
         else:
             return None
         
@@ -294,13 +302,13 @@ class Two1Wallet(BaseWallet):
 
     @property
     def balance(self):
-        balance = (0, 0)
+        balance = [0, 0]
         for acct in self._accounts:
             acct_balance = acct.balance
             balance[0] += acct_balance[0]
             balance[1] += acct_balance[1]
 
-        return balance
+        return tuple(balance)
 
     @property
     def accounts(self):

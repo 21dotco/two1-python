@@ -960,9 +960,10 @@ class HDKey(object):
     @staticmethod
     def parse_path(path):
         if isinstance(path, str):
-            p = path.split("/")
+            # Remove trailing "/"
+            p = path.rstrip("/").split("/")
         elif isinstance(path, bytes):
-            p = path.decode('utf-8').split("/")
+            p = path.decode('utf-8').rstrip("/").split("/")
         else:
             p = list(path)
 
