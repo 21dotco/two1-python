@@ -119,7 +119,7 @@ class BIP44Account(object):
                 addr = self._used_addresses[change][i] if i <= self.last_indices[change] else self.get_address(change, i)
                     
                 if addr in addresses:
-                    found[addr] = (change, i)
+                    found[addr] = (self.index, change, i)
 
         return found
             
