@@ -967,6 +967,21 @@ class HDKey(object):
             p = list(path)
 
         return p
+
+    @staticmethod
+    def path_from_indices(l):
+        p = []
+        for n in l:
+            if n == "m":
+                p.append(n)
+            else:
+                if n & 0x80000000:
+                    _n = n & 0x7fffffff
+                    p.append(str(_n) + "'")
+                else:
+                    p.append(str(n))
+
+        return "/".join(p)
     
     def __init__(self, key, chain_code, index, depth, parent_fingerprint):
         if index < 0 or index > 0xffffffff:
