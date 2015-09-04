@@ -4,6 +4,7 @@ import time
 import cpu_miner
 
 STATE_CONNECT = "connect"
+STATE_DISCONNECT = "connect"
 STATE_AUTHORIZE = "authorize"
 STATE_HANDLE_MSG = "handle_msg"
 
@@ -23,6 +24,8 @@ class ClientMessageHandler(object):
         while True:
             method = '_state_%s' % (self.state,)
             self.state = yield from getattr(self, method)()
+            if self.state == STATE_DISCONNECT:
+                return
 
     def _state_connect(self):
         self.logger.info('Connecting')
@@ -46,12 +49,17 @@ class ClientMessageHandler(object):
         auth_type = auth_msg.WhichOneof("authreplies")
         auth_resp = getattr(auth_msg, auth_type)
 
-        self.logger.info('Auth Success')
-        enonce1 = auth_resp.enonce1
-        enonce2_size = auth_resp.enonce2_size
-        self.cpu_work_master = cpu_miner.CPUWorkMaster(enonce1, enonce2_size)
+        if auth_type == 'auth_reply_yes':
+            self.logger.info('Auth Success')
+            enonce1 = auth_resp.enonce1
+            enonce2_size = auth_resp.enonce2_size
+            self.cpu_work_master = cpu_miner.CPUWorkMaster(enonce1, enonce2_size)
 
-        return STATE_HANDLE_MSG
+            return STATE_HANDLE_MSG
+        elif auth_type == 'auth_reply_no':
+            self.logger.info('Auth Failed. error=%s', auth_resp.error)
+            return STATE_DISCONNECT
+
 
     @asyncio.coroutine
     def _state_handle_msg(self):
