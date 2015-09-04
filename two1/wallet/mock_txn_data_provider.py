@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.bitcoin.txn import Transaction
-from two1.wallet.bip44_account import BIP44Account
+from two1.wallet.account_types import AccountType, account_types
+from two1.wallet.hd_account import HDAccount
 from two1.wallet.txn_data_provider import TransactionDataProvider
 
 class MockTxnDict(dict):
@@ -34,12 +35,22 @@ class MockTransactionDataProvider(TransactionDataProvider):
     methods = ['get_balance', 'get_transactions', 'get_utxo',
                'get_balance_hd', 'get_transactions_hd', 'get_utxo_hd',
                'send_transaction']
-    address_increment = 2 * BIP44Account.GAP_LIMIT
+    address_increment = 2 * HDAccount.GAP_LIMIT
     max_address = 2 * address_increment
     max_accounts = 10
     
-    def __init__(self, hd_master_key, non_hd_addr_list=[]):
+    def __init__(self, hd_account_type, hd_master_key, non_hd_addr_list=[]):
         super().__init__()
+
+        if isinstance(hd_account_type, str):
+            if hd_account_type not in account_types:
+                raise ValueError("hd_account_type must be one of %r." % account_types.keys())
+            else:
+                self.account_type = account_types[hd_account_type]
+        elif isinstance(hd_account_type, AccountType):
+            self.account_type = hd_account_type
+        else:
+            raise TypeError("hd_account_type should be a str or AccountType object")
 
         self._num_used_addresses = {}
         self._num_used_accounts = 0
@@ -73,7 +84,7 @@ class MockTransactionDataProvider(TransactionDataProvider):
         self._hd_master_key = k
         self._acct_keys = {}
 
-        keys = HDKey.from_path(self._hd_master_key, "m/44'/0'")
+        keys = HDKey.from_path(self._hd_master_key, self.account_type.account_derivation_prefix)
         for i in range(self.max_accounts):
             acct_key = HDPrivateKey.from_parent(keys[-1], 0x80000000 | i)
             payout_key = HDPrivateKey.from_parent(acct_key, 0)

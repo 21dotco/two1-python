@@ -4,25 +4,26 @@ from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 
-from two1.wallet.bip44_account import BIP44Account
+from two1.wallet.account_types import account_types
+from two1.wallet.hd_account import HDAccount
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.mock_txn_data_provider import MockTransactionDataProvider
 
 master_key_mnemonic = 'cage minimum apology region aspect wrist demise gravity another bulb tail invest'
 master_key_passphrase = "test"
 
+account_type = account_types['BIP44BitcoinMainnet']
+
 master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic=master_key_mnemonic,
                                                    passphrase=master_key_passphrase)
-acct0_key = HDKey.from_path(master_key, [Two1Wallet.PURPOSE_CONSTANT, Two1Wallet.BITCOIN_MAINNET, 0x80000000])[-1]
+acct0_key = HDKey.from_path(master_key, account_type.account_derivation_prefix + "/0'")[-1]
 
-mock_txn_provider = MockTransactionDataProvider(master_key)
+
+mock_txn_provider = MockTransactionDataProvider(account_type, master_key)
 
 def test_init():
     with pytest.raises(TypeError):
-        acct = BIP44Account(master_key_passphrase, "default", 0, mock_txn_provider)
-
-    with pytest.raises(AssertionError):
-        acct = BIP44Account(master_key, "default", 0, mock_txn_provider)
+        acct = HDAccount(master_key_passphrase, "default", 0, mock_txn_provider)
 
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
                          [(0, 0, (0, 0)),
@@ -41,7 +42,7 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
     
     expected_call_count = m.set_txn_side_effect_for_hd_discovery()
 
-    acct = BIP44Account(acct0_key, "default", 0, m)
+    acct = HDAccount(acct0_key, "default", 0, m)
     mk0 = m._acct_keys[0]
 
     assert acct._chain_priv_keys[0].to_b58check() == mk0['payout_key'].to_b58check()

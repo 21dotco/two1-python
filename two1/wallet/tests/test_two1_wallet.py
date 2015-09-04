@@ -8,13 +8,14 @@ from two1.wallet.mock_txn_data_provider import MockTxnDict, MockTransactionDataP
 
 config = {'master_key': "xprv9s21ZrQH143K3But1Hju6Ga2H7dn9CyWz7nfAtdEWLhQZ7GGad7qKm4Btg9yfWgBW1xtfjqimL3zHe3TYQaPPXsQDNWSMinX1HdVG4axX5p",
           'master_seed': "tuna object element cancel hard nose faculty noble swear net subway offer",
+          'account_type': "BIP44BitcoinMainnet",
           'accounts': [{ 'public_key': "xpub6CcQGHogi7ch8kCGTUJajqCXSY4HNQUj6seuToEGix9gVzrZjxGx1oJEcu1M6zweE6qxvzpddSMZmFKiXwEvghvG4xArBT2PCQLQ3qt4sZP",
                          'last_payout_index': 2,
                          'last_change_index': 1 }],
           'account_map': { 'default': 0 }}
 
 master = HDPrivateKey.master_key_from_mnemonic(config['master_seed'])
-mock_txn_provider = MockTransactionDataProvider(master)
+mock_txn_provider = MockTransactionDataProvider("BIP44BitcoinMainnet", master)
     
 def test_create():
     # Here we just check to see that the config was created properly,
@@ -28,7 +29,7 @@ def test_create():
 
     assert len(wallet._accounts) == 1
     assert wallet._accounts[0].name == "default"
-    assert wallet._accounts[0].index == 0
+    assert wallet._accounts[0].index == 0x80000000
     
     wallet_config = wallet.to_dict()
     assert wallet_config['account_map'] == {"default": 0}
@@ -46,10 +47,11 @@ def test_import():
     m.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
-                                             mnemonic=config['master_seed'])
+                                             mnemonic=config['master_seed'],
+                                             account_type="BIP44BitcoinMainnet")
 
-    assert wallet._purpose_priv_key.to_b58check() == keys[1].to_b58check()
-    assert wallet._coin_priv_key.to_b58check() == keys[2].to_b58check()
+    assert wallet._root_keys[1].to_b58check() == keys[1].to_b58check()
+    assert wallet._root_keys[2].to_b58check() == keys[2].to_b58check()
     assert wallet._accounts[0].key.to_b58check() == keys[3].to_b58check()
     
     assert len(wallet._accounts) == 1
@@ -63,7 +65,8 @@ def test_import():
     m.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
-                                             mnemonic=config['master_seed'])
+                                             mnemonic=config['master_seed'],
+                                             account_type="BIP44BitcoinMainnet")
 
     assert len(wallet._accounts) == 1
     assert wallet._accounts[0].has_txns()
@@ -78,7 +81,8 @@ def test_import():
     m.set_txn_side_effect_for_hd_discovery()    
 
     wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
-                                             mnemonic=config['master_seed'])
+                                             mnemonic=config['master_seed'],
+                                             account_type="BIP44BitcoinMainnet")
 
     assert len(wallet._accounts) == 4
     for i in range(4):
@@ -89,7 +93,7 @@ def test_rest():
     m = mock_txn_provider
     m.reset_mocks()
 
-    m.set_num_used_accounts(2)
+    m.set_num_used_accounts(1)
     m.set_num_used_addresses(account_index=0, n=1, change=0)
     m.set_num_used_addresses(account_index=0, n=2, change=1)
 
@@ -130,4 +134,24 @@ def test_rest():
         assert b not in paths
         assert wallet.address_belongs(b) is None
 
+    # Check that there's an account name
+    assert wallet.get_account_name(0) == "default"
+
+    # Check the balance
+    assert wallet.balance == (100000, 20000)
+    
+    # Check that we can get a new payout address
+    for i in range(3):
+        ext_addr = wallet.get_new_payout_address("default")
+        assert ext_addr == ext_addrs[i + 1]
+        assert wallet.accounts[0].last_indices[0] == i + 1
+        assert wallet.accounts[0].current_payout_address == ext_addr
+
+    # Check the balance again - should be the same
+    assert wallet.balance == (100000, 20000)
+
+    # Check it after updating the mock
+    m.set_num_used_addresses(0, 4, 0)
+    assert wallet.balance == (400000, 20000)
         
+    
