@@ -949,6 +949,8 @@ class HDKey(object):
                 hardened = i[-1] == "'"
                 base = 16 if i.startswith("0x") else 10
                 index = int(i[:-1], base) | 0x80000000 if hardened else int(i, base)
+            else:
+                index = i
             k = keys[-1]
             klass = k.__class__
             keys.append(klass.from_parent(k, index))
