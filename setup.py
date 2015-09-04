@@ -23,6 +23,7 @@ install_requires = [
                     'pytest',
                     'requests',
                     'simplejson',
+                    'sha256',
                     'path.py',
                     'click',
                     'keyring',

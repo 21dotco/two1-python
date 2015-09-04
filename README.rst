@@ -130,7 +130,6 @@ The ``two1/bitcoin`` subdirectory
  - `script.py <two1/bitcoin/script.py>`_: Parse scripts and assemble/disassemble.
  - `txn.py <two1/bitcoin/txn.py>`_: Represent transactions: input, output, and coinbases.
  - `utils.py <two1/bitcoin/utils.py>`_: Utility functions, mostly related to serializing and difficulty
- - `sha256.pyx <two1/bitcoin/sha256.pyx>`_: Cython code to rapidly calculate SHA-256
 
 The ``two1/mining`` subdirectory
 ----------------------------------

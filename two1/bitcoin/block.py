@@ -1,6 +1,7 @@
+from sha256 import sha256 as sha256_midstate
+
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import CoinbaseInput, Transaction
-from two1.bitcoin.sha256 import sha256 as sha256_midstate
 from two1.bitcoin.utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
