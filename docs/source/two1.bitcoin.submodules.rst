@@ -32,14 +32,6 @@ two1.bitcoin.script module
     :undoc-members:
     :show-inheritance:
 
-two1.bitcoin.sha256 module
---------------------------
-
-.. automodule:: two1.bitcoin.sha256
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 two1.bitcoin.txn module
 -----------------------
 
