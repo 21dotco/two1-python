@@ -1,3 +1,4 @@
+import base64
 from collections import namedtuple
 import click
 import json
@@ -67,12 +68,19 @@ def mine(config):
         payout_address = config.wallet.current_address()
         config.log("Setting payout_address to {}".format(payout_address))
         # set a new address from the HD wallet for payouts
-        rest_client.account_payout_address_post(config.username,payout_address)
+        payout_address = config.wallet.current_address()
+        auth_resp = client.account_payout_address_post(config.username, payout_address)
+        if auth_resp.status_code != 200:
+            click.echo(UxString.Error.server_err)
+            return
 
-        work_msg = mining_rest_client.get_work(username=config.username)
-        msg_factory = message_factory.SwirlMessageFactory()
-        work = msg_factory.read_object(work_msg.content)
-        share = find_valid_nonce(config, work)
+        user_info = json.loads(auth_resp.text)
+        enonce1_base64 = user_info["enonce1"]
+        enonce1 = base64.decodebytes(enonce1_base64.encode())
+        enonce2_size = user_info["enonce2_size"]
+
+        # get work from server
+        work = get_work(config, client)
 
         message_id = random.randint(1, 1e5)
         req_msg = msg_factory.create_submit_request(message_id=message_id,
@@ -81,13 +89,8 @@ def mine(config):
                                                     otime=share.otime,
                                                     nonce=share.nonce)
 
-        client_message = swirl.SwirlClientMessage()
-        reqq = req_msg[2:]
-        client_message.ParseFromString(reqq)
-        # take a look at the protobuf file to see what this means.
-        message_type = client_message.WhichOneof("clientmessages")
-        msg = getattr(client_message, message_type)
-        mining_rest_client.send_work(username=config.username, data=req_msg)
+        # start mining
+        found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
         if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
             click.echo(UxString.Error.server_err)
@@ -155,8 +158,7 @@ Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'work_id'])
 Work = namedtuple('Work', ['work_id', 'enonce2', 'cb'])
 
 
-def mine_work(work_msg, username):
-    enonce1, enonce2_size = get_enonces(username=username)
+def mine_work(work_msg, enonce1, enonce2_size):
 
     pool_target = utils.bits_to_target(work_msg.bits_pool)
     for enonce2_num in range(0, 2 ** (enonce2_size * 8)):
@@ -195,15 +197,6 @@ def mine_work(work_msg, username):
                 return share
 
         click.echo("Exhausted enonce1 space. Changing enonce2")
-
-def get_enonces(username):
-    enonce1_size = 8
-    enonce1 = username[-1 * enonce1_size:].encode()
-    if len(enonce1) != enonce1_size:
-        enonce1 = enonce1 + ((enonce1_size - len(enonce1)) * b"0")
-    enonce2_size = 4
-    return enonce1, enonce2_size
-
 
 def save_work(client, share, username):
     message_id = random.randint(1, 1e5)
