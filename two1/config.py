@@ -16,7 +16,7 @@ TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
 TWO1_HOST = 'http://twentyone-devel-1d3c.herokuapp.com'
-# TWO1_HOST = "http://127.0.0.1:8000"
+#TWO1_HOST = "http://127.0.0.1:8000"
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
@@ -108,7 +108,7 @@ class Config(object):
                 print(UxString.Error.file_load % self.file)
                 self.defaults = {}
 
-        defaults = dict(username=getpass.getuser(),
+        defaults = dict(username=None,
                         sellprice=10000,
                         contact="two1@21.co",
                         stdout=".two1/two1.stdout",
