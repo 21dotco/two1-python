@@ -47,7 +47,7 @@ def mine(config):
                     return
                 else:
                     # Stale PID file, so delete it.
-                    subprocess.call("sudo minerd --stop")
+                    subprocess.call(["sudo", "minerd", "--stop"])
 
         # Not running, let's start it
         # TODO: make sure config exists in /etc
