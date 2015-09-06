@@ -53,7 +53,7 @@ def mine(config):
         # Not running, let's start it
         # TODO: make sure config exists in /etc
         # TODO: replace with sys-ctrl command
-        minerd_cmd = "sudo minerd -u nigel swirl+tcp://pool.pool2.21.co:21006/"
+        minerd_cmd = ["sudo", "minerd", "-u", config.username, "swirl+tcp://pool.pool2.21.co:21006/"]
         try:
             o = subprocess.check_output(minerd_cmd, universal_newlines=True)
         except CalledProcessError as e:
