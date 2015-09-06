@@ -1,11 +1,14 @@
 from collections import namedtuple
-import json
 import click
+import json
+import os.path
+import random
+import time
+
 from two1.config import pass_config
 from two1.bitcoin.block import CompactBlock
+from two1.mining.coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.txn import Transaction
-import time
-import random
 from two1.lib import rest_client, message_factory, login
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
@@ -20,11 +23,16 @@ from two1.gen import swirl_pb2 as swirl
 def mine(config):
     """Fastest way to get Bitcoin!"""
     # detect if hat is present
-    bitcoinkit_present = False
+    hat_present = os.path.isfile("/proc/device-tree/hat")
+    if hat_present:
+        with open("/proc/device-tree/hat/product", "r") as f:
+            bitcoinkit_present = f.read().startswith('21 Bitcoin Kit')
+    else:
+        bitcoinkit_present = False
+
     config.log("\nMining...")
 
     if bitcoinkit_present:
-        # do minertop
         pass
     else:
         rest_client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
