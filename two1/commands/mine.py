@@ -30,11 +30,10 @@ def mine(config):
     except FileNotFoundError:
         bitcoinkit_present = False
 
-    config.log("\nMining...")
-
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
     if bitcoinkit_present:
+        config.log("\nBitcoinkit is present, starting miner...")
         # Read the PID and check if the process is running
         if os.path.isfile(minerd_pid_file):
             pid = None
