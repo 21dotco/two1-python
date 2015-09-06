@@ -55,7 +55,7 @@ def mine(config):
         minerd_cmd = ["sudo", "minerd", "-u", config.username, "swirl+tcp://pool.pool2.21.co:21006/"]
         try:
             o = subprocess.check_output(minerd_cmd, universal_newlines=True)
-        except CalledProcessError as e:
+        except subprocess.CalledProcessError as e:
             config.log("\nError starting minerd: %r" % e)
 
         # Now call minertop after it's started
