@@ -1,8 +1,9 @@
 from collections import namedtuple
 import click
 import json
-import os.path
+import os
 import random
+import subprocess
 import time
 
 from two1.config import pass_config
@@ -23,17 +24,43 @@ from two1.gen import swirl_pb2 as swirl
 def mine(config):
     """Fastest way to get Bitcoin!"""
     # detect if hat is present
-    hat_present = os.path.isfile("/proc/device-tree/hat")
-    if hat_present:
+    try:
         with open("/proc/device-tree/hat/product", "r") as f:
             bitcoinkit_present = f.read().startswith('21 Bitcoin Kit')
-    else:
+    except FileNotFoundError:
         bitcoinkit_present = False
 
     config.log("\nMining...")
 
+    # Check if it's already up and running by checking pid file.
+    minerd_pid_file = "/run/minerd.pid"
     if bitcoinkit_present:
-        pass
+        # Read the PID and check if the process is running
+        if os.path.isfile(minerd_pid_file):
+            pid = None
+            with open(minerd_pid_file, "r") as f:
+                pid = int(f.read().rstrip())
+
+            if pid is not None:
+                if check_pid(pid):
+                    # Running, so fire up minertop...
+                    subprocess.call("minertop")
+                    return
+                else:
+                    # Stale PID file, so delete it.
+                    subprocess.call("sudo minerd --stop")
+
+        # Not running, let's start it
+        # TODO: make sure config exists in /etc
+        # TODO: replace with sys-ctrl command
+        minerd_cmd = "sudo minerd -u nigel swirl+tcp://pool.pool2.21.co:21006/"
+        try:
+            o = subprocess.check_output(minerd_cmd, universal_newlines=True)
+        except CalledProcessError as e:
+            config.log("\nError starting minerd: %r" % e)
+
+        # Now call minertop after it's started
+        subprocess.call("minertop")
     else:
         rest_client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
                                                         login.get_auth_key())
@@ -88,7 +115,28 @@ def mine(config):
                    .format(balance_c, balance_u, bitcoin_address)
                    )
 
+# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid        
+def check_pid(pid):
+    if pid < 0:
+        return False
+    if pid == 0:
+        # According to "man 2 kill" PID 0 refers to every process
+        # in the process group of the calling process.
+        # On certain systems 0 is a valid PID but we have no way
+        # to know that in a portable fashion.
+        raise ValueError('invalid PID 0')
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        # There is a process but we don't have permissions
+        return True
+    except:
+        raise
 
+    return True
+    
 def get_work(config, client):
     username = config.username
     work_msg = client.get_work(username=username)
