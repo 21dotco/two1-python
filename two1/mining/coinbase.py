@@ -134,8 +134,9 @@ class CoinbaseTransactionBuilder(object):
         packed_txn = bytes(txn)
         packed_cb_input = bytes(txn.inputs[0])
 
+        padding_len = len(self.bitshare_padding) if bitshare else 0
         # Find the enonce1 start
-        enonce1_start = 5 + (len(packed_cb_input) - (self.enonce1_len + self.enonce2_len + 4))
+        enonce1_start = 5 + (len(packed_cb_input) - (self.enonce1_len + self.enonce2_len + padding_len + 4))
         enonce2_end = enonce1_start + self.enonce1_len + self.enonce2_len
         # coinb1 is everything up to enonce1
         coinb1 = packed_txn[:enonce1_start]
