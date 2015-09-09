@@ -1231,7 +1231,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         Returns:
             ECPointAffine: a raw point (r = pt.x, s = pt.y) which is the signature.
         """
-        return self.key.raw_sign(message, do_hash)
+        return self._key.raw_sign(message, do_hash)
 
     def sign(self, message, do_hash=True):
         """ Signs message using the underlying non-extended private key.
@@ -1252,7 +1252,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         Returns:
             Signature: The signature corresponding to message.
         """
-        return self.key.sign(message, do_hash)
+        return self._key.sign(message, do_hash)
 
     def sign_bitcoin(self, message):
         """ Signs a message using the underlying non-extended private
@@ -1275,7 +1275,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
                always processes full, uncompressed public-keys, so the magic
                number will always be either 27 or 28).
         """
-        return self.key.sign_bitcoin(message)
+        return self._key.sign_bitcoin(message)
         
     @property
     def identifier(self):
@@ -1385,7 +1385,7 @@ class HDPublicKey(HDKey, PublicKeyBase):
         """
         return self.hash160()
 
-    def hash160(self):
+    def hash160(self, compressed=True):
         """ Return the RIPEMD-160 hash of the SHA-256 hash of the
             non-extended public key.
 
