@@ -334,6 +334,8 @@ class Transaction(object):
                 h160 = private_key.public_key.hash160(compressed)
                 if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
                     h160 = None
+                else:
+                    break
 
             if h160 is None:
                 raise ValueError("Address derived from private key does not match sub_script!")
