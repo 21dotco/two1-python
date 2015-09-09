@@ -1,12 +1,16 @@
 paths:
   /serve/kittens:
     basePrice: 10000
-    localPath: ~/Documents/Kittens
+    localPath: /Users/veer/Documents/git/21dotco/two1/tests/test_data
     priceMode: pricePerFile
   /serve/kittens/kitty.jpg:
     basePrice: 10000
     localPath: ~/Documents/Kittens/red.jpeg
     priceMode: pricePerFile
+  /serve/kittens/kitty/kitty.jpg:
+    basePrice: 10000
+    localPath: /Users/veer/Documents/git/21dotco/two1/tests/test_data/red.jpeg
+    priceMode: pricePerFile
   /serve/public/ppb:
-    basePrice: 0.1  #satoshi per byte
+    basePrice: 0.1
     priceMode: payPerByte_full
