@@ -1,11 +1,15 @@
+import json
 import requests
 from collections import defaultdict
 from two1.wallet.txn_data_provider import TransactionDataProvider
 from two1.wallet.txn_data_provider import DataProviderUnAvailable
+from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import UnspentTransactionOutput
 from two1.bitcoin.txn import TransactionInput
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.txn import Transaction
+from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.utils import pack_var_str
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.script import Script
 
@@ -43,6 +47,22 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             raise DataProviderUnAvailable("Could not connect to service.")
         except requests.expcetions.Timeout:
             raise DataProviderUnAvailable("Connection timed out.")
+
+    def _gen_hd_addresses(self, pub_key, last_payout_index, last_change_index):
+        if not isinstance(pub_key, HDPublicKey):
+            raise TypeError("pub_key must be an HDPublicKey object.")
+
+        payout_chain_key = HDPublicKey.from_parent(pub_key, 0)
+        change_chain_key = HDPublicKey.from_parent(pub_key, 1)
+
+        address_list = []
+        for i in range(max(last_payout_index, last_change_index) + 1):
+            if i <= last_payout_index:
+                address_list.append(HDPublicKey.from_parent(payout_chain_key, i).address())
+            if i <= last_change_index:
+                address_list.append(HDPublicKey.from_parent(change_chain_key, i).address())
+
+        return address_list
 
     def get_balance(self, address_list):
         """ Provides the balance for each address.
@@ -155,15 +175,19 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                     outputs = []
                     addr_keys = set()
                     for i in data["inputs"]:
+                        # Chain doesn't return the stuff about script length etc, so
+                        # we need to prepend that.
+                        script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_signature_hex"])))
                         inputs.append(TransactionInput(Hash(i["output_hash"]),
                                                        i["output_index"],
-                                                       i["script_signature"],
+                                                       script,
                                                        i["sequence"]))
                         addr_keys.add(i["addresses"][0])
 
                     for i in data["outputs"]:
+                        script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_hex"])))
                         outputs.append(TransactionOutput(i["value"],
-                                                         Script(i["script"])))
+                                                         script))
                         addr_keys.add(i["addresses"][0])
 
                     for addr in addr_keys:
@@ -173,7 +197,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                                                          outputs,
                                                          data["lock_time"]))
             elif r.status_code == 400:
-                raise ValueError("Invalid bitcoin addresse/addresses.")
+                raise ValueError("Invalid bitcoin address/addresses.")
         return ret
 
     def get_utxo(self, address_list):
@@ -223,3 +247,94 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             elif r.status_code == 400:
                 raise ValueError("Invalid bitcoin addresse/addresses.")
             return ret
+
+    def get_balance_hd(self, pub_key, last_payout_index, last_change_index):
+        """ Provides the balance for each address.
+
+            Like TransactionDataProvider.get_balance() except that it uses the HD
+            public key and returns balances for each payout address up to
+            last_payout_index and each change address up to last_change_index.
+
+        Args:
+            pub_key (HDPublicKey): an extended public key from which change and
+               payout addresses are derived.
+            last_payout_index (int): Index of last payout address to return data for.
+            last_change_index (int): Index of last change address to return data for.
+
+        Returns:
+            dict: A dict keyed by address with each value being a tuple containing
+               the confirmed and unconfirmed balances.
+        """
+        return self.get_balance(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
+
+    def get_transactions_hd(self, pub_key, last_payout_index, last_change_index):
+        """ Provides transactions associated with each address.
+
+            Like TransactionDataProvider.get_transactions() except that it uses the HD
+            public key and returns balances for each payout address up to
+            last_payout_index and each change address up to last_change_index.
+
+        Args:
+            pub_key (HDPublicKey): an extended public key from which change and
+               payout addresses are derived.
+            last_payout_index (int): Index of last payout address to return data for.
+            last_change_index (int): Index of last change address to return data for.
+
+        Returns:
+            dict: A dict keyed by address with each value being a list of Transaction
+               objects.
+        """
+        return self.get_transactions(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
+
+    def get_utxo_hd(self, pub_key, last_payout_index, last_change_index):
+        """ Provides all unspent transactions associated with each address.
+
+            Like TransactionDataProvider.get_utxo() except that it uses the HD
+            public key and returns balances for each payout address up to
+            last_payout_index and each change address up to last_change_index.
+
+        Args:
+            pub_key (HDPublicKey): an extended public key from which change and
+               payout addresses are derived.
+            last_payout_index (int): Index of last payout address to return data for.
+            last_change_index (int): Index of last change address to return data for.
+
+        Returns:
+            dict: A dict keyed by address with each value being a list of 
+               UnspentTransactionOutput objects.
+        """
+        return self.get_utxo(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
+        
+    def send_transaction(self, transaction):
+        """ Broadcasts a transaction to the Bitcoin network
+        
+        Args:
+            transaction (bytes or str): serialized, signed transaction
+
+        Returns:
+            str: The transaction ID
+        """
+        if isinstance(transaction, bytes):
+            signed_hex = bytes_to_str(transaction)
+        elif isinstance(transaction, Transaction):
+            signed_hex = bytes_to_str(bytes(transaction))
+        elif isinstance(transaction, str):
+            signed_hex = transaction
+        else:
+            raise TypeError("transaction must be one of: bytes, str, Transaction.")
+        
+        data = {"signed_hex": signed_hex}
+        r = self._request("POST", "transactions/send", data=data)
+
+        if r.status_code == 200:
+            j = r.json()
+            return j["transaction_hash"]
+        elif r.status_code == 400:
+            j = r.json()
+            
+            # TODO: Change this to some more meaningful exception type
+            raise ValueError(j['message'])
+        else:
+            # Some other status code... should never happen.
+            raise ValueError("Unexpected response: %r" % r.status_code)
+            
