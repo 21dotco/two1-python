@@ -3,3 +3,6 @@ class WalletError(Exception):
 
 class WalletSigningError(Exception):
     pass
+
+class WalletBalanceError(Exception):
+    pass
