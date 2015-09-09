@@ -12,14 +12,16 @@ DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
 class Two1Wallet(BaseWallet):
     """ utxo_selector should be a filtering function with prototype:
-            selected, fees = utxo_selector_func(list(UnspentTransactionOutput), int, int)
+            selected, fees = utxo_selector_func(txn_data_provider,
+                                                list(UnspentTransactionOutput),
+                                                int, int)
 
         The job of the selector is choose from the input list of UTXOs which
         are to be used in a transaction such that there are sufficient coins
-        to pay the total amount (2nd passed argument) and transaction fees.
+        to pay the total amount (3rd passed argument) and transaction fees.
         Since transaction fees are computed based on size of transaction, which
         is in turn (partially) determined by number of inputs and number of
-        outputs (3rd passed argument), the selector must determine the required
+        outputs (4th passed argument), the selector must determine the required
         fees and return that amount as well.
 
         The return value must be a tuple where the first item is a dict keyed
@@ -298,7 +300,8 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        return self.txn_provider.send_transaction(txn)
+        print('txn = %s' % bytes_to_str(bytes(txn)))
+        #return self.txn_provider.send_transaction(txn)
 
     @property
     def balance(self):
