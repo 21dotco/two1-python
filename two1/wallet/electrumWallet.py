@@ -13,7 +13,7 @@ class ElectrumWallet(BaseWallet):
         super(ElectrumWallet, self).__init__()
         # check if electrum is works
         # will throw an OSError if electrum does not work
-        output = check_output(["electrum","--help"]).decode("utf-8")
+        # output = check_output(["electrum","--help"]).decode("utf-8")
         # start daemon
 
     def start_daemon(self):
