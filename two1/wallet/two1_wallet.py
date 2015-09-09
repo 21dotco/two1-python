@@ -7,6 +7,7 @@ from two1.bitcoin import utils
 from two1.wallet.account_types import account_types
 from two1.wallet.hd_account import HDAccount
 from two1.wallet.baseWallet import BaseWallet
+from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
@@ -35,7 +36,10 @@ class Two1Wallet(BaseWallet):
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
 
     @staticmethod
-    def create(txn_provider, passphrase='', testnet=False):
+    def create(txn_provider,
+               passphrase='',
+               utxo_selector=utxo_selector_smallest_first,
+               testnet=False):
         # Create:
         # 1. master key seed + mnemonic
         # 2. First account
@@ -46,12 +50,15 @@ class Two1Wallet(BaseWallet):
                    "master_seed": mnemonic,
                    "account_type": account_type
                }
-        wallet = Two1Wallet(config, txn_provider)
+        wallet = Two1Wallet(config, txn_provider, utxo_selector)
 
         return wallet
 
     @staticmethod
-    def import_from_mnemonic(txn_provider, mnemonic, passphrase='', account_type=DEFAULT_ACCOUNT_TYPE):
+    def import_from_mnemonic(txn_provider, mnemonic,
+                             passphrase='',
+                             utxo_selector=utxo_selector_smallest_first,
+                             account_type=DEFAULT_ACCOUNT_TYPE):
         if account_type not in account_types:
             raise ValueError("account_type must be one of %r" % account_types.keys())
 
@@ -61,13 +68,14 @@ class Two1Wallet(BaseWallet):
                    "master_seed": mnemonic,
                    "account_type": account_type
                }
-        wallet = Two1Wallet(config, txn_provider)
+        wallet = Two1Wallet(config, txn_provider, utxo_selector)
         wallet.discover_accounts()
 
         return wallet
         
-    def __init__(self, config, txn_provider):
+    def __init__(self, config, txn_provider, utxo_selector=utxo_selector_smallest_first):
         self.txn_provider = txn_provider
+        self.utxo_selector = utxo_selector
         self._testnet = False
         
         m = config.get('master_key', None)
@@ -240,7 +248,10 @@ class Two1Wallet(BaseWallet):
         # Now get the unspents from all accounts and select which we
         # want to use
         utxos = self.get_utxo(accts)
-        selected_utxos, fees = self.utxo_selector(utxos, total_amount, len(addresses_and_amounts))
+        selected_utxos, fees = self.utxo_selector(txn_data_provider=self.txn_data_provider,
+                                                  utxo_list=utxos,
+                                                  amount=total_amount,
+                                                  num_outputs=len(addresses_and_amounts))
 
         total_with_fees = total_amount + fees
         
@@ -300,8 +311,8 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        print('txn = %s' % bytes_to_str(bytes(txn)))
-        #return self.txn_provider.send_transaction(txn)
+        #print('txn = %s' % bytes_to_str(bytes(txn)))
+        return self.txn_provider.send_transaction(txn)
 
     @property
     def balance(self):
