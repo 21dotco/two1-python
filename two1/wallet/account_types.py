@@ -7,8 +7,9 @@ BITCOIN_TESTNET = 0x80000001
 AccountType = namedtuple("AccountType", "account_derivation_prefix")
 
 account_types = { 'BIP32':               AccountType(account_derivation_prefix="m/"),
-                  'BIP32Hive':           AccountType(account_derivation_prefix="m/0'"),
-                  'BIP32Mycelium':       AccountType(account_derivation_prefix="m/44'/0'/0'"),
+                  'Hive':                AccountType(account_derivation_prefix="m/0'"),
+                  'BreadWallet':         AccountType(account_derivation_prefix="m/0'/0/0"),
+                  'Mycelium':            AccountType(account_derivation_prefix="m/44'/0'/0'"),
                   'BIP44Testnet':        AccountType(account_derivation_prefix="m/44'/1'"),
                   'BIP44BitcoinMainnet': AccountType(account_derivation_prefix="m/44'/0'") }
 
