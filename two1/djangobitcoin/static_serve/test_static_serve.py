@@ -1,6 +1,7 @@
 from django.test import TestCase
-from two1.djangobitcoin.static_serve.static_serve import get_config, getTargetPath
-
+import two1.djangobitcoin.djangobitcoin.settings as settings
+settings.STATIC_SERVE_CONFIG += '.test'
+from two1.djangobitcoin.static_serve.static_serve import get_config
 
 class ConfigurationsTests(TestCase):
     def test_info_for_path_items(self):

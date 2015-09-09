@@ -13,7 +13,6 @@ COPY . /usr/src/app
 
 RUN pip install -e . --no-cache-dir
 
-
 RUN python setup.py build_ext --inplace
 
 EXPOSE 8000
