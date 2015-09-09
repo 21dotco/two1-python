@@ -12,11 +12,10 @@ import yaml
 
 
 def loadConfig(filePath):
-    fileData = open(filePath).read()
-    if not isinstance(fileData, str):
-        print("\033[91m" + 'Aborting: Failed to load configuration at \'' +
-              filePath + '\'' + "\033[0m")
-        exit(-1)
+    try:
+        fileData = open(filePath).read()
+    except:
+        fileData = None
     return configurations(fileData)
 
 

@@ -115,6 +115,8 @@ def update_config(package_name, package_path, pattern):
     try:
         ep_json = json.load(open(ENDPOINTS_PATH))
     except:
+        if os.path.exists(ENDPOINTS_PATH):
+            click.echo('endpoints configuration file {0} was corrupted, created a new one'.format(ENDPOINTS_PATH))
         ep_json = []
     package_element = next((x for x in ep_json if x['package'] == package_name), None)
     if not package_element:

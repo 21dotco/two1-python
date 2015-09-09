@@ -95,12 +95,11 @@ class configurations(object):
 
     # Converts the inputted data model into a traversable tree
     def _dataModelWith(self, raw):
-        if not isinstance(raw, str):
-            raise ValueError('raw Must be a string!')
-            return
-
         # Normalize and convert
-        configObj = yaml.load(self._normilizeConfiguration(raw))
+        try:
+            configObj = yaml.load(self._normilizeConfiguration(raw))
+        except:
+            configObj = {'paths': []}
         if not isinstance(raw, object):
             raise ValueError('Failed to parse configuration!')
             return
