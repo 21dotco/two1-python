@@ -238,7 +238,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                 for d in data:
                     address = d["addresses"][0]
                     txn_hash = Hash(d["transaction_hash"])
-                    script = Script(d["script"])
+                    script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(d["script_hex"])))
                     ret[address].append(UnspentTransactionOutput(txn_hash,
                                                                  d["output_index"],
                                                                  d["value"],

@@ -24,7 +24,7 @@ def test_create():
 
     mock_txn_provider.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.create(txn_provider=mock_txn_provider,
+    wallet = Two1Wallet.create(txn_data_provider=mock_txn_provider,
                                passphrase='test_wallet')
 
     assert len(wallet._accounts) == 1
@@ -46,7 +46,7 @@ def test_import():
     m.set_num_used_accounts(0)
     m.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
+    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
                                              mnemonic=config['master_seed'],
                                              account_type="BIP44BitcoinMainnet")
 
@@ -64,7 +64,7 @@ def test_import():
     
     m.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
+    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
                                              mnemonic=config['master_seed'],
                                              account_type="BIP44BitcoinMainnet")
 
@@ -80,7 +80,7 @@ def test_import():
 
     m.set_txn_side_effect_for_hd_discovery()    
 
-    wallet = Two1Wallet.import_from_mnemonic(txn_provider=m,
+    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
                                              mnemonic=config['master_seed'],
                                              account_type="BIP44BitcoinMainnet")
 
@@ -99,7 +99,7 @@ def test_rest():
 
     m.set_txn_side_effect_for_hd_discovery()
     
-    wallet = Two1Wallet(config=config, txn_provider=m)
+    wallet = Two1Wallet(config=config, txn_data_provider=m)
 
     # First 5 internal addresses of account 0
     int_addrs = ["12q2xjqTh6ZNHUTQLWSs9uSyDkGHNpQAzu",

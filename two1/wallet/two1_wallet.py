@@ -36,7 +36,7 @@ class Two1Wallet(BaseWallet):
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
 
     @staticmethod
-    def create(txn_provider,
+    def create(txn_data_provider,
                passphrase='',
                utxo_selector=utxo_selector_smallest_first,
                testnet=False):
@@ -50,12 +50,12 @@ class Two1Wallet(BaseWallet):
                    "master_seed": mnemonic,
                    "account_type": account_type
                }
-        wallet = Two1Wallet(config, txn_provider, utxo_selector)
+        wallet = Two1Wallet(config, txn_data_provider, utxo_selector)
 
         return wallet
 
     @staticmethod
-    def import_from_mnemonic(txn_provider, mnemonic,
+    def import_from_mnemonic(txn_data_provider, mnemonic,
                              passphrase='',
                              utxo_selector=utxo_selector_smallest_first,
                              account_type=DEFAULT_ACCOUNT_TYPE):
@@ -68,13 +68,13 @@ class Two1Wallet(BaseWallet):
                    "master_seed": mnemonic,
                    "account_type": account_type
                }
-        wallet = Two1Wallet(config, txn_provider, utxo_selector)
+        wallet = Two1Wallet(config, txn_data_provider, utxo_selector)
         wallet.discover_accounts()
 
         return wallet
         
-    def __init__(self, config, txn_provider, utxo_selector=utxo_selector_smallest_first):
-        self.txn_provider = txn_provider
+    def __init__(self, config, txn_data_provider, utxo_selector=utxo_selector_smallest_first):
+        self.txn_data_provider = txn_data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
         
@@ -128,7 +128,7 @@ class Two1Wallet(BaseWallet):
         acct_index = index | 0x80000000
         
         acct_priv_key = HDPrivateKey.from_parent(self._root_keys[-1], acct_index)
-        acct = HDAccount(acct_priv_key, name, acct_index, self.txn_provider, self._testnet)
+        acct = HDAccount(acct_priv_key, name, acct_index, self.txn_data_provider, self._testnet)
         self._accounts.insert(index, acct)
         self._account_map[name] = index
         
@@ -162,6 +162,8 @@ class Two1Wallet(BaseWallet):
                         accts.append(self._accounts[account_index])
                     else:
                         raise ValueError("Specified account (%s) does not exist." % a)
+                elif isinstance(a, HDAccount) and a in self._accounts:
+                    accts.append(a)
                 else:
                     raise TypeError("account (%r) must be either a string or an int" % a)
 
@@ -174,7 +176,10 @@ class Two1Wallet(BaseWallet):
         address_paths = self.find_addresses(addresses)
         private_keys = {}
         for addr, path in address_paths.items():
-            acct = self._accounts(path[0])
+            account_index = path[0]
+            if account_index >= 0x8000000:
+                account_index &= 0x7fffffff
+            acct = self._accounts[account_index]
             private_keys[addr] = acct.get_private_key(path[1], path[2])
 
         return private_keys
@@ -242,21 +247,25 @@ class Two1Wallet(BaseWallet):
 
     def send_to(self, addresses_and_amounts, accounts=[]):
         total_amount = sum([amt for amt in addresses_and_amounts.values()])
-            
-        accts = self._check_and_get_accounts(accounts)
+
+        if not accounts:
+            accts = self._accounts
+        else:
+            accts = self._check_and_get_accounts(accounts)
         
         # Now get the unspents from all accounts and select which we
         # want to use
-        utxos = self.get_utxo(accts)
+        utxos_by_addr = self.get_utxo(accts)
+                
         selected_utxos, fees = self.utxo_selector(txn_data_provider=self.txn_data_provider,
-                                                  utxo_list=utxos,
+                                                  utxos_by_addr=utxos_by_addr,
                                                   amount=total_amount,
                                                   num_outputs=len(addresses_and_amounts))
 
         total_with_fees = total_amount + fees
         
         # Verify we have enough money
-        if total_with_fees > self.balance:
+        if total_with_fees > self.balance[0]: # First element is confirmed balance
             return False
 
         # Get all private keys in one shot
@@ -274,7 +283,7 @@ class Two1Wallet(BaseWallet):
                                                script=utxo.script,
                                                sequence_num=0xffffffff))
 
-        for addr, amount in addressess_and_amounts.items():
+        for addr, amount in addresses_and_amounts.items():
             _, key_hash = utils.address_to_key_hash(addr)
             outputs.append(TransactionOutput(value=amount,
                                              script=Script.build_p2pkh(key_hash)))
@@ -300,6 +309,8 @@ class Two1Wallet(BaseWallet):
                 raise WalletSigningError("Couldn't find address %s or unable to generate private key for it." % addr)
 
             for utxo in utxo_list:
+                print("utxo.script: %s" % utxo.script)
+                print("utxo.script.raw_script: %r" % utxo.script.raw_script)
                 signed = txn.sign_input(input_index=i,
                                         hash_type=Transaction.SIG_HASH_ALL,
                                         private_key=private_key,
@@ -311,8 +322,9 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        #print('txn = %s' % bytes_to_str(bytes(txn)))
-        return self.txn_provider.send_transaction(txn)
+        print("txn: %s" % txn)
+        print("txn = %s" % utils.bytes_to_str(bytes(txn)))
+        #return self.txn_data_provider.send_transaction(txn)
 
     @property
     def balance(self):
