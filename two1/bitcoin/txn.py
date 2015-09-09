@@ -313,7 +313,8 @@ class Transaction(object):
             raise ValueError("Invalid input index.")
 
         inp = self.inputs[input_index]
-        
+
+        compressed = False
         if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
             # This is to deal with the bug where specifying an index that is out
             # of range (wrt outputs) results in a signature hash of 0x1 (little-endian)
@@ -323,12 +324,18 @@ class Transaction(object):
 
             # Before signing we should verify that the address in the sub_script
             # corresponds to that of the private key
-            h160 = private_key.public_key.hash160(False) # Use uncompressed keys for now
             script_pub_key_h160_hex = sub_scr.get_hash160()
             if script_pub_key_h160_hex is None:
                 raise ValueError("Couldn't find public key hash in sub_script!")
 
-            if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
+            # first try uncompressed key
+            h160 = None
+            for compressed in [True, False]:
+                h160 = private_key.public_key.hash160(compressed)
+                if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
+                    h160 = None
+
+            if h160 is None:
                 raise ValueError("Address derived from private key does not match sub_script!")
 
             msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) + pack_u32(hash_type)))
@@ -338,7 +345,11 @@ class Transaction(object):
         if not private_key.public_key.verify(msg_to_sign, sig, False):
             return False
 
-        script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pack_var_str(bytes(private_key.public_key))
+        if compressed:
+            pub_key_str = pack_var_str(private_key.public_key.compressed_bytes)
+        else:
+            pub_key_str = pack_var_str(bytes(private_key.public_key))
+        script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
         inp.script = Script(script_sig)
 
         return True
