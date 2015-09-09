@@ -378,7 +378,13 @@ class Transaction(object):
         if compressed:
             pub_key_str = pack_var_str(private_key.public_key.compressed_bytes)
         else:
-            pub_key_str = pack_var_str(bytes(private_key.public_key))
+            # In the case of extended keys (HDPublicKey), need to get the underlying
+            # key and serialize that.
+            if isinstance(private_key.public_key, crypto.HDPublicKey):
+                pub_key = private_key.public_key._key
+            else:
+                pub_key = private_key.public_key
+            pub_key_str = pack_var_str(bytes(pub_key))
         script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
         inp.script = Script(script_sig)
 
