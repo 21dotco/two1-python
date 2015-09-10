@@ -389,6 +389,24 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(False)
 
+    def broadcast_transaction(self, tx):
+        """ Broadcasts the transaction to the Bitcoin network.
+
+        Args:
+            tx (str): Hex string serialization of the transaction 
+               to be broadcasted to the Bitcoin network..
+        Returns:
+            str: The name of the transaction that was broadcasted.
+        """
+        res = []
+        try:
+            txid = self.txn_data_provider.send_transaction(tx)
+            res = [{"txid": txid, "txn": tx}]
+        except exceptions.WalletError as e:
+            print("Problem sending transaction to network: %s" % e)
+
+        return res
+        
     def send_to_multiple(self, addresses_and_amounts, accounts=[]):
         """ Sends bitcoins to multiple addresses.
 
@@ -477,15 +495,24 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        try:
-            txid = self.txn_data_provider.send_transaction(txn)
-            txn_hex = utils.bytes_to_str(bytes(txn))
+        return self.broadcast_transaction(utils.bytes_to_str(bytes(txn)))
 
-            return [{"txid": txid, "txn": txn_hex}]
-        except exceptions.WalletError as e:
-            print("Problem sending transaction to network: %s" % e)
-            return []
+    def send_to(self, address, amount, accounts=[]):
+        """ Sends Bitcoin to the provided address for the specified amount.
 
+        Args:
+            address (str): The address to send the Bitcoin too.
+            amount (number): The amount of Bitcoin to send.
+            accounts (list(str or int)): List of accounts to use. If not provided,
+               all discovered accounts may be used based on the chosen UTXO
+               selection algorithm.
+
+        Returns:
+            list(dict): A list of dicts containing transaction names and raw transactions.
+               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
+        """
+        return self.send_to_multiple({address: amount})
+        
     @property
     def balances(self):
         """ Balance for the wallet.
