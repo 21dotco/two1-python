@@ -92,7 +92,8 @@ class BaseWallet(object):
             address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
         Returns:
-            dict: A dictionary containing the transaction name and the raw transaction object.
+            list(dict): A list of dicts containing transaction names and raw transactions.
+               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `make_signed_transaction_for` must be overridden')
     	
@@ -103,6 +104,7 @@ class BaseWallet(object):
             address (str): The address to send the Bitcoin too.
             amount (number): The amount of Bitcoin to send.
         Returns:
-            dict: A dictionary containing the transaction name and the raw transaction object.
+            list(dict): A list of dicts containing transaction names and raw transactions.
+               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `send_to` must be overridden')
