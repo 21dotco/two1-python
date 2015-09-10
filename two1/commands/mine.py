@@ -12,6 +12,7 @@ from two1.bitcoin.block import CompactBlock
 from two1.mining.coinbase import CoinbaseTransactionBuilder
 from two1.bitcoin.txn import Transaction
 from two1.lib import rest_client, message_factory, login
+from two1.lib.machine_auth import MachineAuth
 import two1.config as cmd_config
 from two1.bitcoin.hash import Hash
 from two1.uxstring import UxString
@@ -62,8 +63,10 @@ def mine(config):
         # Now call minertop after it's started
         subprocess.call("minertop")
     else:
-        rest_client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
-                                                        login.get_auth_key())
+        config.log("\nMining...")
+        machine_auth = MachineAuth.from_keyring()
+        client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
+                                                 machine_auth)
 
         payout_address = config.wallet.current_address()
         config.log("Setting payout_address to {}".format(payout_address))
