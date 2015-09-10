@@ -27,6 +27,7 @@ install_requires = [
                     'path.py',
                     'click',
                     'keyring',
+                    'tabulate',
                     'mnemonic',
                     'protobuf >= 3.0.0a3',
                     'pyaes'
