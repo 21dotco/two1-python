@@ -309,8 +309,6 @@ class Two1Wallet(BaseWallet):
                 raise WalletSigningError("Couldn't find address %s or unable to generate private key for it." % addr)
 
             for utxo in utxo_list:
-                print("utxo.script: %s" % utxo.script)
-                print("utxo.script.raw_script: %r" % utxo.script.raw_script)
                 signed = txn.sign_input(input_index=i,
                                         hash_type=Transaction.SIG_HASH_ALL,
                                         private_key=private_key,
@@ -322,9 +320,7 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        print("txn: %s" % txn)
-        print("txn = %s" % utils.bytes_to_str(bytes(txn)))
-        #return self.txn_data_provider.send_transaction(txn)
+        return self.txn_data_provider.send_transaction(txn)
 
     @property
     def balance(self):
