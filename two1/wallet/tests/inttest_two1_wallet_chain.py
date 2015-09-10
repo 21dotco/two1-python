@@ -61,7 +61,7 @@ for i, w in enumerate(wallets):
     print("Sending %d satoshis to wallet %d, address %s." % (amount, i, address))
 
 try:
-    txid = sending_wallet.send_to(send_addresses_amounts)
+    txid = sending_wallet.send_to_multiple(send_addresses_amounts)
     print("Transaction successfully sent. txid = %s" % txid)
 except Exception as e:
     print(e)
