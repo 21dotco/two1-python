@@ -138,7 +138,7 @@ def test_rest():
     assert wallet.get_account_name(0) == "default"
 
     # Check the balance
-    assert wallet.balance == (100000, 20000)
+    assert wallet.balances == (100000, 20000)
     
     # Check that we can get a new payout address
     for i in range(3):
@@ -148,10 +148,10 @@ def test_rest():
         assert wallet.accounts[0].current_payout_address == ext_addr
 
     # Check the balance again - should be the same
-    assert wallet.balance == (100000, 20000)
+    assert wallet.balances == (100000, 20000)
 
     # Check it after updating the mock
     m.set_num_used_addresses(0, 4, 0)
-    assert wallet.balance == (400000, 20000)
+    assert wallet.balances == (400000, 20000)
         
     

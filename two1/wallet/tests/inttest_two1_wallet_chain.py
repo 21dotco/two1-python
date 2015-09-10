@@ -24,7 +24,7 @@ wallets = [Two1Wallet.import_from_mnemonic(txn_data_provider=ctd,
 max_balance_index = -1
 max_balance = 0
 for i, w in enumerate(wallets):
-    balance = w.balance
+    balance = w.balances
 
     if balance[0] > max_balance:
         max_balance = balance[0]
@@ -54,8 +54,8 @@ for i, w in enumerate(wallets):
 
     amount = random.randrange(max_amount)
     total_to_send += amount
-    expected_balances[i] = w.balance[0] + amount
-    address = w.get_new_payout_address()
+    expected_balances[i] = w.confirmed_balance() + amount
+    address = w.current_address
     send_addresses_amounts[address] = amount
 
     print("Sending %d satoshis to wallet %d, address %s." % (amount, i, address))
@@ -64,12 +64,12 @@ try:
     txid = sending_wallet.send_to_multiple(send_addresses_amounts)
     print("Transaction successfully sent. txid = %s" % txid)
 except Exception as e:
-    print(e)
+    raise
 
 # Wait until the balance in the sending wallet goes down
 print("\nWaiting up to 15 minutes for txn confirmation ...")
 start_time = time.time()
-while sending_wallet.balance[0] >= max_balance - total_to_send:
+while sending_wallet.confirmed_balance() >= max_balance - total_to_send:
     time.sleep(10)
 
     if time.time() - start_time > 900:
@@ -81,9 +81,9 @@ for i, w in enumerate(wallets):
     if i == max_balance_index:
         continue
 
-    balance = w.balance[0]
+    balance = w.confirmed_balance()
     if balance != expected_balances[i]:
         print("Wallet %d balance (%d) does not match expected (%d)!!!" % (i, balance, expected_balances[i]))
     
 # Print the update balance for the sending wallet
-print("Updated balance for sending wallet (index: %d): %r" % (max_balance_index, sending_wallet.balance))
+print("Updated balances for sending wallet (index: %d): %r" % (max_balance_index, sending_wallet.balances))
