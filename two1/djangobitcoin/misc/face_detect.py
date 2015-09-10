@@ -30,7 +30,7 @@ def detect_from_url(request):
           paramType: query
     """
 
-    url = request.QUERY_PARAMS.get("url", None)
+    url = request.query_params.get("url", None)
     if not url:
         return Response("Must provide value for Url parameter", status=400)
     response = requests.post("https://api.projectoxford.ai/face/v0/detections?analyzesAge=true&analyzesGender=true",

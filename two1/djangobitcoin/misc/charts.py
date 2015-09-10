@@ -54,10 +54,10 @@ def chart(request):
           paramType: query
 
     """
-    chart_type = request.QUERY_PARAMS.get("chart_type", None)
+    chart_type = request.query_params.get("chart_type", None)
     if not chart_type:
         return Response({"Error": "Must provide value for Chart Type parameter"})
-    data = request.DATA
+    data = request.data
     if not data:
         return Response("Must provide value for Data parameter",status=400)
 

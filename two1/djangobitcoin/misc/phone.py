@@ -29,7 +29,7 @@ def phone_lookup(request):
           paramType: query
     """
 
-    phone_number = request.QUERY_PARAMS.get("phone", None)
+    phone_number = request.query_params.get("phone", None)
     if not phone_number:
         return Response("Must provide value for Phone parameter", code=400)
     response = requests.get("https://api.opencnam.com/v2/phone/{0}?format=json".format(phone_number))
