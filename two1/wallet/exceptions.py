@@ -9,3 +9,6 @@ class WalletBalanceError(WalletError):
 
 class TransactionSendError(WalletError):
     pass
+
+class TxidMismatchError(WalletError):
+    pass
