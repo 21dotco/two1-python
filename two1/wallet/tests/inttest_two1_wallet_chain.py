@@ -60,30 +60,30 @@ for i, w in enumerate(wallets):
 
     print("Sending %d satoshis to wallet %d, address %s." % (amount, i, address))
 
-try:
-    txid = sending_wallet.send_to_multiple(send_addresses_amounts)
-    print("Transaction successfully sent. txid = %s" % txid)
-except Exception as e:
-    raise
+res = sending_wallet.send_to_multiple(send_addresses_amounts)
+if res:
+    print("Transaction successfully sent. TXIDs:")
+    for r in res:
+        print(r["txid"])
 
-# Wait until the balance in the sending wallet goes down
-print("\nWaiting up to 15 minutes for txn confirmation ...")
-start_time = time.time()
-while sending_wallet.confirmed_balance() >= max_balance - total_to_send:
-    time.sleep(10)
+    # Wait until the balance in the sending wallet goes down
+    print("\nWaiting up to 15 minutes for txn confirmation ...")
+    start_time = time.time()
+    while sending_wallet.confirmed_balance() >= max_balance - total_to_send:
+        time.sleep(10)
 
-    if time.time() - start_time > 900:
-        print("Unsuccessfully waited 900s for balance update.")
-        break
+        if time.time() - start_time > 900:
+            print("Unsuccessfully waited 900s for balance update.")
+            break
 
-# Check the balances against expectation
-for i, w in enumerate(wallets):
-    if i == max_balance_index:
-        continue
+    # Check the balances against expectation
+    for i, w in enumerate(wallets):
+        if i == max_balance_index:
+            continue
 
-    balance = w.confirmed_balance()
-    if balance != expected_balances[i]:
-        print("Wallet %d balance (%d) does not match expected (%d)!!!" % (i, balance, expected_balances[i]))
+        balance = w.confirmed_balance()
+        if balance != expected_balances[i]:
+            print("Wallet %d balance (%d) does not match expected (%d)!!!" % (i, balance, expected_balances[i]))
     
-# Print the update balance for the sending wallet
-print("Updated balances for sending wallet (index: %d): %r" % (max_balance_index, sending_wallet.balances))
+    # Print the update balance for the sending wallet
+    print("Updated balances for sending wallet (index: %d): %r" % (max_balance_index, sending_wallet.balances))
