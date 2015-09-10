@@ -45,7 +45,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             return result
         except requests.exceptions.ConnectionError:
             raise DataProviderUnAvailable("Could not connect to service.")
-        except requests.expcetions.Timeout:
+        except requests.exceptions.Timeout:
             raise DataProviderUnAvailable("Connection timed out.")
 
     def _gen_hd_addresses(self, pub_key, last_payout_index, last_change_index):
@@ -324,7 +324,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             raise TypeError("transaction must be one of: bytes, str, Transaction.")
         
         data = {"signed_hex": signed_hex}
-        r = self._request("POST", "transactions/send", data=data)
+        r = self._request("POST", "transactions/send", data=json.dumps(data))
 
         if r.status_code == 200:
             j = r.json()
