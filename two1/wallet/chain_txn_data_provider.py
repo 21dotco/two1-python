@@ -1,6 +1,7 @@
 import json
 import requests
 from collections import defaultdict
+from two1.wallet import exceptions
 from two1.wallet.txn_data_provider import TransactionDataProvider
 from two1.wallet.txn_data_provider import DataProviderUnAvailable
 from two1.bitcoin.crypto import HDPublicKey
@@ -333,8 +334,8 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             j = r.json()
             
             # TODO: Change this to some more meaningful exception type
-            raise ValueError(j['message'])
+            raise exceptions.TransactionBroadcastError(j['message'])
         else:
             # Some other status code... should never happen.
-            raise ValueError("Unexpected response: %r" % r.status_code)
+            raise exceptions.TransactionBroadcastError("Unexpected response: %r" % r.status_code)
             

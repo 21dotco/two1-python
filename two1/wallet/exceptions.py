@@ -1,8 +1,11 @@
 class WalletError(Exception):
     pass
 
-class WalletSigningError(Exception):
+class WalletSigningError(WalletError):
     pass
 
-class WalletBalanceError(Exception):
+class WalletBalanceError(WalletError):
+    pass
+
+class TransactionSendError(WalletError):
     pass
