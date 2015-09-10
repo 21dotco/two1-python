@@ -4,6 +4,7 @@ from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.bitcoin.script import Script
 from two1.bitcoin.txn import Transaction, TransactionInput, TransactionOutput
 from two1.bitcoin import utils
+from two1.wallet import exceptions
 from two1.wallet.account_types import account_types
 from two1.wallet.hd_account import HDAccount
 from two1.wallet.base_wallet import BaseWallet
@@ -462,7 +463,7 @@ class Two1Wallet(BaseWallet):
             # Need to get the private key
             private_key = private_keys.get(addr, None)
             if private_key is None:
-                raise WalletSigningError("Couldn't find address %s or unable to generate private key for it." % addr)
+                raise exceptions.WalletSigningError("Couldn't find address %s or unable to generate private key for it." % addr)
 
             for utxo in utxo_list:
                 signed = txn.sign_input(input_index=i,
@@ -471,12 +472,19 @@ class Two1Wallet(BaseWallet):
                                         sub_script=utxo.script)
 
                 if not signed:
-                    raise WalletSigningError("Unable to sign input %d." % i)
+                    raise exceptions.WalletSigningError("Unable to sign input %d." % i)
 
                 i += 1
 
         # Was able to sign all inputs, now send txn
-        return self.txn_data_provider.send_transaction(txn)
+        try:
+            txid = self.txn_data_provider.send_transaction(txn)
+            txn_hex = utils.bytes_to_str(bytes(txn))
+
+            return [{"txid": txid, "txn": txn_hex}]
+        except exceptions.WalletError as e:
+            print("Problem sending transaction to network: %s" % e)
+            return []
 
     @property
     def balances(self):
