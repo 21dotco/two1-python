@@ -1,4 +1,4 @@
-from two1.wallet.baseWallet import BaseWallet
+from two1.wallet.base_wallet import BaseWallet
 
 
 class TestWallet(BaseWallet):

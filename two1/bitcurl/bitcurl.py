@@ -1,7 +1,6 @@
 import math
 import json
 import requests
-import two1.wallet.baseWallet
 
 DEFAULT_MAX_REQUEST_PRICE = 100000  # Satoshi
 DEFAULT_MAX_RETRY_DELAY = 15000  # ms
@@ -16,7 +15,7 @@ def _conditional_log(message, logger=None):
 def _handle_402_response(wallet, res, req, max_request_price=DEFAULT_MAX_REQUEST_PRICE, goal_price=0, logger=None):
     """  Handles the 402 payment portion of the request.
     Args:
-            wallet (baseWallet): The wallet to use for payment.
+            wallet (BaseWallet): The wallet to use for payment.
             res (response): The response object to pay for.
             req (request): The request to mutate with the payment headers.
             goal_price (number): The price you wish to pay for the request.
@@ -157,7 +156,7 @@ def bitcurl(
     """ Performs a HTTP request, if the initial request responds with 402 it will pay for the asset using the given wallet.
     Args:
             req (dict): The request object to perform the request for.
-            wallet (baseWallet): The wallet to use for request payment.
+            wallet (BaseWallet): The wallet to use for request payment.
             max_request_price (int): The maximum price to allow for the request.
             backoff_delay (float): The base number of seconds the exponential back off delay will start at.
             backoff_max_delay (float): The maximum time the back off delay can be before aborting.

@@ -6,18 +6,20 @@ from two1.bitcoin.txn import Transaction, TransactionInput, TransactionOutput
 from two1.bitcoin import utils
 from two1.wallet.account_types import account_types
 from two1.wallet.hd_account import HDAccount
-from two1.wallet.baseWallet import BaseWallet
+from two1.wallet.base_wallet import BaseWallet
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
 class Two1Wallet(BaseWallet):
-    """ utxo_selector should be a filtering function with prototype:
+    """ A wallet class capable of handling multiple types of wallets.
+
+        utxo_selector should be a filtering function with prototype:
             selected, fees = utxo_selector_func(txn_data_provider,
                                                 list(UnspentTransactionOutput),
                                                 int, int)
 
-        The job of the selector is choose from the input list of UTXOs which
+        The job of the selector is to choose from the input list of UTXOs which
         are to be used in a transaction such that there are sufficient coins
         to pay the total amount (3rd passed argument) and transaction fees.
         Since transaction fees are computed based on size of transaction, which

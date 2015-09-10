@@ -6,8 +6,8 @@ from codecs import open
 
 import click
 from path import path
-from two1.wallet import electrumWallet
-from two1.wallet import testWallet
+from two1.wallet import electrum_wallet
+from two1.wallet import test_wallet
 from two1.debug import dlog
 from two1.uxstring import UxString
 import pkg_resources
@@ -71,9 +71,9 @@ class Config(object):
         # add wallet object
         try:
             if self.defaults.get('testwallet', None) == 'y':
-                self.wallet = testWallet.TestWallet()
+                self.wallet = test_wallet.TestWallet()
             else:
-                self.wallet = electrumWallet.ElectrumWallet(TWO1_PATH)
+                self.wallet = electrum_wallet.ElectrumWallet(TWO1_PATH)
         except OSError as e:
             if e.errno == os.errno.ENOENT:
             # handle file not found error.

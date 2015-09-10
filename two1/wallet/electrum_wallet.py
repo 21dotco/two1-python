@@ -2,7 +2,7 @@ from subprocess import check_output
 import subprocess
 import json
 import copy
-from two1.wallet.baseWallet import BaseWallet, satoshi_to_btc
+from two1.wallet.base_wallet import BaseWallet, satoshi_to_btc
 import os
 
 class ElectrumWallet(BaseWallet):
