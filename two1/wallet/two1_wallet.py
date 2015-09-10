@@ -398,17 +398,36 @@ class Two1Wallet(BaseWallet):
         Returns:
             str: The name of the transaction that was broadcasted.
         """
-        res = []
+        res = ""
         try:
             txid = self.txn_data_provider.send_transaction(tx)
-            res = [{"txid": txid, "txn": tx}]
+            res = txid 
         except exceptions.WalletError as e:
             print("Problem sending transaction to network: %s" % e)
 
         return res
+
+    def make_signed_transaction_for(self, address, amount, accounts=[]):
+        """ Makes a raw signed unbroadcasted transaction for the specified amount.
+
+        Args:
+            address (str): The address to send the Bitcoin to.
+            amount (number): The amount of Bitcoin to send.
+            accounts (list(str or int)): List of accounts to use. If not provided,
+               all discovered accounts may be used based on the chosen UTXO
+               selection algorithm.
+
+        Returns:
+            list(dict): A list of dicts containing transaction names and raw transactions.
+               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
+        """
+        return self.make_signed_transaction_for_multiple({address: amount}, accounts)
+    
+    def make_signed_transaction_for_multiple(self, addresses_and_amounts, accounts=[]):
+        """ Makes raw signed unbrodcasted transaction(s) for the specified amount.
         
-    def send_to_multiple(self, addresses_and_amounts, accounts=[]):
-        """ Sends bitcoins to multiple addresses.
+            In the future, this function may create multiple transactions
+            if a single one would be too big.
 
         Args:
             addresses_and_amounts (dict): A dict keyed by recipient address
@@ -419,7 +438,8 @@ class Two1Wallet(BaseWallet):
                selection algorithm.
 
         Returns:
-            str or None: A string containing the submitted TXID or None.
+            list(dict): A list of dicts containing transaction names and raw transactions.
+               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
         """
         total_amount = sum([amt for amt in addresses_and_amounts.values()])
 
@@ -494,8 +514,36 @@ class Two1Wallet(BaseWallet):
 
                 i += 1
 
-        # Was able to sign all inputs, now send txn
-        return self.broadcast_transaction(utils.bytes_to_str(bytes(txn)))
+        return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}]
+        
+    def send_to_multiple(self, addresses_and_amounts, accounts=[]):
+        """ Sends bitcoins to multiple addresses.
+
+        Args:
+            addresses_and_amounts (dict): A dict keyed by recipient address
+               and corresponding values being the amount - *in satoshis* - to
+               send to that address.
+            accounts (list(str or int)): List of accounts to use. If not provided,
+               all discovered accounts may be used based on the chosen UTXO
+               selection algorithm.
+
+        Returns:
+            str or None: A string containing the submitted TXID or None.
+        """
+        txn_dict = self.make_signed_transaction_for_multiple(addresses_and_amounts, accounts)
+
+        res = []
+        for t in txn_dict:
+            txid = self.broadcast_transaction(t["txn"])
+            if not txid:
+                print("Unable to send txn %s" % t["txid"])
+            elif txid != t["txid"]:
+                # Something weird happened ...
+                raise exceptions.TxidMismatchError("Transaction IDs do not match")
+            else:
+                res.append(t)
+            
+        return res
 
     def send_to(self, address, amount, accounts=[]):
         """ Sends Bitcoin to the provided address for the specified amount.
@@ -511,7 +559,7 @@ class Two1Wallet(BaseWallet):
             list(dict): A list of dicts containing transaction names and raw transactions.
                e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
         """
-        return self.send_to_multiple({address: amount})
+        return self.send_to_multiple({address: amount}, accounts)
         
     @property
     def balances(self):
