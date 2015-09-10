@@ -38,7 +38,7 @@ def str2bool(v):
 #    from the environment
 # if TWO1_DEV is not set, use TWO1_PROD_HOST
 if str2bool(os.environ.get("TWO1_DEV", default="0")):
-    click.style("Setting up developer environment.", fg="red")
+    click.echo(click.style("Setting up developer environment.", fg="red"))
     TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default=TWO1_DEV_HOST)
     click.echo("Host: {}".format(TWO1_HOST))
 else:
