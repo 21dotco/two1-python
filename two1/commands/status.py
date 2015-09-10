@@ -1,5 +1,8 @@
+import time
+
 import click
 from two1.config import pass_config
+from tabulate import tabulate
 from two1.lib import rest_client
 from two1.config import TWO1_HOST
 from two1.uxstring import UxString
@@ -27,12 +30,12 @@ def status(config):
 Wallet''', fg='magenta')
 
     b_seed = ord(config.username[0])
-    #balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
-    #balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
+    # balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
+    # balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
-    
-#    balance_c = config.wallet.confirmed_balance()
+
+    #    balance_c = config.wallet.confirmed_balance()
     try:
         bitcoin_address = config.wallet.current_address()
     except AttributeError:
@@ -66,13 +69,8 @@ Mining Proceeds''', fg='magenta')
 
 
 def status_endpoints(config):
-
-    headers =  \
+    headers = \
         ("URL", "Price", "MMM?", "Description", "# Requests", "Earnings")
-    header_format = "{:^15}|{:^10}|{:^5}|{:^25}|{:^10}|{:^12}"
-    data_format = "{:<15.15}|{:>10}|{:^5}|{:<25.25}|{:>10}|{:>12}"
-    dundee1_format = "{:_^16}{:_^11}{:_^6}{:_^26}{:_^11}{:_^13}"
-    dundee2_format = "{:_^15}|{:_^10}|{:_^5}|{:_^25}|{:_^10}|{:_^12}"
 
     endpoint_data = [
         ("misc/en2cn", 1000, "No", "English to Chinese", 27, 27000),
@@ -81,35 +79,16 @@ def status_endpoints(config):
         ("blackjack/", 1000, "No", "Blackjack", 17, 17000),
         ("misc/cn2en", 2000, "No", "Chinese to English", 2, 4000),
     ]
-    dundee_data = ["" for n in range(len(headers))]
-    config.log("\nMMM Endpoints", fg="magenta")
-    config.log(dundee1_format.format(*dundee_data))
-    config.log(header_format.format(*headers))
-    config.log(dundee2_format.format(*dundee_data))
-    for edata in endpoint_data:
-        config.log(data_format.format(*edata))
-    config.log(dundee2_format.format(*dundee_data))
-    config.log("")
+    config.log('\n')
+    config.log(tabulate(endpoint_data, headers=headers, tablefmt='psql'))
 
 
 def status_bought_endpoints(config):
-
-    headers =  \
+    headers = \
         ("Seller", "Resource", "Price", "Date")
-    header_format = "{:^15}|{:^15}|{:^12}|{:^25}"
-    data_format = "{:<15.15}|{:<15.15}|{:>12}|{:^25.25}"
-    dundee1_format = "{:_^16}{:_^16}{:_^13}{:_^26}"
-    dundee2_format = "{:_^15}|{:_^15}|{:_^12}|{:_^25}"
 
-    purchases = config.get_purchases()
-
-    dundee_data = ["" for n in range(len(headers))]
-    config.log("\nMMM Purchases", fg="magenta")
-    config.log(dundee1_format.format(*dundee_data))
-    config.log(header_format.format(*headers))
-    config.log(dundee2_format.format(*dundee_data))
-    for edata in purchases:
-        config.log(
-            data_format.format(edata["s"], edata["r"], edata["p"], edata["d"]))
-    config.log(dundee2_format.format(*dundee_data))
-    config.log("")
+    purchases = [
+        ("peaceful_beast", "en2cn", 4000, "2015-08-21 12:25:35")
+    ]
+    config.log('\n')
+    config.log(tabulate(purchases, headers=headers, tablefmt='psql'))

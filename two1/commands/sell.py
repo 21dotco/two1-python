@@ -10,6 +10,7 @@ import os
 from two1.config import pass_config
 from two1.djangobitcoin.djangobitcoin.settings import ENDPOINTS_FILE
 import two1.djangobitcoin.djangobitcoin as dj_bt
+from tabulate import tabulate
 
 ENDPOINTS_PATH = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
 
@@ -186,25 +187,15 @@ def try_url_imports(package_name):
         return []
 
 
-def _show_builtins(config, package):
-    data_format = "{:<50}|   {:<50}"
-    urls = try_url_imports('two1.djangobitcoin.misc')
-    for u in urls:
-        config.log(data_format.format(u.regex.pattern.strip('^$'), package))
+def get_builtins(package):
+    urls = try_url_imports(package)
+    return [[u.regex.pattern.strip('^$'), package] for u in urls]
 
 
 def show_builtins(config):
-    dundee1_format = "{:_^50}{:_^50}"
-    dundee2_format = "{:_^50}|{:_^49}"
-    header_format = "{:<50}|{:<50}"
-    headers = ("PATH", "   PACKAGE")
-    config.log("\nBUILTINS\n")
     if not try_config_django():
         return
-    dundee_data = ['' for n in range(len(headers))]
-    config.log(dundee1_format.format(*dundee_data))
-    config.log(header_format.format(*headers))
-    config.log(dundee2_format.format(*dundee_data))
-    _show_builtins(config, 'two1.djangobitcoin.misc')
-    _show_builtins(config, 'two1.djangobitcoin.scipy_aas')
-    _show_builtins(config, 'two1.djangobitcoin.static_serve')
+    builtins = get_builtins('two1.djangobitcoin.misc') \
+               + get_builtins('two1.djangobitcoin.scipy_aas') \
+               + get_builtins('two1.djangobitcoin.static_serve')
+    config.log(tabulate(builtins, headers=['PATH', 'PACKAGE'], tablefmt='rst'))

@@ -35,3 +35,4 @@ tornado
 mnemonic==0.12
 pyaes
 pbkdf2
+tabulate==0.7.5
