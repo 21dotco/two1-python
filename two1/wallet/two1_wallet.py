@@ -421,7 +421,7 @@ class Two1Wallet(BaseWallet):
         total_with_fees = total_amount + fees
         
         # Verify we have enough money
-        if total_with_fees > self.balance[0]: # First element is confirmed balance
+        if total_with_fees > self.confirmed_balance(): # First element is confirmed balance
             return False
 
         # Get all private keys in one shot
