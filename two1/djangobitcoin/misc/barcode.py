@@ -27,7 +27,7 @@ def generate_qr(request):
 
     """
 
-    text = request.QUERY_PARAMS.get("text", None)
+    text = request.query_params.get("text", None)
     if not text:
         return Response("Must provide value for Text parameter", 400)
     response = HttpResponse(content_type="image/png")
@@ -58,7 +58,7 @@ def upc_lookup(request):
           paramType: query
     """
 
-    upc = request.QUERY_PARAMS.get("upc", None)
+    upc = request.query_params.get("upc", None)
     if not upc:
         return Response("Must provide value for Url parameter", 400)
     response = requests.get("http://api.upcdatabase.org/json/84018dcccb9479a88c2de6cc3367a9c5/0071142000500")

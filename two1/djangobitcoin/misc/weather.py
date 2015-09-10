@@ -39,7 +39,7 @@ def current_temperature(request):
           paramType: query
     """
 
-    place = request.QUERY_PARAMS.get("place", None)
+    place = request.query_params.get("place", None)
     if not place:
         return Response("Must provide value for Place parameter", code=400)
     return Response(wunderground_request("conditions", place)["current_observation"]["temp_f"])
@@ -67,7 +67,7 @@ def forecast(request):
           paramType: query
     """
 
-    place = request.QUERY_PARAMS.get("place", None)
+    place = request.query_params.get("place", None)
     if not place:
         return Response("Must provide value for Place parameter", code=400)
     return Response(wunderground_request("forecast", place))
@@ -95,7 +95,7 @@ def radar(request):
           paramType: query
     """
 
-    place = request.QUERY_PARAMS.get("place", None)
+    place = request.query_params.get("place", None)
     if not place:
         return Response("Must provide value for Place parameter", code=400)
     radar_response = wunderground_radar_request("animatedradar", place)

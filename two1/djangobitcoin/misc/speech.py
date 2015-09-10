@@ -31,7 +31,7 @@ def text_to_speech(request):
 
     """
 
-    text = request.QUERY_PARAMS.get("text", None)
+    text = request.query_params.get("text", None)
     if not text:
         return Response("Must provide value for Text parameter", 400)
     response = requests.get("http://tts-api.com/tts.mp3?q=" + urllib.parse.quote_plus(text))

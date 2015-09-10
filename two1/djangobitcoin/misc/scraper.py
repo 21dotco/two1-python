@@ -29,7 +29,7 @@ def scrape_text(request):
           paramType: query
     """
 
-    url = request.QUERY_PARAMS.get("url", None)
+    url = request.query_params.get("url", None)
     if not url:
         return Response("Must provide value for Url parameter", 400)
     try:
@@ -70,10 +70,10 @@ def scrape_text_with_selector(request):
           paramType: query
     """
 
-    url = request.QUERY_PARAMS.get("url", None)
+    url = request.query_params.get("url", None)
     if not url:
         return Response("Must provide value for Url parameter", 400)
-    selector = request.QUERY_PARAMS.get("selector", None)
+    selector = request.query_params.get("selector", None)
     if not selector:
         return Response("Must provide value for Selector parameter", 400)
     try:
