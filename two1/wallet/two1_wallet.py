@@ -348,6 +348,28 @@ class Two1Wallet(BaseWallet):
             }
         return config
 
+    @property
+    def addresses(self):
+        """ Gets the address list for the current wallet.
+        
+        Returns:
+            list(str): The current list of addresses in this wallet.
+        """
+        addresses = []
+        for a in self._accounts:
+            addresses += a.all_used_addresses
+
+        return addresses
+    
+    @property
+    def current_address(self):
+        """ Gets the preferred address.
+
+        Returns:
+            str: The current preferred payment address. 
+        """
+        return self.get_new_payout_address()
+    
     def get_new_payout_address(self, account_name_or_index=None):
         """ Gets the next payout address.
 
@@ -457,19 +479,35 @@ class Two1Wallet(BaseWallet):
         return self.txn_data_provider.send_transaction(txn)
 
     @property
-    def balance(self):
+    def balances(self):
         """ Balance for the wallet.
         
         Returns:
             tuple: First element is confirmed balance, second is unconfirmed.
         """
-        balance = [0, 0]
+        balances = [0, 0]
         for acct in self._accounts:
             acct_balance = acct.balance
-            balance[0] += acct_balance[0]
-            balance[1] += acct_balance[1]
+            balances[0] += acct_balance[0]
+            balances[1] += acct_balance[1]
 
-        return tuple(balance)
+        return tuple(balances)
+
+    def confirmed_balance(self):
+        """ Gets the current confirmed balance of the wallet in Satoshi.
+
+        Returns:
+            number: The current confirmed balance.
+        """
+        return self.balances[0]
+    	
+    def unconfirmed_balance(self):
+        """ Gets the current unconfirmed balance of the wallet in Satoshi.
+
+        Returns:
+            number: The current unconfirmed balance.
+        """
+        return self.balances[1]
 
     @property
     def accounts(self):
