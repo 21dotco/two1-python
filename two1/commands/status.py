@@ -1,5 +1,8 @@
 import click
 from two1.config import pass_config
+from two1.lib import rest_client
+from two1.config import TWO1_HOST
+from two1.uxstring import UxString
 from two1.debug import dlog
 import time
 import datetime
@@ -10,6 +13,8 @@ from random import randint
 @pass_config
 def status(config):
     """View earned Bitcoin and configuration"""
+
+    client = rest_client.TwentyOneRestClient(TWO1_HOST)
 
     foo = config.fmt()
     config.log('''
@@ -41,7 +46,11 @@ Wallet''', fg='magenta')
                )
 
     mining_p = int(time.time() / 9.0)
-    shares = int(time.time() / 1.0)
+    try:
+        share_data = client.get_shares(config.username)[config.username]
+        shares = share_data["good"]
+    except:
+        shares = UxString.Error.data_unavailable
 
     config.log('''
 Mining Proceeds''', fg='magenta')
