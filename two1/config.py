@@ -15,8 +15,8 @@ import pkg_resources
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
-TWO1_HOST = 'http://twentyone-devel-1d3c.herokuapp.com'
-#TWO1_HOST = "http://127.0.0.1:8000"
+TWO1_PROD_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
+TWO1_DEV_HOST = "http://127.0.0.1:8000"
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
@@ -28,6 +28,21 @@ try:
 except:
     TWO1_PATH = None
 
+
+def str2bool(v):
+    return str(v).lower() in ("yes", "true", "t", "1", "on")
+
+# override variables based on environment settings
+# if TWO1_DEV is set, we will switch to DEV mode with the following changes
+# 1) set the TWO1_HOST to TWO1_DEV_HOST (127.0.0.1:8000) or TWO1_DEV_HOST
+#    from the environment
+# if TWO1_DEV is not set, use TWO1_PROD_HOST
+if str2bool(os.environ.get("TWO1_DEV", default="0")):
+    click.style("Setting up developer environment.", fg="red")
+    TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default=TWO1_DEV_HOST)
+    click.echo("Host: {}".format(TWO1_HOST))
+else:
+    TWO1_HOST = TWO1_PROD_HOST
 
 '''Primary use case for the following class is the singleton that holds
    all the state & config data required to run commands and subcommands
