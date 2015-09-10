@@ -12,7 +12,19 @@ from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
 class Two1Wallet(BaseWallet):
-    """ A wallet class capable of handling multiple types of wallets.
+    """ An HD wallet class capable of handling multiple types of wallets.
+
+        This wallet can implement a variety of account types, including:
+        pure BIP-32, pure BIP-44, Hive, and Mycelium variants.
+
+        This class depends on pluggable elements which allow flexibility to use
+        different backend data providers (bitcoind, chain.com, etc.) as well
+        as different UTXO selection algorithms. In particular, these elements
+        are:
+
+        1. A transaction data provider class that implements the abstract
+           class found in TxnDataProvider.
+        2. A unspent transaction output selector (utxo_selector):
 
         utxo_selector should be a filtering function with prototype:
             selected, fees = utxo_selector_func(txn_data_provider,
@@ -34,6 +46,17 @@ class Two1Wallet(BaseWallet):
         This is pluggable to allow for different selection criteria, i.e. fewest
         number of inputs, oldest UTXOs first, newest UTXOs first, minimize change
         amount, etc.
+
+    Args:
+        config (dict): A dict containing at minimum a "master_key" key with a 
+           Base58Check encoded HDPrivateKey as the value.
+        txn_data_provider (TransactionDataProvider): An instance of a derived
+           TransactionDataProvider class as described above.
+        utxo_selector (function): A filtering function with the prototype documented
+           above.
+
+    Returns:
+        Two1Wallet: The wallet instance.
     """
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
 
@@ -42,6 +65,21 @@ class Two1Wallet(BaseWallet):
                passphrase='',
                utxo_selector=utxo_selector_smallest_first,
                testnet=False):
+        """ Creates a Two1Wallet using a random seed.
+
+            This will create a wallet using the default account type (currently BIP32).
+        
+        Args:
+            txn_data_provider (TransactionDataProvider): An instance of a derived
+               TransactionDataProvider class as described above.
+            passphrase (str): A passphrase to lock the wallet with.
+            utxo_selector (function): A filtering function with the prototype documented
+               above.
+            testnet (bool): Whether or not this wallet will be used for testnet.
+
+        Returns:
+            Two1Wallet: The wallet instance.
+        """
         # Create:
         # 1. master key seed + mnemonic
         # 2. First account
@@ -61,6 +99,21 @@ class Two1Wallet(BaseWallet):
                              passphrase='',
                              utxo_selector=utxo_selector_smallest_first,
                              account_type=DEFAULT_ACCOUNT_TYPE):
+        """ Creates a Two1Wallet from an existing mnemonic.
+
+        Args:
+            txn_data_provider (TransactionDataProvider): An instance of a derived
+               TransactionDataProvider class as described above.
+            mnemonic (str): The mnemonic representing the wallet seed.
+            passphrase (str): A passphrase to lock the wallet with.
+            utxo_selector (function): A filtering function with the prototype documented
+               above.
+            account_type (str): One of the account types in account_types.py.
+
+        Returns:
+            Two1Wallet: The wallet instance.
+        """
+        
         if account_type not in account_types:
             raise ValueError("account_type must be one of %r" % account_types.keys())
 
@@ -111,7 +164,16 @@ class Two1Wallet(BaseWallet):
             self._load_accounts(account_config)
 
     def discover_accounts(self):
-        # We follow the account discovery procedure in BIP44
+        """ Discovers all accounts associated with the wallet.
+
+            Account discovery is accomplished by the discovery procedure outlined
+            in BIP44. Namely, we start with account 0', check to see if there are
+            used addresses. If there are, we continue to account 1' and proceed
+            until the first account with no used addresses.
+
+            The discovered accounts are stored internally, but can be retrieved with
+            the Two1Wallet.accounts property.
+        """
         has_txns = True
         i = 0
         while has_txns:
@@ -187,7 +249,18 @@ class Two1Wallet(BaseWallet):
         return private_keys
 
     def find_addresses(self, addresses):
-        """ Returns the paths to the address, if found
+        """ Returns the paths to the address, if found. 
+        
+            All *discovered* accounts are checked. Within an account, all
+            addresses up to GAP_LIMIT (20) addresses beyond the last known
+            index for the chain are checked.
+
+        Args:
+            addresses (list(str)): list of Base58Check encoded addresses.
+
+        Returns:
+            dict: Dict keyed by address with the path (account index first)
+               corresponding to the derivation path for that key.
         """
         addrs = addresses
         found = {}
@@ -206,6 +279,13 @@ class Two1Wallet(BaseWallet):
     
     def address_belongs(self, address):
         """ Returns the full path for generating this address
+
+        Args:
+            address (str): Base58Check encoded bitcoin address.
+        
+        Returns:
+            str or None: The full key derivation path if found. Otherwise,
+               returns None.
         """
         found = self.find_addresses([address])
 
@@ -218,6 +298,20 @@ class Two1Wallet(BaseWallet):
             return None
         
     def get_account_name(self, index):
+        """ Returns the account name for the given index.
+
+        Note:
+            The name of the account is a convenience item only - it
+            serves no purpose other than being a human-readable
+            identifier.
+
+        Args:
+            index (int): The index of the account to retrieve the
+               name for.
+
+        Returns:
+            str or None: The name of the account if found, or None.
+        """
         for name, i in self._account_map.items():
             if index == i:
                 return name
@@ -225,6 +319,16 @@ class Two1Wallet(BaseWallet):
         return None
 
     def get_utxo(self, accounts=[]):
+        """ Returns all UTXOs for all addresses in all specified accounts.
+
+        Args:
+            accounts (list): A list of either account indices or names.
+
+        Returns:
+            dict: A dict keyed by address containing a list of UnspentTransactionOutput
+               objects for that address. Only addresses for which there 
+               are current UTXOs are included.
+        """
         utxos = {}
         for acct in self._check_and_get_accounts(accounts):
             utxos.update(acct.get_utxo())
@@ -232,6 +336,11 @@ class Two1Wallet(BaseWallet):
         return utxos
 
     def to_dict(self):
+        """ Creates a dict of critical configuration parameters.
+
+        Returns:
+            dict: A dict containing key/value pairs that is JSON serializable.
+        """
         config = { "master_key": self._master_key.to_b58check(self._testnet),
                    "master_seed": self._master_seed,
                    "account_map": self._account_map,
@@ -240,6 +349,16 @@ class Two1Wallet(BaseWallet):
         return config
 
     def get_new_payout_address(self, account_name_or_index=None):
+        """ Gets the next payout address.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               payout address from. If not provided, the default account (0')
+               is used.
+
+        Returns:
+            str: A Base58Check encoded bitcoin address.
+        """
         if account_name_or_index is None:
             acct = self._accounts[0]
         else:
@@ -247,7 +366,20 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(False)
 
-    def send_to(self, addresses_and_amounts, accounts=[]):
+    def send_to_multiple(self, addresses_and_amounts, accounts=[]):
+        """ Sends bitcoins to multiple addresses.
+
+        Args:
+            addresses_and_amounts (dict): A dict keyed by recipient address
+               and corresponding values being the amount - *in satoshis* - to
+               send to that address.
+            accounts (list(str or int)): List of accounts to use. If not provided,
+               all discovered accounts may be used based on the chosen UTXO
+               selection algorithm.
+
+        Returns:
+            str or None: A string containing the submitted TXID or None.
+        """
         total_amount = sum([amt for amt in addresses_and_amounts.values()])
 
         if not accounts:
@@ -326,6 +458,11 @@ class Two1Wallet(BaseWallet):
 
     @property
     def balance(self):
+        """ Balance for the wallet.
+        
+        Returns:
+            tuple: First element is confirmed balance, second is unconfirmed.
+        """
         balance = [0, 0]
         for acct in self._accounts:
             acct_balance = acct.balance
@@ -336,6 +473,11 @@ class Two1Wallet(BaseWallet):
 
     @property
     def accounts(self):
+        """ All accounts in the wallet.
+
+        Returns:
+            list(HDAccount): List of HDAccount objects.
+        """
         return self._accounts
 
     
