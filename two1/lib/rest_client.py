@@ -113,6 +113,16 @@ class TwentyOneRestClient(object):
                              data=data
                              )
 
+    # GET /v0/mining/statistics/shares/{username}
+    def get_shares(self, username):
+        method = "GET"
+        path = "/v0/mining/statistics/shares/" + username
+        r = self._request(False, method, path)
+        if r.status_code == 200:
+            return json.loads(r.content.decode())
+        else:
+            raise
+
     # GET /mmm/sells/search/
     def mmm_search(self, query, page_num=1):
         method = "GET"
