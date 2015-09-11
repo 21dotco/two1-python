@@ -1,4 +1,9 @@
+import getpass
+import hashlib
 import json
+import math
+
+from Crypto.Cipher import AES
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.bitcoin.script import Script
@@ -49,18 +54,63 @@ class Two1Wallet(BaseWallet):
         amount, etc.
 
     Args:
-        config (dict): A dict containing at minimum a "master_key" key with a 
+        params (dict): A dict containing at minimum a "master_key" key with a 
            Base58Check encoded HDPrivateKey as the value.
         txn_data_provider (TransactionDataProvider): An instance of a derived
            TransactionDataProvider class as described above.
         utxo_selector (function): A filtering function with the prototype documented
            above.
+        passphrase (str): Passphrase to unlock wallet key if it is locked.
 
     Returns:
         Two1Wallet: The wallet instance.
     """
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
 
+    @staticmethod
+    def pad_str(s, n, truncate=False):
+        padded = str.encode(s)
+        if truncate and len(padded) > n:
+            padded = padded[:n]
+        elif len(padded) < n:
+            padded += b'\x00' * (n - len(padded))
+
+        return padded
+    
+    @staticmethod
+    def encrypt(master_key, master_seed, passphrase):
+        key = Two1Wallet.pad_str(passphrase, 16, True)
+        
+        iv = utils.rand_bytes(AES.block_size)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        pad_len = math.ceil(len(master_key) / AES.block_size) * AES.block_size
+        master_key_enc = utils.bytes_to_str(iv + cipher.encrypt(Two1Wallet.pad_str(master_key, pad_len)))
+
+        iv = utils.rand_bytes(AES.block_size)
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        pad_len = math.ceil(len(master_seed) / AES.block_size) * AES.block_size        
+        master_seed_enc = utils.bytes_to_str(iv + cipher.encrypt(Two1Wallet.pad_str(master_seed, pad_len)))
+
+        return (master_key_enc, master_seed_enc)
+
+    @staticmethod
+    def decrypt(master_key_enc, master_seed_enc, passphrase):
+        key = Two1Wallet.pad_str(passphrase, 16, True)
+
+        master_key_enc_bytes = bytes.fromhex(master_key_enc)
+        iv = master_key_enc_bytes[:AES.block_size]
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        dec = cipher.decrypt(master_key_enc_bytes[AES.block_size:])
+        master_key = dec.rstrip(b'\x00').decode('ascii')
+
+        master_seed_enc_bytes = bytes.fromhex(master_seed_enc)
+        iv = master_seed_enc_bytes[:AES.block_size]
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        dec = cipher.decrypt(master_seed_enc_bytes[AES.block_size:])
+        master_seed = dec.rstrip(b'\x00').decode('ascii')
+
+        return (master_key, master_seed)
+        
     @staticmethod
     def create(txn_data_provider,
                passphrase='',
@@ -87,11 +137,23 @@ class Two1Wallet(BaseWallet):
         # Store info to file
         account_type = "BIP44Testnet" if testnet else DEFAULT_ACCOUNT_TYPE
         master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
-        config = { "master_key": master_key.to_b58check(testnet),
-                   "master_seed": mnemonic,
-                   "account_type": account_type
-               }
-        wallet = Two1Wallet(config, txn_data_provider, utxo_selector)
+        salt = utils.rand_bytes(4, True)
+        passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
+
+        master_key_b58 = master_key.to_b58check(testnet)
+        if passphrase:
+            mkey, mseed = Two1Wallet.encrypt(master_key_b58, mnemonic, passphrase)
+        else:
+            mkey = master_key_b58
+            mseed = mnemonic
+        
+        config = { "master_key": mkey,
+                   "master_seed": mseed,
+                   "passphrase_hash": utils.bytes_to_str(passphrase_hash),
+                   "salt": utils.bytes_to_str(salt),
+                   "locked": bool(passphrase),
+                   "account_type": account_type }
+        wallet = Two1Wallet(config, txn_data_provider, utxo_selector, passphrase)
 
         return wallet
 
@@ -120,50 +182,128 @@ class Two1Wallet(BaseWallet):
 
         testnet = account_type == "BIP44Testnet"
         master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic, passphrase)
-        config = { "master_key": master_key.to_b58check(testnet),
-                   "master_seed": mnemonic,
-                   "account_type": account_type
-               }
-        wallet = Two1Wallet(config, txn_data_provider, utxo_selector)
+        salt = utils.rand_bytes(4, True)
+        passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
+
+        master_key_b58 = master_key.to_b58check(testnet)
+        if passphrase:
+            mkey, mseed = Two1Wallet.encrypt(master_key_b58, mnemonic, passphrase)
+        else:
+            mkey = master_key_b58
+            mseed = mnemonic
+
+        config = { "master_key": mkey,
+                   "master_seed": mseed,
+                   "passphrase_hash": utils.bytes_to_str(passphrase_hash),
+                   "salt": utils.bytes_to_str(salt),
+                   "locked": bool(passphrase),
+                   "account_type": account_type }
+
+        wallet = Two1Wallet(config, txn_data_provider, utxo_selector, passphrase)
         wallet.discover_accounts()
 
         return wallet
+
+    @staticmethod
+    def from_file(filename, txn_data_provider, utxo_selector=utxo_selector_smallest_first):
+        """ Initializes a wallet from the parameters stored in a file.
+
+            The wallet file should have been written by Two1Wallet.to_file().
+
+        Args:
+            filename (str): File to read
+            txn_data_provider (TransactionDataProvider): An instance of a derived
+               TransactionDataProvider class as described above.
+            utxo_selector (function): A filtering function with the prototype documented
+               above.
+        """
+        params = {}
+        with open(filename, 'r') as f:
+            params = json.load(f)
+
+        if params['locked']:
+            # Ask for passphrase
+            passphrase = getpass.getpass("Passphrase: ")
+        else:
+            passphrase = ''
+
+        return Two1Wallet(params=params,
+                          txn_data_provider=txn_data_provider,
+                          utxo_selector=utxo_selector,
+                          passphrase=passphrase)
         
-    def __init__(self, config, txn_data_provider, utxo_selector=utxo_selector_smallest_first):
+    def __init__(self, params, txn_data_provider,
+                 utxo_selector=utxo_selector_smallest_first,
+                 passphrase=''):
         self.txn_data_provider = txn_data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
-        
-        m = config.get('master_key', None)
-        if m is not None:
-            self._master_key = HDKey.from_b58check(m)
-            self._master_seed = config.get('master_seed')
-            assert isinstance(self._master_key, HDPrivateKey)
-            assert self._master_key.master
-        else:
-            raise ValueError("config does not have a required key: 'master_key'")
 
-        acct_type = config.get('account_type', None)
-        if acct_type is not None:
-            self.account_type = account_types[acct_type]
-            self._testnet = self.account_type == 'BIP44Testnet'
+        required_params = ['master_key', 'locked', 'salt', 'passphrase_hash', 'account_type']
+        for rp in required_params:
+            if rp not in params:
+                raise ValueError("params does not have a required key: '%s'" % rp)
+
+        if passphrase:
+            # Make sure the passphrase is correct
+            phash = hashlib.sha256(str.encode(passphrase) + bytes.fromhex(params['salt'])).digest()
+            if utils.bytes_to_str(phash) != params['passphrase_hash']:
+                raise exceptions.PassphraseError("Given passphrase is incorrect.")
+            
+        if params['locked']:
+            mkey, self._master_seed = self.decrypt(master_key_enc=params['master_key'],
+                                                   master_seed_enc=params['master_seed'],
+                                                   passphrase=passphrase)
+
+            self._master_key = HDKey.from_b58check(mkey)
+
         else:
-            raise ValueError("config does not have a required key: 'account_type'")
+            self._master_key = HDKey.from_b58check(params['master_key'])
+            self._master_seed = params['master_seed']
+            
+        assert isinstance(self._master_key, HDPrivateKey)
+        assert self._master_key.master
+
+        acct_type = params.get('account_type', None)
+        self.account_type = account_types[acct_type]
+        self._testnet = self.account_type == 'BIP44Testnet'
 
         self._root_keys = HDKey.from_path(self._master_key, self.account_type.account_derivation_prefix)
-
+        
         self._accounts = []
         self._account_map = {}
 
-        account_config = config.get("accounts", None)
-        if account_config is None:
+        account_params = params.get("accounts", None)
+        if account_params is None:
             # Create default account
             self._init_account(0, "default")
         else:
             # Setup the account map first
-            self._account_map = config.get("account_map", {})
-            self._load_accounts(account_config)
+            self._account_map = params.get("account_map", {})
+            self._load_accounts(account_params)
 
+    @property
+    def config_options(self):
+        """ Returns the configuration options available for the wallet. 
+
+        Returns:
+            dict: The keys of this dictionary are the available configuration settings/options
+                for the wallet. The value for each key represents the possible values for each option.
+                e.g. {key_style: ["HD","Brain","Simple"], ....}
+        """
+        return {"account_type": account_types.keys(),
+                "txn_data_provider": ['chain'],
+                "utxo_selector": ["smallest_first"]}
+
+    @property
+    def is_configured(self):
+        """ Returns the configuration/initialization status of the wallet. 
+                
+        Returns:
+            bool: True if the wallet has been configured and ready to use otherwise False
+        """
+        return True
+            
     def discover_accounts(self):
         """ Discovers all accounts associated with the wallet.
 
@@ -197,18 +337,18 @@ class Two1Wallet(BaseWallet):
         self._accounts.insert(index, acct)
         self._account_map[name] = index
         
-    def _load_accounts(self, account_config):
-        for i, a in enumerate(account_config):
+    def _load_accounts(self, account_params):
+        for i, a in enumerate(account_params):
             # Determine account name
             name = self.get_account_name(i)
             self._init_account(i, name)
 
             acct = self._accounts[i]
 
-            # Make sure that the key serialization in the config matches
+            # Make sure that the key serialization in the params matches
             # that from our init
             if a["public_key"] != self.accounts[i].key.public_key.to_b58check(self._testnet):
-                raise ValueError("Account config inconsistency detected: pub key for account %d (%s) does not match expected." % (i, name))
+                raise ValueError("Account params inconsistency detected: pub key for account %d (%s) does not match expected." % (i, name))
 
     def _check_and_get_accounts(self, accounts):
         accts = []
@@ -337,18 +477,24 @@ class Two1Wallet(BaseWallet):
         return utxos
 
     def to_dict(self):
-        """ Creates a dict of critical configuration parameters.
+        """ Creates a dict of critical parameters.
 
         Returns:
             dict: A dict containing key/value pairs that is JSON serializable.
         """
-        config = { "master_key": self._master_key.to_b58check(self._testnet),
+        params = { "master_key": self._master_key.to_b58check(self._testnet),
                    "master_seed": self._master_seed,
                    "account_map": self._account_map,
                    "accounts": [acct.to_dict() for acct in self._accounts]
             }
-        return config
+        return params
 
+    def to_file(self, filename):
+        """ Writes all wallet information to a file.
+        """
+        with open(filename, 'w') as f:
+            json.dump(self.to_dict(), f)
+    
     @property
     def addresses(self):
         """ Gets the address list for the current wallet.

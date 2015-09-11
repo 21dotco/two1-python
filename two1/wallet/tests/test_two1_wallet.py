@@ -1,22 +1,50 @@
+import hashlib
 import pytest
 from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey
 from two1.bitcoin.txn import Transaction
+from two1.bitcoin.utils import bytes_to_str
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.mock_txn_data_provider import MockTxnDict, MockTransactionDataProvider
 
-config = {'master_key': "xprv9s21ZrQH143K3But1Hju6Ga2H7dn9CyWz7nfAtdEWLhQZ7GGad7qKm4Btg9yfWgBW1xtfjqimL3zHe3TYQaPPXsQDNWSMinX1HdVG4axX5p",
-          'master_seed': "tuna object element cancel hard nose faculty noble swear net subway offer",
+salt = bytes.fromhex("aabbccdd")
+passphrase = "test_wallet"
+passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
+
+master_key = "xprv9s21ZrQH143K2dUcTctuNw8oV8e7gi4ZbHFGAnyGJtWwmKbKTbLGtx48DQGzioGDdhVn8zFhJe8hbDdfDnK19ykxjwXLzd6EpxnTqi4zQGN"
+master_seed = "tuna object element cancel hard nose faculty noble swear net subway offer"
+
+mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=master_key,
+                                         master_seed=master_seed,
+                                         passphrase=passphrase)
+
+config = {'master_key': mkey_enc,
+          'master_seed': mseed_enc,
+          'locked': True,
+          'salt': bytes_to_str(salt),
+          'passphrase_hash': bytes_to_str(passphrase_hash),
           'account_type': "BIP44BitcoinMainnet",
-          'accounts': [{ 'public_key': "xpub6CcQGHogi7ch8kCGTUJajqCXSY4HNQUj6seuToEGix9gVzrZjxGx1oJEcu1M6zweE6qxvzpddSMZmFKiXwEvghvG4xArBT2PCQLQ3qt4sZP",
+          'accounts': [{ 'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",
                          'last_payout_index': 2,
                          'last_change_index': 1 }],
           'account_map': { 'default': 0 }}
 
-master = HDPrivateKey.master_key_from_mnemonic(config['master_seed'])
+master = HDPrivateKey.master_key_from_mnemonic(master_seed, passphrase)
 mock_txn_provider = MockTransactionDataProvider("BIP44BitcoinMainnet", master)
-    
+
+def test_encrypt_decrypt():
+    mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=config['master_key'],
+                                             master_seed=config['master_seed'],
+                                             passphrase=passphrase)
+
+    mkey, mseed = Two1Wallet.decrypt(master_key_enc=mkey_enc,
+                                     master_seed_enc=mseed_enc,
+                                     passphrase=passphrase)
+
+    assert mkey == config['master_key']
+    assert mseed == config['master_seed']
+
 def test_create():
     # Here we just check to see that the config was created properly,
     # there is only 1 account associated w/the wallet and that there
@@ -25,7 +53,7 @@ def test_create():
     mock_txn_provider.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet.create(txn_data_provider=mock_txn_provider,
-                               passphrase='test_wallet')
+                               passphrase=passphrase)
 
     assert len(wallet._accounts) == 1
     assert wallet._accounts[0].name == "default"
@@ -47,7 +75,8 @@ def test_import():
     m.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
-                                             mnemonic=config['master_seed'],
+                                             mnemonic=master_seed,
+                                             passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
 
     assert wallet._root_keys[1].to_b58check() == keys[1].to_b58check()
@@ -63,9 +92,10 @@ def test_import():
     m.set_num_used_addresses(account_index=0, n=20, change=1)
     
     m.set_txn_side_effect_for_hd_discovery()
-
+    
     wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
-                                             mnemonic=config['master_seed'],
+                                             mnemonic=master_seed,
+                                             passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
 
     assert len(wallet._accounts) == 1
@@ -78,10 +108,11 @@ def test_import():
         m.set_num_used_addresses(account_index=i, n=1, change=0)
         m.set_num_used_addresses(account_index=i, n=2, change=1)
 
-    m.set_txn_side_effect_for_hd_discovery()    
+    m.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
-                                             mnemonic=config['master_seed'],
+                                             mnemonic=master_seed,
+                                             passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
 
     assert len(wallet._accounts) == 4
@@ -91,6 +122,7 @@ def test_import():
 
 def test_rest():
     m = mock_txn_provider
+    m.hd_master_key = master
     m.reset_mocks()
 
     m.set_num_used_accounts(1)
@@ -98,21 +130,24 @@ def test_rest():
     m.set_num_used_addresses(account_index=0, n=2, change=1)
 
     m.set_txn_side_effect_for_hd_discovery()
-    
-    wallet = Two1Wallet(config=config, txn_data_provider=m)
+
+    wallet = Two1Wallet(params=config,
+                        txn_data_provider=m,
+                        passphrase=passphrase)
 
     # First 5 internal addresses of account 0
-    int_addrs = ["12q2xjqTh6ZNHUTQLWSs9uSyDkGHNpQAzu",
-                 "1NpksrEeUpMcbw6ekWPZfPd3qAhEL5ygJ4",
-                 "1BruaiE6VNXQdeDdhGKhB1x8sq2NcJrDBX",
-                 "1ECsMhxMnHR7mMjaP1yBRhUNaUszZUYQUj",
-                 "1KbGXnyg1gXx4CA3YnCmpKH252jw8pR9C1"]
+    # These can be gotten from https://dcpos.github.io/bip39/
+    ext_addrs = ["1Kv1QLXekeE42rKhvZ41kHS1auE7R3t21o",
+                 "1CYhVFaBwmTQRQwdyLc4rq9HwaxdqtQ68G",
+                 "18KCKKB5MGs4Rqu4t8jL9Bkt9SAp7NpUvm",
+                 "1FqUrpUpqWfHoPVga4uMKYCPHHoApvNiPa",
+                 "12zb1hJP5WEHCSKz5LyoPM9iaCwXtTthRc"]
 
-    ext_addrs = ["1Lqf8UgzG3SWWTe9ab8YPwgm6gzkJCZMX6",
-                 "1KuwentNouJBjKZgfrcPidSBELyXkpvpDa",
-                 "1DgSD3feEKysnre6bL2xQAUyza4cdShVX1",
-                 "1JefJedKMWX4NowgGujdhr7Lq3EFHtwDjQ",
-                 "1A994BxdSc5HzNeQ8vUUrZJ7X1azjvkQ9"]
+    int_addrs = ["1Hiv6LroFmqcaVV9rhY6eNUjnFQh4y6kL7",
+                 "1GTUuNbgk4sv7LPQd2WqSP9PiinzeuBmay",
+                 "14fpkEZZ6QP3QEcQnfSjH7adkC2RsMuiZw",
+                 "1LPNyqqX6RU5b4oPumePR72tFfwiNUho4s",
+                 "1FqvNKJb8au82PhtGP8D1odXWVC1Ae4jN9"]
 
     bad_addrs = ["1CEDwjjtYjCQUoRZQW9RUXHH5Ao7PWYKf",
                  "1CbHFUNsyCzZSDu7hYae7HHqgzMjBfqoP9"]
