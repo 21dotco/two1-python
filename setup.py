@@ -10,6 +10,7 @@ from setuptools import setup
 from setuptools import find_packages
 from codecs import open
 from os import path
+import os
 
 here = path.abspath(path.dirname(__file__))
 
@@ -19,7 +20,6 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 install_requires = [
                     'arrow',
                     'base58',
-                    'Cython',
                     'pytest',
                     'requests',
                     'simplejson',
@@ -29,13 +29,23 @@ install_requires = [
                     'keyring',
                     ]
 
+# https://www.python.org/dev/peps/pep-0440/
+VERSION=[0,2,1]
+# This build number is set by the build environment(Jenkins)
+# This is only intended to be used for internal builds or
+# development builds.
+# Release builds are created manually and the version is
+# updated manually in those cases
+if os.environ.get("BUILD_NUMBER"):
+    VERSION.append("dev"+os.environ.get("BUILD_NUMBER"))
+
 setup(
     name='two1',
-    version='0.2.1',
+    version=".".join([str(n) for n in VERSION]),
     description='Buy and sell anything on the internet with Bitcoin.',
     long_description=long_description,
     url='https://github.com/21dotco/two1',
-    author='21, Inc',
+    author='21,Inc',
     author_email='two1@21.co',
     license='MIT',
 
