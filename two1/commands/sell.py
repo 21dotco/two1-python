@@ -1,6 +1,6 @@
 import json
 import signal
-from subprocess import Popen, PIPE
+import subprocess
 import sys
 
 from re import split
@@ -69,8 +69,8 @@ def try_config_django():
 
 def find_process_by_attribute(attribute):
     process_list = []
-    sub_proc_ps = Popen(['ps', 'auxw', ], stdout=PIPE)
-    sub_proc = Popen(['grep', attribute, ], stdin=sub_proc_ps.stdout, stdout=PIPE)
+    sub_proc_ps = subprocess.Popen(['ps', 'auxw', ], stdout=subprocess.PIPE)
+    sub_proc = subprocess.Popen(['grep', attribute, ], stdin=sub_proc_ps.stdout, stdout=subprocess.PIPE)
     sub_proc_ps.stdout.close()
     # Discard the first line (ps aux header)
     sub_proc.stdout.readline()
@@ -80,18 +80,6 @@ def find_process_by_attribute(attribute):
         process_list.append(proc_info[1])  # pid
     if process_list:
         return min(process_list)
-
-
-def find_process():
-    # gunicorn process is started gunicorn --pythonpath two1/djangobitcoin djangobitcoin.wsgi --bind 127.0.0.1:8000
-    # built-in django server is started python manage.py runserver 127.0.0.1:8000
-    gunicorn_pid = find_process_by_attribute('djangobitcoin.wsgi')
-    if gunicorn_pid:
-        return gunicorn_pid, True
-    django_svr_pid = find_process_by_attribute('runserver')
-    if django_svr_pid:
-        return django_svr_pid, False
-    return None, None
 
 
 def match_endpoint(endpoint, regex):
@@ -142,13 +130,25 @@ def save_config(ep_json):
     with open(ENDPOINTS_PATH, 'w') as outfile:
         json.dump(ep_json, outfile, indent=2)
     click.echo('Endpoints configuration updated.')
-    # Check if we can restart the server
-    pid, is_gunicorn = find_process()
-    if is_gunicorn:
-        os.kill(int(pid), signal.SIGHUP)
-        click.echo('Server restarted')
-    elif pid:
-        click.echo('Restart the server')
+
+
+def check_server_state(updated, port):
+    '''
+    Checks if server is running and if not, starts it
+    :param updated: if server is already running, restarts it
+    Assumes gunicorn process is started via:
+    gunicorn --pythonpath two1/djangobitcoin djangobitcoin.wsgi --bind 127.0.0.1:8000
+    '''
+    gunicorn_pid = find_process_by_attribute('djangobitcoin.wsgi')
+    if gunicorn_pid:
+        if updated:
+            os.kill(int(gunicorn_pid), signal.SIGHUP)
+            click.echo('Server restarted')
+            return
+    else:
+        subprocess.Popen(['gunicorn', '--pythonpath', 'two1/djangobitcoin', 'djangobitcoin.wsgi', '--bind',
+               '127.0.0.1:' + str(port)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        click.echo('Server started')
 
 
 def sell_item(path, package_name, config, port):
@@ -176,6 +176,7 @@ def sell_item(path, package_name, config, port):
     ep_json = update_config(package_name, package_path, pattern)
     if ep_json:
         save_config(ep_json)
+    check_server_state(ep_json, port)
 
 
 def try_url_imports(package_name):
