@@ -33,3 +33,5 @@ simplejson==3.7.3
 textblob==0.9.1
 tornado
 mnemonic==0.12
+pyaes
+pbkdf2
