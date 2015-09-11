@@ -12,3 +12,6 @@ class TransactionSendError(WalletError):
 
 class TxidMismatchError(WalletError):
     pass
+
+class PassphraseError(WalletError):
+    pass
