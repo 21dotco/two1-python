@@ -243,6 +243,9 @@ class Two1Wallet(BaseWallet):
             if rp not in params:
                 raise ValueError("params does not have a required key: '%s'" % rp)
 
+        # Keep these around for writing out using to_file()
+        self._orig_params = params
+            
         if passphrase:
             # Make sure the passphrase is correct
             if params['passphrase_hash'] != PBKDF2.crypt(passphrase, params['passphrase_hash']):
@@ -481,18 +484,23 @@ class Two1Wallet(BaseWallet):
         Returns:
             dict: A dict containing key/value pairs that is JSON serializable.
         """
-        params = { "master_key": self._master_key.to_b58check(self._testnet),
-                   "master_seed": self._master_seed,
-                   "account_map": self._account_map,
-                   "accounts": [acct.to_dict() for acct in self._accounts]
-            }
+
+        params = self._orig_params.copy()
+        params["account_map"] = self._account_map
+        params["accounts"] = [acct.to_dict() for acct in self._accounts]
+
         return params
 
-    def to_file(self, filename):
+    def to_file(self, file_or_filename):
         """ Writes all wallet information to a file.
         """
-        with open(filename, 'w') as f:
-            json.dump(self.to_dict(), f)
+        d = json.dumps(self.to_dict()).encode('utf-8')
+        if isinstance(file_or_filename, str):
+            with open(filename, 'w') as f:
+                f.write(d)
+        else:
+            # Assume it's file-like
+            file_or_filename.write(d)
     
     @property
     def addresses(self):
