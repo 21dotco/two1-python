@@ -1,3 +1,4 @@
+import base64
 import getpass
 import hashlib
 import json
@@ -75,11 +76,11 @@ class Two1Wallet(BaseWallet):
         encrypter = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
         msg_enc = encrypter.feed(str.encode(s))
         msg_enc += encrypter.feed()
-        return utils.bytes_to_str(iv + msg_enc)
+        return base64.b64encode(iv + msg_enc).decode('ascii')
 
     @staticmethod
     def _decrypt_str(enc, key):
-        enc_bytes = bytes.fromhex(enc)
+        enc_bytes = base64.b64decode(enc)
         iv = enc_bytes[:Two1Wallet.AES_BLOCK_SIZE]
         decrypter = pyaes.Decrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
         dec = decrypter.feed(enc_bytes[Two1Wallet.AES_BLOCK_SIZE:])
