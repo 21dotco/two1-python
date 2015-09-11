@@ -1,10 +1,15 @@
+import getpass
+import json
+import os
 import pytest
 from pbkdf2 import PBKDF2
+import tempfile
 from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey
 from two1.bitcoin.txn import Transaction
 from two1.bitcoin.utils import bytes_to_str
+from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.mock_txn_data_provider import MockTxnDict, MockTransactionDataProvider
 
@@ -191,5 +196,45 @@ def test_rest():
     # Check it after updating the mock
     m.set_num_used_addresses(0, 4, 0)
     assert wallet.balances == (400000, 20000)
-        
-    
+
+    # Finally check storing to a file
+    params = {}
+    with tempfile.NamedTemporaryFile(delete=True) as tf:
+        wallet.to_file(tf)
+
+        # Read it back
+        tf.seek(0, 0)
+        params = json.loads(tf.read().decode('utf-8'))
+
+        # Check that the params match expected
+        assert params['master_key'] == config['master_key']
+        assert params['master_seed'] == config['master_seed']
+        assert params['locked']
+        assert params['key_salt'] == bytes_to_str(enc_key_salt)
+        assert params['passphrase_hash'] == passphrase_hash
+        assert params['account_type'] == "BIP44BitcoinMainnet"
+        assert params['account_map']['default'] == 0
+        assert len(params['accounts']) == 1
+        assert params['accounts'][0]['last_payout_index'] == 3
+        assert params['accounts'][0]['last_change_index'] == 1
+        assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
+
+        # Now create the wallet from the file
+        getpass.getpass = MagicMock(return_value='wrong pass')
+
+        with pytest.raises(exceptions.PassphraseError):
+            w2 = Two1Wallet.from_file(tf.name, m)
+
+        # Now do with the correct passphrase
+        m.set_txn_side_effect_for_hd_discovery()
+        getpass.getpass = MagicMock(return_value=passphrase)
+        w2 = Two1Wallet.from_file(tf.name, m)
+
+        assert len(w2.accounts) == 1
+        assert not w2._testnet
+
+        acct = w2.accounts[0]
+        assert acct.last_indices[0] == 3
+        assert acct.last_indices[1] == 1
+        assert acct._used_addresses[0] == ext_addrs[:4]
+        assert acct._used_addresses[1] == int_addrs[:2]
