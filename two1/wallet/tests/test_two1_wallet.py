@@ -1,5 +1,5 @@
-import hashlib
 import pytest
+from pbkdf2 import PBKDF2
 from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey
@@ -8,22 +8,23 @@ from two1.bitcoin.utils import bytes_to_str
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.mock_txn_data_provider import MockTxnDict, MockTransactionDataProvider
 
-salt = bytes.fromhex("aabbccdd")
+enc_key_salt = b'\xaa\xbb\xcc\xdd'
 passphrase = "test_wallet"
-passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
+passphrase_hash = PBKDF2.crypt(passphrase)
 
 master_key = "xprv9s21ZrQH143K2dUcTctuNw8oV8e7gi4ZbHFGAnyGJtWwmKbKTbLGtx48DQGzioGDdhVn8zFhJe8hbDdfDnK19ykxjwXLzd6EpxnTqi4zQGN"
 master_seed = "tuna object element cancel hard nose faculty noble swear net subway offer"
 
 mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=master_key,
                                          master_seed=master_seed,
-                                         passphrase=passphrase)
+                                         passphrase=passphrase,
+                                         key_salt=enc_key_salt)
 
 config = {'master_key': mkey_enc,
           'master_seed': mseed_enc,
           'locked': True,
-          'salt': bytes_to_str(salt),
-          'passphrase_hash': bytes_to_str(passphrase_hash),
+          'passphrase_hash': passphrase_hash,
+          'key_salt': bytes_to_str(enc_key_salt),
           'account_type': "BIP44BitcoinMainnet",
           'accounts': [{ 'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",
                          'last_payout_index': 2,
@@ -36,11 +37,13 @@ mock_txn_provider = MockTransactionDataProvider("BIP44BitcoinMainnet", master)
 def test_encrypt_decrypt():
     mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=config['master_key'],
                                              master_seed=config['master_seed'],
-                                             passphrase=passphrase)
+                                             passphrase=passphrase,
+                                             key_salt=enc_key_salt)
 
     mkey, mseed = Two1Wallet.decrypt(master_key_enc=mkey_enc,
                                      master_seed_enc=mseed_enc,
-                                     passphrase=passphrase)
+                                     passphrase=passphrase,
+                                     key_salt=enc_key_salt)
 
     assert mkey == config['master_key']
     assert mseed == config['master_seed']

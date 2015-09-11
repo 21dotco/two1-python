@@ -3,7 +3,8 @@ import hashlib
 import json
 import math
 
-from Crypto.Cipher import AES
+import pyaes
+from pbkdf2 import PBKDF2
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.bitcoin.script import Script
@@ -66,48 +67,40 @@ class Two1Wallet(BaseWallet):
         Two1Wallet: The wallet instance.
     """
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
+    AES_BLOCK_SIZE = 16
 
     @staticmethod
-    def pad_str(s, n, truncate=False):
-        padded = str.encode(s)
-        if truncate and len(padded) > n:
-            padded = padded[:n]
-        elif len(padded) < n:
-            padded += b'\x00' * (n - len(padded))
+    def _encrypt_str(s, key):
+        iv = utils.rand_bytes(Two1Wallet.AES_BLOCK_SIZE)
+        encrypter = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
+        msg_enc = encrypter.feed(str.encode(s))
+        msg_enc += encrypter.feed()
+        return utils.bytes_to_str(iv + msg_enc)
 
-        return padded
+    @staticmethod
+    def _decrypt_str(enc, key):
+        enc_bytes = bytes.fromhex(enc)
+        iv = enc_bytes[:Two1Wallet.AES_BLOCK_SIZE]
+        decrypter = pyaes.Decrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
+        dec = decrypter.feed(enc_bytes[Two1Wallet.AES_BLOCK_SIZE:])
+        dec += decrypter.feed()
+        return dec.rstrip(b'\x00').decode('ascii')
     
     @staticmethod
-    def encrypt(master_key, master_seed, passphrase):
-        key = Two1Wallet.pad_str(passphrase, 16, True)
+    def encrypt(master_key, master_seed, passphrase, key_salt):
+        key = PBKDF2(passphrase, key_salt).read(Two1Wallet.AES_BLOCK_SIZE)
         
-        iv = utils.rand_bytes(AES.block_size)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        pad_len = math.ceil(len(master_key) / AES.block_size) * AES.block_size
-        master_key_enc = utils.bytes_to_str(iv + cipher.encrypt(Two1Wallet.pad_str(master_key, pad_len)))
-
-        iv = utils.rand_bytes(AES.block_size)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        pad_len = math.ceil(len(master_seed) / AES.block_size) * AES.block_size        
-        master_seed_enc = utils.bytes_to_str(iv + cipher.encrypt(Two1Wallet.pad_str(master_seed, pad_len)))
+        master_key_enc = Two1Wallet._encrypt_str(master_key, key)
+        master_seed_enc = Two1Wallet._encrypt_str(master_seed, key)
 
         return (master_key_enc, master_seed_enc)
 
     @staticmethod
-    def decrypt(master_key_enc, master_seed_enc, passphrase):
-        key = Two1Wallet.pad_str(passphrase, 16, True)
+    def decrypt(master_key_enc, master_seed_enc, passphrase, key_salt):
+        key = PBKDF2(passphrase, key_salt).read(Two1Wallet.AES_BLOCK_SIZE)
 
-        master_key_enc_bytes = bytes.fromhex(master_key_enc)
-        iv = master_key_enc_bytes[:AES.block_size]
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        dec = cipher.decrypt(master_key_enc_bytes[AES.block_size:])
-        master_key = dec.rstrip(b'\x00').decode('ascii')
-
-        master_seed_enc_bytes = bytes.fromhex(master_seed_enc)
-        iv = master_seed_enc_bytes[:AES.block_size]
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        dec = cipher.decrypt(master_seed_enc_bytes[AES.block_size:])
-        master_seed = dec.rstrip(b'\x00').decode('ascii')
+        master_key = Two1Wallet._decrypt_str(master_key_enc, key)
+        master_seed = Two1Wallet._decrypt_str(master_seed_enc, key)
 
         return (master_key, master_seed)
         
@@ -137,20 +130,23 @@ class Two1Wallet(BaseWallet):
         # Store info to file
         account_type = "BIP44Testnet" if testnet else DEFAULT_ACCOUNT_TYPE
         master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
-        salt = utils.rand_bytes(4, True)
-        passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
+        passphrase_hash = PBKDF2.crypt(passphrase)
+        key_salt = utils.rand_bytes(8)
 
         master_key_b58 = master_key.to_b58check(testnet)
         if passphrase:
-            mkey, mseed = Two1Wallet.encrypt(master_key_b58, mnemonic, passphrase)
+            mkey, mseed = Two1Wallet.encrypt(master_key=master_key_b58,
+                                             master_seed=mnemonic,
+                                             passphrase=passphrase,
+                                             key_salt=key_salt)
         else:
             mkey = master_key_b58
             mseed = mnemonic
         
         config = { "master_key": mkey,
                    "master_seed": mseed,
-                   "passphrase_hash": utils.bytes_to_str(passphrase_hash),
-                   "salt": utils.bytes_to_str(salt),
+                   "passphrase_hash": passphrase_hash,
+                   "key_salt": utils.bytes_to_str(key_salt),
                    "locked": bool(passphrase),
                    "account_type": account_type }
         wallet = Two1Wallet(config, txn_data_provider, utxo_selector, passphrase)
@@ -182,20 +178,23 @@ class Two1Wallet(BaseWallet):
 
         testnet = account_type == "BIP44Testnet"
         master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic, passphrase)
-        salt = utils.rand_bytes(4, True)
-        passphrase_hash = hashlib.sha256(str.encode(passphrase) + salt).digest()
-
+        passphrase_hash = PBKDF2.crypt(passphrase)
+        key_salt = utils.rand_bytes(8)
+        
         master_key_b58 = master_key.to_b58check(testnet)
         if passphrase:
-            mkey, mseed = Two1Wallet.encrypt(master_key_b58, mnemonic, passphrase)
+            mkey, mseed = Two1Wallet.encrypt(master_key=master_key_b58,
+                                             master_seed=mnemonic,
+                                             passphrase=passphrase,
+                                             key_salt=key_salt)
         else:
             mkey = master_key_b58
             mseed = mnemonic
 
         config = { "master_key": mkey,
                    "master_seed": mseed,
-                   "passphrase_hash": utils.bytes_to_str(passphrase_hash),
-                   "salt": utils.bytes_to_str(salt),
+                   "passphrase_hash": passphrase_hash,
+                   "key_salt": utils.bytes_to_str(key_salt),
                    "locked": bool(passphrase),
                    "account_type": account_type }
 
@@ -239,21 +238,21 @@ class Two1Wallet(BaseWallet):
         self.utxo_selector = utxo_selector
         self._testnet = False
 
-        required_params = ['master_key', 'locked', 'salt', 'passphrase_hash', 'account_type']
+        required_params = ['master_key', 'locked', 'key_salt', 'passphrase_hash', 'account_type']
         for rp in required_params:
             if rp not in params:
                 raise ValueError("params does not have a required key: '%s'" % rp)
 
         if passphrase:
             # Make sure the passphrase is correct
-            phash = hashlib.sha256(str.encode(passphrase) + bytes.fromhex(params['salt'])).digest()
-            if utils.bytes_to_str(phash) != params['passphrase_hash']:
+            if params['passphrase_hash'] != PBKDF2.crypt(passphrase, params['passphrase_hash']):
                 raise exceptions.PassphraseError("Given passphrase is incorrect.")
             
         if params['locked']:
             mkey, self._master_seed = self.decrypt(master_key_enc=params['master_key'],
                                                    master_seed_enc=params['master_seed'],
-                                                   passphrase=passphrase)
+                                                   passphrase=passphrase,
+                                                   key_salt=bytes.fromhex(params['key_salt']))
 
             self._master_key = HDKey.from_b58check(mkey)
 
