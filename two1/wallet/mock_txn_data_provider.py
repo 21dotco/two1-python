@@ -88,7 +88,7 @@ class MockTransactionDataProvider(TransactionDataProvider):
         for i in range(self.max_accounts):
             acct_key = HDPrivateKey.from_parent(keys[-1], 0x80000000 | i)
             payout_key = HDPrivateKey.from_parent(acct_key, 0)
-            change_key = HDPrivateKey.from_parent(acct_key, 1)            
+            change_key = HDPrivateKey.from_parent(acct_key, 1)
                 
             payout_addresses = [HDPublicKey.from_parent(payout_key.public_key, i).address()
                                      for i in range(self.max_address)]
