@@ -3,6 +3,7 @@ import getpass
 import hashlib
 import json
 import math
+import os
 
 import pyaes
 from pbkdf2 import PBKDF2
@@ -15,6 +16,7 @@ from two1.wallet import exceptions
 from two1.wallet.account_types import account_types
 from two1.wallet.hd_account import HDAccount
 from two1.wallet.base_wallet import BaseWallet
+from two1.wallet.chain_txn_data_provider import ChainTransactionDataProvider
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 DEFAULT_ACCOUNT_TYPE = 'BIP32'
@@ -69,7 +71,96 @@ class Two1Wallet(BaseWallet):
     """
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
     AES_BLOCK_SIZE = 16
+    DEFAULT_WALLET_PATH = os.path.join(os.path.expanduser('~'),
+                                       ".two1",
+                                       "wallet",
+                                       "default_wallet.json")
 
+    """ The configuration options available for creating the wallet. 
+
+        The keys of this dictionary are the available configuration
+        settings/options for the wallet. The value for each key
+        represents the possible values for each option.
+        e.g. {key_style: ["HD","Brain","Simple"], ....}
+    """
+    config_options =  {"account_type": account_types.keys(),
+                       "passphrase": "",
+                       "txn_data_provider": ['chain'],
+                       "txn_data_provider_params": {},
+                       "testnet": [True, False],
+                       "wallet_path": ""}
+
+    required_params = ['master_key', 'locked', 'key_salt', 'passphrase_hash', 'account_type']
+
+    @staticmethod
+    def is_configured():
+        """ Returns the configuration/initialization status of the wallet. 
+                
+        Returns:
+            bool: True if the default wallet has been configured and
+                ready to use otherwise False
+        """
+        if os.path.exists(Two1Wallet.DEFAULT_WALLET_PATH):
+            # Check if the config is actually good
+            params = {}
+            with open(Two1Wallet.DEFAULT_WALLET_PATH, 'r') as f:
+                params = json.load(f)
+                
+            for rp in Two1Wallet.required_params:
+                if rp not in params:
+                    return False
+
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def configure(config_options):
+        """ Creates a default wallet. 
+        
+            If 'wallet_path' is found in config_options, the wallet is
+            stored at that location. Otherwise, it is created in
+            ~/.two1/wallet/default_wallet.json.
+
+        Args:
+            config_options (dict): A dict of config options, the keys
+                and allowed values of each key are found in the class
+                variable of the same name. When 'chain' is specified as
+                the value for 'txn_data_provider', a second key
+                'txn_data_provider_params' must be supplied with a dict
+                containing the 'api_key' and 'api_secret'.
+
+        Returns:
+            bool: True if the wallet was created and written to disk,
+                False otherwise.
+        """
+        wallet_path = config_options.get('wallet_path', Two1Wallet.DEFAULT_WALLET_PATH)
+        wallet_dirname = os.path.dirname(wallet_path)
+        if not os.path.exists(wallet_dirname):
+            os.makedirs(wallet_dirname)
+        else:
+            if os.path.exists(wallet_path):
+                print("File %s already present. Not creating wallet." % wallet_path)
+                return False
+
+        # Create the default txn data provider
+        tdp = None
+        if config_options['txn_data_provider'] == 'chain':
+            tdp = ChainTransactionDataProvider(api_key=config_options['txn_data_provider_params']['api_key'],
+                                               api_secret=config_options['txn_data_provider_params']['api_secret'])
+
+        passphrase = config_options.get("passphrase", "")
+        testnet = config_options.get("testnet", False)
+        wallet = Two1Wallet.create(txn_data_provider=tdp,
+                                   passphrase=passphrase,
+                                   account_type=config_options['account_type'],
+                                   testnet=testnet)
+
+        wallet.discover_accounts()
+        wallet.to_file(wallet_path)
+
+        return os.path.exists(wallet_path)
+    
     @staticmethod
     def _encrypt_str(s, key):
         iv = utils.rand_bytes(Two1Wallet.AES_BLOCK_SIZE)
@@ -108,6 +199,7 @@ class Two1Wallet(BaseWallet):
     @staticmethod
     def create(txn_data_provider,
                passphrase='',
+               account_type=DEFAULT_ACCOUNT_TYPE,
                utxo_selector=utxo_selector_smallest_first,
                testnet=False):
         """ Creates a Two1Wallet using a random seed.
@@ -118,6 +210,7 @@ class Two1Wallet(BaseWallet):
             txn_data_provider (TransactionDataProvider): An instance of a derived
                TransactionDataProvider class as described above.
             passphrase (str): A passphrase to lock the wallet with.
+            account_type (str): One of the account types in account_types.py.
             utxo_selector (function): A filtering function with the prototype documented
                above.
             testnet (bool): Whether or not this wallet will be used for testnet.
@@ -231,16 +324,15 @@ class Two1Wallet(BaseWallet):
                           txn_data_provider=txn_data_provider,
                           utxo_selector=utxo_selector,
                           passphrase=passphrase)
-        
+
     def __init__(self, params, txn_data_provider,
                  utxo_selector=utxo_selector_smallest_first,
                  passphrase=''):
         self.txn_data_provider = txn_data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
-
-        required_params = ['master_key', 'locked', 'key_salt', 'passphrase_hash', 'account_type']
-        for rp in required_params:
+        
+        for rp in self.required_params:
             if rp not in params:
                 raise ValueError("params does not have a required key: '%s'" % rp)
 
@@ -284,28 +376,6 @@ class Two1Wallet(BaseWallet):
             # Setup the account map first
             self._account_map = params.get("account_map", {})
             self._load_accounts(account_params)
-
-    @property
-    def config_options(self):
-        """ Returns the configuration options available for the wallet. 
-
-        Returns:
-            dict: The keys of this dictionary are the available configuration settings/options
-                for the wallet. The value for each key represents the possible values for each option.
-                e.g. {key_style: ["HD","Brain","Simple"], ....}
-        """
-        return {"account_type": account_types.keys(),
-                "txn_data_provider": ['chain'],
-                "utxo_selector": ["smallest_first"]}
-
-    @property
-    def is_configured(self):
-        """ Returns the configuration/initialization status of the wallet. 
-                
-        Returns:
-            bool: True if the wallet has been configured and ready to use otherwise False
-        """
-        return True
             
     def discover_accounts(self):
         """ Discovers all accounts associated with the wallet.
@@ -497,7 +567,7 @@ class Two1Wallet(BaseWallet):
         """
         d = json.dumps(self.to_dict()).encode('utf-8')
         if isinstance(file_or_filename, str):
-            with open(filename, 'w') as f:
+            with open(file_or_filename, 'wb') as f:
                 f.write(d)
         else:
             # Assume it's file-like
