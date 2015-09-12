@@ -19,7 +19,6 @@ from two1.wallet.base_wallet import BaseWallet
 from two1.wallet.chain_txn_data_provider import ChainTransactionDataProvider
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
-DEFAULT_ACCOUNT_TYPE = 'BIP32'
 
 class Two1Wallet(BaseWallet):
     """ An HD wallet class capable of handling multiple types of wallets.
@@ -71,6 +70,7 @@ class Two1Wallet(BaseWallet):
     """
     DUST_LIMIT = 5460 # Satoshis - should this be somewhere else?
     AES_BLOCK_SIZE = 16
+    DEFAULT_ACCOUNT_TYPE = 'BIP32'
     DEFAULT_WALLET_PATH = os.path.join(os.path.expanduser('~'),
                                        ".two1",
                                        "wallet",
@@ -222,7 +222,7 @@ class Two1Wallet(BaseWallet):
         # 1. master key seed + mnemonic
         # 2. First account
         # Store info to file
-        account_type = "BIP44Testnet" if testnet else DEFAULT_ACCOUNT_TYPE
+        account_type = "BIP44Testnet" if testnet else Two1Wallet.DEFAULT_ACCOUNT_TYPE
         master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
         passphrase_hash = PBKDF2.crypt(passphrase)
         key_salt = utils.rand_bytes(8)
