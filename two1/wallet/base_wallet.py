@@ -3,6 +3,31 @@ satoshi_to_btc = 1e8
 class BaseWallet(object):
     """ An abstract wallet class.
     """
+
+    """ The configuration options available for the wallet. 
+
+        The keys of this dictionary are the available configuration
+        settings/options for the wallet. The value for each key
+        represents the possible values for each option.
+        e.g. {key_style: ["HD","Brain","Simple"], ....}
+    """
+    config_options = {}
+
+    @staticmethod
+    def is_configured():
+        """ Returns the configuration/initialization status of the wallet. 
+
+        Returns:
+            bool: True if the wallet has been configured and ready to use otherwise False
+        """
+        raise NotImplementedError('Abstract class, `is_configured` must be overridden')
+
+    @staticmethod
+    def configure(config_options):
+        """ Automatically configures the wallet with the provided configuration options
+        """
+        raise NotImplementedError('Abstract class, `auto_configure` must be overridden')
+
     def __init__(self):
     	super(BaseWallet, self).__init__()
 
@@ -23,26 +48,6 @@ class BaseWallet(object):
             str: The current preferred payment address. 
         """
         raise NotImplementedError('Abstract class, `current_address` must be overridden')
-
-    @property
-    def is_configured(self):
-        """ Returns the configuration/initialization status of the wallet. 
-
-        Returns:
-            bool: True if the wallet has been configured and ready to use otherwise False
-        """
-        raise NotImplementedError('Abstract class, `is_configured` must be overridden')
-
-    @property
-    def config_options(self):
-        """ Returns the configuration options available for the wallet. 
-
-        Returns:
-            dict: The keys of this dictionary are the available configuration settings/options
-                for the wallet. The value for each key represents the possible values for each option.
-                e.g. {key_style: ["HD","Brain","Simple"], ....}
-        """
-        raise NotImplementedError('Abstract class, `is_configured` must be overridden')
     	
     def balance(self):
         """ Gets the confirmed balance of the wallet in Satoshi.
@@ -67,12 +72,6 @@ class BaseWallet(object):
             number: The current unconfirmed balance.
         """
         raise NotImplementedError('Abstract class, `unconfirmed_balance` must be overridden')
-
-    def configure(self, config_options):
-        """ Automatically configures the wallet with the provided configuration options
-
-        """
-        raise NotImplementedError('Abstract class, `auto_configure` must be overridden')
 
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.
