@@ -61,9 +61,9 @@ class Two1Wallet(BaseWallet):
            Base58Check encoded HDPrivateKey as the value.
         txn_data_provider (TransactionDataProvider): An instance of a derived
            TransactionDataProvider class as described above.
+        passphrase (str): Passphrase to unlock wallet key if it is locked.
         utxo_selector (function): A filtering function with the prototype documented
            above.
-        passphrase (str): Passphrase to unlock wallet key if it is locked.
 
     Returns:
         Two1Wallet: The wallet instance.
@@ -143,11 +143,8 @@ class Two1Wallet(BaseWallet):
                 print("File %s already present. Not creating wallet." % wallet_path)
                 return False
 
-        # Create the default txn data provider
-        tdp = None
-        if config_options['txn_data_provider'] == 'chain':
-            tdp = ChainTransactionDataProvider(api_key=config_options['txn_data_provider_params']['chain_api_key'],
-                                               api_secret=config_options['txn_data_provider_params']['chain_api_secret'])
+        tdp = Two1Wallet.instantiate_data_provider(txn_data_provider_name=config_options['txn_data_provider'],
+                                                   txn_data_provider_params=config_options['txn_data_provider_params'])
 
         passphrase = config_options.get("passphrase", "")
         testnet = config_options.get("testnet", False)
@@ -160,6 +157,15 @@ class Two1Wallet(BaseWallet):
         wallet.to_file(wallet_path)
 
         return os.path.exists(wallet_path)
+
+    @staticmethod
+    def instantiate_data_provider(txn_data_provider_name, txn_data_provider_params):
+        # Create the default txn data provider
+        if txn_data_provider_name == 'chain':
+            return ChainTransactionDataProvider(api_key=txn_data_provider_params['chain_api_key'],
+                                                api_secret=txn_data_provider_params['chain_api_secret'])
+        else:
+            raise exceptions.UnknownTransactionDataProviderError()
     
     @staticmethod
     def _encrypt_str(s, key):
@@ -243,7 +249,7 @@ class Two1Wallet(BaseWallet):
                    "key_salt": utils.bytes_to_str(key_salt),
                    "locked": bool(passphrase),
                    "account_type": account_type }
-        wallet = Two1Wallet(config, txn_data_provider, utxo_selector, passphrase)
+        wallet = Two1Wallet(config, txn_data_provider, passphrase, utxo_selector)
 
         return wallet
 
@@ -292,13 +298,13 @@ class Two1Wallet(BaseWallet):
                    "locked": bool(passphrase),
                    "account_type": account_type }
 
-        wallet = Two1Wallet(config, txn_data_provider, utxo_selector, passphrase)
+        wallet = Two1Wallet(config, txn_data_provider, passphrase, utxo_selector)
         wallet.discover_accounts()
 
         return wallet
 
     @staticmethod
-    def from_file(filename, txn_data_provider, utxo_selector=utxo_selector_smallest_first):
+    def from_file(filename, txn_data_provider, passphrase='', utxo_selector=utxo_selector_smallest_first):
         """ Initializes a wallet from the parameters stored in a file.
 
             The wallet file should have been written by Two1Wallet.to_file().
@@ -307,6 +313,7 @@ class Two1Wallet(BaseWallet):
             filename (str): File to read
             txn_data_provider (TransactionDataProvider): An instance of a derived
                TransactionDataProvider class as described above.
+            passphrase (str): A passphrase to lock the wallet with.
             utxo_selector (function): A filtering function with the prototype documented
                above.
         """
@@ -314,20 +321,14 @@ class Two1Wallet(BaseWallet):
         with open(filename, 'r') as f:
             params = json.load(f)
 
-        if params['locked']:
-            # Ask for passphrase
-            passphrase = getpass.getpass("Passphrase: ")
-        else:
-            passphrase = ''
-
         return Two1Wallet(params=params,
                           txn_data_provider=txn_data_provider,
-                          utxo_selector=utxo_selector,
-                          passphrase=passphrase)
+                          passphrase=passphrase,                          
+                          utxo_selector=utxo_selector)
 
     def __init__(self, params, txn_data_provider,
-                 utxo_selector=utxo_selector_smallest_first,
-                 passphrase=''):
+                 passphrase='',
+                 utxo_selector=utxo_selector_smallest_first):
         self.txn_data_provider = txn_data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
