@@ -220,15 +220,12 @@ def test_rest():
         assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
 
         # Now create the wallet from the file
-        getpass.getpass = MagicMock(return_value='wrong pass')
-
         with pytest.raises(exceptions.PassphraseError):
-            w2 = Two1Wallet.from_file(tf.name, m)
+            w2 = Two1Wallet.from_file(tf.name, m, 'wrong_pass')
 
         # Now do with the correct passphrase
         m.set_txn_side_effect_for_hd_discovery()
-        getpass.getpass = MagicMock(return_value=passphrase)
-        w2 = Two1Wallet.from_file(tf.name, m)
+        w2 = Two1Wallet.from_file(tf.name, m, passphrase)
 
         assert len(w2.accounts) == 1
         assert not w2._testnet

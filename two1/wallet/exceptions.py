@@ -7,6 +7,9 @@ class WalletSigningError(WalletError):
 class WalletBalanceError(WalletError):
     pass
 
+class UnknownTransactionDataProviderError(WalletError):
+    pass
+
 class TransactionSendError(WalletError):
     pass
 
