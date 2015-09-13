@@ -146,8 +146,8 @@ class Two1Wallet(BaseWallet):
         # Create the default txn data provider
         tdp = None
         if config_options['txn_data_provider'] == 'chain':
-            tdp = ChainTransactionDataProvider(api_key=config_options['txn_data_provider_params']['api_key'],
-                                               api_secret=config_options['txn_data_provider_params']['api_secret'])
+            tdp = ChainTransactionDataProvider(api_key=config_options['txn_data_provider_params']['chain_api_key'],
+                                               api_secret=config_options['txn_data_provider_params']['chain_api_secret'])
 
         passphrase = config_options.get("passphrase", "")
         testnet = config_options.get("testnet", False)
