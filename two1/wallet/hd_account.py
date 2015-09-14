@@ -132,11 +132,12 @@ class HDAccount(object):
             HDPublicKey: a public key in this account's chain.
         """
         # We only use public key derivation per BIP44
-        k = self._chain_pub_keys[change]
+        c = int(change)
+        k = self._chain_pub_keys[c]
         if n < 0:
-            self.last_indices[int(change)] += 1
-            pub_key = HDPublicKey.from_parent(k, self.last_indices[int(change)])
-            self._used_addresses[int(change)].append(pub_key.address(True, self.testnet))
+            self.last_indices[c] += 1
+            pub_key = HDPublicKey.from_parent(k, self.last_indices[c])
+            self._used_addresses[c].append(pub_key.address(True, self.testnet))
         else:
             pub_key = HDPublicKey.from_parent(k, n)
         
@@ -176,7 +177,10 @@ class HDAccount(object):
         return self.get_public_key(change, n).address(True, self.testnet)
 
     def get_next_address(self, change):
-        """ Returns the next public address in the specified chain
+        """ Returns the next public address in the specified chain.
+
+            A new address is only returned if there are transactions found
+            for the current address.
 
         Args:
             change (bool): If True, returns an address for change purposes,
@@ -185,7 +189,15 @@ class HDAccount(object):
         Returns:
             str: A bitcoin address
         """
-        return self.get_address(change)
+        # Check to see if the current address has any txns
+        # associated with it before giving out a new one.
+        current_addr = self._used_addresses[int(change)][self.last_indices[int(change)]]
+        txns = self.txn_provider.get_transactions([current_addr])
+
+        if current_addr in txns and txns[current_addr]:
+            return self.get_address(change)
+        else:
+            return current_addr
 
     def get_utxo(self):
         """ Gets all unspent transactions associated with all addresses
