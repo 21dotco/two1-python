@@ -46,7 +46,7 @@ class HDAccount(object):
 
         self._chain_priv_keys = [None, None]
         self._chain_pub_keys = [None, None]
-        self.last_indices = [None, None]
+        self.last_indices = [-1, -1]
         for change in [0, 1]:
             if isinstance(self.key, HDPrivateKey):
                 self._chain_priv_keys[change] = HDPrivateKey.from_parent(self.key, change)
@@ -173,6 +173,12 @@ class HDAccount(object):
         Returns:
             str: A bitcoin address
         """
+        # If this is an address we've already generated, don't regenerate.
+        c = int(change)
+        last_index = self.last_indices[c]
+        if n != -1 and n <= last_index:
+            return self._used_addresses[c][n]
+        
         # Always do compressed keys
         return self.get_public_key(change, n).address(True, self.testnet)
 
