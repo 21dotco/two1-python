@@ -17,7 +17,7 @@ class MockTxnDict(dict):
 
         self.start = max([0, self.addr_range.start])
         self.end = min([self.num_used, self.addr_range.stop])
-        
+
     def __getitem__(self, item):
         if item in self:
             return self.used_value
@@ -124,6 +124,16 @@ class MockTransactionDataProvider(TransactionDataProvider):
             d.update({a: (100000, 0) for a in payout_addresses})
             
         self.get_balance_hd = MagicMock(return_value=d)
+
+    def set_txn_side_effect_for_index(self, account_index, address_index, change):
+        dummy_txn = Transaction(1, [], [], 0)
+
+        addr_list = self._acct_keys[account_index]['change_addresses' if change else 'payout_addresses']
+        self.get_transactions.side_effect = [MockTxnDict(num_used=address_index + 1,
+                                                         addr_range=range(address_index, address_index + 1),
+                                                         addr_list=addr_list,
+                                                         used_value=[dummy_txn],
+                                                         unused_value=[])]
         
     def set_txn_side_effect_for_hd_discovery(self):
         dummy_txn = Transaction(1, [], [], 0)
