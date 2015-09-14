@@ -44,6 +44,9 @@ class HDAccount(object):
         self.txn_provider = txn_provider
         self.testnet = testnet
 
+        self._txn_cache = {}
+        self._address_cache = { self.CHANGE_CHAIN: [], self.PAYOUT_CHAIN: [] }
+        
         self._chain_priv_keys = [None, None]
         self._chain_pub_keys = [None, None]
         self.last_indices = [-1, -1]
@@ -56,9 +59,6 @@ class HDAccount(object):
         self._discover_used_addresses()
 
     def _discover_used_addresses(self, max_index=0):
-        self._txns = {}
-        self._used_addresses = { self.CHANGE_CHAIN: [], self.PAYOUT_CHAIN: [] }
-        
         for change in [0, 1]:
             found_last = False
             current_last = -1
@@ -79,12 +79,12 @@ class HDAccount(object):
 
                     if bool(txns[addr]):
                         # Do we want to cache transactions?
-                        self._txns[addr] = txns[addr]
+                        self._txn_cache[addr] = txns[addr]
                         current_last = global_index
 
                 addr_range += 2 * self.GAP_LIMIT
 
-            self._used_addresses[change] = all_addresses[:current_last+1] if current_last != -1 else []
+            self._address_cache[change] += all_addresses
             self.last_indices[change] = current_last
                 
     def has_txns(self):
@@ -94,7 +94,7 @@ class HDAccount(object):
         Returns:
             bool: True if there are discovered transactions, False otherwise.
         """
-        return bool(self._txns)
+        return bool(self._txn_cache)
 
     def find_addresses(self, addresses):
         """ Searches both the change and payout chains up to self.GAP_LIMIT
@@ -112,7 +112,7 @@ class HDAccount(object):
         for change in [0, 1]:
             for i in range(self.last_indices[change] + self.GAP_LIMIT + 1):
                 # Save the key generation step for indices we already know about.
-                addr = self._used_addresses[change][i] if i <= self.last_indices[change] else self.get_address(change, i)
+                addr = self._address_cache[change][i] if i <= self.last_indices[change] else self.get_address(change, i)
                     
                 if addr in addresses:
                     found[addr] = (self.index, change, i)
@@ -137,7 +137,7 @@ class HDAccount(object):
         if n < 0:
             self.last_indices[c] += 1
             pub_key = HDPublicKey.from_parent(k, self.last_indices[c])
-            self._used_addresses[c].append(pub_key.address(True, self.testnet))
+            self._address_cache[c].append(pub_key.address(True, self.testnet))
         else:
             pub_key = HDPublicKey.from_parent(k, n)
         
@@ -177,7 +177,7 @@ class HDAccount(object):
         c = int(change)
         last_index = self.last_indices[c]
         if n != -1 and n <= last_index:
-            return self._used_addresses[c][n]
+            return self._address_cache[c][n]
         
         # Always do compressed keys
         return self.get_public_key(change, n).address(True, self.testnet)
@@ -197,7 +197,7 @@ class HDAccount(object):
         """
         # Check to see if the current address has any txns
         # associated with it before giving out a new one.
-        current_addr = self._used_addresses[int(change)][self.last_indices[int(change)]]
+        current_addr = self._address_cache[int(change)][self.last_indices[int(change)]]
         txns = self.txn_provider.get_transactions([current_addr])
 
         if current_addr in txns and txns[current_addr]:
@@ -257,7 +257,8 @@ class HDAccount(object):
         Returns:
             list(str): list of all used addresses (Base58Check encoded)
         """
-        return self._used_addresses[self.PAYOUT_CHAIN] + self._used_addresses[self.CHANGE_CHAIN]
+        return self._address_cache[self.PAYOUT_CHAIN][:self.last_indices[self.PAYOUT_CHAIN] + 1] + \
+            self._address_cache[self.CHANGE_CHAIN][:self.last_indices[self.CHANGE_CHAIN] + 1]
 
     @property
     def current_change_address(self):

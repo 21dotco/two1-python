@@ -48,8 +48,6 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
     assert acct._chain_priv_keys[0].to_b58check() == mk0['payout_key'].to_b58check()
     assert m.get_transactions.call_count == expected_call_count
 
-    assert len(acct._used_addresses[0]) == num_used_payout_addresses
-    assert len(acct._used_addresses[1]) == num_used_change_addresses
     assert acct.last_indices[0] == num_used_payout_addresses - 1
     assert acct.last_indices[1] == num_used_change_addresses - 1
 

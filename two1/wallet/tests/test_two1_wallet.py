@@ -126,7 +126,7 @@ def test_import():
     assert len(wallet._accounts) == 4
     for i in range(4):
         assert wallet._accounts[i].has_txns()
-        assert len(wallet._accounts[i]._txns.keys()) == 3
+        assert len(wallet._accounts[i]._txn_cache.keys()) == 3
 
 def test_rest():
     m = mock_txn_provider
@@ -221,6 +221,8 @@ def test_rest():
         assert params['accounts'][0]['last_payout_index'] == 3
         assert params['accounts'][0]['last_change_index'] == 1
         assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
+        assert "address_cache" in params['accounts'][0]
+        assert len(params['accounts'][0]['address_cache']) > 0
 
         # Now create the wallet from the file
         with pytest.raises(exceptions.PassphraseError):
@@ -236,5 +238,5 @@ def test_rest():
         acct = w2.accounts[0]
         assert acct.last_indices[0] == 3
         assert acct.last_indices[1] == 1
-        assert acct._used_addresses[0] == ext_addrs[:4]
-        assert acct._used_addresses[1] == int_addrs[:2]
+        #assert acct._used_addresses[0] == ext_addrs[:4]
+        #assert acct._used_addresses[1] == int_addrs[:2]
