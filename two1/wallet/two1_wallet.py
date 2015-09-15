@@ -394,12 +394,17 @@ class Two1Wallet(BaseWallet):
         if len(self._accounts) > 1:
             del self._accounts[-1]
             
-    def _init_account(self, index, name=""):
+    def _init_account(self, index, name="", account_state=None):
         # Account keys use hardened deriviation, so make sure the MSB is set
         acct_index = index | 0x80000000
         
         acct_priv_key = HDPrivateKey.from_parent(self._root_keys[-1], acct_index)
-        acct = HDAccount(acct_priv_key, name, acct_index, self.txn_data_provider, self._testnet)
+        acct = HDAccount(hd_key=acct_priv_key,
+                         name=name,
+                         index=acct_index,
+                         txn_provider=self.txn_data_provider,
+                         testnet=self._testnet,
+                         last_state=account_state)
         self._accounts.insert(index, acct)
         self._account_map[name] = index
         
@@ -411,8 +416,16 @@ class Two1Wallet(BaseWallet):
 
         for i, a in enumerate(account_params):
             # Determine account name
+            state = { "last_payout_index": a["last_payout_index"],
+                      "last_change_index": a["last_change_index"] }
+
+            if "addresses" in cache:
+                state["addresses"] = {int(k):{int(ik):iv for ik, iv in v.items()} for k, v in cache["addresses"][i].items()}
+            if "transactions" in cache:
+                state["transactions"] = cache["transactions"][i]
+
             name = self.get_account_name(i)
-            self._init_account(i, name)
+            self._init_account(i, name, state)
 
             acct = self._accounts[i]
 
@@ -572,7 +585,10 @@ class Two1Wallet(BaseWallet):
         dirname = os.path.dirname(file_or_filename if isinstance(file_or_filename, str) else file_or_filename.name)
         
         p = self.to_dict()
-        cache_file = os.path.join(dirname, "wallet_%s_cache.json" % (p['passphrase_hash'][-8:]))
+        # Convert to hex str to make sure we don't get weird
+        # characters.
+        cf_id = utils.bytes_to_str(p['passphrase_hash'][-4:].encode('utf-8'))
+        cache_file = os.path.join(dirname, "wallet_%s_cache.json" % (cf_id))
         p['cache_file'] = cache_file
 
         d = json.dumps(p).encode('utf-8')
