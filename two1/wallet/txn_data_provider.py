@@ -133,3 +133,6 @@ class TransactionDataProvider(object):
 # Exceptions 
 class DataProviderUnAvailable(Exception):
     pass
+
+class DataProviderError(Exception):
+    pass
