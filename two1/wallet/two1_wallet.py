@@ -75,6 +75,8 @@ class Two1Wallet(BaseWallet):
                                        ".two1",
                                        "wallet",
                                        "default_wallet.json")
+    WALLET_FILE_VERSION = "0.1.0"
+    WALLET_CACHE_VERSION = "0.1.0"
 
     """ The configuration options available for creating the wallet. 
 
@@ -545,8 +547,8 @@ class Two1Wallet(BaseWallet):
         Returns:
             dict: A dict containing key/value pairs that is JSON serializable.
         """
-
         params = self._orig_params.copy()
+        params["version"] = self.WALLET_FILE_VERSION
         params["account_map"] = self._account_map
         params["accounts"] = [acct.to_dict() for acct in self._accounts]
 
@@ -555,14 +557,33 @@ class Two1Wallet(BaseWallet):
     def to_file(self, file_or_filename):
         """ Writes all wallet information to a file.
         """
-        d = json.dumps(self.to_dict()).encode('utf-8')
+        address_cache = [a.address_cache for a in self._accounts]
+        txn_cache = [a.transaction_cache for a in self._accounts]
+        cache = { "version": self.WALLET_CACHE_VERSION,
+                  "addresses": address_cache,
+                  "transactions": txn_cache }
+        
+        dirname = os.path.dirname(file_or_filename if isinstance(file_or_filename, str) else file_or_filename.name)
+        
+        p = self.to_dict()
+        cache_file = os.path.join(dirname, "wallet_%s_cache.json" % (p['passphrase_hash'][-8:]))
+        p['cache_file'] = cache_file
+
+        d = json.dumps(p).encode('utf-8')
+
+        dirname = ""
         if isinstance(file_or_filename, str):
+            dirname = os.path.dirname(file_or_filename)
             with open(file_or_filename, 'wb') as f:
                 f.write(d)
             self._filename = file_or_filename
         else:
             # Assume it's file-like
+            dirname = os.path.dirname(file_or_filename.name)
             file_or_filename.write(d)
+
+        with open(cache_file, 'wb') as f:
+            f.write(json.dumps(cache).encode('utf-8'))
 
     def sync_wallet_file(self):
         """ Syncs all wallet data to the wallet file used
