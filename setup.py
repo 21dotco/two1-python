@@ -28,7 +28,8 @@ install_requires = [
                     'click',
                     'keyring',
                     'mnemonic',
-                    'protobuf >= 3.0.0a3'
+                    'protobuf >= 3.0.0a3',
+                    'pyaes'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/
@@ -108,6 +109,7 @@ setup(
     entry_points={
         'console_scripts': [
             'two1=two1.cli:main',
+            'wallet=two1.wallet.two1_wallet_cli:main'
         ],
     },
 )
