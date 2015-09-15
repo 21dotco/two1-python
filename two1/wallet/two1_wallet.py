@@ -361,13 +361,14 @@ class Two1Wallet(BaseWallet):
         self._account_map = {}
 
         account_params = params.get("accounts", None)
+        cache_file = params.get("cache_file", None)
         if account_params is None:
             # Create default account
             self._init_account(0, "default")
         else:
             # Setup the account map first
             self._account_map = params.get("account_map", {})
-            self._load_accounts(account_params)
+            self._load_accounts(account_params, cache_file)
             
     def discover_accounts(self):
         """ Discovers all accounts associated with the wallet.
@@ -402,7 +403,12 @@ class Two1Wallet(BaseWallet):
         self._accounts.insert(index, acct)
         self._account_map[name] = index
         
-    def _load_accounts(self, account_params):
+    def _load_accounts(self, account_params, cache_file=None):
+        cache = {}
+        if cache_file is not None and os.path.exists(cache_file):
+            with open(cache_file) as cf:
+                cache = json.load(cf)
+
         for i, a in enumerate(account_params):
             # Determine account name
             name = self.get_account_name(i)
