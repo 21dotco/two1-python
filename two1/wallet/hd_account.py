@@ -239,13 +239,24 @@ class HDAccount(object):
         """
         # Check to see if the current address has any txns
         # associated with it before giving out a new one.
-        current_addr = self._address_cache[int(change)][self.last_indices[int(change)]]
-        txns = self.txn_provider.get_transactions([current_addr])
+        ret = None
+        c = int(change)
+        last_index = self.last_indices[c]
 
-        if current_addr in txns and txns[current_addr]:
-            return self.get_address(change)
+        need_new = False
+        if last_index >= 0:
+            current_addr = self._address_cache[c][last_index]
+            txns = self.txn_provider.get_transactions([current_addr])
+            need_new = current_addr in txns and txns[current_addr]
         else:
-            return current_addr
+            need_new = True
+
+        if need_new:
+            ret = self.get_address(change)
+        else:
+            ret = current_addr
+
+        return ret
 
     def get_utxo(self):
         """ Gets all unspent transactions associated with all addresses
