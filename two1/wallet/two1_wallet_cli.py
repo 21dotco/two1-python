@@ -77,9 +77,9 @@ def main(ctx, wallet_path, passphrase,
         # instantiate a wallet object here and pass it into the context
         tdp = Two1Wallet.instantiate_data_provider(txn_data_provider_name=ctx.obj['txn_data_provider'],
                                                    txn_data_provider_params=ctx.obj['txn_data_provider_params'])
-        ctx.obj['wallet'] = Two1Wallet.from_file(filename=wallet_path,
-                                                 txn_data_provider=tdp,
-                                                 passphrase=p)
+        ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
+                                       txn_data_provider=tdp,
+                                       passphrase=p)
 
 @click.command()
 @click.option('--account-type', '-a',
