@@ -16,7 +16,6 @@ from two1.bitcoin.script import Script
 
 
 class ChainTransactionDataProvider(TransactionDataProvider):
-
     """ Transaction data provider using the 21 server
 
         Args:
@@ -33,54 +32,55 @@ class ChainTransactionDataProvider(TransactionDataProvider):
     @staticmethod
     def txn_from_json(txn_json):
         # {
-                # "hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                # "block_hash": "00000000000000001ea5471a4edc67380f114c6cad06bfd59ac6508f90e8b252",
-                # "block_height": 303404,
-                # "block_time": "2014-05-30T23:54:55Z",
-                # "chain_received_at": "2015-08-13T10:52:21.718Z",
-                # "confirmations": 69389,
-                # "lock_time": 0,
-                # "inputs": [
-                #   {
-                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                #     "output_hash": "b84a66c46e24fe71f9d8ab29b06df932d77bec2cc0691799fae398a8dc9069bf",
-                #     "output_index": 0,
-                #     "value": 300000,
-                #     "addresses": [
-                #       "3L7dKYQGNoZub928CJ8NC2WfrM8U8GGBjr"
-                #     ],
-                #     "script_signature": "0 3046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb5701 304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b675301 5221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
-                #     "script_signature_hex": "00493046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb570147304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b6753014c695221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
-                #     "sequence": 4294967295
-                #   }
-                # ],
-                # "outputs": [
-                #   {
-                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                #     "output_index": 0,
-                #     "value": 290000,
-                #     "addresses": [
-                #       "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
-                #     ],
-                #     "script": "OP_DUP OP_HASH160 c629680b8d13ca7a4b7d196360186d05658da6db OP_EQUALVERIFY OP_CHECKSIG",
-                #     "script_hex": "76a914c629680b8d13ca7a4b7d196360186d05658da6db88ac",
-                #     "script_type": "pubkeyhash",
-                #     "required_signatures": 1,
-                #     "spent": false,
-                #     "spending_transaction": null
-                #   }
-                # ],
-                # "fees": 10000,
-                # "amount": 290000
-                # },
-                # Transaction.DEFAULT_TRANSACTION_VERSION
+        # "hash": "0bf0de38c26195919179f...",
+        # "block_hash": "000000000000000...",
+        # "block_height": 303404,
+        # "block_time": "2014-05-30T23:54:55Z",
+        # "chain_received_at": "2015-08-13T10:52:21.718Z",
+        # "confirmations": 69389,
+        # "lock_time": 0,
+        # "inputs": [
+        #   {
+        #     "transaction_hash": "0bf0de38c2619...",
+        #     "output_hash": "b84a66c46e24fe71f9...",
+        #     "output_index": 0,
+        #     "value": 300000,
+        #     "addresses": [
+        #       "3L7dKYQGNoZub928CJ8NC2WfrM8U8GGBjr"
+        #     ],
+        #     "script_signature": "03046022100de7b67b9...",
+        #     "script_signature_hex": "00493046022100de7b...",
+        #     "sequence": 4294967295
+        #   }
+        # ],
+        # "outputs": [
+        #   {
+        #     "transaction_hash": "0bf0de38c261959...",
+        #     "output_index": 0,
+        #     "value": 290000,
+        #     "addresses": [
+        #       "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
+        #     ],
+        #     "script": "OP_DUP OP_HASH160 c629680b8d...",
+        #     "script_hex": "76a914c629680b8d13...",
+        #     "script_type": "pubkeyhash",
+        #     "required_signatures": 1,
+        #     "spent": false,
+        #     "spending_transaction": null
+        #   }
+        # ],
+        # "fees": 10000,
+        # "amount": 290000
+        # },
+        # Transaction.DEFAULT_TRANSACTION_VERSION
         inputs = []
         outputs = []
         addr_keys = set()
         for i in txn_json["inputs"]:
             # Chain doesn't return the stuff about script length etc, so
             # we need to prepend that.
-            script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_signature_hex"])))
+            script, _ = Script.from_bytes(
+                pack_var_str(bytes.fromhex(i["script_signature_hex"])))
             inputs.append(TransactionInput(Hash(i["output_hash"]),
                                            i["output_index"],
                                            script,
@@ -88,7 +88,8 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             addr_keys.add(i["addresses"][0])
 
         for i in txn_json["outputs"]:
-            script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_hex"])))
+            script, _ = Script.from_bytes(
+                pack_var_str(bytes.fromhex(i["script_hex"])))
             outputs.append(TransactionOutput(i["value"],
                                              script))
             addr_keys.add(i["addresses"][0])
@@ -99,7 +100,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                           txn_json["lock_time"])
 
         return txn, addr_keys
-        
+
     @staticmethod
     def _list_chunks(lst, chunk_size):
         for i in range(0, len(lst), chunk_size):
@@ -129,9 +130,11 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         address_list = []
         for i in range(max(last_payout_index, last_change_index) + 1):
             if i <= last_payout_index:
-                address_list.append(HDPublicKey.from_parent(payout_chain_key, i).address())
+                address_list.append(
+                    HDPublicKey.from_parent(payout_chain_key, i).address())
             if i <= last_change_index:
-                address_list.append(HDPublicKey.from_parent(change_chain_key, i).address())
+                address_list.append(
+                    HDPublicKey.from_parent(change_chain_key, i).address())
 
         return address_list
 
@@ -185,11 +188,13 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         """ Provides transactions associated with each address in address_list.
 
         Args:
-            address_list (list(str)): List of Base58Check encoded Bitcoin addresses.
+            address_list (list(str)): List of Base58Check encoded Bitcoin
+            addresses.
             limit (int): Maximum number of transactions to return.
 
         Returns:
-            dict: A dict keyed by address with each value being a list of Transaction
+            dict: A dict keyed by address with each value being a list of
+            Transaction
                objects.
         """
         ret = defaultdict(list)
@@ -220,7 +225,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         ret = {}
         for txid in ids:
             r = self._request("GET", "transactions/%s/hex" % txid)
-            data = r.json()            
+            data = r.json()
             if r.status_code == 200:
                 txn, _ = Transaction.from_bytes(bytes.fromhex(data["hex"]))
                 assert str(txn.hash) == txid
@@ -230,7 +235,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                 raise ValueError(data["message"])
 
         return ret
-    
+
     def get_utxo(self, address_list):
         """ Provides all unspent transactions associated with each address in
             the address_list.
@@ -252,14 +257,14 @@ class ChainTransactionDataProvider(TransactionDataProvider):
 
                 # for each address
                 # {
-                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
+                #     "transaction_hash": "0bf0de38c261...",
                 #     "output_index": 0,
                 #     "value": 290000,
                 #     "addresses": [
                 #         "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
                 #     ],
-                #     "script": "OP_DUP OP_HASH160 c629680b8d13ca7a4b7d196360186d05658da6db OP_EQUALVERIFY OP_CHECKSIG",
-                #     "script_hex": "76a914c629680b8d13ca7a4b7d196360186d05658da6db88ac",
+                #     "script": "OP_DUP OP_HASH160 c6296...",
+                #     "script_hex": "76a914c629680b8d1...",
                 #     "script_type": "pubkeyhash",
                 #     "required_signatures": 1,
                 #     "spent": false,
@@ -269,12 +274,15 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                 for d in data:
                     address = d["addresses"][0]
                     txn_hash = Hash(d["transaction_hash"])
-                    script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(d["script_hex"])))
+                    script, _ = Script.from_bytes(
+                        pack_var_str(bytes.fromhex(d["script_hex"])))
                     ret[address].append(UnspentTransactionOutput(txn_hash,
-                                                                 d["output_index"],
+                                                                 d[
+                                                                     "output_index"],
                                                                  d["value"],
                                                                  script,
-                                                                 d["confirmations"]))
+                                                                 d[
+                                                                     "confirmations"]))
             elif r.status_code == 400:
                 raise ValueError("Invalid bitcoin addresse/addresses.")
             return ret
@@ -282,40 +290,52 @@ class ChainTransactionDataProvider(TransactionDataProvider):
     def get_balance_hd(self, pub_key, last_payout_index, last_change_index):
         """ Provides the balance for each address.
 
-            Like TransactionDataProvider.get_balance() except that it uses the HD
-            public key and returns balances for each payout address up to
+            Like TransactionDataProvider.get_balance() except that it uses
+            the HD public key and returns balances for each payout address up to
             last_payout_index and each change address up to last_change_index.
 
         Args:
             pub_key (HDPublicKey): an extended public key from which change and
                payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return data for.
-            last_change_index (int): Index of last change address to return data for.
+            last_payout_index (int): Index of last payout address to return
+            data for.
+            last_change_index (int): Index of last change address to return
+            data for.
 
         Returns:
-            dict: A dict keyed by address with each value being a tuple containing
+            dict: A dict keyed by address with each value being a tuple
+            containing
                the confirmed and unconfirmed balances.
         """
-        return self.get_balance(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
+        return self.get_balance(
+            self._gen_hd_addresses(pub_key, last_payout_index,
+                                   last_change_index))
 
-    def get_transactions_hd(self, pub_key, last_payout_index, last_change_index):
+    def get_transactions_hd(self, pub_key, last_payout_index,
+                            last_change_index):
         """ Provides transactions associated with each address.
 
-            Like TransactionDataProvider.get_transactions() except that it uses the HD
-            public key and returns balances for each payout address up to
-            last_payout_index and each change address up to last_change_index.
+            Like TransactionDataProvider.get_transactions() except that it
+            uses the HD public key and returns balances for each payout address
+            up to last_payout_index and each change address up to
+            last_change_index.
 
         Args:
             pub_key (HDPublicKey): an extended public key from which change and
                payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return data for.
-            last_change_index (int): Index of last change address to return data for.
+            last_payout_index (int): Index of last payout address to return
+            data for.
+            last_change_index (int): Index of last change address to return
+            data for.
 
         Returns:
-            dict: A dict keyed by address with each value being a list of Transaction
+            dict: A dict keyed by address with each value being a list of
+            Transaction
                objects.
         """
-        return self.get_transactions(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
+        return self.get_transactions(
+            self._gen_hd_addresses(pub_key, last_payout_index,
+                                   last_change_index))
 
     def get_utxo_hd(self, pub_key, last_payout_index, last_change_index):
         """ Provides all unspent transactions associated with each address.
@@ -327,15 +347,18 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         Args:
             pub_key (HDPublicKey): an extended public key from which change and
                payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return data for.
-            last_change_index (int): Index of last change address to return data for.
+            last_payout_index (int): Index of last payout address to return
+            data for.
+            last_change_index (int): Index of last change address to return
+            data for.
 
         Returns:
             dict: A dict keyed by address with each value being a list of 
                UnspentTransactionOutput objects.
         """
-        return self.get_utxo(self._gen_hd_addresses(pub_key, last_payout_index, last_change_index))
-        
+        return self.get_utxo(self._gen_hd_addresses(pub_key, last_payout_index,
+                                                    last_change_index))
+
     def send_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
         
@@ -352,8 +375,9 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         elif isinstance(transaction, str):
             signed_hex = transaction
         else:
-            raise TypeError("transaction must be one of: bytes, str, Transaction.")
-        
+            raise TypeError(
+                "transaction must be one of: bytes, str, Transaction.")
+
         data = {"signed_hex": signed_hex}
         r = self._request("POST", "transactions/send", data=json.dumps(data))
 
@@ -362,10 +386,10 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             return j["transaction_hash"]
         elif r.status_code == 400:
             j = r.json()
-            
+
             # TODO: Change this to some more meaningful exception type
             raise exceptions.TransactionBroadcastError(j['message'])
         else:
             # Some other status code... should never happen.
-            raise exceptions.TransactionBroadcastError("Unexpected response: %r" % r.status_code)
-            
+            raise exceptions.TransactionBroadcastError(
+                "Unexpected response: %r" % r.status_code)
