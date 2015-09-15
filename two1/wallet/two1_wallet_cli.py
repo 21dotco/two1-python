@@ -8,12 +8,14 @@ from two1.wallet.two1_wallet import Two1Wallet
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
+
 def get_passphrase():
     return getpass.getpass("Passphrase to unlock wallet: ")
 
+
 @click.pass_context
-def validate_txn_data_provider(ctx, param, value):
-    txn_data_provider_params = {}
+def validate_data_provider(ctx, param, value):
+    data_provider_params = {}
     if ctx.obj is None:
         ctx.obj = {}
     if value == 'chain':
@@ -26,14 +28,24 @@ def validate_txn_data_provider(ctx, param, value):
             click.echo("--%s is required to use %s." % (s, value))
             fail = True
         else:
-            txn_data_provider_params[r] = ctx.params[r]
+            data_provider_params[r] = ctx.params[r]
 
     if fail:
         ctx.fail("One or more required arguments are missing.")
 
-    ctx.obj['txn_data_provider'] = value
-    ctx.obj['txn_data_provider_params'] = txn_data_provider_params
-        
+    if value == 'chain':
+        key = ctx.params['chain_api_key']
+        secret = ctx.params['chain_api_secret']
+
+        # validate key and secret for chain data provider
+        if len(key) != 32 or len(secret) != 32 or \
+           not key.isalnum() or not secret.isalnum():
+            ctx.fail("Invalid chain_api_key or chain_api_secret")
+
+    ctx.obj['data_provider'] = value
+    ctx.obj['data_provider_params'] = data_provider_params
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option('--wallet-path', '-wp',
               default=Two1Wallet.DEFAULT_WALLET_PATH,
@@ -43,26 +55,26 @@ def validate_txn_data_provider(ctx, param, value):
 @click.option('--passphrase', '-p',
               is_flag=True,
               help='Prompt for a passphrase.')
-@click.option('--transaction-data-provider', '-t',
+@click.option('--blockchain-data-provider', '-b',
               default='chain',
               type=click.Choice(['chain']),
               show_default=True,
-              callback=validate_txn_data_provider,
-              help='Transaction data provider service to use')
+              callback=validate_data_provider,
+              help='Blockchain data provider service to use')
 @click.option('--chain-api-key', '-ck',
               metavar='STRING',
               envvar='CHAIN_API_KEY',
               is_eager=True,
-              help='Chain API Key (only if -t chain)')
+              help='Chain API Key (only if -b chain)')
 @click.option('--chain-api-secret', '-cs',
               metavar='STRING',
               envvar='CHAIN_API_SECRET',
               is_eager=True,
-              help='Chain API Secret (only if -t chain)')
+              help='Chain API Secret (only if -b chain)')
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
-         transaction_data_provider, chain_api_key, chain_api_secret):
+         blockchain_data_provider, chain_api_key, chain_api_secret):
     """ Command-line Interface for the Two1 Wallet
     """
     if ctx.obj is None:
@@ -70,17 +82,18 @@ def main(ctx, wallet_path, passphrase,
 
     ctx.obj['wallet_path'] = wallet_path
     ctx.obj['passphrase'] = passphrase
-    
+
     if ctx.invoked_subcommand != "create":
         p = get_passphrase() if passphrase else ''
-            
+
         # instantiate a wallet object here and pass it into the context
-        tdp = Two1Wallet.instantiate_data_provider(txn_data_provider_name=ctx.obj['txn_data_provider'],
-                                                   txn_data_provider_params=ctx.obj['txn_data_provider_params'])
+        dp = Two1Wallet.instantiate_data_provider(data_provider_name=ctx.obj['data_provider'],
+                                                  data_provider_params=ctx.obj['data_provider_params'])
         ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
-                                       txn_data_provider=tdp,
+                                       data_provider=dp,
                                        passphrase=p)
         ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
+
 
 @click.command()
 @click.option('--account-type', '-a',
@@ -97,7 +110,7 @@ def create(ctx, account_type, testnet):
     """
     # txn_data_provider and related params come from the
     # global context.
-    passphrase = ""    
+    passphrase = ""
     if ctx.obj['passphrase']:
         # Let's prompt for a passphrase
         conf = "a"
@@ -112,8 +125,8 @@ def create(ctx, account_type, testnet):
 
     options = {"account_type": account_type,
                "passphrase": passphrase,
-               "txn_data_provider": ctx.obj['txn_data_provider'],
-               "txn_data_provider_params": ctx.obj['txn_data_provider_params'],
+               "data_provider": ctx.obj['data_provider'],
+               "data_provider_params": ctx.obj['data_provider_params'],
                "testnet": testnet,
                "wallet_path": ctx.obj['wallet_path']}
 
@@ -124,6 +137,7 @@ def create(ctx, account_type, testnet):
     else:
         ctx.fail("Wallet was not created.")
 
+
 @click.command(name="payoutaddress")
 @click.pass_context
 def payout_address(ctx):
@@ -131,22 +145,27 @@ def payout_address(ctx):
     """
     w = ctx.obj['wallet']
     click.echo(w.current_address)
-        
+
+
 @click.command(name="confirmedbalance")
 @click.pass_context
 def confirmed_balance(ctx):
-    """ Prints the current confirmed balance
+    """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
-    click.echo("Confirmed balance: %f BTC" % (w.confirmed_balance() / satoshi_to_btc))
+    click.echo("Confirmed balance: %f BTC" %
+               (w.confirmed_balance() / satoshi_to_btc))
 
-@click.command(name="unconfirmedbalance")
+
+@click.command()
 @click.pass_context
-def unconfirmed_balance(ctx):
-    """ Prints the current unconfirmed balance
+def balance(ctx):
+    """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
-    click.echo("Unconfirmed balance: %f BTC" % (w.unconfirmed_balance() / satoshi_to_btc))
+    click.echo("Total balance (including unconfirmed txns): %f BTC" %
+               (w.unconfirmed_balance() / satoshi_to_btc))
+
 
 @click.command(name="sendto")
 @click.argument('address',
@@ -164,25 +183,25 @@ def send_to(ctx, address, amount, account):
 
     # Do we want to confirm if it's larger than some amount?
     satoshis = int(amount * satoshi_to_btc)
-    print("Sending %d satoshis to %s from accounts = %r" % (satoshis, address, list(account)))
+    print("Sending %d satoshis to %s from accounts = %r" %
+          (satoshis, address, list(account)))
 
     try:
         txids = w.send_to(address=address,
                           amount=satoshis,
                           accounts=list(account))
         if txids:
-            click.echo("Successfully sent %f BTC to %s. txid = %r" % (amount,
-                                                                      address,
-                                                                      [t['txid'] for t in txids]))
+            click.echo("Successfully sent %f BTC to %s. txid = %r" %
+                       (amount, address, [t['txid'] for t in txids]))
     except Exception as e:
         click.echo("Problem sending coins: %s" % e)
-    
+
+
 main.add_command(create)
 main.add_command(payout_address)
 main.add_command(confirmed_balance)
-main.add_command(unconfirmed_balance)
+main.add_command(balance)
 main.add_command(send_to)
-    
+
 if __name__ == "__main__":
     main()
-    

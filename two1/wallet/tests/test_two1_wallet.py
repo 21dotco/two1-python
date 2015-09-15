@@ -1,17 +1,13 @@
-import getpass
 import json
-import os
 import pytest
 from pbkdf2 import PBKDF2
 import tempfile
-from unittest.mock import MagicMock
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey
-from two1.bitcoin.txn import Transaction
 from two1.bitcoin.utils import bytes_to_str
+from two1.blockchain.mock_provider import MockProvider
 from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
-from two1.wallet.mock_txn_data_provider import MockTxnDict, MockTransactionDataProvider
 
 enc_key_salt = b'\xaa\xbb\xcc\xdd'
 passphrase = "test_wallet"
@@ -31,13 +27,14 @@ config = {'master_key': mkey_enc,
           'passphrase_hash': passphrase_hash,
           'key_salt': bytes_to_str(enc_key_salt),
           'account_type': "BIP44BitcoinMainnet",
-          'accounts': [{ 'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",
-                         'last_payout_index': 2,
-                         'last_change_index': 1 }],
-          'account_map': { 'default': 0 }}
+          'accounts': [{'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",
+                        'last_payout_index': 2,
+                        'last_change_index': 1}],
+          'account_map': {'default': 0}}
 
 master = HDPrivateKey.master_key_from_mnemonic(master_seed, passphrase)
-mock_txn_provider = MockTransactionDataProvider("BIP44BitcoinMainnet", master)
+mock_provider = MockProvider("BIP44BitcoinMainnet", master)
+
 
 def test_encrypt_decrypt():
     mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=config['master_key'],
@@ -53,27 +50,29 @@ def test_encrypt_decrypt():
     assert mkey == config['master_key']
     assert mseed == config['master_seed']
 
+
 def test_create():
     # Here we just check to see that the config was created properly,
     # there is only 1 account associated w/the wallet and that there
     # are no txns, etc.
 
-    mock_txn_provider.set_txn_side_effect_for_hd_discovery()
+    mock_provider.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.create(txn_data_provider=mock_txn_provider,
+    wallet = Two1Wallet.create(data_provider=mock_provider,
                                passphrase=passphrase)
 
     assert len(wallet._accounts) == 1
     assert wallet._accounts[0].name == "default"
     assert wallet._accounts[0].index == 0x80000000
-    
+
     wallet_config = wallet.to_dict()
     assert wallet_config['account_map'] == {"default": 0}
     assert wallet_config['accounts'][0]['last_payout_index'] == -1
     assert wallet_config['accounts'][0]['last_change_index'] == -1
 
+
 def test_import():
-    m = mock_txn_provider
+    m = mock_provider
     m.reset_mocks()
 
     keys = HDKey.from_path(master, "m/44'/0'/0'")
@@ -82,7 +81,7 @@ def test_import():
     m.set_num_used_accounts(0)
     m.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
+    wallet = Two1Wallet.import_from_mnemonic(data_provider=m,
                                              mnemonic=master_seed,
                                              passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
@@ -90,18 +89,18 @@ def test_import():
     assert wallet._root_keys[1].to_b58check() == keys[1].to_b58check()
     assert wallet._root_keys[2].to_b58check() == keys[2].to_b58check()
     assert wallet._accounts[0].key.to_b58check() == keys[3].to_b58check()
-    
+
     assert len(wallet._accounts) == 1
 
     # Now test where the first account has transactions
     m.reset_mocks()
-    m.set_num_used_accounts(2) # Set this to 2 so that we get the side effects
+    m.set_num_used_accounts(2)  # Set this to 2 so that we get the side effects
     m.set_num_used_addresses(account_index=0, n=10, change=0)
     m.set_num_used_addresses(account_index=0, n=20, change=1)
-    
+
     m.set_txn_side_effect_for_hd_discovery()
-    
-    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
+
+    wallet = Two1Wallet.import_from_mnemonic(data_provider=m,
                                              mnemonic=master_seed,
                                              passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
@@ -118,7 +117,7 @@ def test_import():
 
     m.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.import_from_mnemonic(txn_data_provider=m,
+    wallet = Two1Wallet.import_from_mnemonic(data_provider=m,
                                              mnemonic=master_seed,
                                              passphrase=passphrase,
                                              account_type="BIP44BitcoinMainnet")
@@ -128,8 +127,9 @@ def test_import():
         assert wallet._accounts[i].has_txns()
         assert len(wallet._accounts[i]._txn_cache.keys()) == 3
 
+
 def test_rest():
-    m = mock_txn_provider
+    m = mock_provider
     m.hd_master_key = master
     m.reset_mocks()
 
@@ -140,7 +140,7 @@ def test_rest():
     m.set_txn_side_effect_for_hd_discovery()
 
     wallet = Two1Wallet(params_or_file=config,
-                        txn_data_provider=m,
+                        data_provider=m,
                         passphrase=passphrase)
 
     # First 5 internal addresses of account 0
@@ -163,7 +163,7 @@ def test_rest():
     paths = wallet.find_addresses(int_addrs + ext_addrs + bad_addrs)
 
     assert len(paths.keys()) == 10
-    
+
     for i in range(5):
         # Hardened account key derivation, thus 0x80000000
         assert paths[ext_addrs[i]] == (0x80000000, 0, i)
@@ -172,7 +172,7 @@ def test_rest():
         # Check address belongs
         assert wallet.address_belongs(ext_addrs[i]) == "m/44'/0'/0'/0/%d" % i
         assert wallet.address_belongs(int_addrs[i]) == "m/44'/0'/0'/1/%d" % i
-        
+
     for b in bad_addrs:
         assert b not in paths
         assert wallet.address_belongs(b) is None
@@ -182,7 +182,7 @@ def test_rest():
 
     # Check the balance
     assert wallet.balances == (100000, 20000)
-    
+
     # Check that we can get a new payout address
     for i in range(3):
         m.set_num_used_addresses(0, i, 0)
@@ -225,13 +225,13 @@ def test_rest():
         # Now create the wallet from the file
         with pytest.raises(exceptions.PassphraseError):
             w2 = Two1Wallet(params_or_file=tf.name,
-                             txn_data_provider=m,
-                             passphrase='wrong_pass')
+                            data_provider=m,
+                            passphrase='wrong_pass')
 
         # Now do with the correct passphrase
         m.set_txn_side_effect_for_hd_discovery()
         w2 = Two1Wallet(params_or_file=tf.name,
-                        txn_data_provider=m,
+                        data_provider=m,
                         passphrase=passphrase)
 
         assert len(w2.accounts) == 1

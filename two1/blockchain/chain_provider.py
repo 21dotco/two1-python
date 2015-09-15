@@ -1,9 +1,8 @@
 import json
 import requests
 from collections import defaultdict
-from two1.wallet import exceptions
-from two1.wallet.txn_data_provider import TransactionDataProvider
-from two1.wallet.txn_data_provider import DataProviderUnAvailable
+from two1.blockchain import exceptions
+from two1.blockchain.base_provider import BaseProvider
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import UnspentTransactionOutput
 from two1.bitcoin.txn import TransactionInput
@@ -15,8 +14,8 @@ from two1.bitcoin.hash import Hash
 from two1.bitcoin.script import Script
 
 
-class ChainTransactionDataProvider(TransactionDataProvider):
-    """ Transaction data provider using the 21 server
+class ChainProvider(BaseProvider):
+    """ Transaction data provider using the chain API
 
         Args:
             api_key (str): chain.com API key
@@ -108,17 +107,33 @@ class ChainTransactionDataProvider(TransactionDataProvider):
 
     def _request(self, method, path, **kwargs):
         url = self.server_url + path + "/"
+        result = None
         try:
             result = requests.request(method,
                                       url,
                                       auth=self.auth,
                                       **kwargs)
 
+            # A non 200 status_code from Chain API is an exception
+            if result.status_code != 200:
+                data = result.json()
+                raise exceptions.DataProviderError(data['message'])
             return result
+
         except requests.exceptions.ConnectionError:
-            raise DataProviderUnAvailable("Could not connect to service.")
+            raise exceptions.DataProviderUnAvailable("Could not connect to service.")
         except requests.exceptions.Timeout:
-            raise DataProviderUnAvailable("Connection timed out.")
+            raise exceptions.DataProviderUnAvailable("Connection timed out.")
+        except ValueError:
+            if result:
+                raise exceptions.DataProviderError(result.text)
+            else:
+                raise
+        except KeyError:
+            if result:
+                raise exceptions.DataProviderError(result.text)
+            else:
+                raise
 
     def _gen_hd_addresses(self, pub_key, last_payout_index, last_change_index):
         if not isinstance(pub_key, HDPublicKey):
@@ -144,7 +159,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             The balance is computed by looking up the transactions associated
             with each address in address_list, summing all received coins and
             subtracting all coins payed out. It makes a distinction between
-            confirmed and unconfirmed transactions.
+            confirmed and total transactions.
 
         Args:
             address_list (list(str)): List of Base58Check encoded
@@ -152,36 +167,33 @@ class ChainTransactionDataProvider(TransactionDataProvider):
 
         Returns:
             dict: A dict keyed by address with each value being a tuple
-            containing the confirmed and unconfirmed balances.
+            containing the confirmed and total balances.
         """
         ret = {}
         for addresses in self._list_chunks(address_list, 199):
             r = self._request("GET", "addresses/" + ",".join(addresses))
-            if r.status_code == 200:
-                data = r.json()
+            data = r.json()
 
-                # for each address
+            # for each address
 
-                # {
-                #     "address": "17x23dNjXJLzGMev6R63uyRhMWP1VHawKc",
-                #     "total": {
-                #       "balance": 5000000000,
-                #       "received": 5000000000,
-                #       "sent": 0
-                #     },
-                #     "confirmed": {
-                #       "balance": 5000000000,
-                #       "received": 5000000000,
-                #       "sent": 0
-                #     }
-                # }
+            # {
+            #     "address": "17x23dNjXJLzGMev6R63uyRhMWP1VHawKc",
+            #     "total": {
+            #       "balance": 5000000000,
+            #       "received": 5000000000,
+            #       "sent": 0
+            #     },
+            #     "confirmed": {
+            #       "balance": 5000000000,
+            #       "received": 5000000000,
+            #       "sent": 0
+            #     }
+            # }
 
-                for d in data:
-                    ret[d["address"]] = (d["confirmed"]["balance"],
-                                         d["total"]["balance"] -
-                                         d["confirmed"]["balance"])
-            elif r.status_code == 400:
-                raise ValueError("Invalid bitcoin addresse/addresses.")
+            for d in data:
+                ret[d["address"]] = (d["confirmed"]["balance"],
+                                     d["total"]["balance"])
+
         return ret
 
     def get_transactions(self, address_list, limit=100):
@@ -201,16 +213,14 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         for addresses in self._list_chunks(address_list, 199):
             r = self._request("GET", "addresses/" + ",".join(addresses)
                               + "/transactions?limit={}".format(limit))
-            if r.status_code == 200:
-                txn_data = r.json()
+            txn_data = r.json()
 
-                for data in txn_data:
-                    txn, addr_keys = self.txn_from_json(data)
-                    for addr in addr_keys:
-                        if addr in addresses:
-                            ret[addr].append(txn)
-            elif r.status_code == 400:
-                raise ValueError("Invalid bitcoin address/addresses.")
+            for data in txn_data:
+                txn, addr_keys = self.txn_from_json(data)
+                for addr in addr_keys:
+                    if addr in addresses:
+                        ret[addr].append(txn)
+
         return ret
 
     def get_transactions_by_id(self, ids):
@@ -231,8 +241,6 @@ class ChainTransactionDataProvider(TransactionDataProvider):
                 assert str(txn.hash) == txid
 
                 ret[txid] = txn
-            elif r.status_code == 400:
-                raise ValueError(data["message"])
 
         return ret
 
@@ -252,39 +260,34 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         for addresses in self._list_chunks(address_list, 199):
             r = self._request("GET", "addresses/" + ",".join(addresses)
                               + "/unspents")
-            if r.status_code == 200:
-                data = r.json()
+            data = r.json()
 
-                # for each address
-                # {
-                #     "transaction_hash": "0bf0de38c261...",
-                #     "output_index": 0,
-                #     "value": 290000,
-                #     "addresses": [
-                #         "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
-                #     ],
-                #     "script": "OP_DUP OP_HASH160 c6296...",
-                #     "script_hex": "76a914c629680b8d1...",
-                #     "script_type": "pubkeyhash",
-                #     "required_signatures": 1,
-                #     "spent": false,
-                #     "confirmations": 8758
-                # },
+            # for each address
+            # {
+            #     "transaction_hash": "0bf0de38c261...",
+            #     "output_index": 0,
+            #     "value": 290000,
+            #     "addresses": [
+            #         "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
+            #     ],
+            #     "script": "OP_DUP OP_HASH160 c6296...",
+            #     "script_hex": "76a914c629680b8d1...",
+            #     "script_type": "pubkeyhash",
+            #     "required_signatures": 1,
+            #     "spent": false,
+            #     "confirmations": 8758
+            # },
 
-                for d in data:
-                    address = d["addresses"][0]
-                    txn_hash = Hash(d["transaction_hash"])
-                    script, _ = Script.from_bytes(
-                        pack_var_str(bytes.fromhex(d["script_hex"])))
-                    ret[address].append(UnspentTransactionOutput(txn_hash,
-                                                                 d[
-                                                                     "output_index"],
-                                                                 d["value"],
-                                                                 script,
-                                                                 d[
-                                                                     "confirmations"]))
-            elif r.status_code == 400:
-                raise ValueError("Invalid bitcoin addresse/addresses.")
+            for d in data:
+                address = d["addresses"][0]
+                txn_hash = Hash(d["transaction_hash"])
+                script, _ = Script.from_bytes(
+                    pack_var_str(bytes.fromhex(d["script_hex"])))
+                ret[address].append(UnspentTransactionOutput(txn_hash,
+                                                             d["output_index"],
+                                                             d["value"],
+                                                             script,
+                                                             d["confirmations"]))
             return ret
 
     def get_balance_hd(self, pub_key, last_payout_index, last_change_index):
@@ -304,8 +307,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
 
         Returns:
             dict: A dict keyed by address with each value being a tuple
-            containing
-               the confirmed and unconfirmed balances.
+            containing the confirmed and total balances.
         """
         return self.get_balance(
             self._gen_hd_addresses(pub_key, last_payout_index,
@@ -361,7 +363,7 @@ class ChainTransactionDataProvider(TransactionDataProvider):
 
     def send_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
-        
+
         Args:
             transaction (bytes or str): serialized, signed transaction
 

@@ -1,8 +1,7 @@
 
-from two1.bitcoin.txn import Transaction
 from two1.wallet.exceptions import WalletBalanceError
 
-FEE_PER_KB = 10000 # Satoshis
+FEE_PER_KB = 10000  # Satoshis
 
 # Each txn input is ~150 bytes:
 # outpoint: 32 bytes
@@ -15,6 +14,7 @@ DEFAULT_INPUT_FEE = int(0.15 * FEE_PER_KB)
 # Each txn output is ~40 bytes, thus 0.04
 DEFAULT_OUTPUT_FEE = int(0.04 * FEE_PER_KB)
 
+
 def _get_utxo_addr_tuple_list(utxos_by_addr):
     utxo_tuple_list = []
     for addr, utxos_addr in utxos_by_addr.items():
@@ -23,10 +23,13 @@ def _get_utxo_addr_tuple_list(utxos_by_addr):
 
     return utxo_tuple_list
 
-def utxo_selector_smallest_first(txn_data_provider, utxos_by_addr, amount, num_outputs):
+
+def utxo_selector_smallest_first(data_provider, utxos_by_addr, amount,
+                                 num_outputs):
     # Order the utxos by amount
     utxo_tuple_list = _get_utxo_addr_tuple_list(utxos_by_addr)
-    ordered_utxos = sorted(utxo_tuple_list, key=lambda utxo_addr_tuple: utxo_addr_tuple[1].value)
+    ordered_utxos = sorted(utxo_tuple_list,
+                           key=lambda utxo_addr_tuple: utxo_addr_tuple[1].value)
 
     fees = num_outputs * DEFAULT_OUTPUT_FEE
     utxos_to_use = {}
@@ -46,6 +49,5 @@ def utxo_selector_smallest_first(txn_data_provider, utxos_by_addr, amount, num_o
 
     if utxo_sum < amount + fees:
         raise WalletBalanceError("Provided list of UTXOs does not have enough BTC to send %d." % amount)
-            
-    return utxos_to_use, fees
 
+    return utxos_to_use, fees

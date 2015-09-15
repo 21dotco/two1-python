@@ -1,8 +1,9 @@
 import pytest
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
-from two1.wallet.chain_txn_data_provider import ChainTransactionDataProvider
-from two1.wallet.txn_data_provider import DataProviderUnAvailable
+from two1.blockchain.chain_provider import ChainProvider
+from two1.blockchain.exceptions import DataProviderUnAvailable
+from two1.blockchain.exceptions import DataProviderError
 
 
 API_KEY = 'a96f8c3c18abe407757713a09614ba0b'
@@ -11,73 +12,73 @@ API_SECRET = 'a13421f9347421e88c17d8388638e311'
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 def test_get_balance():
-    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["17x23dNjXJLzGMev6R63uyRhMWP1VHawKc"]
-    data = ctd.get_balance(address_list)
+    data = cp.get_balance(address_list)
     assert len(data) == 1
     assert list(data.keys())[0] == address_list[0]
     # test satoshi's address. If the following fails, Satoshi has moved coins
-    assert data[address_list[0]] == (5000000000, 0)
+    assert data[address_list[0]] == (5000000000, 5000000000)
 
     # empty addresslist
-    data = ctd.get_balance([])
+    data = cp.get_balance([])
     assert len(data) == 0
     # bad address
-    with pytest.raises(ValueError):
-        data = ctd.get_balance(["garbage"])
+    with pytest.raises(DataProviderError):
+        data = cp.get_balance(["garbage"])
     # simulate server failure
-    ctd.server_url = "https://askdfjldsfjlk1j3ouhfsbjdafsjfhu.com"
+    cp.server_url = "https://askdfjldsfjlk1j3ouhfsbjdafsjfhu.com"
     with pytest.raises(DataProviderUnAvailable):
-        data = ctd.get_balance(address_list)
+        data = cp.get_balance(address_list)
 
 def test_utxo():
-    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
-    data = ctd.get_utxo(address_list)
+    data = cp.get_utxo(address_list)
     assert len(data) == 1
     assert list(data.keys())[0] == address_list[0]
     assert len(data[address_list[0]]) == 3
 #    assert data[address_list[0]].transaction_hash ==
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb", "1EX1E9n3bPA1zGKDV5iHY2MnM7n5tDfnfH"]
-    data = ctd.get_utxo(address_list)
+    data = cp.get_utxo(address_list)
     assert len(data) == 2
     assert set(address_list) == set(data.keys())
     assert len(data[address_list[0]]) == 3
     assert len(data[address_list[1]]) == 1
 
 def test_get_transactions():
-    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
-    data = ctd.get_transactions(address_list)
+    data = cp.get_transactions(address_list)
     assert len(data) == 1
     assert len(data[address_list[0]]) == 9
 
 def test_get_transactions_by_id():
-    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY, API_SECRET)
     txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
              "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
-    data = ctd.get_transactions_by_id(txids)
+    data = cp.get_transactions_by_id(txids)
     assert len(data) == 2
     for txid, txn in data.items():
         assert txid in txids
         assert isinstance(txn, Transaction)
     
 def test_hd():
-    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY, API_SECRET)
 
     used_address = '1K3m1EwuxMCUTsS3wN2k7sXYHzABCVJSug'
     
     # Only has 1 key used, but give it 10, just to make sure
-    balances = ctd.get_balance_hd(acct_pub_key, 10, 10)
+    balances = cp.get_balance_hd(acct_pub_key, 10, 10)
 
-    assert balances[used_address] == (716871, 0)
+    assert balances[used_address] == (716871, 716871)
 
     for addr, balance in balances.items():
         if addr != used_address:
             assert balance == (0, 0)
 
     # Get txns
-    txns = ctd.get_transactions_hd(acct_pub_key, 10, 10)
+    txns = cp.get_transactions_hd(acct_pub_key, 10, 10)
 
     assert len(txns[used_address]) == 21
     for addr, addr_txns in txns.items():
@@ -110,7 +111,7 @@ def test_hd():
         assert str(txn.hash) in used_txns
 
     # Now test get_utxo_hd - all of the above txns are unspent.
-    utxos = ctd.get_utxo_hd(acct_pub_key, 10, 10)
+    utxos = cp.get_utxo_hd(acct_pub_key, 10, 10)
     
     assert len(utxos[used_address]) == 23 # There are 2 txns that have 2 outpoints coming to this address.
     for utxo in utxos[used_address]:
