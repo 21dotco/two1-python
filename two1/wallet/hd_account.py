@@ -221,13 +221,13 @@ class HDAccount(object):
         Returns:
             dict: Dict that can be serialized into a JSON string
         """
-        # For now just return the pub-key and indices of last
-        # change and payout addresses.
+        txn_id_cache = {a: [str(t.hash) for t in txns] for a, txns in self._txn_cache.items()}
         pub_key = self.key if isinstance(self.key, HDPublicKey) else self.key.public_key
         return { "public_key": pub_key.to_b58check(self.testnet),
                  "last_payout_index": self.last_indices[self.PAYOUT_CHAIN],
                  "last_change_index": self.last_indices[self.CHANGE_CHAIN],
-             }
+                 "address_cache": self._address_cache,
+                 "txn_cache": txn_id_cache }
 
     @property
     def balance(self):
