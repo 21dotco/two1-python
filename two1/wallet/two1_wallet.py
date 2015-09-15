@@ -563,7 +563,16 @@ class Two1Wallet(BaseWallet):
         else:
             # Assume it's file-like
             file_or_filename.write(d)
-    
+
+    def sync_wallet_file(self):
+        """ Syncs all wallet data to the wallet file used
+            to construct this wallet instance, if one was used.
+        """
+        # TODO: In the future, we can keep track of whether syncing
+        # is necessary and only write out if necessary.
+        if self._filename:
+            self.to_file(self._filename)
+            
     @property
     def addresses(self):
         """ Gets the address list for the current wallet.

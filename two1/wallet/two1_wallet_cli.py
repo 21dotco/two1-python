@@ -80,6 +80,7 @@ def main(ctx, wallet_path, passphrase,
         ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
                                        txn_data_provider=tdp,
                                        passphrase=p)
+        ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
 @click.command()
 @click.option('--account-type', '-a',
