@@ -1,10 +1,11 @@
 satoshi_to_btc = 1e8
 
+
 class BaseWallet(object):
     """ An abstract wallet class.
     """
 
-    """ The configuration options available for the wallet. 
+    """ The configuration options available for the wallet.
 
         The keys of this dictionary are the available configuration
         settings/options for the wallet. The value for each key
@@ -15,10 +16,12 @@ class BaseWallet(object):
 
     @staticmethod
     def is_configured():
-        """ Returns the configuration/initialization status of the wallet. 
+        """ Returns the configuration/initialization status of the
+            wallet.
 
         Returns:
-            bool: True if the wallet has been configured and ready to use otherwise False
+            bool: True if the wallet has been configured and ready to
+                use otherwise False
         """
         raise NotImplementedError('Abstract class, `is_configured` must be overridden')
 
@@ -29,12 +32,12 @@ class BaseWallet(object):
         raise NotImplementedError('Abstract class, `auto_configure` must be overridden')
 
     def __init__(self):
-    	super(BaseWallet, self).__init__()
+        super(BaseWallet, self).__init__()
 
     @property
     def addresses(self):
         """ Gets the address list for the current wallet.
-        
+
         Returns:
             list: The current list of addresses in this wallet.
         """
@@ -45,10 +48,10 @@ class BaseWallet(object):
         """ Gets the preferred address.
 
         Returns:
-            str: The current preferred payment address. 
+            str: The current preferred payment address.
         """
         raise NotImplementedError('Abstract class, `current_address` must be overridden')
-    	
+
     def balance(self):
         """ Gets the confirmed balance of the wallet in Satoshi.
 
@@ -64,7 +67,7 @@ class BaseWallet(object):
             number: The current confirmed balance.
         """
         raise NotImplementedError('Abstract class `confirmed_balance` must be overridden')
-    	
+
     def unconfirmed_balance(self):
         """ Gets the current unconfirmed balance of the wallet in Satoshi.
 
@@ -77,7 +80,7 @@ class BaseWallet(object):
         """ Broadcasts the transaction to the Bitcoin network.
 
         Args:
-            tx (str): Hex string serialization of the transaction 
+            tx (str): Hex string serialization of the transaction
                to be broadcasted to the Bitcoin network..
         Returns:
             str: The name of the transaction that was broadcasted.
@@ -91,11 +94,12 @@ class BaseWallet(object):
             address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
         Returns:
-            list(dict): A list of dicts containing transaction names and raw transactions.
-               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
+            list(dict): A list of dicts containing transaction names
+               and raw transactions.  e.g.: [{"txid": txid0, "txn":
+               txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `make_signed_transaction_for` must be overridden')
-    	
+
     def send_to(self, address, amount):
         """ Sends Bitcoin to the provided address for the specified amount.
 
@@ -103,7 +107,8 @@ class BaseWallet(object):
             address (str): The address to send the Bitcoin too.
             amount (number): The amount of Bitcoin to send.
         Returns:
-            list(dict): A list of dicts containing transaction names and raw transactions.
-               e.g.: [{"txid": txid0, "txn": txn_hex0}, ...]
+            list(dict): A list of dicts containing transaction names
+               and raw transactions.  e.g.: [{"txid": txid0, "txn":
+               txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `send_to` must be overridden')

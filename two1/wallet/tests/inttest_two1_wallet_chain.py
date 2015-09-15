@@ -1,9 +1,8 @@
 import random
 import time
 
-from two1.wallet.chain_txn_data_provider import ChainTransactionDataProvider
+from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet.two1_wallet import Two1Wallet
-from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 CHAIN_API_KEY = 'a96f8c3c18abe407757713a09614ba0b'
 CHAIN_API_SECRET = 'a13421f9347421e88c17d8388638e311'
@@ -14,12 +13,13 @@ mnemonics = ['absent paddle capable spell bag reflect rally there swear swallow 
              'business lyrics news image duty stone clerk salad harvest shallow follow evoke',
              'another student leg ladder jeans hello cluster type network wrist before sense']
 
-ctd = ChainTransactionDataProvider(CHAIN_API_KEY, CHAIN_API_SECRET)
+cp = ChainProvider(CHAIN_API_KEY, CHAIN_API_SECRET)
 
 # Create wallet objects
-wallets = [Two1Wallet.import_from_mnemonic(txn_data_provider=ctd,
+wallets = [Two1Wallet.import_from_mnemonic(data_provider=cp,
                                            mnemonic=m,
-                                           account_type='BIP32') for m in mnemonics]
+                                           account_type='BIP32')
+           for m in mnemonics]
 
 max_balance_index = -1
 max_balance = 0
@@ -29,13 +29,15 @@ for i, w in enumerate(wallets):
     if balance[0] > max_balance:
         max_balance = balance[0]
         max_balance_index = i
-    
+
     print("\nWallet %d:" % i)
     print("----------")
     print("Num accounts: %d" % (len(w._accounts)))
-    print("Balance %d satoshis (confirmed), %d satoshis (unconfirmed)" % (balance[0], balance[1]))
+    print("Balance %d satoshis (confirmed), %d satoshis (unconfirmed)" %
+          (balance[0], balance[1]))
     for acct in w._accounts:
-        print("Acct: %d, last_used_indices: %r" % (acct.index & 0x7fffffff, acct.last_indices))
+        print("Acct: %d, last_used_indices: %r" %
+              (acct.index & 0x7fffffff, acct.last_indices))
 
     print("Next payout address: %s" % w.get_new_payout_address())
 
@@ -58,7 +60,8 @@ for i, w in enumerate(wallets):
     address = w.current_address
     send_addresses_amounts[address] = amount
 
-    print("Sending %d satoshis to wallet %d, address %s." % (amount, i, address))
+    print("Sending %d satoshis to wallet %d, address %s." %
+          (amount, i, address))
 
 res = sending_wallet.send_to_multiple(send_addresses_amounts)
 if res:
@@ -83,7 +86,9 @@ if res:
 
         balance = w.confirmed_balance()
         if balance != expected_balances[i]:
-            print("Wallet %d balance (%d) does not match expected (%d)!!!" % (i, balance, expected_balances[i]))
-    
+            print("Wallet %d balance (%d) does not match expected (%d)!!!" %
+                  (i, balance, expected_balances[i]))
+
     # Print the update balance for the sending wallet
-    print("Updated balances for sending wallet (index: %d): %r" % (max_balance_index, sending_wallet.balances))
+    print("Updated balances for sending wallet (index: %d): %r" %
+          (max_balance_index, sending_wallet.balances))
