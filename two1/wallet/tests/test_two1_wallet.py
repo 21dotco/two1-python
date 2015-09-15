@@ -221,8 +221,6 @@ def test_rest():
         assert params['accounts'][0]['last_payout_index'] == 3
         assert params['accounts'][0]['last_change_index'] == 1
         assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
-        assert "address_cache" in params['accounts'][0]
-        assert len(params['accounts'][0]['address_cache']) > 0
 
         # Now create the wallet from the file
         with pytest.raises(exceptions.PassphraseError):
