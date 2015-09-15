@@ -1,5 +1,6 @@
 import pytest
 from two1.bitcoin.crypto import HDPublicKey
+from two1.bitcoin.txn import Transaction
 from two1.wallet.chain_txn_data_provider import ChainTransactionDataProvider
 from two1.wallet.txn_data_provider import DataProviderUnAvailable
 
@@ -51,6 +52,16 @@ def test_get_transactions():
     assert len(data) == 1
     assert len(data[address_list[0]]) == 9
 
+def test_get_transactions_by_id():
+    ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
+    txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
+             "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
+    data = ctd.get_transactions_by_id(txids)
+    assert len(data) == 2
+    for txid, txn in data.items():
+        assert txid in txids
+        assert isinstance(txn, Transaction)
+    
 def test_hd():
     ctd = ChainTransactionDataProvider(API_KEY, API_SECRET)
 

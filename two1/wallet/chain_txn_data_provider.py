@@ -31,6 +31,76 @@ class ChainTransactionDataProvider(TransactionDataProvider):
         self.server_url = 'https://api.chain.com/v2/' + chain + "/"
 
     @staticmethod
+    def txn_from_json(txn_json):
+        # {
+                # "hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
+                # "block_hash": "00000000000000001ea5471a4edc67380f114c6cad06bfd59ac6508f90e8b252",
+                # "block_height": 303404,
+                # "block_time": "2014-05-30T23:54:55Z",
+                # "chain_received_at": "2015-08-13T10:52:21.718Z",
+                # "confirmations": 69389,
+                # "lock_time": 0,
+                # "inputs": [
+                #   {
+                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
+                #     "output_hash": "b84a66c46e24fe71f9d8ab29b06df932d77bec2cc0691799fae398a8dc9069bf",
+                #     "output_index": 0,
+                #     "value": 300000,
+                #     "addresses": [
+                #       "3L7dKYQGNoZub928CJ8NC2WfrM8U8GGBjr"
+                #     ],
+                #     "script_signature": "0 3046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb5701 304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b675301 5221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
+                #     "script_signature_hex": "00493046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb570147304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b6753014c695221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
+                #     "sequence": 4294967295
+                #   }
+                # ],
+                # "outputs": [
+                #   {
+                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
+                #     "output_index": 0,
+                #     "value": 290000,
+                #     "addresses": [
+                #       "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
+                #     ],
+                #     "script": "OP_DUP OP_HASH160 c629680b8d13ca7a4b7d196360186d05658da6db OP_EQUALVERIFY OP_CHECKSIG",
+                #     "script_hex": "76a914c629680b8d13ca7a4b7d196360186d05658da6db88ac",
+                #     "script_type": "pubkeyhash",
+                #     "required_signatures": 1,
+                #     "spent": false,
+                #     "spending_transaction": null
+                #   }
+                # ],
+                # "fees": 10000,
+                # "amount": 290000
+                # },
+                # Transaction.DEFAULT_TRANSACTION_VERSION
+        inputs = []
+        outputs = []
+        addr_keys = set()
+        for i in txn_json["inputs"]:
+            # Chain doesn't return the stuff about script length etc, so
+            # we need to prepend that.
+            script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_signature_hex"])))
+            inputs.append(TransactionInput(Hash(i["output_hash"]),
+                                           i["output_index"],
+                                           script,
+                                           i["sequence"]))
+            addr_keys.add(i["addresses"][0])
+
+        for i in txn_json["outputs"]:
+            script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_hex"])))
+            outputs.append(TransactionOutput(i["value"],
+                                             script))
+            addr_keys.add(i["addresses"][0])
+
+        txn = Transaction(Transaction.DEFAULT_TRANSACTION_VERSION,
+                          inputs,
+                          outputs,
+                          txn_json["lock_time"])
+
+        return txn, addr_keys
+        
+    @staticmethod
     def _list_chunks(lst, chunk_size):
         for i in range(0, len(lst), chunk_size):
             yield lst[i:i + chunk_size]
@@ -129,78 +199,38 @@ class ChainTransactionDataProvider(TransactionDataProvider):
             if r.status_code == 200:
                 txn_data = r.json()
 
-                # {
-                # "hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                # "block_hash": "00000000000000001ea5471a4edc67380f114c6cad06bfd59ac6508f90e8b252",
-                # "block_height": 303404,
-                # "block_time": "2014-05-30T23:54:55Z",
-                # "chain_received_at": "2015-08-13T10:52:21.718Z",
-                # "confirmations": 69389,
-                # "lock_time": 0,
-                # "inputs": [
-                #   {
-                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                #     "output_hash": "b84a66c46e24fe71f9d8ab29b06df932d77bec2cc0691799fae398a8dc9069bf",
-                #     "output_index": 0,
-                #     "value": 300000,
-                #     "addresses": [
-                #       "3L7dKYQGNoZub928CJ8NC2WfrM8U8GGBjr"
-                #     ],
-                #     "script_signature": "0 3046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb5701 304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b675301 5221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
-                #     "script_signature_hex": "00493046022100de7b67b96a6855fbc81c1a4b45d98ba6fef27ddda8739c5a3e7c70039685f7db0221008972607445195847631d902f594db6d712c315e0d49a2bee98125af8e1fefb570147304402200cc13d8859247bff4ab4bc70964955fa4dbcd1a0dff0a84896be7d9a7757516202206e2c6c0aec6527ccf30305ad6e242c973aad011e9ccc18a0b75fd7be6c9b6753014c695221032071a66eaed3dbe31a982dc337108b28bcffbf88d8cac8975194e184abdb36662102134541ec8f3dc2d382646bad199526a64080a66d27d2e156906bdb822774283921020431faa475c966c752e6cf97dfbb2c68c98b0013ca5c76b860263438850c2ba053ae",
-                #     "sequence": 4294967295
-                #   }
-                # ],
-                # "outputs": [
-                #   {
-                #     "transaction_hash": "0bf0de38c26195919179f42d475beb7a6b15258c38b57236afdd60a07eddd2cc",
-                #     "output_index": 0,
-                #     "value": 290000,
-                #     "addresses": [
-                #       "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
-                #     ],
-                #     "script": "OP_DUP OP_HASH160 c629680b8d13ca7a4b7d196360186d05658da6db OP_EQUALVERIFY OP_CHECKSIG",
-                #     "script_hex": "76a914c629680b8d13ca7a4b7d196360186d05658da6db88ac",
-                #     "script_type": "pubkeyhash",
-                #     "required_signatures": 1,
-                #     "spent": false,
-                #     "spending_transaction": null
-                #   }
-                # ],
-                # "fees": 10000,
-                # "amount": 290000
-                # },
-                # Transaction.DEFAULT_TRANSACTION_VERSION
                 for data in txn_data:
-                    inputs = []
-                    outputs = []
-                    addr_keys = set()
-                    for i in data["inputs"]:
-                        # Chain doesn't return the stuff about script length etc, so
-                        # we need to prepend that.
-                        script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_signature_hex"])))
-                        inputs.append(TransactionInput(Hash(i["output_hash"]),
-                                                       i["output_index"],
-                                                       script,
-                                                       i["sequence"]))
-                        addr_keys.add(i["addresses"][0])
-
-                    for i in data["outputs"]:
-                        script, _ = Script.from_bytes(pack_var_str(bytes.fromhex(i["script_hex"])))
-                        outputs.append(TransactionOutput(i["value"],
-                                                         script))
-                        addr_keys.add(i["addresses"][0])
-
+                    txn, addr_keys = self.txn_from_json(data)
                     for addr in addr_keys:
                         if addr in addresses:
-                            ret[addr].append(Transaction(Transaction.DEFAULT_TRANSACTION_VERSION,
-                                                         inputs,
-                                                         outputs,
-                                                         data["lock_time"]))
+                            ret[addr].append(txn)
             elif r.status_code == 400:
                 raise ValueError("Invalid bitcoin address/addresses.")
         return ret
 
+    def get_transactions_by_id(self, ids):
+        """ Gets transactions by their IDs.
+
+        Args:
+            ids (list(str)): List of TXIDs to retrieve.
+
+        Returns:
+            dict: A dict keyed by TXID of Transaction objects.
+        """
+        ret = {}
+        for txid in ids:
+            r = self._request("GET", "transactions/%s/hex" % txid)
+            data = r.json()            
+            if r.status_code == 200:
+                txn, _ = Transaction.from_bytes(bytes.fromhex(data["hex"]))
+                assert str(txn.hash) == txid
+
+                ret[txid] = txn
+            elif r.status_code == 400:
+                raise ValueError(data["message"])
+
+        return ret
+    
     def get_utxo(self, address_list):
         """ Provides all unspent transactions associated with each address in
             the address_list.

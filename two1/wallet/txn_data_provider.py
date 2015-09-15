@@ -37,6 +37,17 @@ class TransactionDataProvider(object):
                objects.
         """
         raise NotImplementedError
+
+    def get_transactions_by_id(self, ids):
+        """ Gets transactions by their IDs.
+
+        Args:
+            ids (list(str)): List of TXIDs to retrieve.
+
+        Returns:
+            dict: A dict keyed by TXID of Transaction objects.
+        """
+        raise NotImplementedError
     
     def get_utxo(self, address_list):
         """ Provides all unspent transactions associated with each address in address_list.
