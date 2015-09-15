@@ -139,7 +139,7 @@ def test_rest():
 
     m.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet(params=config,
+    wallet = Two1Wallet(params_or_file=config,
                         txn_data_provider=m,
                         passphrase=passphrase)
 
@@ -226,11 +226,15 @@ def test_rest():
 
         # Now create the wallet from the file
         with pytest.raises(exceptions.PassphraseError):
-            w2 = Two1Wallet.from_file(tf.name, m, 'wrong_pass')
+            w2 = Two1Wallet(params_or_file=tf.name,
+                             txn_data_provider=m,
+                             passphrase='wrong_pass')
 
         # Now do with the correct passphrase
         m.set_txn_side_effect_for_hd_discovery()
-        w2 = Two1Wallet.from_file(tf.name, m, passphrase)
+        w2 = Two1Wallet(params_or_file=tf.name,
+                        txn_data_provider=m,
+                        passphrase=passphrase)
 
         assert len(w2.accounts) == 1
         assert not w2._testnet
@@ -238,5 +242,3 @@ def test_rest():
         acct = w2.accounts[0]
         assert acct.last_indices[0] == 3
         assert acct.last_indices[1] == 1
-        #assert acct._used_addresses[0] == ext_addrs[:4]
-        #assert acct._used_addresses[1] == int_addrs[:2]

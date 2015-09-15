@@ -303,35 +303,24 @@ class Two1Wallet(BaseWallet):
 
         return wallet
 
-    @staticmethod
-    def from_file(filename, txn_data_provider, passphrase='', utxo_selector=utxo_selector_smallest_first):
-        """ Initializes a wallet from the parameters stored in a file.
-
-            The wallet file should have been written by Two1Wallet.to_file().
-
-        Args:
-            filename (str): File to read
-            txn_data_provider (TransactionDataProvider): An instance of a derived
-               TransactionDataProvider class as described above.
-            passphrase (str): A passphrase to lock the wallet with.
-            utxo_selector (function): A filtering function with the prototype documented
-               above.
-        """
-        params = {}
-        with open(filename, 'r') as f:
-            params = json.load(f)
-
-        return Two1Wallet(params=params,
-                          txn_data_provider=txn_data_provider,
-                          passphrase=passphrase,                          
-                          utxo_selector=utxo_selector)
-
-    def __init__(self, params, txn_data_provider,
+    def __init__(self, params_or_file, txn_data_provider,
                  passphrase='',
                  utxo_selector=utxo_selector_smallest_first):
         self.txn_data_provider = txn_data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
+        self._filename = ""
+
+        params = {}
+        if isinstance(params_or_file, dict):
+            params = params_or_file
+        elif isinstance(params_or_file, str):
+            # Assume it's a filename
+            with open(params_or_file, 'r') as f:
+                params = json.load(f)
+                self._filename = params_or_file
+        else:
+            raise TypeError("params_or_file must either be a JSON-serializable dict or a file path.")
         
         for rp in self.required_params:
             if rp not in params:
@@ -570,6 +559,7 @@ class Two1Wallet(BaseWallet):
         if isinstance(file_or_filename, str):
             with open(file_or_filename, 'wb') as f:
                 f.write(d)
+            self._filename = file_or_filename
         else:
             # Assume it's file-like
             file_or_filename.write(d)
