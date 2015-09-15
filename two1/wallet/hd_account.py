@@ -1,3 +1,5 @@
+import time
+
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 
 class HDAccount(object):
@@ -31,8 +33,9 @@ class HDAccount(object):
     PAYOUT_CHAIN = 0
     CHANGE_CHAIN = 1
     GAP_LIMIT = 20
+    DISCOVERY_INCREMENT = GAP_LIMIT
 
-    def __init__(self, hd_key, name, index, txn_provider, testnet=False):
+    def __init__(self, hd_key, name, index, txn_provider, testnet=False, last_state=None):
         # Take in either public or private key for this account as we can derive
         # everything from it.
         if not isinstance(hd_key, HDKey):
@@ -44,12 +47,31 @@ class HDAccount(object):
         self.txn_provider = txn_provider
         self.testnet = testnet
 
+        self.last_indices = [-1, -1]
         self._txn_cache = {}
-        self._address_cache = { self.CHANGE_CHAIN: [], self.PAYOUT_CHAIN: [] }
+        self._address_cache = { self.CHANGE_CHAIN: {}, self.PAYOUT_CHAIN: {} }
         
+        if last_state is not None and isinstance(last_state, dict):
+            if "last_payout_index" in last_state:
+                self.last_indices[self.PAYOUT_CHAIN] = last_state["last_payout_index"]
+            if "last_change_index" in last_state:
+                self.last_indices[self.CHANGE_CHAIN] = last_state["last_change_index"]
+            if "addresses" in last_state:
+                self._address_cache = last_state["addresses"]
+            if "transactions" in last_state:
+                self._txn_cache = last_state["transactions"]
+
+        # Check to see that the address cache has up to last_indices
+        for change in [self.PAYOUT_CHAIN, self.CHANGE_CHAIN]:
+            k = sorted(list(self._address_cache[change].keys()))
+            for i in range(self.last_indices[change] + 1):
+                if i not in k or k[i] != i:
+                    self.last_indices[change] = -1
+                    break
+                
         self._chain_priv_keys = [None, None]
         self._chain_pub_keys = [None, None]
-        self.last_indices = [-1, -1]
+
         for change in [0, 1]:
             if isinstance(self.key, HDPrivateKey):
                 self._chain_priv_keys[change] = HDPrivateKey.from_parent(self.key, change)
@@ -61,32 +83,47 @@ class HDAccount(object):
     def _discover_used_addresses(self, max_index=0):
         for change in [0, 1]:
             found_last = False
-            current_last = -1
-            addr_range = 0
-            all_addresses = []
+            current_last = self.last_indices[change]
+            addr_range = current_last + 1
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
-                addresses = [self.get_address(change, i) for i in range(addr_range, addr_range + 2 * self.GAP_LIMIT)]
-                all_addresses += addresses
-                txns = self.txn_provider.get_transactions(addresses, 10000)
+                end = addr_range + self.DISCOVERY_INCREMENT
+                addresses = {}
+                addresses_to_retrieve = []
+                for i in range(addr_range, end):
+                    addresses[i] = self.get_address(change, i)
 
-                for i, addr in enumerate(addresses):
-                    global_index = addr_range + i
-                    if addr not in txns or not bool(txns[addr]):
-                        if global_index - current_last >= self.GAP_LIMIT:
+                    # Check any addresses we may have in the cache
+                    if addresses[i] not in self._txn_cache or \
+                       not self._txn_cache[addresses[i]]:
+                        addresses_to_retrieve.append(addresses[i])
+
+                txns = self.txn_provider.get_transactions(addresses_to_retrieve, 10000)
+
+                for i in sorted(addresses.keys()):
+                    addr = addresses[i]
+                    if i not in self._address_cache[change]:
+                        self._address_cache[change][i] = addr
+                    else:
+                        assert self._address_cache[change][i] == addr
+
+                    if addr not in self._txn_cache or not self._txn_cache[addr] or \
+                       addr not in txns or not bool(txns[addr]):
+                        if i - current_last >= self.GAP_LIMIT:
                             found_last = True
                             break                        
 
-                    if bool(txns[addr]):
-                        # Do we want to cache transactions?
-                        self._txn_cache[addr] = txns[addr]
-                        current_last = global_index
+                    if addr in self._txn_cache and self._txn_cache[addr]:
+                        current_last = i
+                    elif bool(txns[addr]):
+                        # For now we keep only txn hashes around. Revisit later.
+                        self._txn_cache[addr] = [str(t.hash) for t in txns[addr]]
+                        current_last = i
 
-                addr_range += 2 * self.GAP_LIMIT
+                addr_range += self.DISCOVERY_INCREMENT
 
-            self._address_cache[change] += all_addresses
             self.last_indices[change] = current_last
-                
+
     def has_txns(self):
         """ Returns whether or not there are any discovered transactions
             associated with any address in the account.
@@ -111,8 +148,7 @@ class HDAccount(object):
         found = {}
         for change in [0, 1]:
             for i in range(self.last_indices[change] + self.GAP_LIMIT + 1):
-                # Save the key generation step for indices we already know about.
-                addr = self._address_cache[change][i] if i <= self.last_indices[change] else self.get_address(change, i)
+                addr = self.get_address(change, i)
                     
                 if addr in addresses:
                     found[addr] = (self.index, change, i)
@@ -136,8 +172,14 @@ class HDAccount(object):
         k = self._chain_pub_keys[c]
         if n < 0:
             self.last_indices[c] += 1
-            pub_key = HDPublicKey.from_parent(k, self.last_indices[c])
-            self._address_cache[c].append(pub_key.address(True, self.testnet))
+            i = self.last_indices[c]
+            pub_key = HDPublicKey.from_parent(k, i)
+            addr = pub_key.address(True, self.testnet)
+            if i not in self._address_cache[c]:
+                self._address_cache[c][i] = addr
+            else:
+                # Make sure it's the same
+                assert self._address_cache[c][i] == addr
         else:
             pub_key = HDPublicKey.from_parent(k, n)
         
@@ -225,7 +267,7 @@ class HDAccount(object):
     def transaction_cache(self):
         """ Returns the transaction cache
         """
-        return {a: [str(t.hash) for t in txns] for a, txns in self._txn_cache.items()}
+        return self._txn_cache
         
     def to_dict(self):
         """ Returns a JSON-serializable dict to save account data
@@ -266,9 +308,13 @@ class HDAccount(object):
         Returns:
             list(str): list of all used addresses (Base58Check encoded)
         """
-        return self._address_cache[self.PAYOUT_CHAIN][:self.last_indices[self.PAYOUT_CHAIN] + 1] + \
-            self._address_cache[self.CHANGE_CHAIN][:self.last_indices[self.CHANGE_CHAIN] + 1]
+        all_addresses = []
+        for change in [self.PAYOUT_CHAIN, self.CHANGE_CHAIN]:
+            last = self.last_indices[change]
+            all_addresses += [v for k, v in self._address_cache[change].items() if k <= last]
 
+        return all_addresses
+    
     @property
     def current_change_address(self):
         """ Returns the current change address

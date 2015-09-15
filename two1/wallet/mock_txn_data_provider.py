@@ -35,8 +35,8 @@ class MockTransactionDataProvider(TransactionDataProvider):
     methods = ['get_balance', 'get_transactions', 'get_utxo',
                'get_balance_hd', 'get_transactions_hd', 'get_utxo_hd',
                'send_transaction']
-    address_increment = 2 * HDAccount.GAP_LIMIT
-    max_address = 2 * address_increment
+    address_increment = HDAccount.DISCOVERY_INCREMENT
+    max_address = 8 * address_increment
     max_accounts = 10
     
     def __init__(self, hd_account_type, hd_master_key, non_hd_addr_list=[]):
@@ -139,8 +139,8 @@ class MockTransactionDataProvider(TransactionDataProvider):
         dummy_txn = Transaction(1, [], [], 0)
 
         # For each used account, there are at least 2 calls required:
-        # 1 for the first 2*GAP_LIMIT payout addresses and 1 for the first
-        # 2*GAP_LIMIT change addresses. Depending on the number of used
+        # 1 for the first DISCOVERY_INCREMENT payout addresses and 1 for the first
+        # DISCOVERY_INCREMENT change addresses. Depending on the number of used
         # addresses for the account, this will change.
         
         effects = []
@@ -152,7 +152,7 @@ class MockTransactionDataProvider(TransactionDataProvider):
         for acct_num in range(n):
             for change in [0, 1]:
                 num_used = self._num_used_addresses[acct_num][change]
-                r = math.ceil(num_used / self.address_increment)
+                r = math.ceil((num_used + HDAccount.GAP_LIMIT) / self.address_increment)
                 addr_list = self._acct_keys[acct_num]['change_addresses' if change else 'payout_addresses']
 
                 if r == 0:
