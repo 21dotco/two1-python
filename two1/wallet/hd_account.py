@@ -98,6 +98,7 @@ class HDAccount(object):
                        not self._txn_cache[addresses[i]]:
                         addresses_to_retrieve.append(addresses[i])
 
+                print("Querying the following addresses: %r" % addresses_to_retrieve)
                 txns = self.txn_provider.get_transactions(addresses_to_retrieve, 10000)
 
                 for i in sorted(addresses.keys()):
