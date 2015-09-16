@@ -251,7 +251,7 @@ class Two1Wallet(BaseWallet):
             mkey = master_key_b58
             mseed = mnemonic
 
-        adder = " (and your passphrase)" if passphrase else " "
+        adder = " (and your passphrase) " if passphrase else " "
         print("Your wallet can be recovered using the following set of words (in that order).")
         print("Please store them%ssafely." % adder)
         print("\n%s\n" % mnemonic)
