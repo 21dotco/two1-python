@@ -150,7 +150,7 @@ class Two1Wallet(BaseWallet):
                 return False
 
         dp = Two1Wallet.instantiate_data_provider(data_provider_name=config_options['data_provider'],
-                                                   data_provider_params=config_options['data_provider_params'])
+                                                  data_provider_params=config_options['data_provider_params'])
 
         passphrase = config_options.get("passphrase", "")
         testnet = config_options.get("testnet", False)
@@ -230,7 +230,7 @@ class Two1Wallet(BaseWallet):
                 for testnet.
 
         Returns:
-            Two1Wallet: The wallet instance.
+            tuple(Two1Wallet, mnemonic): The wallet instance and the mnemonic
         """
         # Create:
         # 1. master key seed + mnemonic
@@ -250,6 +250,11 @@ class Two1Wallet(BaseWallet):
         else:
             mkey = master_key_b58
             mseed = mnemonic
+
+        adder = " (and your passphrase)" if passphrase else " "
+        print("Your wallet can be recovered using the following set of words (in that order).")
+        print("Please store them%ssafely." % adder)
+        print("\n%s\n" % mnemonic)
 
         config = {"master_key": mkey,
                   "master_seed": mseed,
