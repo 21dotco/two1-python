@@ -1,12 +1,14 @@
 import click
 import getpass
 
+from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet.account_types import account_types
 from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet.two1_wallet import Two1Wallet
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key', 'chain_api_secret']}
 
 
 def get_passphrase():
@@ -18,8 +20,14 @@ def validate_data_provider(ctx, param, value):
     data_provider_params = {}
     if ctx.obj is None:
         ctx.obj = {}
+
     if value == 'chain':
         required = ['chain_api_key_id', 'chain_api_key_secret']
+
+    if value not in REQUIRED_DATA_PROVIDER_PARAMS:
+        ctx.fail("Unknown data provider %s" % value)
+
+    required = REQUIRED_DATA_PROVIDER_PARAMS[value]
 
     fail = False
     for r in required:
@@ -33,6 +41,7 @@ def validate_data_provider(ctx, param, value):
     if fail:
         ctx.fail("One or more required arguments are missing.")
 
+    dp = None
     if value == 'chain':
         key = ctx.params['chain_api_key_id']
         secret = ctx.params['chain_api_key_secret']
@@ -42,8 +51,9 @@ def validate_data_provider(ctx, param, value):
            not key.isalnum() or not secret.isalnum():
             ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
 
-    ctx.obj['data_provider'] = value
-    ctx.obj['data_provider_params'] = data_provider_params
+        dp = ChainProvider(api_key=key, api_secret=secret)
+
+    ctx.obj['data_provider'] = dp
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -87,10 +97,8 @@ def main(ctx, wallet_path, passphrase,
         p = get_passphrase() if passphrase else ''
 
         # instantiate a wallet object here and pass it into the context
-        dp = Two1Wallet.instantiate_data_provider(data_provider_name=ctx.obj['data_provider'],
-                                                  data_provider_params=ctx.obj['data_provider_params'])
         ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
-                                       data_provider=dp,
+                                       data_provider=ctx.obj['data_provider'],
                                        passphrase=p)
         ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
@@ -126,7 +134,6 @@ def create(ctx, account_type, testnet):
     options = {"account_type": account_type,
                "passphrase": passphrase,
                "data_provider": ctx.obj['data_provider'],
-               "data_provider_params": ctx.obj['data_provider_params'],
                "testnet": testnet,
                "wallet_path": ctx.obj['wallet_path']}
 

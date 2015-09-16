@@ -12,6 +12,7 @@ from two1.bitcoin.txn import Transaction
 from two1.bitcoin.txn import TransactionInput
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin import utils
+from two1.blockchain.base_provider import BaseProvider
 from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet import exceptions
 from two1.wallet.account_types import account_types
@@ -87,8 +88,7 @@ class Two1Wallet(BaseWallet):
     """
     config_options = {"account_type": account_types.keys(),
                       "passphrase": "",
-                      "data_provider": ['chain'],
-                      "data_provider_params": {},
+                      "data_provider": BaseProvider,
                       "testnet": [True, False],
                       "wallet_path": ""}
 
@@ -129,10 +129,7 @@ class Two1Wallet(BaseWallet):
         Args:
             config_options (dict): A dict of config options, the keys
                 and allowed values of each key are found in the class
-                variable of the same name. When 'chain' is specified as
-                the value for 'data_provider', a second key
-                'data_provider_params' must be supplied with a dict
-                containing the 'api_key_id' and 'api_key_secret'.
+                variable of the same name.
 
         Returns:
             bool: True if the wallet was created and written to disk,
@@ -149,29 +146,26 @@ class Two1Wallet(BaseWallet):
                       wallet_path)
                 return False
 
-        dp = Two1Wallet.instantiate_data_provider(data_provider_name=config_options['data_provider'],
-                                                  data_provider_params=config_options['data_provider_params'])
+        dp = config_options.get('data_provider', None)
+        account_type = config_options.get('account_type', Two1Wallet.DEFAULT_ACCOUNT_TYPE)
+        passphrase = config_options.get('passphrase', "")
+        testnet = config_options.get('testnet', False)
 
-        passphrase = config_options.get("passphrase", "")
-        testnet = config_options.get("testnet", False)
-        wallet = Two1Wallet.create(data_provider=dp,
-                                   passphrase=passphrase,
-                                   account_type=config_options['account_type'],
-                                   testnet=testnet)
-
-        wallet.discover_accounts()
-        wallet.to_file(wallet_path)
-
-        return os.path.exists(wallet_path)
-
-    @staticmethod
-    def instantiate_data_provider(data_provider_name, data_provider_params):
-        # Create the default txn data provider
-        if data_provider_name == 'chain':
-            return ChainProvider(api_key_id=data_provider_params['chain_api_key_id'],
-                                 api_key_secret=data_provider_params['chain_api_key_secret'])
+        rv = None
+        if dp is None or not isinstance(dp, BaseProvider):
+            rv = False
         else:
-            raise exceptions.UnknownDataProviderError()
+            wallet = Two1Wallet.create(data_provider=dp,
+                                       passphrase=passphrase,
+                                       account_type=account_type,
+                                       testnet=testnet)
+
+            wallet.discover_accounts()
+            wallet.to_file(wallet_path)
+
+            rv = os.path.exists(wallet_path)
+
+        return rv
 
     @staticmethod
     def _encrypt_str(s, key):
