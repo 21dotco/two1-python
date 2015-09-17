@@ -166,7 +166,7 @@ class ChainProvider(BaseProvider):
             Bitcoin addresses.
 
         Returns:
-            dict: A dict keyed by address with each value being a tuple
+            dict: A dict keyed by address with each value being a dict
             containing the confirmed and total balances.
         """
         ret = {}
@@ -191,8 +191,8 @@ class ChainProvider(BaseProvider):
             # }
 
             for d in data:
-                ret[d["address"]] = (d["confirmed"]["balance"],
-                                     d["total"]["balance"])
+                ret[d["address"]] = {"confirmed": d["confirmed"]["balance"],
+                                     "total": d["total"]["balance"]}
 
         return ret
 

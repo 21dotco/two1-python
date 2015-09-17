@@ -18,7 +18,8 @@ def test_get_balance():
     assert len(data) == 1
     assert list(data.keys())[0] == address_list[0]
     # test satoshi's address. If the following fails, Satoshi has moved coins
-    assert data[address_list[0]] == (5000000000, 5000000000)
+    assert data[address_list[0]] == {'confirmed': 5000000000,
+                                     'total': 5000000000}
 
     # empty addresslist
     data = cp.get_balance([])
@@ -71,11 +72,11 @@ def test_hd():
     # Only has 1 key used, but give it 10, just to make sure
     balances = cp.get_balance_hd(acct_pub_key, 10, 10)
 
-    assert balances[used_address] == (716871, 716871)
+    assert balances[used_address] == {'confirmed': 716871, 'total': 716871}
 
     for addr, balance in balances.items():
         if addr != used_address:
-            assert balance == (0, 0)
+            assert balance == {'confirmed': 0, 'total': 0}
 
     # Get txns
     txns = cp.get_transactions_hd(acct_pub_key, 10, 10)

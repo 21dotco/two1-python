@@ -26,15 +26,15 @@ max_balance = 0
 for i, w in enumerate(wallets):
     balance = w.balances
 
-    if balance[0] > max_balance:
-        max_balance = balance[0]
+    if balance['confirmed'] > max_balance:
+        max_balance = balance['confirmed']
         max_balance_index = i
 
     print("\nWallet %d:" % i)
     print("----------")
     print("Num accounts: %d" % (len(w._accounts)))
-    print("Balance %d satoshis (confirmed), %d satoshis (unconfirmed)" %
-          (balance[0], balance[1]))
+    print("Balance %d satoshis (confirmed), %d satoshis (total)" %
+          (balance['confirmed'], balance['total']))
     for acct in w._accounts:
         print("Acct: %d, last_used_indices: %r" %
               (acct.index & 0x7fffffff, acct.last_indices))

@@ -863,15 +863,17 @@ class Two1Wallet(BaseWallet):
         """ Balance for the wallet.
 
         Returns:
-            tuple: First element is confirmed balance, second is unconfirmed.
+            dict: keys are 'confirmed' and 'total' with values being in
+                satoshis. The 'total' balance includes any unconfirmed
+                transactions.
         """
-        balances = [0, 0]
+        balances = {'confirmed': 0, 'total': 0}
         for acct in self._accounts:
             acct_balance = acct.balance
-            balances[0] += acct_balance[0]
-            balances[1] += acct_balance[1]
+            balances['confirmed'] += acct_balance['confirmed']
+            balances['total'] += acct_balance['total']
 
-        return tuple(balances)
+        return balances
 
     def confirmed_balance(self):
         """ Gets the current confirmed balance of the wallet in Satoshi.
@@ -879,7 +881,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             number: The current confirmed balance.
         """
-        return self.balances[0]
+        return self.balances['confirmed']
 
     def unconfirmed_balance(self):
         """ Gets the current total balance of the wallet in Satoshi,
@@ -888,7 +890,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             number: The current unconfirmed balance.
         """
-        return self.balances[1]
+        return self.balances['total']
 
     @property
     def accounts(self):
