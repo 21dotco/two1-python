@@ -16,7 +16,7 @@ class EmailAddress(click.ParamType):
 
     def convert(self, value, param, ctx):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
-            self.fail(UxString.Error.invalid_email)
+            self.fail(UxString.invalid_email)
         return value
 
 
@@ -100,7 +100,7 @@ def create_username(config, username=None):
 
     while True:
         if username == "" or username is None:
-            username = click.prompt(UxString.enter_username, type=EmailAddress())
+            username = click.prompt(UxString.enter_username, type=click.STRING)
             click.echo(UxString.creating_account % username)
         r = rest_client.account_post(username, bitcoin_payout_address)
         if r.status_code == 200:

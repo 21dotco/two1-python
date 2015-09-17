@@ -5,7 +5,7 @@ class UxString:
 
     account_failed = "Failed to create 21.co account."
     username_exists = "User %s already exists."
-    enter_username = "Enter your email address to create an account"
+    enter_username = "Choose username for your account"
     enter_username_retry = "Create a new username and retry."
     # wallet
     create_wallet = "You do not have a Bitcoin wallet configured."\
@@ -20,9 +20,8 @@ class UxString:
         # 500 unknown error
         server_err = "Error: You have experienced a Technical Error. "\
             "We are working to correct this issue."
-        # User related
         non_existing_user = "Error: Username %s does not exist"
-        invalid_email = "Invalid email address."
+
         # wallet errors
         electrum_missing = "Error: Could not find ElectrumWallet application."
         electrum_daemon = "Error: Could not start electrum daemon."

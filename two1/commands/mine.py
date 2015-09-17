@@ -28,7 +28,7 @@ def mine(config):
     # detect if hat is present
     try:
         with open("/proc/device-tree/hat/product", "r") as f:
-            bitcoinkit_present = f.read().startswith('21 Bitcoin Kit')
+            bitcoinkit_present = f.read().startswith('21 Bitcoin')
     except FileNotFoundError:
         bitcoinkit_present = False
 
