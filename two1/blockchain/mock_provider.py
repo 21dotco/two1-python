@@ -124,8 +124,10 @@ class MockProvider(BaseProvider):
             payout_addresses = self._acct_keys[i]['payout_addresses'][:self._num_used_addresses[i][0]]
             change_addresses = self._acct_keys[i]['change_addresses'][:self._num_used_addresses[i][1]]
 
-            d.update({a: (0, 10000) for a in change_addresses})
-            d.update({a: (100000, 0) for a in payout_addresses})
+            cd = {'confirmed': 0, 'total': 10000}
+            pd = {'confirmed': 100000, 'total': 100000}
+            d.update({a: cd for a in change_addresses})
+            d.update({a: pd for a in payout_addresses})
 
         self.get_balance_hd = MagicMock(return_value=d)
 

@@ -23,12 +23,12 @@ def test_init():
         HDAccount(master_key_passphrase, "default", 0, mock_provider)
 
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
-                         [(0, 0, (0, 0)),
-                          (1, 0, (100000, 0)),
-                          (1, 2, (100000, 20000)),
-                          (41, 2, (4100000, 20000)),
-                          (41, 45, (4100000, 450000)),
-                          (55, 60, (5500000, 600000))])
+                         [(0, 0, {'confirmed': 0, 'total': 0}),
+                          (1, 0, {'confirmed': 100000, 'total': 100000}),
+                          (1, 2, {'confirmed': 100000, 'total': 120000}),
+                          (41, 2, {'confirmed': 4100000, 'total': 4120000}),
+                          (41, 45, {'confirmed': 4100000, 'total': 4550000}),
+                          (55, 60, {'confirmed': 5500000, 'total': 6100000})])
 def test_all(num_used_payout_addresses, num_used_change_addresses, expected_balance):
     m = mock_provider
     m.reset_mocks()

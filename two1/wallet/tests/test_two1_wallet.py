@@ -181,7 +181,7 @@ def test_rest():
     assert wallet.get_account_name(0) == "default"
 
     # Check the balance
-    assert wallet.balances == (100000, 20000)
+    assert wallet.balances == {'confirmed': 100000, 'total': 120000}
 
     # Check that we can get a new payout address
     for i in range(3):
@@ -194,11 +194,11 @@ def test_rest():
 
     # Check the balance again - should be the same
     m.set_num_used_addresses(0, 1, 0)
-    assert wallet.balances == (100000, 20000)
+    assert wallet.balances == {'confirmed': 100000, 'total': 120000}
 
     # Check it after updating the mock
     m.set_num_used_addresses(0, 4, 0)
-    assert wallet.balances == (400000, 20000)
+    assert wallet.balances == {'confirmed': 400000, 'total': 420000}
 
     # Finally check storing to a file
     params = {}

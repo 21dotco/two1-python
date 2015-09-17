@@ -22,8 +22,7 @@ class BaseProvider(object):
 
         Returns:
             dict: A dict keyed by address with each value being a
-               tuple containing the confirmed and unconfirmed
-               balances.
+                dict containing the confirmed and total balances.
         """
         raise NotImplementedError
 
@@ -84,8 +83,7 @@ class BaseProvider(object):
 
         Returns:
             dict: A dict keyed by address with each value being a
-                tuple containing the confirmed and unconfirmed
-                balances.
+                dict containing the confirmed and total balances.
         """
         raise NotImplementedError
 

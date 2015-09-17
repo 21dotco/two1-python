@@ -318,12 +318,12 @@ class HDAccount(object):
                                                             last_payout_index=self.last_indices[self.PAYOUT_CHAIN],
                                                             last_change_index=self.last_indices[self.CHANGE_CHAIN])
 
-        balance = [0, 0]  # (confirmed, unconfirmed)
+        balance = {'confirmed': 0, 'total': 0}
         for k, v in address_balances.items():
-            balance[0] += v[0]
-            balance[1] += v[1]
+            balance['confirmed'] += v['confirmed']
+            balance['total'] += v['total']
 
-        return tuple(balance)
+        return balance
 
     @property
     def all_used_addresses(self):
