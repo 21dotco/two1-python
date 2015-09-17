@@ -49,15 +49,20 @@ def test_hdkeys(vector):
     seed = vector[0]
     checks = vector[1]
 
+    pub_key = None
     for i in range(len(checks)):
         index = checks[i][0]
 
+        der_pub_key = None
         if index == 'master':
             priv_key = crypto.HDPrivateKey.master_key_from_seed(seed)
-            der_pub_key = None
         else:
             priv_key = crypto.HDPrivateKey.from_parent(priv_key, index)
-            der_pub_key = crypto.HDPublicKey.from_parent(pub_key, index)
+            if index & 0x80000000:
+                with pytest.raises(ValueError):
+                    der_pub_key = crypto.HDPublicKey.from_parent(pub_key, index)
+            else:
+                der_pub_key = crypto.HDPublicKey.from_parent(pub_key, index)
 
         pub_key = priv_key.public_key
 
