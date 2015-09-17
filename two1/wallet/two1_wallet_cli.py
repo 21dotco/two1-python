@@ -48,7 +48,7 @@ def validate_data_provider(ctx, param, value):
            not key.isalnum() or not secret.isalnum():
             ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
 
-        dp = ChainProvider(api_key=key, api_secret=secret)
+        dp = ChainProvider(api_key_id=key, api_key_secret=secret)
 
     ctx.obj['data_provider'] = dp
 
