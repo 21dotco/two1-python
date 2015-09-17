@@ -559,7 +559,7 @@ class Two1Wallet(BaseWallet):
 
         return None
 
-    def get_utxo(self, accounts=[]):
+    def get_utxos(self, accounts=[]):
         """ Returns all UTXOs for all addresses in all specified accounts.
 
         Args:
@@ -573,7 +573,7 @@ class Two1Wallet(BaseWallet):
         """
         utxos = {}
         for acct in self._check_and_get_accounts(accounts):
-            utxos.update(acct.get_utxo())
+            utxos.update(acct.get_utxos())
 
         return utxos
 
@@ -742,7 +742,7 @@ class Two1Wallet(BaseWallet):
 
         # Now get the unspents from all accounts and select which we
         # want to use
-        utxos_by_addr = self.get_utxo(accts)
+        utxos_by_addr = self.get_utxos(accts)
 
         selected_utxos, fees = self.utxo_selector(data_provider=self.data_provider,
                                                   utxos_by_addr=utxos_by_addr,

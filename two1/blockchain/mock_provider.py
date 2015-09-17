@@ -34,8 +34,8 @@ class MockTxnDict(dict):
 
 
 class MockProvider(BaseProvider):
-    methods = ['get_balance', 'get_transactions', 'get_utxo',
-               'get_balance_hd', 'get_transactions_hd', 'get_utxo_hd',
+    methods = ['get_balance', 'get_transactions', 'get_utxos',
+               'get_balance_hd', 'get_transactions_hd', 'get_utxos_hd',
                'send_transaction']
     address_increment = HDAccount.DISCOVERY_INCREMENT
     max_address = 8 * address_increment
