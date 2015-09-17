@@ -901,6 +901,9 @@ class HDKey(object):
             HDPrivateKey or HDPublicKey: Either an HD private or public key object, depending
                on what was serialized.
         """
+        if len(b) < 78:
+            raise ValueError("b must be at least 78 bytes long.")
+        
         version = int.from_bytes(b[:4], 'big')
         depth = b[4]
         parent_fingerprint = b[5:9]
@@ -910,7 +913,9 @@ class HDKey(object):
 
         rv = None
         if version == HDPrivateKey.MAINNET_VERSION or version == HDPrivateKey.TESTNET_VERSION:
-            assert key_bytes[0] == 0
+            if key_bytes[0] != 0:
+                raise ValueError("First byte of private key must be 0x00!")
+
             private_key = int.from_bytes(key_bytes[1:], 'big')
             rv = HDPrivateKey(key=private_key,
                               chain_code=chain_code,
@@ -918,7 +923,9 @@ class HDKey(object):
                               depth=depth,
                               parent_fingerprint=parent_fingerprint)
         elif version == HDPublicKey.MAINNET_VERSION or version == HDPublicKey.TESTNET_VERSION:
-            assert key_bytes[0] == 0x02 or key_bytes[0] == 0x03
+            if key_bytes[0] != 0x02 and key_bytes[0] != 0x03:
+                raise ValueError("First byte of public key must be 0x02 or 0x03!")
+
             public_key = PublicKey.from_bytes(key_bytes)
             rv = HDPublicKey(x=public_key.point.x,
                              y=public_key.point.y,
@@ -947,8 +954,7 @@ class HDKey(object):
         for i in p:
             if isinstance(i, str):
                 hardened = i[-1] == "'"
-                base = 16 if i.startswith("0x") else 10
-                index = int(i[:-1], base) | 0x80000000 if hardened else int(i, base)
+                index = int(i[:-1], 0) | 0x80000000 if hardened else int(i, 0)
             else:
                 index = i
             k = keys[-1]
@@ -1139,8 +1145,8 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
             raise ValueError("strength must be a multiple of 32")
         if strength < 128 or strength > 256:
             raise ValueError("strength should be >= 128 and <= 256")
-        entropy = rand_bytes(strength // 8, True)
-        m = Mnemonic('english')
+        entropy = rand_bytes(strength // 8)
+        m = Mnemonic(language='english')
         n = m.to_mnemonic(entropy)
         return HDPrivateKey.master_key_from_seed(Mnemonic.to_seed(n, passphrase)), n
     
@@ -1332,9 +1338,7 @@ class HDPublicKey(HDKey, PublicKeyBase):
             return HDPrivateKey.from_parent(parent_key, i).public_key
         elif isinstance(parent_key, HDPublicKey):
             if i & 0x80000000:
-                # Can't generate a hardened child public key from
-                # a parent public key.
-                return None
+                raise ValueError("Can't generate a hardened child key from a parent public key.")
             else:
                 I = hmac.new(parent_key.chain_code,
                              parent_key.compressed_bytes + i.to_bytes(length=4, byteorder='big'),
@@ -1358,12 +1362,6 @@ class HDPublicKey(HDKey, PublicKeyBase):
                                    parent_fingerprint=parent_key.fingerprint)
         else:
             raise TypeError("parent_key must be either a HDPrivateKey or HDPublicKey object")
-
-    @staticmethod
-    def from_path(root_key, path):
-        """
-        """
-        
 
     def __init__(self, x, y, chain_code, index, depth, parent_fingerprint=b'\x00\x00\x00\x00'):
         key = PublicKey(x, y)
