@@ -14,7 +14,7 @@ import os
 
 MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000
 
-def rand_bytes(n, secure=False):
+def rand_bytes(n, secure=True):
     """ Returns n random bytes.
 
     Args:
