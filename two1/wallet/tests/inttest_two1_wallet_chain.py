@@ -4,8 +4,8 @@ import time
 from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet.two1_wallet import Two1Wallet
 
-CHAIN_API_KEY = 'a96f8c3c18abe407757713a09614ba0b'
-CHAIN_API_SECRET = 'a13421f9347421e88c17d8388638e311'
+CHAIN_API_KEY_ID = 'a96f8c3c18abe407757713a09614ba0b'
+CHAIN_API_KEY_SECRET = 'a13421f9347421e88c17d8388638e311'
 
 mnemonics = ['absent paddle capable spell bag reflect rally there swear swallow cook rubber',
              'stairs art mirror spoon clap talk exclude tuna absurd exact grape relief',
@@ -13,7 +13,7 @@ mnemonics = ['absent paddle capable spell bag reflect rally there swear swallow 
              'business lyrics news image duty stone clerk salad harvest shallow follow evoke',
              'another student leg ladder jeans hello cluster type network wrist before sense']
 
-cp = ChainProvider(CHAIN_API_KEY, CHAIN_API_SECRET)
+cp = ChainProvider(CHAIN_API_KEY_ID, CHAIN_API_KEY_SECRET)
 
 # Create wallet objects
 wallets = [Two1Wallet.import_from_mnemonic(data_provider=cp,

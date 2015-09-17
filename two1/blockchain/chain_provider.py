@@ -18,14 +18,14 @@ class ChainProvider(BaseProvider):
     """ Transaction data provider using the chain API
 
         Args:
-            api_key (str): chain.com API key
-            api_secret (str): chain.com API secret
+            api_key_id (str): chain.com API key
+            api_key_secret (str): chain.com API secret
             chain (str, optional): 'bitcoin' for mainnet (default).
             'testnet3' for testnet
     """
 
-    def __init__(self, api_key, api_secret, chain="bitcoin"):
-        self.auth = (api_key, api_secret)
+    def __init__(self, api_key_id, api_key_secret, chain="bitcoin"):
+        self.auth = (api_key_id, api_key_secret)
         self.server_url = 'https://api.chain.com/v2/' + chain + "/"
 
     @staticmethod
