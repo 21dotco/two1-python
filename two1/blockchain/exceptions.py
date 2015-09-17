@@ -1,4 +1,4 @@
-class DataProviderUnAvailable(Exception):
+class DataProviderUnavailableError(Exception):
     pass
 
 

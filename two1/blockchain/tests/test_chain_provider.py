@@ -2,7 +2,7 @@ import pytest
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
 from two1.blockchain.chain_provider import ChainProvider
-from two1.blockchain.exceptions import DataProviderUnAvailable
+from two1.blockchain.exceptions import DataProviderUnavailableError
 from two1.blockchain.exceptions import DataProviderError
 
 
@@ -28,7 +28,7 @@ def test_get_balance():
         data = cp.get_balance(["garbage"])
     # simulate server failure
     cp.server_url = "https://askdfjldsfjlk1j3ouhfsbjdafsjfhu.com"
-    with pytest.raises(DataProviderUnAvailable):
+    with pytest.raises(DataProviderUnavailableError):
         data = cp.get_balance(address_list)
 
 def test_utxo():
