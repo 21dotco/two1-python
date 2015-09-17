@@ -132,7 +132,7 @@ class Two1Wallet(BaseWallet):
                 variable of the same name. When 'chain' is specified as
                 the value for 'data_provider', a second key
                 'data_provider_params' must be supplied with a dict
-                containing the 'api_key' and 'api_secret'.
+                containing the 'api_key_id' and 'api_key_secret'.
 
         Returns:
             bool: True if the wallet was created and written to disk,
@@ -168,8 +168,8 @@ class Two1Wallet(BaseWallet):
     def instantiate_data_provider(data_provider_name, data_provider_params):
         # Create the default txn data provider
         if data_provider_name == 'chain':
-            return ChainProvider(api_key=data_provider_params['chain_api_key'],
-                                 api_secret=data_provider_params['chain_api_secret'])
+            return ChainProvider(api_key_id=data_provider_params['chain_api_key_id'],
+                                 api_key_secret=data_provider_params['chain_api_key_secret'])
         else:
             raise exceptions.UnknownDataProviderError()
 

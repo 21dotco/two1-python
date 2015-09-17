@@ -19,7 +19,7 @@ def validate_data_provider(ctx, param, value):
     if ctx.obj is None:
         ctx.obj = {}
     if value == 'chain':
-        required = ['chain_api_key', 'chain_api_secret']
+        required = ['chain_api_key_id', 'chain_api_key_secret']
 
     fail = False
     for r in required:
@@ -34,13 +34,13 @@ def validate_data_provider(ctx, param, value):
         ctx.fail("One or more required arguments are missing.")
 
     if value == 'chain':
-        key = ctx.params['chain_api_key']
-        secret = ctx.params['chain_api_secret']
+        key = ctx.params['chain_api_key_id']
+        secret = ctx.params['chain_api_key_secret']
 
         # validate key and secret for chain data provider
         if len(key) != 32 or len(secret) != 32 or \
            not key.isalnum() or not secret.isalnum():
-            ctx.fail("Invalid chain_api_key or chain_api_secret")
+            ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
 
     ctx.obj['data_provider'] = value
     ctx.obj['data_provider_params'] = data_provider_params
@@ -61,20 +61,20 @@ def validate_data_provider(ctx, param, value):
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
-@click.option('--chain-api-key', '-ck',
+@click.option('--chain-api-key-id', '-ck',
               metavar='STRING',
-              envvar='CHAIN_API_KEY',
+              envvar='CHAIN_API_KEY_ID',
               is_eager=True,
               help='Chain API Key (only if -b chain)')
-@click.option('--chain-api-secret', '-cs',
+@click.option('--chain-api-key-secret', '-cs',
               metavar='STRING',
-              envvar='CHAIN_API_SECRET',
+              envvar='CHAIN_API_KEY_SECRET',
               is_eager=True,
               help='Chain API Secret (only if -b chain)')
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
-         blockchain_data_provider, chain_api_key, chain_api_secret):
+         blockchain_data_provider, chain_api_key_id, chain_api_key_secret):
     """ Command-line Interface for the Two1 Wallet
     """
     if ctx.obj is None:

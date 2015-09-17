@@ -7,18 +7,18 @@ from two1.blockchain.exceptions import DataProviderUnavailableError
 from two1.blockchain.exceptions import DataProviderError
 
 
-API_KEY = os.environ.get("CHAIN_API_KEY", None)
-API_SECRET = os.environ.get("CHAIN_API_SECRET", None)
-chain_key_present = pytest.mark.skipif(API_KEY is None or
-                                        API_SECRET is None,
-                                       reason="Chain key not available in env")
+API_KEY_ID = os.environ.get("CHAIN_API_KEY_ID", None)
+API_KEY_SECRET = os.environ.get("CHAIN_API_KEY_SECRET", None)
+chain_key_present = pytest.mark.skipif(API_KEY_ID is None or API_KEY_SECRET is None,
+                                       reason="CHAIN_API_KEY_ID or CHAIN_API_KEY_SECRET\
+                                       is not available in env")
 
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 
 @chain_key_present
 def test_get_balance():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
     address_list = ["17x23dNjXJLzGMev6R63uyRhMWP1VHawKc"]
     data = cp.get_balance(address_list)
     assert len(data) == 1
@@ -41,7 +41,7 @@ def test_get_balance():
 
 @chain_key_present
 def test_utxo():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
     data = cp.get_utxos(address_list)
     assert len(data) == 1
@@ -58,7 +58,7 @@ def test_utxo():
 
 @chain_key_present
 def test_get_transactions():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
     data = cp.get_transactions(address_list)
     assert len(data) == 1
@@ -67,7 +67,7 @@ def test_get_transactions():
 
 @chain_key_present
 def test_get_transactions_by_id():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
     txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
              "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
     data = cp.get_transactions_by_id(txids)
@@ -79,7 +79,7 @@ def test_get_transactions_by_id():
 
 @chain_key_present
 def test_hd():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 
     used_address = '1K3m1EwuxMCUTsS3wN2k7sXYHzABCVJSug'
     
