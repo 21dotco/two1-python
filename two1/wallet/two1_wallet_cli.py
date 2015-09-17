@@ -8,7 +8,7 @@ from two1.wallet.two1_wallet import Two1Wallet
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key', 'chain_api_secret']}
+REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret']}
 
 
 def get_passphrase():
@@ -20,9 +20,6 @@ def validate_data_provider(ctx, param, value):
     data_provider_params = {}
     if ctx.obj is None:
         ctx.obj = {}
-
-    if value == 'chain':
-        required = ['chain_api_key_id', 'chain_api_key_secret']
 
     if value not in REQUIRED_DATA_PROVIDER_PARAMS:
         ctx.fail("Unknown data provider %s" % value)
