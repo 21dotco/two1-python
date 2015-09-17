@@ -3,6 +3,7 @@ import requests
 import click
 import os
 import re
+from two1.blockchain.chain_provider import ChainProvider
 from two1.config import TWO1_HOST
 from two1.lib.machine_auth import MachineAuth
 from two1.lib.rest_client import TwentyOneRestClient
