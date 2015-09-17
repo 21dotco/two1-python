@@ -1,3 +1,4 @@
+import os
 import pytest
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
@@ -6,11 +7,16 @@ from two1.blockchain.exceptions import DataProviderUnavailableError
 from two1.blockchain.exceptions import DataProviderError
 
 
-API_KEY = 'a96f8c3c18abe407757713a09614ba0b'
-API_SECRET = 'a13421f9347421e88c17d8388638e311'
+API_KEY = os.environ.get("CHAIN_API_KEY", None)
+API_SECRET = os.environ.get("CHAIN_API_SECRET", None)
+chain_key_present = pytest.mark.skipif(API_KEY is None or
+                                        API_SECRET is None,
+                                       reason="Chain key not available in env")
 
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
+
+@chain_key_present
 def test_get_balance():
     cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["17x23dNjXJLzGMev6R63uyRhMWP1VHawKc"]
@@ -32,6 +38,8 @@ def test_get_balance():
     with pytest.raises(DataProviderUnavailableError):
         data = cp.get_balance(address_list)
 
+
+@chain_key_present
 def test_utxo():
     cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
@@ -47,6 +55,8 @@ def test_utxo():
     assert len(data[address_list[0]]) == 3
     assert len(data[address_list[1]]) == 1
 
+
+@chain_key_present
 def test_get_transactions():
     cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
@@ -54,6 +64,8 @@ def test_get_transactions():
     assert len(data) == 1
     assert len(data[address_list[0]]) == 9
 
+
+@chain_key_present
 def test_get_transactions_by_id():
     cp = ChainProvider(API_KEY, API_SECRET)
     txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
@@ -63,7 +75,9 @@ def test_get_transactions_by_id():
     for txid, txn in data.items():
         assert txid in txids
         assert isinstance(txn, Transaction)
-    
+
+
+@chain_key_present
 def test_hd():
     cp = ChainProvider(API_KEY, API_SECRET)
 
@@ -114,6 +128,6 @@ def test_hd():
     # Now test get_utxos_hd - all of the above txns are unspent.
     utxos = cp.get_utxos_hd(acct_pub_key, 10, 10)
     
-    assert len(utxos[used_address]) == 23 # There are 2 txns that have 2 outpoints coming to this address.
+    assert len(utxos[used_address]) == 23  # There are 2 txns that have 2 outpoints coming to this address.
     for utxo in utxos[used_address]:
         assert str(utxo.transaction_hash) in used_txns
