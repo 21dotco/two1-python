@@ -121,9 +121,9 @@ class ChainProvider(BaseProvider):
             return result
 
         except requests.exceptions.ConnectionError:
-            raise exceptions.DataProviderUnAvailable("Could not connect to service.")
+            raise exceptions.DataProviderUnavailableError("Could not connect to service.")
         except requests.exceptions.Timeout:
-            raise exceptions.DataProviderUnAvailable("Connection timed out.")
+            raise exceptions.DataProviderUnavailableError("Connection timed out.")
         except ValueError:
             if result:
                 raise exceptions.DataProviderError(result.text)
