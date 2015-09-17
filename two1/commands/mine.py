@@ -71,7 +71,7 @@ def mine(config):
         payout_address = config.wallet.current_address()
         config.log("Setting payout_address to {}".format(payout_address))
         # set a new address from the HD wallet for payouts
-        payout_address = config.wallet.current_address()
+        payout_address = config.wallet.current_address
         auth_resp = client.account_payout_address_post(config.username, payout_address)
         if auth_resp.status_code != 200:
             click.echo(UxString.Error.server_err)
@@ -104,7 +104,7 @@ def mine(config):
         satoshi = payment_details["amount"]
         config.log("You mined {} ฿\n".format(satoshi), fg="yellow")
         try:
-            bitcoin_address = config.wallet.current_address()
+            bitcoin_address = config.wallet.current_address
         except AttributeError:
             bitcoin_address = "Not Set"
 

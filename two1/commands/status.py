@@ -37,7 +37,7 @@ Wallet''', fg='magenta')
 
     #    balance_c = config.wallet.confirmed_balance()
     try:
-        bitcoin_address = config.wallet.current_address()
+        bitcoin_address = config.wallet.current_address
     except AttributeError:
         bitcoin_address = "Not Set"
 

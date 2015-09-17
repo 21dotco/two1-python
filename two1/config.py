@@ -6,7 +6,8 @@ from codecs import open
 
 import click
 from path import path
-from two1.wallet import electrum_wallet
+from two1.blockchain.chain_provider import ChainProvider
+from two1.wallet import two1_wallet
 from two1.wallet import test_wallet
 from two1.debug import dlog
 from two1.uxstring import UxString
@@ -69,20 +70,16 @@ class Config(object):
                 self.vlog("  {}={}".format(k, v))
 
         # add wallet object
-        try:
-            if self.defaults.get('testwallet', None) == 'y':
-                self.wallet = test_wallet.TestWallet()
-            else:
-                self.wallet = electrum_wallet.ElectrumWallet(TWO1_PATH)
-        except OSError as e:
-            if e.errno == os.errno.ENOENT:
-            # handle file not found error.
-                click.echo(UxString.Error.electrum_missing)
-            raise
-
-        # if not self.wallet.start_daemon():
-        #     click.echo(UxString.Error.electrum_daemon)
-        #     raise
+        if self.defaults.get('testwallet', None) == 'y':
+            self.wallet = test_wallet.TestWallet()
+        else:
+            api_key = os.environ.get('CHAIN_API_KEY', default="")
+            api_secret = os.environ.get('CHAIN_API_SECRET', default="")
+            dp = ChainProvider(api_key=api_key,
+                               api_secret=api_secret)
+            wallet_path = two1_wallet.Two1Wallet.DEFAULT_WALLET_PATH
+            self.wallet = two1_wallet.Two1Wallet(params_or_file=wallet_path,
+                                                 data_provider=dp)
 
         # create an empty purchases file if it does not exist
         self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()

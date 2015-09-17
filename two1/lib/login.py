@@ -1,6 +1,7 @@
 import base64
 import requests
 import click
+import os
 import re
 from two1.config import TWO1_HOST
 from two1.lib.machine_auth import MachineAuth
@@ -28,12 +29,18 @@ def check_setup_twentyone_account(config):
         config (Config): Config object from the cli
     """
     # check if wallet is ready to use
-    if not config.wallet.is_configured:
-        #    #configure wallet with default options
+    if not config.wallet.is_configured():
+        # configure wallet with default options
         click.pause(UxString.create_wallet)
 
-        config.wallet.configure(config.wallet.config_options)
-        config.wallet.start_daemon()
+        # Setup chain data provider
+        api_key = os.environ.get('CHAIN_API_KEY', default="")
+        api_secret = os.environ.get('CHAIN_API_SECRET', default="")
+        dp = ChainProvider(api_key=api_key,
+                           api_secret=api_secret)
+
+        config.wallet.configure({'data_provider': dp})
+        # config.wallet.start_daemon()
 
         click.pause(UxString.create_wallet_done)
 
