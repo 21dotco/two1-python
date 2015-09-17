@@ -260,7 +260,7 @@ class HDAccount(object):
 
         return ret
 
-    def get_utxo(self):
+    def get_utxos(self):
         """ Gets all unspent transactions associated with all addresses
             up to and including the last known indices for both change
             and payout chains.
@@ -269,9 +269,9 @@ class HDAccount(object):
             k = self.key.public_key
         else:
             k = self.key
-        return self.data_provider.get_utxo_hd(pub_key=k,
-                                              last_payout_index=self.last_indices[self.PAYOUT_CHAIN],
-                                              last_change_index=self.last_indices[self.CHANGE_CHAIN])
+        return self.data_provider.get_utxos_hd(pub_key=k,
+                                               last_payout_index=self.last_indices[self.PAYOUT_CHAIN],
+                                               last_change_index=self.last_indices[self.CHANGE_CHAIN])
 
     @property
     def address_cache(self):

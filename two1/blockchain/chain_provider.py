@@ -244,7 +244,7 @@ class ChainProvider(BaseProvider):
 
         return ret
 
-    def get_utxo(self, address_list):
+    def get_utxos(self, address_list):
         """ Provides all unspent transactions associated with each address in
             the address_list.
 
@@ -339,10 +339,10 @@ class ChainProvider(BaseProvider):
             self._gen_hd_addresses(pub_key, last_payout_index,
                                    last_change_index))
 
-    def get_utxo_hd(self, pub_key, last_payout_index, last_change_index):
+    def get_utxos_hd(self, pub_key, last_payout_index, last_change_index):
         """ Provides all unspent transactions associated with each address.
 
-            Like TransactionDataProvider.get_utxo() except that it uses the HD
+            Like TransactionDataProvider.get_utxos() except that it uses the HD
             public key and returns balances for each payout address up to
             last_payout_index and each change address up to last_change_index.
 
@@ -358,8 +358,8 @@ class ChainProvider(BaseProvider):
             dict: A dict keyed by address with each value being a list of 
                UnspentTransactionOutput objects.
         """
-        return self.get_utxo(self._gen_hd_addresses(pub_key, last_payout_index,
-                                                    last_change_index))
+        return self.get_utxos(self._gen_hd_addresses(pub_key, last_payout_index,
+                                                     last_change_index))
 
     def send_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network

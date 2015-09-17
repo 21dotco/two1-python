@@ -34,13 +34,13 @@ def test_get_balance():
 def test_utxo():
     cp = ChainProvider(API_KEY, API_SECRET)
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
-    data = cp.get_utxo(address_list)
+    data = cp.get_utxos(address_list)
     assert len(data) == 1
     assert list(data.keys())[0] == address_list[0]
     assert len(data[address_list[0]]) == 3
 #    assert data[address_list[0]].transaction_hash ==
     address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb", "1EX1E9n3bPA1zGKDV5iHY2MnM7n5tDfnfH"]
-    data = cp.get_utxo(address_list)
+    data = cp.get_utxos(address_list)
     assert len(data) == 2
     assert set(address_list) == set(data.keys())
     assert len(data[address_list[0]]) == 3
@@ -110,8 +110,8 @@ def test_hd():
     for txn in txns[used_address]:
         assert str(txn.hash) in used_txns
 
-    # Now test get_utxo_hd - all of the above txns are unspent.
-    utxos = cp.get_utxo_hd(acct_pub_key, 10, 10)
+    # Now test get_utxos_hd - all of the above txns are unspent.
+    utxos = cp.get_utxos_hd(acct_pub_key, 10, 10)
     
     assert len(utxos[used_address]) == 23 # There are 2 txns that have 2 outpoints coming to this address.
     for utxo in utxos[used_address]:

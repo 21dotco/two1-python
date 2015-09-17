@@ -15,7 +15,7 @@ DEFAULT_INPUT_FEE = int(0.15 * FEE_PER_KB)
 DEFAULT_OUTPUT_FEE = int(0.04 * FEE_PER_KB)
 
 
-def _get_utxo_addr_tuple_list(utxos_by_addr):
+def _get_utxos_addr_tuple_list(utxos_by_addr):
     utxo_tuple_list = []
     for addr, utxos_addr in utxos_by_addr.items():
         for u in utxos_addr:
@@ -27,7 +27,7 @@ def _get_utxo_addr_tuple_list(utxos_by_addr):
 def utxo_selector_smallest_first(data_provider, utxos_by_addr, amount,
                                  num_outputs):
     # Order the utxos by amount
-    utxo_tuple_list = _get_utxo_addr_tuple_list(utxos_by_addr)
+    utxo_tuple_list = _get_utxos_addr_tuple_list(utxos_by_addr)
     ordered_utxos = sorted(utxo_tuple_list,
                            key=lambda utxo_addr_tuple: utxo_addr_tuple[1].value)
 
