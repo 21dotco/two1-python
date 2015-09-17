@@ -103,7 +103,7 @@ class MachineAuth(object):
             if isinstance(message, str):
                 utf8 = message.encode('utf-8')
             else:
-                raise ValueError
+                raise TypeError("message must be a string.")
             signature = self.private_key.sign(utf8).to_base64()
             return signature
         else:
