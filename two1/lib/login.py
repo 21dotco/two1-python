@@ -35,10 +35,10 @@ def check_setup_twentyone_account(config):
         click.pause(UxString.create_wallet)
 
         # Setup chain data provider
-        api_key = os.environ.get('CHAIN_API_KEY', default="")
-        api_secret = os.environ.get('CHAIN_API_SECRET', default="")
-        dp = ChainProvider(api_key=api_key,
-                           api_secret=api_secret)
+        api_key = os.environ.get('CHAIN_API_KEY_ID', default="")
+        api_secret = os.environ.get('CHAIN_API_KEY_SECRET', default="")
+        dp = ChainProvider(api_key_id=api_key,
+                           api_key_secret=api_secret)
 
         config.wallet.configure({'data_provider': dp})
         # config.wallet.start_daemon()
