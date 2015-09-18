@@ -372,9 +372,6 @@ class Transaction(object):
             
         sig = private_key.sign(msg_to_sign, False)
 
-        if not private_key.public_key.verify(msg_to_sign, sig, False):
-            return False
-
         if compressed:
             pub_key_str = pack_var_str(private_key.public_key.compressed_bytes)
         else:
