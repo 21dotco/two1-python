@@ -75,8 +75,9 @@ class HDAccount(object):
         for change in [0, 1]:
             if isinstance(self.key, HDPrivateKey):
                 self._chain_priv_keys[change] = HDPrivateKey.from_parent(self.key, change)
-
-            self._chain_pub_keys[change] = HDPublicKey.from_parent(self.key, change)
+                self._chain_pub_keys[change] = self._chain_priv_keys[change].public_key
+            else:
+                self._chain_pub_keys[change] = HDPublicKey.from_parent(self.key, change)
 
         self._discover_used_addresses()
 
@@ -219,8 +220,7 @@ class HDAccount(object):
         """
         # If this is an address we've already generated, don't regenerate.
         c = int(change)
-        last_index = self.last_indices[c]
-        if n != -1 and n <= last_index:
+        if n in self._address_cache[c]:
             return self._address_cache[c][n]
 
         # Always do compressed keys
@@ -265,13 +265,7 @@ class HDAccount(object):
             up to and including the last known indices for both change
             and payout chains.
         """
-        if isinstance(self.key, HDPrivateKey):
-            k = self.key.public_key
-        else:
-            k = self.key
-        return self.data_provider.get_utxos_hd(pub_key=k,
-                                               last_payout_index=self.last_indices[self.PAYOUT_CHAIN],
-                                               last_change_index=self.last_indices[self.CHANGE_CHAIN])
+        return self.data_provider.get_utxos(self.all_used_addresses)
 
     @property
     def address_cache(self):
@@ -309,14 +303,7 @@ class HDAccount(object):
                transactions and second item is the total balance,
                including unconfirmed transactions
         """
-        if isinstance(self.key, HDPublicKey):
-            pub_key = self.key
-        else:
-            pub_key = self.key.public_key
-
-        address_balances = self.data_provider.get_balance_hd(pub_key=pub_key,
-                                                            last_payout_index=self.last_indices[self.PAYOUT_CHAIN],
-                                                            last_change_index=self.last_indices[self.CHANGE_CHAIN])
+        address_balances = self.data_provider.get_balance(self.all_used_addresses)
 
         balance = {'confirmed': 0, 'total': 0}
         for k, v in address_balances.items():

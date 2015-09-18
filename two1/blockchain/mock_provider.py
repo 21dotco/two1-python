@@ -67,7 +67,7 @@ class MockProvider(BaseProvider):
         for m in self.methods:
             setattr(self, m, MagicMock())
 
-        self._setup_balances_hd()
+        self._setup_balances()
 
     def reset_mocks(self, methods=[]):
         if not methods:
@@ -108,17 +108,17 @@ class MockProvider(BaseProvider):
             self._num_used_addresses[i][0] = 0
             self._num_used_addresses[i][1] = 0
 
-        self._setup_balances_hd()
+        self._setup_balances()
 
     def set_num_used_addresses(self, account_index, n, change):
         self._num_used_addresses[account_index][change] = n
-        self._setup_balances_hd()
+        self._setup_balances()
 
     def set_num_used_accounts(self, n):
         self._num_used_accounts = n
-        self._setup_balances_hd()
+        self._setup_balances()
 
-    def _setup_balances_hd(self):
+    def _setup_balances(self):
         d = {}
         for i in range(self._num_used_accounts):
             payout_addresses = self._acct_keys[i]['payout_addresses'][:self._num_used_addresses[i][0]]
@@ -129,6 +129,7 @@ class MockProvider(BaseProvider):
             d.update({a: cd for a in change_addresses})
             d.update({a: pd for a in payout_addresses})
 
+        self.get_balance = MagicMock(return_value=d)
         self.get_balance_hd = MagicMock(return_value=d)
 
     def set_txn_side_effect_for_index(self, account_index, address_index,
