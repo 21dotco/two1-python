@@ -14,7 +14,13 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 def test_smallest_first():
     cp = ChainProvider(API_KEY, API_SECRET)
 
-    utxos_by_addr = cp.get_utxos_hd(acct_pub_key, 10, 10)
+    payout_key = HDPublicKey.from_parent(acct_pub_key, 0)
+    change_key = HDPublicKey.from_parent(acct_pub_key, 1)
+
+    addrs = [HDPublicKey.from_parent(payout_key, i).address(True) for i in range(10)]
+    addrs += [HDPublicKey.from_parent(change_key, i).address(True) for i in range(10)]
+
+    utxos_by_addr = cp.get_utxos(addrs)
 
     utxos = []
     for addr, addr_utxos in utxos_by_addr.items():

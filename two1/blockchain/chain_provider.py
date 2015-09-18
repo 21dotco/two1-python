@@ -135,24 +135,6 @@ class ChainProvider(BaseProvider):
             else:
                 raise
 
-    def _gen_hd_addresses(self, pub_key, last_payout_index, last_change_index):
-        if not isinstance(pub_key, HDPublicKey):
-            raise TypeError("pub_key must be an HDPublicKey object.")
-
-        payout_chain_key = HDPublicKey.from_parent(pub_key, 0)
-        change_chain_key = HDPublicKey.from_parent(pub_key, 1)
-
-        address_list = []
-        for i in range(max(last_payout_index, last_change_index) + 1):
-            if i <= last_payout_index:
-                address_list.append(
-                    HDPublicKey.from_parent(payout_chain_key, i).address())
-            if i <= last_change_index:
-                address_list.append(
-                    HDPublicKey.from_parent(change_chain_key, i).address())
-
-        return address_list
-
     def get_balance(self, address_list):
         """ Provides the balance for each address.
 
@@ -289,77 +271,6 @@ class ChainProvider(BaseProvider):
                                                              script,
                                                              d["confirmations"]))
             return ret
-
-    def get_balance_hd(self, pub_key, last_payout_index, last_change_index):
-        """ Provides the balance for each address.
-
-            Like TransactionDataProvider.get_balance() except that it uses
-            the HD public key and returns balances for each payout address up to
-            last_payout_index and each change address up to last_change_index.
-
-        Args:
-            pub_key (HDPublicKey): an extended public key from which change and
-               payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return
-            data for.
-            last_change_index (int): Index of last change address to return
-            data for.
-
-        Returns:
-            dict: A dict keyed by address with each value being a tuple
-            containing the confirmed and total balances.
-        """
-        return self.get_balance(
-            self._gen_hd_addresses(pub_key, last_payout_index,
-                                   last_change_index))
-
-    def get_transactions_hd(self, pub_key, last_payout_index,
-                            last_change_index):
-        """ Provides transactions associated with each address.
-
-            Like TransactionDataProvider.get_transactions() except that it
-            uses the HD public key and returns balances for each payout address
-            up to last_payout_index and each change address up to
-            last_change_index.
-
-        Args:
-            pub_key (HDPublicKey): an extended public key from which change and
-               payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return
-            data for.
-            last_change_index (int): Index of last change address to return
-            data for.
-
-        Returns:
-            dict: A dict keyed by address with each value being a list of
-            Transaction
-               objects.
-        """
-        return self.get_transactions(
-            self._gen_hd_addresses(pub_key, last_payout_index,
-                                   last_change_index))
-
-    def get_utxos_hd(self, pub_key, last_payout_index, last_change_index):
-        """ Provides all unspent transactions associated with each address.
-
-            Like TransactionDataProvider.get_utxos() except that it uses the HD
-            public key and returns balances for each payout address up to
-            last_payout_index and each change address up to last_change_index.
-
-        Args:
-            pub_key (HDPublicKey): an extended public key from which change and
-               payout addresses are derived.
-            last_payout_index (int): Index of last payout address to return
-            data for.
-            last_change_index (int): Index of last change address to return
-            data for.
-
-        Returns:
-            dict: A dict keyed by address with each value being a list of 
-               UnspentTransactionOutput objects.
-        """
-        return self.get_utxos(self._gen_hd_addresses(pub_key, last_payout_index,
-                                                     last_change_index))
 
     def send_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
