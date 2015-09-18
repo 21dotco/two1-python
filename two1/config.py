@@ -73,10 +73,10 @@ class Config(object):
         if self.defaults.get('testwallet', None) == 'y':
             self.wallet = test_wallet.TestWallet()
         else:
-            api_key = os.environ.get('CHAIN_API_KEY', default="")
-            api_secret = os.environ.get('CHAIN_API_SECRET', default="")
-            dp = ChainProvider(api_key=api_key,
-                               api_secret=api_secret)
+            api_key = os.environ.get('CHAIN_API_KEY_ID', default="")
+            api_secret = os.environ.get('CHAIN_API_KEY_SECRET', default="")
+            dp = ChainProvider(api_key_id=api_key,
+                               api_key_secret=api_secret)
             wallet_path = two1_wallet.Two1Wallet.DEFAULT_WALLET_PATH
             self.wallet = two1_wallet.Two1Wallet(params_or_file=wallet_path,
                                                  data_provider=dp)
