@@ -35,7 +35,6 @@ class MockTxnDict(dict):
 
 class MockProvider(BaseProvider):
     methods = ['get_balance', 'get_transactions', 'get_utxos',
-               'get_balance_hd', 'get_transactions_hd', 'get_utxos_hd',
                'send_transaction']
     address_increment = HDAccount.DISCOVERY_INCREMENT
     max_address = 8 * address_increment
@@ -130,7 +129,6 @@ class MockProvider(BaseProvider):
             d.update({a: pd for a in payout_addresses})
 
         self.get_balance = MagicMock(return_value=d)
-        self.get_balance_hd = MagicMock(return_value=d)
 
     def set_txn_side_effect_for_index(self, account_index, address_index,
                                       change):
