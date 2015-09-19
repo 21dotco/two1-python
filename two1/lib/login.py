@@ -103,7 +103,7 @@ def create_username(config, username=None):
     ).decode()
     # use the same key for the payout address as well.
     # this will come from the wallet
-    bitcoin_payout_address = config.wallet.current_address()
+    bitcoin_payout_address = config.wallet.current_address
     rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth)
 
     while True:
