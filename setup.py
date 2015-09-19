@@ -25,7 +25,7 @@ install_requires = [
                     'simplejson',
                     'sha256',
                     'path.py',
-                    'click',
+                    'click==4.1',
                     'keyring',
                     'tabulate',
                     'mnemonic',
