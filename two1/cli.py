@@ -63,13 +63,12 @@ $ two1
 \b
 Full documentation: github.com/21dotco/two1"""
     #dlog("two1.main")
-    try:
-        cfg = Config(config_file, config)
-        check_setup_twentyone_account(cfg)
-        ctx.obj = cfg 
-    except:
-        raise
-        #sys.exit(1)
+    # try:
+    cfg = Config(config_file, config)
+    check_setup_twentyone_account(cfg)
+    ctx.obj = cfg
+    # except Exception as e:
+    #    raise click.ClickException(e)
 
 from two1.commands.buy import buy
 main.add_command(buy)
