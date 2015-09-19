@@ -30,8 +30,10 @@ install_requires = [
                     'keyring',
                     'tabulate',
                     'mnemonic',
-                    'protobuf >= 3.0.0a3',
-                    'pyaes'
+                    'protobuf==3.0.0a3',
+                    'pyaes',
+                    'tabulate',
+                    'tinyrpc'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/
