@@ -8,7 +8,7 @@ class UxString:
     enter_username = "Choose username for your account"
     enter_username_retry = "Create a new username and retry."
     # wallet
-    create_wallet = "You do not have a Bitcoin wallet configured."\
+    create_wallet = "You do not have a Bitcoin wallet configured. "\
         "Let's create one. Press any key ...\n"
     create_wallet_done = "\nWallet successfully created. Press any key ..."
     payout_address = "Setting mining payout address: %s."
