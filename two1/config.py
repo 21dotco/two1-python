@@ -7,7 +7,7 @@ from codecs import open
 import click
 from path import path
 from two1.blockchain.chain_provider import ChainProvider
-from two1.wallet import two1_wallet
+from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet import test_wallet
 from two1.debug import dlog
 from two1.uxstring import UxString
@@ -77,9 +77,18 @@ class Config(object):
             api_secret = os.environ.get('CHAIN_API_KEY_SECRET', default="")
             dp = ChainProvider(api_key_id=api_key,
                                api_key_secret=api_secret)
-            wallet_path = two1_wallet.Two1Wallet.DEFAULT_WALLET_PATH
-            self.wallet = two1_wallet.Two1Wallet(params_or_file=wallet_path,
-                                                 data_provider=dp)
+
+            if not Two1Wallet.is_configured():
+                # configure wallet with default options
+                click.pause(UxString.create_wallet)
+
+                if not Two1Wallet.configure({'data_provider': dp}):
+                    raise click.ClickException(UxString.Error.create_wallet_failed)
+                click.pause(UxString.create_wallet_done)
+
+            wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
+            self.wallet = Two1Wallet(params_or_file=wallet_path,
+                                     data_provider=dp)
 
         # create an empty purchases file if it does not exist
         self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()

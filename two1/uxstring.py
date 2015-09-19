@@ -25,6 +25,7 @@ class UxString:
         # wallet errors
         electrum_missing = "Error: Could not find ElectrumWallet application."
         electrum_daemon = "Error: Could not start electrum daemon."
+        create_wallet_failed = "Error: Could not create wallet."
 
         # data unavailable
         data_unavailable = "[ Unavailable ]"
