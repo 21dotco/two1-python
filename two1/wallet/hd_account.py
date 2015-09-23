@@ -2,7 +2,7 @@ from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 
 
 class HDAccount(object):
-    """ An implemenation of a single HD account to be used in an HD
+    """ An implementation of a single HD account to be used in an HD
         wallet.
 
         This class handles key generation/management for both internal
