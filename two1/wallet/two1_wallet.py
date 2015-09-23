@@ -682,7 +682,7 @@ class Two1Wallet(BaseWallet):
         """
         res = ""
         try:
-            txid = self.data_provider.send_transaction(tx)
+            txid = self.data_provider.broadcast_transaction(tx)
             res = txid
         except exceptions.WalletError as e:
             print("Problem sending transaction to network: %s" % e)

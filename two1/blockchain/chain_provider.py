@@ -272,7 +272,7 @@ class ChainProvider(BaseProvider):
                                                              d["confirmations"]))
             return ret
 
-    def send_transaction(self, transaction):
+    def broadcast_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
 
         Args:
