@@ -65,7 +65,7 @@ class BaseProvider(object):
         """
         raise NotImplementedError
 
-    def send_transaction(self, transaction):
+    def broadcast_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
 
         Args:
