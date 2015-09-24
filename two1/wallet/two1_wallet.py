@@ -96,6 +96,25 @@ class Two1Wallet(BaseWallet):
                        'account_type']
 
     @staticmethod
+    def is_locked(wallet_path=DEFAULT_WALLET_PATH):
+        """ Returns whether a wallet is locked with a passphrase.
+
+        Returns:
+            bool: True if the wallet has been locked with a
+                passphrase, False otherwise.
+        """
+        locked = False
+        if os.path.exists(wallet_path):
+            with open(wallet_path, 'r') as f:
+                params = json.load(f)
+                locked = params.get('locked', False)
+        else:
+            raise exceptions.WalletError("Wallet does not exist at %s!" %
+                                         wallet_path)
+
+        return locked
+
+    @staticmethod
     def is_configured():
         """ Returns the configuration/initialization status of the
             wallet.
@@ -467,6 +486,10 @@ class Two1Wallet(BaseWallet):
 
         return accts
 
+    def _update_account_balances(self):
+        for a in self._accounts:
+            a._update_balance()
+
     def _get_private_keys(self, addresses):
         """ Returns private keys for a list of addresses, if they
             are a part of this wallet.
@@ -746,9 +769,13 @@ class Two1Wallet(BaseWallet):
         total_with_fees = total_amount + fees
 
         # Verify we have enough money
-        # First element is confirmed balance
-        if total_with_fees > self.confirmed_balance():
-            return False
+        balance = self.confirmed_balance()
+        if total_with_fees > balance:
+            raise exceptions.WalletBalanceError(
+                "Confirmed balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)" %
+                balance,
+                total_amount,
+                fees)
 
         # Get all private keys in one shot
         private_keys = self._get_private_keys(list(selected_utxos.keys()))

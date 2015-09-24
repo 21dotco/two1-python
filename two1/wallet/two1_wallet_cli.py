@@ -1,10 +1,14 @@
 import click
 import getpass
+import types
 
 from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet.account_types import account_types
 from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet.two1_wallet import Two1Wallet
+from two1.wallet.daemonizer import get_daemonizer
+from two1.wallet.socket_rpc_server import UnixSocketServerProxy
+from two1.wallet import exceptions
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -14,6 +18,46 @@ REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_se
 def get_passphrase():
     return getpass.getpass("Passphrase to unlock wallet: ")
 
+
+def check_daemon_running(wallet_path):
+    rv = None
+    try:
+        w = UnixSocketServerProxy()
+
+        # Check the path to make sure it's the same
+        wp = w.wallet_path()
+        rv = w if wp == wallet_path else None
+
+    except exceptions.DaemonNotRunningError:
+        rv = None
+
+    return rv
+
+
+def check_wallet_proxy_unlocked(w, passphrase):
+    if w.is_locked():
+        if not passphrase:
+            click.echo("The wallet is locked and requires a passphrase.")
+            passphrase = get_passphrase()
+
+        w.unlock(p)
+
+    return not w.is_locked()
+
+
+def _call_wallet_method(wallet, method_name, *args, **kwargs):
+    rv = None
+    if hasattr(wallet, method_name):
+        attr = getattr(wallet, method_name)
+        if isinstance(attr, types.FunctionType) or \
+           isinstance(attr, types.MethodType):
+            rv = attr(*args, **kwargs)
+        else:
+            rv = attr
+    else:
+        raise exceptions.UndefinedMethodError("wallet has no method or property: %s" % method_name)
+
+    return rv
 
 @click.pass_context
 def validate_data_provider(ctx, param, value):
@@ -51,6 +95,7 @@ def validate_data_provider(ctx, param, value):
         dp = ChainProvider(api_key_id=key, api_key_secret=secret)
 
     ctx.obj['data_provider'] = dp
+    ctx.obj['data_provider_params'] = data_provider_params
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -90,14 +135,59 @@ def main(ctx, wallet_path, passphrase,
     ctx.obj['wallet_path'] = wallet_path
     ctx.obj['passphrase'] = passphrase
 
-    if ctx.invoked_subcommand != "create":
+    if ctx.invoked_subcommand not in ['create', 'startdaemon']:
         p = get_passphrase() if passphrase else ''
 
-        # instantiate a wallet object here and pass it into the context
-        ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
-                                       data_provider=ctx.obj['data_provider'],
-                                       passphrase=p)
-        ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
+        # Check if the daemon is running
+        w = check_daemon_running(wallet_path)
+        if w is not None:
+            ctx.obj['wallet'] = w
+            check_wallet_proxy_unlocked(w, p)
+        else:
+            # instantiate a wallet object here and pass it into the context
+            ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
+                                           data_provider=ctx.obj['data_provider'],
+                                           passphrase=p)
+
+            ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
+
+
+@click.command()
+@click.pass_context
+def startdaemon(ctx):
+    """ Starts the daemon
+    """
+    d = get_daemonizer()
+    if d is None:
+        return
+
+    if d.started():
+        click.echo("walletd already running.")
+        return
+
+    if not d.installed():
+        if isinstance(ctx.obj['data_provider'], ChainProvider):
+            dp_params = ctx.obj['data_provider_params']
+            dpo = dict(provider='chain',
+                       api_key_id=dp_params['chain_api_key_id'],
+                       api_key_secret=dp_params['chain_api_key_secret'])
+            d.install(dpo)
+
+    if d.start():
+        click.echo("walletd successfully started.")
+
+
+@click.command()
+@click.pass_context
+def stopdaemon(ctx):
+    """ Stops the daemon
+    """
+    d = get_daemonizer()
+    if d is None:
+        return
+
+    if d.stop():
+        click.echo("walletd successfully stopped.")
 
 
 @click.command()
@@ -148,7 +238,7 @@ def payout_address(ctx):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    click.echo(w.current_address)
+    click.echo(_call_wallet_method(w, 'current_address'))
 
 
 @click.command(name="confirmedbalance")
@@ -157,8 +247,9 @@ def confirmed_balance(ctx):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
+    cb = _call_wallet_method(w, 'confirmed_balance')
     click.echo("Confirmed balance: %f BTC" %
-               (w.confirmed_balance() / satoshi_to_btc))
+               (cb / satoshi_to_btc))
 
 
 @click.command()
@@ -167,8 +258,9 @@ def balance(ctx):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
+    ucb = _call_wallet_method(w, 'unconfirmed_balance')
     click.echo("Total balance (including unconfirmed txns): %f BTC" %
-               (w.unconfirmed_balance() / satoshi_to_btc))
+               (ucb / satoshi_to_btc))
 
 
 @click.command(name="sendto")
@@ -191,9 +283,10 @@ def send_to(ctx, address, amount, account):
           (satoshis, address, list(account)))
 
     try:
-        txids = w.send_to(address=address,
-                          amount=satoshis,
-                          accounts=list(account))
+        txids = _call_wallet_method(w, 'send_to',
+                                    address=address,
+                                    amount=satoshis,
+                                    accounts=list(account))
         if txids:
             click.echo("Successfully sent %f BTC to %s. txid = %r" %
                        (amount, address, [t['txid'] for t in txids]))
@@ -201,6 +294,8 @@ def send_to(ctx, address, amount, account):
         click.echo("Problem sending coins: %s" % e)
 
 
+main.add_command(startdaemon)
+main.add_command(stopdaemon)
 main.add_command(create)
 main.add_command(payout_address)
 main.add_command(confirmed_balance)
