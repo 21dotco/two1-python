@@ -1,3 +1,4 @@
+import time
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 
 
@@ -33,6 +34,7 @@ class HDAccount(object):
     CHANGE_CHAIN = 1
     GAP_LIMIT = 20
     DISCOVERY_INCREMENT = GAP_LIMIT
+    MAX_BALANCE_UPDATE_THRESHOLD = 30  # seconds
 
     def __init__(self, hd_key, name, index, data_provider,
                  testnet=False, last_state=None):
@@ -50,6 +52,7 @@ class HDAccount(object):
         self.last_indices = [-1, -1]
         self._txn_cache = {}
         self._address_cache = {self.CHANGE_CHAIN: {}, self.PAYOUT_CHAIN: {}}
+        self._last_balance_update = 0
 
         if last_state is not None and isinstance(last_state, dict):
             if "last_payout_index" in last_state:
@@ -80,6 +83,7 @@ class HDAccount(object):
                 self._chain_pub_keys[change] = HDPublicKey.from_parent(self.key, change)
 
         self._discover_used_addresses()
+        self._update_balance()
 
     def _discover_used_addresses(self, max_index=0):
         for change in [0, 1]:
@@ -127,6 +131,17 @@ class HDAccount(object):
 
             self.last_indices[change] = current_last
 
+    def _update_balance(self):
+        address_balances = self.data_provider.get_balance(self.all_used_addresses)
+
+        balance = {'confirmed': 0, 'total': 0}
+        for k, v in address_balances.items():
+            balance['confirmed'] += v['confirmed']
+            balance['total'] += v['total']
+
+        self._balance_cache = balance
+        self._last_balance_update = time.time()
+        
     def has_txns(self):
         """ Returns whether or not there are any discovered transactions
             associated with any address in the account.
@@ -299,18 +314,13 @@ class HDAccount(object):
             account.
 
         Returns:
-            tuple: First item is the balance for confirmed
-               transactions and second item is the total balance,
-               including unconfirmed transactions
+            dict: 'confirmed' and 'total' keys with balance values in
+                satoshis for each. The total balance includes
+                unconfirmed transactions.
         """
-        address_balances = self.data_provider.get_balance(self.all_used_addresses)
-
-        balance = {'confirmed': 0, 'total': 0}
-        for k, v in address_balances.items():
-            balance['confirmed'] += v['confirmed']
-            balance['total'] += v['total']
-
-        return balance
+        if time.time() - self._last_balance_update > self.MAX_BALANCE_UPDATE_THRESHOLD:
+            self._update_balance()
+        return self._balance_cache
 
     @property
     def all_used_addresses(self):

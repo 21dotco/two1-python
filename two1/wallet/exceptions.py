@@ -24,3 +24,11 @@ class TxidMismatchError(WalletError):
 
 class PassphraseError(WalletError):
     pass
+
+
+class DaemonNotRunningError(WalletError):
+    pass
+
+
+class UndefinedMethodError(WalletError):
+    pass

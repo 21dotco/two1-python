@@ -196,10 +196,18 @@ def test_rest():
     m.set_num_used_addresses(0, 1, 0)
     assert wallet.balances == {'confirmed': 100000, 'total': 120000}
 
-    # Check it after updating the mock
+    # Check it after updating the mock, but since it'll be beneath
+    # the update threshold, we have to manually trigger a balance
+    # update
     m.set_num_used_addresses(0, 4, 0)
+    wallet._update_account_balances()
     assert wallet.balances == {'confirmed': 400000, 'total': 420000}
 
+    # Try sending more than we have and make sure it raises an exception
+    with pytest.raises(exceptions.WalletBalanceError):
+        wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                       amount=1000000)
+    
     # Finally check storing to a file
     params = {}
     with tempfile.NamedTemporaryFile(delete=True) as tf:

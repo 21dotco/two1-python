@@ -33,7 +33,8 @@ install_requires = [
                     'protobuf==3.0.0a3',
                     'pyaes',
                     'tabulate',
-                    'tinyrpc'
+                    'jsonrpcclient',
+                    'jsonrpcserver'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/
@@ -117,6 +118,7 @@ setup(
             'wallet=two1.wallet.two1_wallet_cli:main',
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
+            'walletd=two1.wallet.daemon:main'
         ],
     },
 )
