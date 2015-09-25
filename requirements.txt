@@ -1,4 +1,4 @@
--e git+git://github.com/veerbhan/django-rest-swagger.git@patch-1#egg=django-rest-swagger
+django-rest-swagger==0.3.4
 Django==1.8.3
 Markdown==2.6.2
 PyYAML==3.11
