@@ -1,3 +1,4 @@
+import os
 import pytest
 from two1.bitcoin.crypto import HDPublicKey
 from two1.blockchain.chain_provider import ChainProvider
@@ -5,14 +6,17 @@ from two1.wallet.exceptions import WalletBalanceError
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 
-API_KEY = 'a96f8c3c18abe407757713a09614ba0b'
-API_SECRET = 'a13421f9347421e88c17d8388638e311'
-
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
+API_KEY_ID = os.environ.get("CHAIN_API_KEY_ID", None)
+API_KEY_SECRET = os.environ.get("CHAIN_API_KEY_SECRET", None)
+chain_key_present = pytest.mark.skipif(API_KEY_ID is None or API_KEY_SECRET is None,
+                                       reason="CHAIN_API_KEY_ID or CHAIN_API_KEY_SECRET\
+                                       is not available in env")
 
 
+@chain_key_present
 def test_smallest_first():
-    cp = ChainProvider(API_KEY, API_SECRET)
+    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 
     payout_key = HDPublicKey.from_parent(acct_pub_key, 0)
     change_key = HDPublicKey.from_parent(acct_pub_key, 1)
