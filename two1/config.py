@@ -61,8 +61,9 @@ class Config(object):
         self.defaults = {}
         self.load()
         # override config variables
-        for k, v in config:
-            self.defaults[k] = v
+        if config:
+            for k, v in config:
+                self.defaults[k] = v
 
         if self.verbose:
             self.vlog("Applied manual config.")
