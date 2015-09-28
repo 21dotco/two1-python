@@ -62,6 +62,24 @@ in your path in an uninstallable way, and will also be able to edit
 the files in the ``two1`` directory and see those changes reflected in
 the command line app in realtime.
 
+Developer Environment Variables
+===============================
+The following set of environment variables are useful for development purposes:
+
+- TWO1_DEV 
+This sets the debug mode on. This will automatically use `http://127.0.0.1:8000` as the hostname for the 21-API server.
+
+.. code-block:: bash
+
+   $ export TWO1_DEV=1
+
+- TWO1_DEV_HOST 
+This sets a custom 21-API host to which the CLI will make requests.
+
+.. code-block:: bash
+
+   $ export TWO1_DEV_HOST=localhost:5000
+
 The Codebase
 ============
 
