@@ -16,7 +16,7 @@ import pkg_resources
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
-TWO1_PROD_HOST = "http://twentyone-devel-1d3c.herokuapp.com"
+TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_DEV_HOST = "http://127.0.0.1:8000"
 
 try:

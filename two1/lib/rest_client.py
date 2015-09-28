@@ -42,10 +42,10 @@ class TwentyOneRestClient(object):
                                   **kwargs)
         return result
 
-    # POST /v0/mining/account
+    # POST /pool/account
     def account_post(self, username, payout_address):
         method = "POST"
-        path = "/v0/mining/account/" + username
+        path = "/pool/account/" + username
         body = {
             "payout_address": payout_address,
             "public_key": base64.b64encode(self.auth.public_key.compressed_bytes).decode(),
@@ -56,23 +56,23 @@ class TwentyOneRestClient(object):
                              data=data
                              )
 
-    # GET /v0/mining/work/{username}
+    # GET /pool/work/{username}
     def get_work(self, username):
 
         method = "GET"
-        path = "/v0/mining/work/" + username
+        path = "/pool/work/" + username
         return self._request(True, method, path)
 
-    # POST /v0/mining/work/{username}
+    # POST /pool/work/{username}
     def send_work(self, username, data):
         method = "POST"
-        path = "/v0/mining/work/" + username
+        path = "/pool/work/" + username
         return self._request(False, method, path, data=data)
 
-    # POST /v0/mining/account/payout_address/{username}
+    # POST /pool/account/payout_address/{username}
     def account_payout_address_post(self, username, payout_address):
         method = "POST"
-        path = "/v0/mining/account/payout_address/" + username
+        path = "/pool/account/payout_address/" + username
         body = {
             "payout_address": payout_address,
         }
@@ -82,10 +82,10 @@ class TwentyOneRestClient(object):
                              data=data
                              )
 
-    # GET /v0/mining/statistics/shares/{username}
+    # GET /pool/statistics/shares/{username}
     def get_shares(self, username):
         method = "GET"
-        path = "/v0/mining/statistics/shares/" + username
+        path = "/pool/statistics/shares/" + username
         r = self._request(False, method, path)
         if r.status_code == 200:
             return json.loads(r.content.decode())
