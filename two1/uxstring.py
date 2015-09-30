@@ -13,6 +13,11 @@ class UxString:
     create_wallet_done = "\nWallet successfully created. Press any key ..."
     payout_address = "Setting mining payout address: %s."
 
+    # updater
+    update_check = "Checking for application update..."
+    update_package = "Updating to version %s..."
+    update_superuser = "You might need to enter superuser password."
+
     class Error:
         # network errors
         connection = "Error: Cannot connect to %s."
@@ -29,3 +34,7 @@ class UxString:
 
         # data unavailable
         data_unavailable = "[ Unavailable ]"
+
+        # Updater
+        update_failed = "Error occured during update process. Please try to run a manual update."
+

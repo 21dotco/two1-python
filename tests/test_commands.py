@@ -1,6 +1,9 @@
+import os
 import unittest
 
-import os
+from mock import patch
+
+from two1 import config
 import two1.cli as cli
 from click.testing import CliRunner
 
@@ -16,20 +19,26 @@ def get_args(command, *args):
 
 
 class TestSell(unittest.TestCase):
-    def test_builtins(self):
+    @patch('two1.lib.update.get_latest_version')
+    def test_builtins(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell --builtin
         result = runner.invoke(cli.main, get_args('sell', '--builtin'))
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn('barcode/generate-qr', result.output, result.output)
 
-    def test_sell_builtins(self):
+    @patch('two1.lib.update.get_latest_version')
+    def test_sell_builtins(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell language/translate two1.djangobitcoin.misc
         result = runner.invoke(cli.main, get_args('sell', 'language/translate', 'two1.djangobitcoin.misc'))
         self.assertEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_folder(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_folder(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
@@ -37,7 +46,9 @@ class TestSell(unittest.TestCase):
                                         '--path', TEST_FOLDER, '--price', '10000'))
         self.assertEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_file(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_file(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpeg --price 10000
         result = runner.invoke(cli.main,
@@ -45,7 +56,9 @@ class TestSell(unittest.TestCase):
                                         '--path', TEST_FILE, '--price', '10000'))
         self.assertEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_folder_with_file_fail(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_folder_with_file_fail(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpg --price 10000
         result = runner.invoke(cli.main,
@@ -53,7 +66,9 @@ class TestSell(unittest.TestCase):
                                         '--path', TEST_FILE, '--price', '10000'))
         self.assertNotEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_file_with_folder_fail(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_file_with_folder_fail(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
@@ -61,7 +76,9 @@ class TestSell(unittest.TestCase):
                                         '--path', TEST_FOLDER, '--price', '10000'))
         self.assertNotEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_folder_no_folder_fail(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_folder_no_folder_fail(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens two1.djangobitcoin.static_serve --path ~/Documents/Kittens --price 10000
         result = runner.invoke(cli.main,
@@ -69,7 +86,9 @@ class TestSell(unittest.TestCase):
                                         '--path', TEST_FOLDER + 'X', '--price', '10000'))
         self.assertNotEqual(result.exit_code, 0, result.output)
 
-    def test_sell_static_file_no_file_fail(self):
+    @patch('two1.lib.update.get_latest_version')        
+    def test_sell_static_file_no_file_fail(self, f):
+        f.return_value = config.TWO1_VERSION
         runner = CliRunner()
         # two1 sell serve/kittens/kitty.jpg two1.djangobitcoin.static_serve --path ~/Documents/Kittens/red.jpeg --price 10000
         result = runner.invoke(cli.main,

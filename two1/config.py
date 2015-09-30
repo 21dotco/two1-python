@@ -13,7 +13,6 @@ from two1.uxstring import UxString
 
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
-TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
 TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_DEV_HOST = "http://127.0.0.1:8000"
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
@@ -131,7 +130,8 @@ class Config(object):
                         sortby="price",
                         maxspend=20000,
                         verbose=False,
-                        mining_auth_pubkey=None)
+                        mining_auth_pubkey=None,
+                        auto_update=False)
 
         save_config = False
         for key, default_value in defaults.items():
@@ -169,8 +169,7 @@ class Config(object):
     def log_purchase(self, **kwargs):
         # simple logging to file
         # this can be replaced with pickle/sqlite
-        with open(self.purchases_file, mode='a', encoding='utf-8') as pjson:
-            pjson.write(json.dumps(kwargs) + "\n")
+        return
 
     def get_purchases(self):
         # read all right now. TODO: read the most recent ones only
