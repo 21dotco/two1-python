@@ -27,9 +27,19 @@ from two1.config import pass_config
 from two1.uxstring import UxString 
 from two1.lib.login import check_setup_twentyone_account
 from two1.lib.decorators import docstring_parameter
+from two1.lib.update import update_two1_package
+from two1.commands.buy import buy
+from two1.commands.mine import mine
+from two1.commands.publish import publish
+from two1.commands.rate import rate
+from two1.commands.search import search
+from two1.commands.sell import sell
+from two1.commands.status import status
+from two1.commands.update import update
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option('--config-file',
@@ -79,31 +89,27 @@ Show this help text
 $ {0}
 """
     cfg = Config(config_file, config)
-    check_setup_twentyone_account(cfg)
+    # Disable the auto updater for now.
+    # Todo: This needs to be switched on for the prod channel only.
+    if cfg.auto_update:
+        check_setup_twentyone_account(cfg)
+        update_data = update_two1_package(cfg)
+        if update_data["update_successful"]:
+            # TODO: This should exit the CLI and run the same command using the
+            # newly installed software
+            pass
     ctx.obj = cfg
 
-from two1.commands.buy import buy
 main.add_command(buy)
-
-from two1.commands.mine import mine
 main.add_command(mine)
-
-from two1.commands.publish import publish
 main.add_command(publish)
-
-from two1.commands.rate import rate
 main.add_command(rate)
-
-from two1.commands.search import search
 main.add_command(search)
-
-from two1.commands.sell import sell
 main.add_command(sell)
-
-from two1.commands.status import status
 main.add_command(status)
-    
-if __name__ == "__main__":
-    locale.setlocale(locale.LC_ALL, 'us' if platform.system() == 'Windows' else 'en_US.UTF-8')
-    main()
+main.add_command(update)
 
+if __name__ == "__main__":
+    locale.setlocale(locale.LC_ALL,
+                     'us' if platform.system() == 'Windows' else 'en_US.UTF-8')
+    main()

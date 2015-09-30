@@ -22,6 +22,7 @@ install_requires = [
                     'base58',
                     'pytest',
                     'requests',
+                    'responses',
                     'simplejson',
                     'sha256',
                     'path.py',
