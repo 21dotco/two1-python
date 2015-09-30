@@ -2,7 +2,7 @@ import click
 import re
 from two1.config import pass_config
 from two1.debug import dlog
-from two1.bitcurl.bitcurl import bitcurl
+from two1.bitcurl.bitrequests import BitRequests
 import time
 import datetime
 
@@ -59,8 +59,11 @@ def buy(config, resource, data, max_price):
 
     # Catch Error?
     try:
-        res = bitcurl(target_url, config.wallet, method=method,
-                      data=target_data, max_request_price=max_price, logger=config.log)
+        res = getattr(BitRequests, method.lower())(
+            target_url,
+            config.wallet,
+            data=target_data
+            )
     except Exception as e:
         config.log( str(e), fg="red")
         return
