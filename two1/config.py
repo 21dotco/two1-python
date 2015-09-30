@@ -1,24 +1,23 @@
 import os
 import sys
 import json
-import getpass
-from codecs import open
-
 import click
+import pkg_resources
+from codecs import open
 from path import path
 from two1.blockchain.chain_provider import ChainProvider
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet import test_wallet
-from two1.debug import dlog
 from two1.uxstring import UxString
-import pkg_resources
+
 
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_PURCHASES_FILE = path(TWO1_USER_FOLDER + 'purchases.json')
 TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_DEV_HOST = "http://127.0.0.1:8000"
-
+TWO1_PYPI_HOST = "https://pypi-3844.21.co"
+TWO1_PACKAGE_NAME = "two1"
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
 except:
@@ -90,14 +89,6 @@ class Config(object):
             wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
             self.wallet = Two1Wallet(params_or_file=wallet_path,
                                      data_provider=dp)
-
-        # create an empty purchases file if it does not exist
-        self.purchases_file = path(TWO1_PURCHASES_FILE).expand().abspath()
-        if self.purchases_file.exists() and self.purchases_file.isfile():
-            pass
-        else:
-            with open(self.purchases_file, mode='w', encoding='utf-8') as f:
-                pass
 
     # pulls attributes from the self.defaults dict
     def __getattr__(self, name):
@@ -183,13 +174,7 @@ class Config(object):
 
     def get_purchases(self):
         # read all right now. TODO: read the most recent ones only
-        try:
-            with open(self.purchases_file, mode='r', encoding='utf-8') as pjson:
-                content = pjson.readlines()
-            return [json.loads(n) for n in content]
-        except:
-            dlog("Error: Could not load purchases.")
-            return []
+        return []
 
     def fmt(self):
         pairs = []
