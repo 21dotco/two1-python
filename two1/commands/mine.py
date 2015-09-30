@@ -110,7 +110,7 @@ def mine(config):
 
         config.log("Setting your payout address to {}\n".format(payout_address))
         balance_c = config.wallet.confirmed_balance()
-        balance_u = config.wallet.unconfirmed_balance() + satoshi
+        balance_u = config.wallet.unconfirmed_balance()
         config.log('''Wallet''', fg='magenta')
         config.log('''\
     Balance (confirmed)   : {} Satoshi
