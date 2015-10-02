@@ -77,10 +77,6 @@ $ {0} publish twentyone.en2es
 \b
 Show this help text
 $ {0}
-
-\b
-Full documentation
-$ man {0}
 """
     cfg = Config(config_file, config)
     check_setup_twentyone_account(cfg)
