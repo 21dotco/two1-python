@@ -49,8 +49,8 @@ setup(
     description='Buy and sell anything on the internet with Bitcoin.',
     long_description=long_description,
     url='https://github.com/21dotco/two1',
-    author='21,Inc',
-    author_email='two1@21.co',
+    author='21',
+    author_email='21@21.co',
     license='MIT',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -111,7 +111,9 @@ setup(
     entry_points={
         'console_scripts': [
             'two1=two1.cli:main',
-            'wallet=two1.wallet.two1_wallet_cli:main'
+            'wallet=two1.wallet.two1_wallet_cli:main',
+            '21=two1.cli:main',
+            'twentyone=two1.cli:main',
         ],
     },
 )
