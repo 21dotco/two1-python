@@ -25,11 +25,25 @@ wallet = dict(obj=None,
 
 
 def sig_handler(sig_num, stack_frame):
+    """ Signal handler to shut down upon received signals.
+
+        Upon receiving any signal, this function initiates
+        a complete daemon shutdown.
+
+    Args:
+        signum (int): The signal number that was sent.
+        stack_frame (str): Current stack frame.
+    """
     print("Shutting down...")
     rpc_server.shutdown()
 
 
 def data_updater():
+    """ Update thread target.
+
+        This function updates the account balances based on the
+        interval (default of 25 secons).
+    """
     # This is a daemon thread so no need to explicitly
     # poll for any shutdown events.
     while True:
@@ -39,6 +53,14 @@ def data_updater():
 
 
 def load_wallet(wallet_path, data_provider, passphrase):
+    """ Loads a wallet.
+
+    Args:
+        wallet_path (str): The path to the wallet to be loaded.
+        data_provider (BaseProvider): A blockchain data provider object.
+        passphrase (str): Passphrase to use to unlock the wallet if the
+            wallet requires unlocking.
+    """
     global wallet
 
     wallet['obj'] = Two1Wallet(params_or_file=wallet_path,
@@ -48,36 +70,68 @@ def load_wallet(wallet_path, data_provider, passphrase):
 
 
 def check_unlocked():
+    """ Raises an error if the wallet is locked.
+    """
     if wallet['obj'] is None or wallet['locked']:
         raise ServerError("Wallet is locked. Use the 'unlock' command with the passphrase as an arg.")
 
 
 @dispatcher.method('confirmed_balance')
 def confirmed_balance():
+    """ RPC method to get the current confirmed balance.
+
+    Returns:
+        int: Current confirmed balance in satoshis.
+    """
     check_unlocked()
     return wallet['obj'].confirmed_balance()
 
 
 @dispatcher.method('unconfirmed_balance')
 def unconfirmed_balance():
+    """ RPC method to get the current unconfirmed balance.
+
+    Returns:
+        int: Current unconfirmed balance in satoshis.
+    """
     check_unlocked()
     return wallet['obj'].unconfirmed_balance()
 
 
 @dispatcher.method('current_address')
 def current_address():
+    """ RPC method to get the current payout address.
+
+    Returns:
+        str: Base58Check encoded bitcoin address.
+    """
     check_unlocked()
     return wallet['obj'].current_address
 
 
 @dispatcher.method('send_to')
 def send_to(address, amount, account):
+    """ RPC method to send BTC to an address.
+
+    Args:
+        address (str): Base58Check encoded bitcoin address to send coins to.
+        amount (int): Amount in satoshis to send.
+        account (list): List of accounts to use in sending coins.
+
+    Returns:
+        list: List of txids used to send the coins.
+    """
     check_unlocked()
     return wallet['obj'].send_to(address, amount, account),
 
 
 @dispatcher.method('unlock')
 def unlock_wallet(passphrase):
+    """ RPC method to unlock wallet.
+
+    Args:
+        passphrase (str): The passphrase to use to unlock the wallet.
+    """
     global wallet
     if not wallet['locked']:
         raise ServerError("Wallet is already unlocked or does not use a passphrase.")
@@ -89,16 +143,28 @@ def unlock_wallet(passphrase):
 
 @dispatcher.method('is_locked')
 def is_locked():
+    """ RPC method to determine whether the wallet is currently locked.
+
+    Returns:
+        bool: True if the wallet is locked, False if not.
+    """
     return wallet['locked']
 
 
 @dispatcher.method('wallet_path')
 def wallet_path():
+    """ RPC method to return the wallet path of the currently loaded wallet.
+    
+    Returns:
+        str: The path to the currently loaded wallet.
+    """
     return wallet['path']
 
 
 @dispatcher.method('sync_wallet_file')
 def sync_wallet_file():
+    """ RPC method to trigger a write to the wallet file.
+    """
     return wallet['obj'].sync_wallet_file()
 
 
@@ -133,6 +199,8 @@ def sync_wallet_file():
 @click.pass_context
 def main(ctx, wallet_path, blockchain_data_provider,
          chain_api_key_id, chain_api_key_secret, data_update_interval):
+    """ Two1 Wallet daemon
+    """
     global wallet
 
     wallet['path'] = wallet_path

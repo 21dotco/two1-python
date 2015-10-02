@@ -16,10 +16,26 @@ REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_se
 
 
 def get_passphrase():
+    """ Prompts the user for a passphrase.
+
+    Returns:
+        str: The user-entered passphrase.
+    """
     return getpass.getpass("Passphrase to unlock wallet: ")
 
 
 def check_daemon_running(wallet_path):
+    """ Checks whether the wallet daemon is running.
+
+    Args:
+        wallet_path (str): The path to the wallet that the daemon
+            should have loaded up.
+
+    Returns:
+        UnixSocketServerProxy: Returns the wallet proxy object
+            used to communicate with the daemon, or None if the
+            daemon is not running.
+    """
     rv = None
     try:
         w = UnixSocketServerProxy()
@@ -35,6 +51,14 @@ def check_daemon_running(wallet_path):
 
 
 def check_wallet_proxy_unlocked(w, passphrase):
+    """ Checks if the wallet currently loaded by the daemon
+        is unlocked.
+
+    Args:
+        w (UnixSocketServerProxy): The wallet proxy object to check.
+        passphrase (str): The passphrase to send if the wallet is
+            locked.
+    """
     if w.is_locked():
         if not passphrase:
             click.echo("The wallet is locked and requires a passphrase.")
@@ -61,6 +85,13 @@ def _call_wallet_method(wallet, method_name, *args, **kwargs):
 
 @click.pass_context
 def validate_data_provider(ctx, param, value):
+    """ Validates the data provider sent in via the CLI.
+
+    Args:
+        ctx (Click context): Click context object.
+        param (str): Parameter that is being validated.
+        value (str): Parameter value.
+    """
     data_provider_params = {}
     if ctx.obj is None:
         ctx.obj = {}
