@@ -134,8 +134,11 @@ class BitRequests(object):
         txn = signed_tx[0].get("txn")
         print("txid: {}".format(txid))
         print("txn: {}".format(txn))
-        # insert the raw tranasction into the headers
-        bitcoin_headers = {"Bitcoin-Transaction": txn}
+        # insert the raw tranasction and current address into the headers
+        bitcoin_headers = {
+            "Bitcoin-Transaction": txn,
+            "Wallet-Address": self.wallet.current_address
+        }
         # pay the endpoint again
         print("paying the endpoint: \
              address_to_pay {}, price {}".format(
