@@ -68,7 +68,7 @@ class BitRequests(object):
         return cls._post(cls, url, wallet, **kwargs)
 
     def __init__(self):
-        """An api into bitcoin enabled requests."""
+        """An API into bitcoin enabled requests."""
         self.wallet = None
         self.data = None
         self.paid_amount = None
@@ -88,7 +88,7 @@ class BitRequests(object):
         Raises:
             ValueError: error if request is not ok
         """
-        print("got request obeject: {}".format(request))
+        print("got request object: {}".format(request))
         if request.status_code == self.DEF_PAYMENT_REQUIRED_STATUS_CODE:
             return self._pay_endpoint(self, request)
         elif request.ok:
@@ -203,8 +203,7 @@ class BitRequests(object):
 
 if __name__ == "__main__":
     """
-    namespace bitrequests such that it's imported a la
-    requests.
+    Namespace bitrequests such that it's imported a la requests.
     https://github.com/kennethreitz/requests/blob/master/requests/__init__.py#L15
 
     example usage of requests:
