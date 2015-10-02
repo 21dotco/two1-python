@@ -19,7 +19,6 @@ numpy==1.9.2
 path.py==7.7.1
 pillow==2.9.0
 protobuf==3.0.0a3
-pycoin==0.52
 pygal==1.7.0
 pytest
 pytest-django

@@ -1,5 +1,6 @@
+import os
+
 from django.http import HttpResponse
-from lib.chain   import BitcoinInterface
 from django.conf import settings
 # import qrcode
 # import base64
@@ -13,9 +14,9 @@ from rest_framework.views import exception_handler
 from rest_framework import status
 from rest_framework.response import Response
 
-CAPI = BitcoinInterface()
-payment_required_body_text = "Payment Required"
-
+# initiate blockchain provider keys
+from .helpers.chain_provider_helper import ChainProviderHelper
+bitcoin_provider_helper = ChainProviderHelper()
 
 # This is the applications exception handler, we will write our exception
 # HTTP responses here.
@@ -57,6 +58,7 @@ def configureFor402(response, price, address):
 
 
 class PaymentRequiredAuthentication(authentication.BaseAuthentication):
+    payment_required_body_text = "Payment Required"
 
     # Entry point for verification
     def authenticate(self, request):
@@ -66,7 +68,7 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
         # No payment headers sent
         if not tx:
             raise self.paymentRequiredException(
-                request, payment_required_body_text)
+                request, self.payment_required_body_text)
 
         # Payment verified
         elif self.validatePayment(tx, request):
@@ -76,7 +78,7 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
         # Bad transaction sent by client, or error verifying transaction
         else:
             raise self.paymentRequiredException(
-                request, payment_required_body_text)
+                request, self.payment_required_body_text)
 
     # This can be overridden by a subclass to support dynamic prices.
     # NOTE: this method should be 100% deterministic or transaction
@@ -98,11 +100,22 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
 
         # Verify Transaction with BitcoinInterface.
         # The tx can be a txId or a tx
-        return CAPI.check_payment(
-            tx,
-            self.getAddressFor(request),
-            self.getQuoteFor(request)
-        )
+        try: 
+            bitcoin_provider_helper.validate_payment(
+                tx,
+                self.getAddressFor(request),
+                self.getQuoteFor(request)
+            )
+            print("Broadcasting transaction: {}".format(
+                    bitcoin_provider_helper.provider.broadcast_transaction(
+                        tx
+                    )
+                )
+            )
+            return True
+        except ValueError:
+            return False
+
 
     def getTransactionFor(self, request):
         # 1. Header
@@ -118,7 +131,7 @@ class PaymentRequiredAuthentication(authentication.BaseAuthentication):
             return None
 
     def paymentRequiredException(self, request, message):
-        exe = exceptions.AuthenticationFailed(payment_required_body_text)
+        exe = exceptions.AuthenticationFailed(self.payment_required_body_text)
 
         # TODO: Validate outputs...
         exe.paymentInfo = {

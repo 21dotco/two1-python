@@ -286,6 +286,26 @@ def address_to_key_hash(s):
     h160 = n[1:]
     return version, h160
 
+
+def key_hash_to_address(hash160):
+    """Convert RIPEMD-160 hash to bitcoin address.
+
+    Args:
+        hash160 (bytes/str): bitcoin hash160 to decode
+
+    Returns:
+        (bitcoin address): base58 encoded bitcoin address
+    """
+    # if 0x in string, strip it
+    if "0x" in hash160:
+        hash160 = hash160[2:]
+    # if it's hex, convert it to a string
+    if isinstance(hash160, str):
+        hash160 = hex_str_to_bytes(hash160)
+    address = base58.b58encode_check(bytes([0]) + hash160)
+    return address
+
+
 def compute_reward(height):
     """ Computes the block reward for a block at the supplied height.
         See: https://en.bitcoin.it/wiki/Controlled_supply for the reward
