@@ -12,6 +12,13 @@ from two1.wallet.exceptions import WalletError
 
 
 def get_daemonizer():
+    """ Returns the appropriate daemonizer class for the system.
+
+    Returns:
+        Daemonizer: A daemonizer class that can be used to install/uninstall,
+            enable/disable, and start/stop the daemon. If the init system of
+            the OS is not supported, this will be None.
+    """
     rv = None
     if sys.platform == 'darwin':
         rv = Launchd
@@ -29,46 +36,109 @@ def get_daemonizer():
 class Daemonizer(object):
     """ Abstract base class for installing/enabling/disabling the two1
         wallet daemon.
+
+        All methods are class methods and as such do not require an instance
+        for functionality.
     """
 
     @classmethod
     def installed(self):
+        """ Returns whether or not the daemon has been installed into
+            the init system.
+
+        Returns:
+            bool: True if the daemon has been installed, False otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def install(self):
+        """ Installs the daemon into the init system.
+
+        Returns:
+            bool: True if the daemon was successfully installed, False
+                otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def uninstall(self):
+        """ Un-installs the daemon from the init system.
+
+        Returns:
+            bool: True if the daemon was successfully un-installed, False
+                otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def enabled(self):
+        """ Returns whether or not the daemon has been enabled in
+            the init system.
+
+        Returns:
+            bool: True if the daemon has been enabled, False otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def enable(self):
+        """ Enables the daemon within the init system.
+
+        Returns:
+            bool: True if the daemon was successfully enabled, False
+                otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def disable(self):
+        """ Disables the daemon within the init system.
+
+        Returns:
+            bool: True if the daemon was successfully disabled, False
+                otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def started(self):
+        """ Returns whether or not the daemon has been started and is
+            currently running.
+
+        Returns:
+            bool: True if the daemon is running, False otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def start(self):
+        """ Starts the daemon.
+
+        Returns:
+            bool: True if the daemon was successfully started, False
+                otherwise.
+        """
         raise NotImplementedError
 
     @classmethod
     def stop(self):
+        """ Stops the daemon.
+
+        Returns:
+            bool: True if the daemon was successfully stopped, False
+                otherwise.
+        """
         raise NotImplementedError
 
 
 class Systemd(Daemonizer):
+    """ Class for installing/enabling/disabling the two1 wallet daemon
+        on linux systems using systemd as their init system.
+
+        All methods are class methods and as such do not require an instance
+        for functionality.
+    """
     ENV_FILE_PATH = Path("/etc/sysconfig/two1")
     SERVICE_NAME = "two1-wallet.service"
     SERVICE_FILE_PATH = Path("/etc/systemd/user/").joinpath(SERVICE_NAME)
@@ -87,11 +157,26 @@ WantedBy=default.target
 
     @staticmethod
     def check_systemd():
+        """ Checks to see if systemd/systemctl are installed.
+
+        Returns:
+            bool: True if both systemd and systemctl are installed and
+                in the path.
+        """
         return shutil.which("systemd") is not None and \
             shutil.which("systemctl") is not None
 
     @classmethod
     def _service_status(cls):
+        """ Parses the output of systemctl --user status to determine
+            the current status of the two1-wallet service.
+
+        Returns:
+            dict: Containing two keys "service_found" and "status".
+                service_found will be True if the service was found and
+                has a status to report. status will be one of [enabled,
+                disabled, active] or None.
+        """
         rv = dict(service_found=False, status=None)
         try:
             sc = subprocess.check_output(["systemctl",
@@ -119,6 +204,17 @@ WantedBy=default.target
 
     @classmethod
     def _write_env_file(cls, text):
+        """ Writes a file containing environment variables that
+            should be set to run the daemon.
+
+        Args:
+            text (str): The complete text that should be written to the
+                file.
+
+        Returns:
+            bool: True if the file was successfully created and written to,
+                False otherwise.
+        """
         rv = False
         with tempfile.NamedTemporaryFile() as tf:
             tf.write(text)
@@ -139,6 +235,17 @@ WantedBy=default.target
 
     @classmethod
     def _write_service_file(cls, text):
+        """ Writes a file containing the parameters required for systemd
+            to daemonize the process.
+
+        Args:
+            text (str): The complete text that should be written to the
+                file.
+
+        Returns:
+            bool: True if the file was successfully created and written to,
+                False otherwise.
+        """
         rv = False
         with tempfile.NamedTemporaryFile() as tf:
             tf.write(text)
@@ -156,10 +263,29 @@ WantedBy=default.target
 
     @classmethod
     def installed(cls):
+        """ Returns whether or not the daemon has been installed into
+            systemd's user config area.
+
+        Returns:
+            bool: True if the daemon has been installed, False otherwise.
+        """
         return cls.SERVICE_FILE_PATH.exists() and cls.ENV_FILE_PATH.exists()
 
     @classmethod
     def install(cls, data_provider_options):
+        """ Installs the daemon into the user config area of /etc/systemd.
+
+        Args:
+            data_provider_options (dict): A dict containing the following
+                key/value pairs:
+                'provider': Name of the blockchain data provider to use.
+                'api_key_id': The API key to use (if required by the provider).
+                'api_key_secret': The API secret to use (if required)
+
+        Returns:
+            bool: True if the daemon was successfully installed, False
+                otherwise.
+        """
         rv = False
         if cls.installed():
             rv = True
@@ -184,7 +310,13 @@ WantedBy=default.target
 
     @classmethod
     def uninstall(cls):
-        # Remove the service file
+        """ Un-installs the daemon from systemd by removing the service
+            file from /etc/systemd/user.
+
+        Returns:
+            bool: True if the daemon was successfully un-installed, False
+                otherwise.
+        """
         if cls.SERVICE_FILE_PATH.exists():
             cls.SERVICE_FILE_PATH.unlink()
 
@@ -192,11 +324,22 @@ WantedBy=default.target
 
     @classmethod
     def enabled(cls):
+        """ Returns whether or not the daemon has been enabled in systemd.
+
+        Returns:
+            bool: True if the daemon has been enabled, False otherwise.
+        """
         res = cls._service_status()
         return res['service_found'] and res['status'] != "disabled"
 
     @classmethod
     def enable(cls):
+        """ Enables the daemon within systemd.
+
+        Returns:
+            bool: True if the daemon was successfully enabled, False
+                otherwise.
+        """
         rv = False
         if not cls.installed():
             cls.install()
@@ -217,6 +360,12 @@ WantedBy=default.target
 
     @classmethod
     def disable(cls):
+        """ Disables the daemon within systemd.
+
+        Returns:
+            bool: True if the daemon was successfully disabled, False
+                otherwise.
+        """
         rv = False
         try:
             subprocess.check_output(["systemctl",
@@ -233,11 +382,23 @@ WantedBy=default.target
 
     @classmethod
     def started(cls):
+        """ Returns whether or not the daemon has been started and is
+            currently running.
+
+        Returns:
+            bool: True if the daemon is running, False otherwise.
+        """
         res = cls._service_status()
         return res['service_found'] and res['status'] == "active"
 
     @classmethod
     def start(cls):
+        """ Starts the daemon.
+
+        Returns:
+            bool: True if the daemon was successfully started, False
+                otherwise.
+        """
         rv = False
         if not cls.enabled():
             cls.enable()
@@ -258,6 +419,12 @@ WantedBy=default.target
 
     @classmethod
     def stop(cls):
+        """ Stops the daemon.
+
+        Returns:
+            bool: True if the daemon was successfully stopped, False
+                otherwise.
+        """
         rv = False
 
         if cls.started():
@@ -275,11 +442,19 @@ WantedBy=default.target
 
 
 class Launchd(Daemonizer):
+    """ Class for installing/enabling/disabling the two1 wallet daemon
+        on Mac OS X systems using launchd as their init system.
+
+        All methods are class methods and as such do not require an instance
+        for functionality.
+    """
     PLIST_FILE_PATH = Path("~/Library/LaunchAgents/com.two1.walletd.plist").expanduser()
     AGENT_LABEL = "com.two1.walletd"
 
     @staticmethod
     def indent(elem, level=0):
+        """ Pretty-ifies XML string output.
+        """
         i = "\n" + level*"  "
         if len(elem):
             if not elem.text or not elem.text.strip():
@@ -337,6 +512,11 @@ class Launchd(Daemonizer):
 
     @classmethod
     def _create_plist_file(cls, env_vars={}):
+        """ Creates a PLIST file for launchd.
+        
+            PLIST files are XML docs with certain parameters
+            required to start the daemon.
+        """
         walletd_path = shutil.which('walletd')
         if walletd_path is None:
             raise WalletError("walletd has not been installed correctly!")
@@ -365,10 +545,29 @@ class Launchd(Daemonizer):
 
     @classmethod
     def installed(cls):
+        """ Returns whether or not the daemon has been installed into
+            launchd.
+
+        Returns:
+            bool: True if the daemon has been installed, False otherwise.
+        """
         return cls.PLIST_FILE_PATH.exists()
 
     @classmethod
     def install(cls, data_provider_options):
+        """ Installs the launchd agent into ~/Library/LaunchAgents
+
+        Args:
+            data_provider_options (dict): A dict containing the following
+                key/value pairs:
+                'provider': Name of the blockchain data provider to use.
+                'api_key_id': The API key to use (if required by the provider).
+                'api_key_secret': The API secret to use (if required)
+
+        Returns:
+            bool: True if the daemon was successfully installed, False
+                otherwise.
+        """
         dpo = data_provider_options
         rv = False
 
@@ -392,6 +591,13 @@ class Launchd(Daemonizer):
 
     @classmethod
     def uninstall(cls):
+        """ Un-installs the agent from launchd by removing the PLIST
+            file from ~/Library/LaunchAgents.
+
+        Returns:
+            bool: True if the daemon was successfully un-installed, False
+                otherwise.
+        """
         if cls.PLIST_FILE_PATH.exists():
             cls.PLIST_FILE_PATH.unlink()
 
@@ -399,20 +605,43 @@ class Launchd(Daemonizer):
 
     @classmethod
     def enabled(cls):
+        """ Returns whether or not the agent has been enabled. For launchd,
+            this is equivalent to installing the PLIST file.
+
+        Returns:
+            bool: True if the agent has been installed, False otherwise.
+        """
         return cls.installed()
 
     @classmethod
     def enable(cls):
+        """ Enables the agent within launchd. Since installing is the
+            equivalent of enabling in launchd, this simply returns whether
+            the agent has been installed or not.
+
+        Returns:
+            bool: True if the agent is installed, False otherwise.
+        """
         return cls.installed()
 
     @classmethod
     def disable(cls):
+        """ Disables the agent by removing the PLIST file.
+
+        Returns:
+            bool: True if the agent was successfully uninstalled, False
+                otherwise.
+        """
         return cls.uninstall()
 
     @classmethod
     def started(cls):
-        # Need to do launchctl list com.two1.walletd and
-        # analyze output
+        """ Returns whether or not the agent has been started and is
+            currently running.
+
+        Returns:
+            bool: True if the agent is running, False otherwise.
+        """
         rv = False
         lc = ""
         try:
@@ -430,6 +659,12 @@ class Launchd(Daemonizer):
 
     @classmethod
     def start(cls):
+        """ Starts the agent.
+
+        Returns:
+            bool: True if the agent was successfully started, False
+                otherwise.
+        """
         rv = False
         if not cls.enabled():
             cls.enable()
@@ -452,6 +687,12 @@ class Launchd(Daemonizer):
 
     @classmethod
     def stop(cls):
+        """ Stops the agent.
+
+        Returns:
+            bool: True if the agent was successfully stopped, False
+                otherwise.
+        """
         rv = True
         if cls.started():
             try:
