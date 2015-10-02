@@ -89,10 +89,10 @@ Show this help text
 $ {0}
 """
     cfg = Config(config_file, config)
+    check_setup_twentyone_account(cfg)
     # Disable the auto updater for now.
     # Todo: This needs to be switched on for the prod channel only.
     if cfg.auto_update:
-        check_setup_twentyone_account(cfg)
         update_data = update_two1_package(cfg)
         if update_data["update_successful"]:
             # TODO: This should exit the CLI and run the same command using the
