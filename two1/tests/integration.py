@@ -1,8 +1,13 @@
-import string
+import pytest
 from two1.cli import main
 from click.testing import CliRunner
-import random
-from two1.uxstring import UxString
+from two1.lib.util.uxstring import UxString
+from two1.tests import test_utils
+
+
+@pytest.fixture(scope="session", autouse=True)
+def prepare_wallet():
+    test_utils.setup_wallet()
 
 
 def run_end_to_end():
@@ -20,7 +25,7 @@ def run_end_to_end():
         print_test_msg('buy')
         test_two1_buy(runner)
 
-        print("\n\n\n\nPASSED")
+        print_success()
 
 
 def test_help_msg(runner):
@@ -31,8 +36,8 @@ def test_help_msg(runner):
 
 def test_two1_status(runner):
     # run it without username and craete a username
-    config_file = "--config-file={}".format(rand_str(3))
-    username = rand_str(4) + "\n"
+    config_file = "--config-file={}".format(test_utils.rand_str(3))
+    username = test_utils.rand_str(4) + "\n"
     result = runner.invoke(main, [config_file, 'status'], input=username)
     assert_no_error(result)
     verify_two1_status_no_user(result.output, username)
@@ -61,8 +66,11 @@ def test_two1_buy(runner):
 
 
 def assert_no_error(result):
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.exception
     assert result.exception is None
+    print("\n\n\n")
+    print(result.output)
+    print("\n\n\n")
 
 
 def verify_blank_two1(output):
@@ -88,13 +96,15 @@ def verify_two1_status(output, username, payout_address):
 
 
 def verify_two1_mine(output, original_unconfirmed_amount):
-    pool_payout = 20000
+    pool_payout = 200000
     assert "Mining" in output
     assert "Mining Complete" in output
     assert "You mined {} ฿".format(20000)
 
     new_unconfirmed_amount = scrape_unconfirmed_amount(output)
-    assert new_unconfirmed_amount == original_unconfirmed_amount + pool_payout
+    assert new_unconfirmed_amount == original_unconfirmed_amount + pool_payout, \
+        "original_amount={} new_amount={}".format(original_unconfirmed_amount,
+                                                  new_unconfirmed_amount)
 
 
 def verify_two1_buy(output):
@@ -113,20 +123,31 @@ def scrape_payout_from_status_output(output):
 
 
 def scrape_unconfirmed_amount(output):
-    clue = "Balance (unconfirmed) : "
+    clue = "Pending Transactions  :   "
     amount_start = output[output.index(clue) + len(clue):]
     amount_end_del = amount_start.index(' Satoshi')
     amount = amount_start[:amount_end_del]
     return int(amount)
 
 
-def rand_str(length):
-    return ''.join(
-        random.choice(string.ascii_lowercase) for i in range(length))
-
-
 def print_test_msg(command):
+    HEADER_COLOR = '\033[95m'
+    END_COLOR = '\033[0m'
+    print(HEADER_COLOR)
+    print("-----------------------")
     print('Testing {}.'.format(command))
+    print("-----------------------")
+    print(END_COLOR)
+
+
+def print_success():
+    PASSED_COLOR = '\033[92m'
+    END_COLOR = '\033[0m'
+    print(PASSED_COLOR)
+    print("-----------------------")
+    print('PASSED')
+    print("-----------------------")
+    print(END_COLOR)
 
 
 if __name__ == "__main__":

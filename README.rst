@@ -88,7 +88,7 @@ The root directory
 The top level contains the following files:
 
  - `<Dockerfile>`_: Instructions to Dockerize ``two1.bitcoin``
- - `<Procfile>`_:  Deploy ``two1.djangobitcoin`` to Heroku
+ - `<Procfile>`_:  Deploy ``two1.examples`` to Heroku
  - `<README.rst>`_: This documentation file
  - `<setup.cfg>`_: Configuration for setup.py
  - `<setup.py>`_: The build script for pip/setup.py install of ``two1``

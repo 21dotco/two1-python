@@ -8,6 +8,8 @@ imported. We have configured setup.py and this code such that the
 documentation dynamically updates based on this name.
 """
 import sys
+import platform
+
 import locale
 import os
 import sys
@@ -16,24 +18,19 @@ import getpass
 from codecs import open
 from path import path
 import click
-import platform
 from path import path
-
-from two1.debug import dlog
-from two1.config import Config
-from two1.config import TWO1_CONFIG_FILE
-from two1.config import TWO1_VERSION
-from two1.config import pass_config
-from two1.uxstring import UxString 
-from two1.lib.login import check_setup_twentyone_account
-from two1.lib.decorators import docstring_parameter
-from two1.lib.update import update_two1_package
+from two1.commands.config import Config
+from two1.commands.config import TWO1_CONFIG_FILE
+from two1.commands.config import TWO1_VERSION
+from two1.lib.server.login import check_setup_twentyone_account
+from two1.lib.util.decorators import docstring_parameter
+from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.mine import mine
 from two1.commands.publish import publish
 from two1.commands.rate import rate
 from two1.commands.search import search
-from two1.commands.sell import sell
+#from two1.commands.sell import sell
 from two1.commands.status import status
 from two1.commands.update import update
 
@@ -105,7 +102,7 @@ main.add_command(mine)
 main.add_command(publish)
 main.add_command(rate)
 main.add_command(search)
-main.add_command(sell)
+#main.add_command(sell)
 main.add_command(status)
 main.add_command(update)
 
