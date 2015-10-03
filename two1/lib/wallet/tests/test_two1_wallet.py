@@ -1,9 +1,14 @@
 import json
-
+from mock import MagicMock
 import pytest
 from pbkdf2 import PBKDF2
 import tempfile
+
 from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey
+from two1.lib.bitcoin.hash import Hash
+from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.txn import UnspentTransactionOutput
+from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.blockchain.mock_provider import MockProvider
 from two1.lib.wallet import exceptions
@@ -207,7 +212,49 @@ def test_rest():
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                        amount=1000000)
+
+    # Should still fail when using unconfirmed if amount is greater
+    # than unconfirmed balance
+    with pytest.raises(exceptions.WalletBalanceError):
+        wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                       use_unconfirmed=True,
+                       amount=1000000)
+
+    # Should fail when not using unconfirmed txns and
+    # confirmed < amount < unconfirmed.
+    with pytest.raises(exceptions.WalletBalanceError):
+        wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                       use_unconfirmed=False,
+                       amount=410000)
+
+    addr = '12T4xudaKCiGmZZZynpWBzz47tRYmtavLi'
+    _, hash160 = address_to_key_hash(addr)
+    utxo = UnspentTransactionOutput(transaction_hash=Hash('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52'),
+                                    outpoint_index=3,
+                                    value=15100,
+                                    scr=Script.build_p2pkh(hash160),
+                                    confirmations=300)
+    wallet.get_utxos = MagicMock(return_value=dict(addr=[utxo]))
     
+    # Should get past checking balance but raise a signing error
+    with pytest.raises(exceptions.WalletSigningError):
+        txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                              use_unconfirmed=False,
+                              amount=10000)
+
+    utxo = UnspentTransactionOutput(transaction_hash=Hash('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52'),
+                                    outpoint_index=3,
+                                    value=420000,
+                                    scr=Script.build_p2pkh(hash160),
+                                    confirmations=0)
+    wallet.get_utxos = MagicMock(return_value=dict(addr=[utxo]))
+    
+    # Should get past checking balance but raise a signing error
+    with pytest.raises(exceptions.WalletSigningError):
+        txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                              use_unconfirmed=True,
+                              amount=415000)
+
     # Finally check storing to a file
     params = {}
     with tempfile.NamedTemporaryFile(delete=True) as tf:
