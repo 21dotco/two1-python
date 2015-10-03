@@ -773,9 +773,7 @@ class Two1Wallet(BaseWallet):
         if total_with_fees > balance:
             raise exceptions.WalletBalanceError(
                 "Confirmed balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)" %
-                balance,
-                total_amount,
-                fees)
+                (balance, total_amount, fees))
 
         # Get all private keys in one shot
         private_keys = self._get_private_keys(list(selected_utxos.keys()))
