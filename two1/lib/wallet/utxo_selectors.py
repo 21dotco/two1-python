@@ -47,7 +47,8 @@ def utxo_selector_smallest_first(data_provider, utxos_by_addr, amount,
         else:
             break
 
+    rv = utxos_to_use, fees
     if utxo_sum < amount + fees:
-        raise WalletBalanceError("Provided list of UTXOs does not have enough BTC to send %d." % amount)
+        rv = {}, fees
 
-    return utxos_to_use, fees
+    return rv

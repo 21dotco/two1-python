@@ -710,12 +710,14 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    def make_signed_transaction_for(self, address, amount, accounts=[]):
+    def make_signed_transaction_for(self, address, amount,
+                                    use_unconfirmed=False, accounts=[]):
         """ Makes a raw signed unbroadcasted transaction for the specified amount.
 
         Args:
             address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -729,7 +731,7 @@ class Two1Wallet(BaseWallet):
                                                          accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
-                                             accounts=[]):
+                                             use_unconfirmed=False, accounts=[]):
         """ Makes raw signed unbrodcasted transaction(s) for the specified amount.
 
             In the future, this function may create multiple transactions
@@ -739,6 +741,7 @@ class Two1Wallet(BaseWallet):
             addresses_and_amounts (dict): A dict keyed by recipient address
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -755,23 +758,37 @@ class Two1Wallet(BaseWallet):
         else:
             accts = self._check_and_get_accounts(accounts)
 
+        c_balance = self.confirmed_balance()
+        u_balance = self.unconfirmed_balance()
+        if use_unconfirmed:
+            balance = max(c_balance, u_balance)
+        else:
+            balance = min(c_balance, u_balance)
+
         # Now get the unspents from all accounts and select which we
         # want to use
         utxos_by_addr = self.get_utxos(accts)
+
+        if not use_unconfirmed:
+            # Filter out any UTXOs that are unconfirmed.
+            for addr, utxos_addr in utxos_by_addr.items():
+                utxos_by_addr[addr] = list(filter(lambda u: u.num_confirmations > 0,
+                                                  utxos_addr))
 
         selected_utxos, fees = self.utxo_selector(data_provider=self.data_provider,
                                                   utxos_by_addr=utxos_by_addr,
                                                   amount=total_amount,
                                                   num_outputs=len(addresses_and_amounts))
 
-        total_with_fees = total_amount + fees
-
         # Verify we have enough money
-        balance = self.confirmed_balance()
-        if total_with_fees > balance:
+        total_with_fees = total_amount + fees
+        if total_with_fees > balance or not selected_utxos:
             raise exceptions.WalletBalanceError(
-                "Confirmed balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)" %
+                "Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)." %
                 (balance, total_amount, fees))
+
+        if use_unconfirmed and total_with_fees > c_balance:
+            print("Warning: using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
         private_keys = self._get_private_keys(list(selected_utxos.keys()))
@@ -828,13 +845,15 @@ class Two1Wallet(BaseWallet):
 
         return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}]
 
-    def send_to_multiple(self, addresses_and_amounts, accounts=[]):
+    def send_to_multiple(self, addresses_and_amounts,
+                         use_unconfirmed=False, accounts=[]):
         """ Sends bitcoins to multiple addresses.
 
         Args:
             addresses_and_amounts (dict): A dict keyed by recipient address
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -843,6 +862,7 @@ class Two1Wallet(BaseWallet):
             str or None: A string containing the submitted TXID or None.
         """
         txn_dict = self.make_signed_transaction_for_multiple(addresses_and_amounts,
+                                                             use_unconfirmed,
                                                              accounts)
 
         res = []
@@ -858,12 +878,13 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    def send_to(self, address, amount, accounts=[]):
+    def send_to(self, address, amount, use_unconfirmed=False, accounts=[]):
         """ Sends Bitcoin to the provided address for the specified amount.
 
         Args:
             address (str): The address to send the Bitcoin too.
             amount (number): The amount of Bitcoin to send.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -873,7 +894,9 @@ class Two1Wallet(BaseWallet):
                and raw transactions.  e.g.: [{"txid": txid0, "txn":
                txn_hex0}, ...]
         """
-        return self.send_to_multiple({address: amount}, accounts)
+        return self.send_to_multiple({address: amount},
+                                     use_unconfirmed,
+                                     accounts)
 
     @property
     def balances(self):

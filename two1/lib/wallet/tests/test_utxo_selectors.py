@@ -31,11 +31,11 @@ def test_smallest_first():
         utxos += addr_utxos
 
     amount = 1000000
-    with pytest.raises(WalletBalanceError):
-        selected, fees = utxo_selector_smallest_first(data_provider=cp,
-                                                      utxos_by_addr=utxos_by_addr,
-                                                      amount=amount,
-                                                      num_outputs=2)
+    selected, fees = utxo_selector_smallest_first(data_provider=cp,
+                                                  utxos_by_addr=utxos_by_addr,
+                                                  amount=amount,
+                                                  num_outputs=2)
+    assert not selected
 
     amount = 100000
     selected, fees = utxo_selector_smallest_first(data_provider=cp,
