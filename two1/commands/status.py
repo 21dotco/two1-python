@@ -1,15 +1,11 @@
 import time
 
 import click
-from two1.config import pass_config
+from two1.commands.config import pass_config
 from tabulate import tabulate
-from two1.lib import rest_client
-from two1.config import TWO1_HOST
-from two1.uxstring import UxString
-from two1.debug import dlog
-import time
-import datetime
-from random import randint
+from two1.lib.server import rest_client
+from two1.commands.config import TWO1_HOST
+from two1.lib.util.uxstring import UxString
 
 
 @click.command()
@@ -34,6 +30,7 @@ Wallet''', fg='magenta')
     # balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
+    pending_transactions = balance_u - balance_c
 
     #    balance_c = config.wallet.confirmed_balance()
     try:
@@ -42,10 +39,10 @@ Wallet''', fg='magenta')
         bitcoin_address = "Not Set"
 
     config.log('''\
-    Balance (confirmed)   : {} Satoshi
-    Balance (unconfirmed) : {} Satoshi
-    Payout Address        : {}'''
-               .format(balance_c, balance_u, bitcoin_address)
+    Balance (confirmed)   :   {} Satoshi
+    Pending Transactions  :   {} Satoshi
+    Payout Address        :   {}'''
+               .format(balance_c, pending_transactions, bitcoin_address)
                )
 
     mining_p = int(time.time() / 9.0)

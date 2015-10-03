@@ -1,10 +1,9 @@
+import datetime
+
 import click
 import re
-from two1.config import pass_config
-from two1.debug import dlog
-from two1.bitcurl.bitrequests import BitRequests
-import time
-import datetime
+from two1.commands.config import pass_config
+from two1.lib.bitcurl.bitrequests import BitRequests
 
 DEFAULT_SELLER_NAME = "---"
 URL_REGEXP = re.compile(

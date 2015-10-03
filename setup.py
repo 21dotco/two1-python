@@ -69,13 +69,12 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.lib', 'two1.commands', 'two1.bitcoin',
-              'two1.mining', 'two1.gen', 'two1.wallet', 'two1.crypto',
-              'two1.blockchain', 'two1.bitcurl',
-              'two1.djangobitcoin.djangobitcoin',
-              'two1.djangobitcoin.auth', 'two1.djangobitcoin.misc',
-              'two1.djangobitcoin.scipy_aas',
-              'two1.djangobitcoin.static_serve'],
+    packages=['two1', 'two1.lib', 'two1.commands', 'two1.lib.bitcoin',
+              'two1.lib.mining', 'two1.lib.server', 'two1.lib.wallet', 'two1.lib.crypto',
+              'two1.lib.blockchain', 'two1.lib.bitcurl',
+              'two1.examples.server',
+              'two1.examples.auth', 'two1.examples.server.misc',
+              'two1.examples.server.scipy_aas'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -115,10 +114,10 @@ setup(
     entry_points={
         'console_scripts': [
             'two1=two1.cli:main',
-            'wallet=two1.wallet.two1_wallet_cli:main',
+            'wallet=two1.lib.wallet.two1_wallet_cli:main',
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
-            'walletd=two1.wallet.daemon:main'
+            'walletd=two1.lib.wallet.daemon:main'
         ],
     },
 )

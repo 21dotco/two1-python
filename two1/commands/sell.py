@@ -7,12 +7,12 @@ from re import split
 import click
 from click import ClickException
 import os
-from two1.config import pass_config
-from two1.djangobitcoin.djangobitcoin.settings import ENDPOINTS_FILE
-import two1.djangobitcoin.djangobitcoin as dj_bt
+from two1.commands.config import pass_config
+from two1.examples.server.settings import ENDPOINTS_FILE
+import two1.examples.server as dj_bt
 from tabulate import tabulate
 
-ENDPOINTS_PATH = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
+#ENDPOINTS_PATH = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
 
 
 @click.command(context_settings=dict(
@@ -70,7 +70,8 @@ def try_config_django():
 def find_process_by_attribute(attribute):
     process_list = []
     sub_proc_ps = subprocess.Popen(['ps', 'auxw', ], stdout=subprocess.PIPE)
-    sub_proc = subprocess.Popen(['grep', attribute, ], stdin=sub_proc_ps.stdout, stdout=subprocess.PIPE)
+    sub_proc = subprocess.Popen(['grep', attribute, ], stdin=sub_proc_ps.stdout,
+                                stdout=subprocess.PIPE)
     sub_proc_ps.stdout.close()
     # Discard the first line (ps aux header)
     sub_proc.stdout.readline()
@@ -90,7 +91,8 @@ def find_endpoint(endpoint, package_name):
     try:
         package = __import__(package_name, fromlist=['urls'])
         urls = getattr(package, 'urls')
-        match = next((x.regex.pattern for x in urls.urlpatterns if match_endpoint(endpoint, x.regex)), None)
+        match = next((x.regex.pattern for x in urls.urlpatterns if
+                      match_endpoint(endpoint, x.regex)), None)
         if match:
             return match, urls.configurator
         else:
@@ -105,7 +107,9 @@ def update_config(package_name, package_path, pattern):
         ep_json = json.load(open(ENDPOINTS_PATH))
     except:
         if os.path.exists(ENDPOINTS_PATH):
-            click.echo('endpoints configuration file {0} was corrupted, created a new one'.format(ENDPOINTS_PATH))
+            click.echo(
+                'endpoints configuration file {0} was corrupted, created a new one'.format(
+                    ENDPOINTS_PATH))
         ep_json = []
     package_element = next((x for x in ep_json if x['package'] == package_name), None)
     if not package_element:
@@ -137,7 +141,7 @@ def check_server_state(updated, port):
     Checks if server is running and if not, starts it
     :param updated: if server is already running, restarts it
     Assumes gunicorn process is started via:
-    gunicorn --pythonpath two1/djangobitcoin djangobitcoin.wsgi --bind 127.0.0.1:8000
+    gunicorn --pythonpath two1/examples/server djangobitcoin.wsgi --bind 127.0.0.1:8000
     '''
     gunicorn_pid = find_process_by_attribute('djangobitcoin.wsgi')
     if gunicorn_pid:
@@ -146,8 +150,11 @@ def check_server_state(updated, port):
             click.echo('Server restarted')
             return
     else:
-        subprocess.Popen(['gunicorn', '--pythonpath', 'two1/djangobitcoin', 'djangobitcoin.wsgi', '--bind',
-               '127.0.0.1:' + str(port)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen(
+            ['gunicorn', '--pythonpath', 'two1/examples/djangobitcoin', 'djangobitcoin.wsgi',
+             '--bind',
+             '127.0.0.1:' + str(port)], stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
         click.echo('Server started')
 
 
@@ -196,7 +203,6 @@ def get_builtins(package):
 def show_builtins(config):
     if not try_config_django():
         return
-    builtins = get_builtins('two1.djangobitcoin.misc') \
-               + get_builtins('two1.djangobitcoin.scipy_aas') \
-               + get_builtins('two1.djangobitcoin.static_serve')
+    builtins = get_builtins('two1.examples.server.misc') \
+               + get_builtins('two1.examples.server.scipy_aas')
     config.log(tabulate(builtins, headers=['PATH', 'PACKAGE'], tablefmt='rst'))

@@ -1,24 +1,21 @@
-import base64
-from collections import namedtuple
-import click
 import json
-import os
-import random
 import subprocess
 import time
 
-from two1.config import pass_config
-from two1.bitcoin.block import CompactBlock
-from two1.mining.coinbase import CoinbaseTransactionBuilder
-from two1.bitcoin.txn import Transaction
-from two1.lib import rest_client, message_factory, login
-from two1.lib.machine_auth import MachineAuth
-import two1.config as cmd_config
-from two1.bitcoin.hash import Hash
-from two1.uxstring import UxString
-import two1.bitcoin.utils as utils
-
-from two1.gen import swirl_pb2 as swirl
+import base64
+from collections import namedtuple
+import click
+import os
+import random
+from two1.commands.config import pass_config
+from two1.lib.bitcoin.block import CompactBlock
+from two1.lib.bitcoin.txn import Transaction
+from two1.lib.server import rest_client, message_factory, login
+from two1.lib.server.machine_auth import MachineAuth
+import two1.commands.config as cmd_config
+from two1.lib.bitcoin.hash import Hash
+from two1.lib.util.uxstring import UxString
+import two1.lib.bitcoin.utils as utils
 
 
 @click.command()
@@ -54,7 +51,8 @@ def mine(config):
         # Not running, let's start it
         # TODO: make sure config exists in /etc
         # TODO: replace with sys-ctrl command
-        minerd_cmd = ["sudo", "minerd", "-u", config.username, "swirl+tcp://pool.pool2.21.co:21006/"]
+        minerd_cmd = ["sudo", "minerd", "-u", config.username,
+                      "swirl+tcp://pool.pool2.21.co:21006/"]
         try:
             o = subprocess.check_output(minerd_cmd, universal_newlines=True)
         except subprocess.CalledProcessError as e:
@@ -95,6 +93,15 @@ def mine(config):
         # start mining
         found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
+        # get the confirmed and unconfirmed balance before submitting the share.
+        # after the share gets validated we will then add the validated
+        # satoshis to the balance_u instead of directly asking the wallet for
+        # unconfirmed. This removes our dependency on eventual consistency of the wallet
+        balance_c = config.wallet.confirmed_balance()
+        balance_u = config.wallet.unconfirmed_balance()
+        # show results
+        payment_result = save_work(client, found_share, config.username)
+
         if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
             click.echo(UxString.Error.server_err)
             return
@@ -103,24 +110,26 @@ def mine(config):
         payment_details = json.loads(payment_result.text)
         satoshi = payment_details["amount"]
         config.log("You mined {} ฿\n".format(satoshi), fg="yellow")
+        balance_u += satoshi
         try:
             bitcoin_address = config.wallet.current_address
         except AttributeError:
             bitcoin_address = "Not Set"
 
         config.log("Setting your payout address to {}\n".format(payout_address))
-        balance_c = config.wallet.confirmed_balance()
-        balance_u = config.wallet.unconfirmed_balance()
+
+        pending_transactions = balance_u - balance_c
         config.log('''Wallet''', fg='magenta')
         config.log('''\
-    Balance (confirmed)   : {} Satoshi
-    Balance (unconfirmed) : {} Satoshi
-    Payout Address        : {}
+    Balance (confirmed)   :   {} Satoshi
+    Pending Transactions  :   {} Satoshi
+    Payout Address        :   {}
 '''
-                   .format(balance_c, balance_u, bitcoin_address)
+                   .format(balance_c, pending_transactions, bitcoin_address)
                    )
 
-# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid        
+
+# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
 def check_pid(pid):
     if pid < 0:
         return False
@@ -141,7 +150,8 @@ def check_pid(pid):
         raise
 
     return True
-    
+
+
 def get_work(config, client):
     username = config.username
     work_msg = client.get_work(username=username)
@@ -162,7 +172,6 @@ Work = namedtuple('Work', ['work_id', 'enonce2', 'cb'])
 
 
 def mine_work(work_msg, enonce1, enonce2_size):
-
     pool_target = utils.bits_to_target(work_msg.bits_pool)
     for enonce2_num in range(0, 2 ** (enonce2_size * 8)):
         enonce2 = enonce2_num.to_bytes(enonce2_size, byteorder="big")
@@ -200,6 +209,7 @@ def mine_work(work_msg, enonce1, enonce2_size):
                 return share
 
         click.echo("Exhausted enonce1 space. Changing enonce2")
+
 
 def save_work(client, share, username):
     message_id = random.randint(1, 1e5)
