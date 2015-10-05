@@ -3,10 +3,13 @@
 import base64
 import requests
 import json
+import datetime
 from urllib.parse import urljoin
 from two1.bitcoin.crypto import PrivateKey
 from two1.bitcoin.utils import bytes_to_str, address_to_key_hash
+from two1.lib.exceptions import ServerRequestError
 from two1.lib.machine_auth import MachineAuth
+import click
 
 
 class TwentyOneRestClient(object):
@@ -92,31 +95,109 @@ class TwentyOneRestClient(object):
         else:
             raise
 
-    # GET /mmm/sells/search/
+    # GET /mmm/listings/search/
     def mmm_search(self, query, page_num=1):
         method = "GET"
-        path = "/mmm/sells/search/"
+        path = "/mmm/listings/search/"
         r = self._request(
             False, method, path, params={"q": query, "page": page_num})
         if r.status_code == 200:
-            return json.loads(r.content.decode())
+            return r.json()
         else:
-            raise
+            raise ServerRequestError(r.json()['error'])
 
-    # POST /mmm/{username}/sells
-    def mmm_create_sell(self, name, description, price):
+    # POST /mmm/v1/listings/
+    def mmm_create_listing(self, path, name, description, price, device_id):
         method = "POST"
-        path = "/mmm/{}/sells".format(self.username)
+        url = '/mmm/v1/listings/'
         body = {
             "name": name,
             "description": description,
-            "price": price
+            "price": price,
+            "path": path,
+            "server": device_id
         }
+
         data = json.dumps(body)
+
         return self._request(True, method,
-                             path,
+                             url,
                              data=data
                              )
+
+    # todo implement update, maybe use separate command that takes in uuid
+    def mmm_update_listing(uuid):
+        # method = 'PUT'
+        # url = '{}/mmm/v1/listings/{}'.format(TWO1_DEV_HOST, uuid)
+        pass
+
+    # def mmm_check_listing_exists(self, ):
+    #     import datetime
+    #     method = "GET"
+    #     url = "{}/mmm/v1/listings/".format(TWO1_DEV_HOST)
+    #     params = {
+    #         "path": path,
+    #         "server": device_id
+    #     }
+    #     kwargs = {'params': params}
+    #     headers = {}
+    #     headers["Content-Type"] = "application/json"
+    #     response = requests.request(method, url, headers=headers, **kwargs)
+    #     if response.status_code == 200:
+    #         try:
+    #             existing_id = response.json()[0].get('id', None)
+    #         except IndexError:
+    #             existing_id = None
+    #         # if existing_id is not None:
+    #         #     method = 'PUT'
+    #         #     url = '{}/mmm/v1/listings/{}'.format(TWO1_DEV_HOST, existing_id)
+    #         # else:
+    #     return existing_id
+
+
+    # # PUT /mmm/listings/<id>
+    # def mmm_delete_listing(self, path, name, description, price, device_uuid):
+    #     """Soft deletes listing by setting delete=True
+    #     """
+    #     method = "GET"
+    #     url = "/mmm/v1/listings/"
+    #     params = {
+    #         "server": device_uuid
+    #     }
+    #     response = self._request(True, method, url, params=params)
+    #     if response.status_code == 201:
+    #         method = "PUT"
+    #         body = {
+    #             "name": name,
+    #             "description": description,
+    #             "price": price,
+    #             "path": path,
+    #             "server": device_uuid,
+    #             "deleted": True,
+    #             "active": False,
+    #             "last_active": datetime.datetime.now()
+    #         }
+    #         data = json.dumps(body)
+    #         return self._request(True, method, url, data=data)
+
+
+    # # GET /mmm/listings/ -- list of listings that belong to this device
+    # def mmm_device_listings(self, active=None, page_num=1):
+    #     method = "GET"
+    #     path = "/mmm/v1/listings/"
+    #     params = {
+    #         # should this take in device rather than username?
+    #         "username": self.username, "page": page_num,
+    #         "deleted": False
+    #     }
+    #     if active is True or active is False:
+    #         params['active'] = active
+    #     r = self._request(
+    #         False, method, path, params=params)
+    #     if r.status_code == 200:
+    #         return json.loads(r.content.decode())
+    #     else:
+    #         raise
 
 
 if __name__ == "__main__":

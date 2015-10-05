@@ -1,8 +1,14 @@
 [
   {
-    "package": "two1.djangobitcoin.misc"
+    "package": "two1.djangobitcoin.misc",
+    "urls": [
+      "^language/translate$"
+    ]
   },
   {
+    "urls": [
+      "^serve/*"
+    ],
     "package": "two1.djangobitcoin.static_serve"
   }
 ]
