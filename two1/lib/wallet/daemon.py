@@ -121,7 +121,7 @@ def send_to(address, amount, account):
         list: List of txids used to send the coins.
     """
     check_unlocked()
-    return wallet['obj'].send_to(address, amount, account),
+    return wallet['obj'].send_to(address, amount, account)
 
 
 @dispatcher.method('unlock')
