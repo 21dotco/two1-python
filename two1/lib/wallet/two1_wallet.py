@@ -761,7 +761,7 @@ class Two1Wallet(BaseWallet):
         c_balance = self.confirmed_balance()
         u_balance = self.unconfirmed_balance()
         if use_unconfirmed:
-            balance = max(c_balance, u_balance)
+            balance = u_balance
         else:
             balance = min(c_balance, u_balance)
 
