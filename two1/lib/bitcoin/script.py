@@ -1,4 +1,4 @@
-import copy
+import hashlib
 import struct
 
 from two1.lib.bitcoin.exceptions import ParsingError
@@ -177,6 +177,41 @@ class Script(object):
         """
 
         return Script('OP_HASH160 0x%s OP_EQUAL' % bytes_to_str(hash160_key))
+
+    @staticmethod
+    def build_multisig(m, pub_keys):
+        """ Builds a multisig redeem script and corresponding
+            Pay-to-Script-Hash script.
+
+        Args:
+            m (int): Number of signatures required. Must be <= len(pub_keys).
+            pub_keys (list(bytes)): list of serialized public keys of which the
+               corresponding private keys can be used to sign when redeeming.
+
+        Returns:
+            dict: Containing two keys: 'pubKeyScript' and 'redeemScript'.
+        """
+        if m < 1 or m > len(pub_keys):
+            raise ValueError("m must be > 0 and <= len(pub_keys)!")
+
+        raw_redeem_script = bytes([0x50 + m])
+        for p in pub_keys:
+            raw_redeem_script += bytes([len(p)]) + p
+
+        raw_redeem_script += bytes([0x50 + len(pub_keys)])
+        raw_redeem_script += bytes([Script.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']])
+
+        redeem_script = Script(raw_redeem_script)
+
+        # Get the hash160
+        r = hashlib.new('ripemd160')
+        r.update(hashlib.sha256(raw_redeem_script).digest())
+        hash160 = r.digest()
+
+        pubkey_script = Script.build_p2sh(hash160)
+
+        return dict(pubKeyScript=pubkey_script,
+                    redeemScript=redeem_script)
 
     @staticmethod
     def build_push_str(s):
