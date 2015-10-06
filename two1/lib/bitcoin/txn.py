@@ -1,11 +1,17 @@
 import copy
-import hashlib
+import struct
 
 from two1.lib.bitcoin import crypto
-from two1.lib.bitcoin.exceptions import *
 from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import *
-from two1.lib.bitcoin.utils import *
+from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.utils import bytes_to_str
+from two1.lib.bitcoin.utils import pack_compact_int
+from two1.lib.bitcoin.utils import pack_u32
+from two1.lib.bitcoin.utils import pack_u64
+from two1.lib.bitcoin.utils import pack_var_str
+from two1.lib.bitcoin.utils import unpack_compact_int
+from two1.lib.bitcoin.utils import unpack_u32
+from two1.lib.bitcoin.utils import unpack_u64
 
 
 class TransactionInput(object):
@@ -28,8 +34,8 @@ class TransactionInput(object):
             b (bytes): byte stream starting with the outpoint.
 
         Returns:
-            (ti, b) (tuple): First element of the tuple is the TransactionInput
-                             object and the second is the remaining byte stream.
+            tuple: First element of the tuple is the TransactionInput
+                   object and the second is the remaining byte stream.
         """
         outpoint = b[0:32]
         outpoint_index, b1 = unpack_u32(b[32:])
@@ -64,7 +70,7 @@ class TransactionInput(object):
             "Outpoint Index: %d " % (self.outpoint_index) +
             "Script: %s " % (self.script) +
             "Sequence: %d)" % (self.sequence_num))
-        
+
     def __bytes__(self):
         """ Serializes the object into a byte stream.
 
@@ -83,16 +89,20 @@ class CoinbaseInput(TransactionInput):
     """ See https://bitcoin.org/en/developer-reference#coinbase
 
     Args:
-        height (uint): The height of the block coinbase is part of will go into.
-                       Not required for version 1 blocks.
-        raw_script (bytes): the bytes of the coinbase script. For block_version > 1
-                            the height portion should NOT be included in this script.
-        sequence (int): Unless you are Satoshi with a version 1 block, the default
-                        is fine. If you are Satoshi, send me some of your private
-                        keys and set this to 0.
-        block_version (int): The version of the block this coinbase is a part of
-                             or will go into. If raw_script already contains the
-                             height of the block, this must be 1.
+        height (uint): The height of the block coinbase is part of
+                       will go into.  Not required for version 1
+                       blocks.
+        raw_script (bytes): the bytes of the coinbase script. For
+                            block_version > 1 the height portion
+                            should NOT be included in this script.
+        sequence (int): Unless you are Satoshi with a version 1 block,
+                        the default is fine. If you are Satoshi, send
+                        me some of your private keys and set this to
+                        0.
+        block_version (int): The version of the block this coinbase is
+                             a part of or will go into. If raw_script
+                             already contains the height of the block,
+                             this must be 1.
     """
     NULL_OUTPOINT = Hash(bytes(32))
     MAX_INT       = 0xffffffff
@@ -124,10 +134,10 @@ class CoinbaseInput(TransactionInput):
             "Outpoint Index: 0x%08x " % (self.outpoint_index) +
             "Script: %s " % (bytes_to_str(self.script)) +
             "Sequence: 0x%08x)" % (self.sequence_num))
-        
+
     def __bytes__(self):
         """ Serializes the object into a byte stream.
-        
+
         Returns:
             b (bytes): byte stream containing the serialized coinbase input.
         """
@@ -141,7 +151,7 @@ class CoinbaseInput(TransactionInput):
 
 class TransactionOutput(object):
     """ See https://bitcoin.org/en/developer-reference#txout
-    
+
     Args:
         value (int): Number of satoshis to be spent. Endianness: host
         script (Script): A pay-out script.
@@ -155,13 +165,14 @@ class TransactionOutput(object):
             b (bytes): byte-stream beginning with the value.
 
         Returns:
-            (to, b) (tuple): First element of the tuple is a TransactionOutput, the
-                             second is the remainder of the byte stream.
+            tuple: First element of the tuple is a TransactionOutput,
+                   the second is the remainder of the byte stream.
         """
         value, b0 = unpack_u64(b)
         script_len, b0 = unpack_compact_int(b0)
 
-        return (TransactionOutput(value, Script(b0[:script_len])), b0[script_len:])
+        return (TransactionOutput(value, Script(b0[:script_len])),
+                b0[script_len:])
 
     def __init__(self, value, script):
         self.value = value
@@ -182,7 +193,8 @@ class TransactionOutput(object):
         """ Serializes the object into a byte stream.
 
         Returns:
-            b (bytes): byte stream containing the serialized transaction output.
+            b (bytes): byte stream containing the serialized
+                 transaction output.
         """
         return pack_u64(self.value) + pack_var_str(bytes(self.script))
 
@@ -191,14 +203,16 @@ class UnspentTransactionOutput(object):
     """ Container class for compactly describing unspent transaction outputs.
 
     Args:
-        transaction_hash (Hash): Hash of the transaction containing the unspent output.
+        transaction_hash (Hash): Hash of the transaction containing
+            the unspent output.
         outpoint_index (int): Index of the output.
         value (int): Number of satoshis in the output.
         scr (Script): The scriptPubKey of the output.
         confirmations (int): Number of confirmations for the transaction.
     """
 
-    def __init__(self, transaction_hash, outpoint_index, value, scr, confirmations):
+    def __init__(self, transaction_hash, outpoint_index, value, scr,
+                 confirmations):
         if not isinstance(transaction_hash, Hash):
             raise TypeError("transaction_hash must be a Hash object.")
         if not isinstance(scr, Script):
@@ -213,20 +227,23 @@ class UnspentTransactionOutput(object):
     @property
     def confirmed(self):
         return self.num_confirmations >= 6
-    
-    
+
+
 class Transaction(object):
     """ See https://bitcoin.org/en/developer-reference#raw-transaction-format
 
     Args:
-        version (int): Transaction version (should always be 1). Endianness: host
-        inputs (list(TransactionInput)): all the inputs that spend bitcoin.
-        outputs (list(TransactionOutput)): all the outputs to which bitcoin is sent.
+        version (int): Transaction version (should always be
+            1). Endianness: host
+        inputs (list(TransactionInput)): all the inputs that spend
+            bitcoin.
+        outputs (list(TransactionOutput)): all the outputs to which
+            bitcoin is sent.
         lock_time (int): Time or a block number. Endianness: host
     """
 
-    DEFAULT_TRANSACTION_VERSION = 1 # There are no other versions currently
-    SIG_HASH_OLD = 0x00 # Acts the same as SIG_HASH_ALL
+    DEFAULT_TRANSACTION_VERSION = 1  # There are no other versions currently
+    SIG_HASH_OLD = 0x00  # Acts the same as SIG_HASH_ALL
     SIG_HASH_ALL = 0x01
     SIG_HASH_NONE = 0x02
     SIG_HASH_SINGLE = 0x03
@@ -236,12 +253,12 @@ class Transaction(object):
     def from_bytes(b):
         """ Deserializes a byte stream into a Transaction.
 
-        Args: 
+        Args:
             b (bytes): byte stream starting with the version.
 
         Returns:
-            (tx, b) (tuple): First element of the tuple is the Transaction, second
-                             is the remainder of the byte stream.
+            tuple: First element of the tuple is the Transaction,
+                   second is the remainder of the byte stream.
         """
         # First 4 bytes are version
         version = struct.unpack('<I', b[:4])[0]
@@ -293,7 +310,7 @@ class Transaction(object):
         new_txn = copy.deepcopy(self)
 
         # First deal w/the inputs
-        
+
         # For the SIG_HASH_ANY case, we only care about
         # self.inputs[input_index]
         if hash_type == self.SIG_HASH_ANY:
@@ -302,14 +319,14 @@ class Transaction(object):
         else:
             for i, inp in enumerate(new_txn.inputs):
                 inp.script = sub_script if i == input_index else Script("")
-            
+
                 if hash_type & 0x1f in [self.SIG_HASH_NONE, self.SIG_HASH_SINGLE] and input_index != i:
                     # Sequence numbers (nSequence) must be set to 0 for all but
                     # the input we care about.
                     inp.sequence_num = 0
 
         # Now deal with outputs
-                    
+
         if hash_type & 0x1f == self.SIG_HASH_NONE:
             new_txn.outputs = []
         elif hash_type & 0x1f == self.SIG_HASH_SINGLE:
@@ -323,10 +340,10 @@ class Transaction(object):
                     out.value = 0xffffffff
 
         return new_txn
-            
+
     def sign_input(self, input_index, hash_type, private_key, sub_script):
         """ Signs an input.
-        
+
         Args:
             input_index (int): The index of the input to sign.
             hash_type (int): What kind of signature hash to do.
@@ -336,7 +353,7 @@ class Transaction(object):
                utxo being spent.
         """
         sub_scr = sub_script.remove_op("OP_CODESEPARATOR")
-        
+
         if input_index < 0 or input_index >= len(self.inputs):
             raise ValueError("Invalid input index.")
 
@@ -344,14 +361,15 @@ class Transaction(object):
 
         compressed = False
         if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
-            # This is to deal with the bug where specifying an index that is out
-            # of range (wrt outputs) results in a signature hash of 0x1 (little-endian)
+            # This is to deal with the bug where specifying an index
+            # that is out of range (wrt outputs) results in a
+            # signature hash of 0x1 (little-endian)
             msg_to_sign = 0x1.to_bytes(32, 'little')
         else:
             txn_copy = self._copy_for_sig(input_index, hash_type, sub_scr)
 
-            # Before signing we should verify that the address in the sub_script
-            # corresponds to that of the private key
+            # Before signing we should verify that the address in the
+            # sub_script corresponds to that of the private key
             script_pub_key_h160_hex = sub_scr.get_hash160()
             if script_pub_key_h160_hex is None:
                 raise ValueError("Couldn't find public key hash in sub_script!")
@@ -368,44 +386,47 @@ class Transaction(object):
             if h160 is None:
                 raise ValueError("Address derived from private key does not match sub_script!")
 
-            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) + pack_u32(hash_type)))
-            
+            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) +
+                                           pack_u32(hash_type)))
+
         sig = private_key.sign(msg_to_sign, False)
 
         if compressed:
             pub_key_str = pack_var_str(private_key.public_key.compressed_bytes)
         else:
-            # In the case of extended keys (HDPublicKey), need to get the underlying
-            # key and serialize that.
+            # In the case of extended keys (HDPublicKey), need to get
+            # the underlying key and serialize that.
             if isinstance(private_key.public_key, crypto.HDPublicKey):
                 pub_key = private_key.public_key._key
             else:
                 pub_key = private_key.public_key
             pub_key_str = pack_var_str(bytes(pub_key))
-        script_sig = pack_var_str(sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
+        script_sig = pack_var_str(
+            sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
         inp.script = Script(script_sig)
 
         return True
-    
+
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
 
         Returns:
             s (str): A string containing the human readable transaction.
         """
-        s = "Transaction: Version: %d, lock time: %d\nInputs:\n" % (self.version, self.lock_time)
+        s = "Transaction: Version: %d, lock time: %d\nInputs:\n" % (
+            self.version, self.lock_time)
         for i in self.inputs:
             s += "\t%s\n" % (i)
 
         s += "Outputs:\n"
         for o in self.outputs:
             s += "\t%s\n" % (o)
-            
+
         return s
-    
+
     def __bytes__(self):
         """ Serializes the object into a byte stream.
-        
+
         Returns:
             b (bytes): The serialized transaction.
         """
