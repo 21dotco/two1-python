@@ -9,10 +9,22 @@ from click import ClickException
 import os
 from two1.commands.config import pass_config
 from two1.examples.server.settings import ENDPOINTS_FILE
-import two1.examples.server as dj_bt
+from two1.examples.server import views as dj_bt
 from tabulate import tabulate
 
-#ENDPOINTS_PATH = os.path.join(dj_bt.__path__[0], ENDPOINTS_FILE)
+ENDPOINTS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(dj_bt.__file__)), ENDPOINTS_FILE
+)
+
+
+@click.group()
+@pass_config
+def sell_with_subcommand(config):
+    """
+    Temporary fix for sell command. As it is now, it expects an unbounded
+    number of arguments, which messes up subcommands invocations.
+    """
+    return
 
 
 @click.command(context_settings=dict(

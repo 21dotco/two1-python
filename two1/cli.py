@@ -31,6 +31,8 @@ from two1.commands.publish import publish
 from two1.commands.rate import rate
 from two1.commands.search import search
 #from two1.commands.sell import sell
+from two1.commands.sell import sell_with_subcommand
+from two1.commands.sell_file import sell_file
 from two1.commands.status import status
 from two1.commands.update import update
 
@@ -67,7 +69,7 @@ $ {0} search en2es
 
 \b
 Buy the lowest priced English to Spanish translation for Bitcoin
-$ {0} buy en2es --sortby price --stdin "Hello World" 
+$ {0} buy en2es --sortby price --stdin "Hello World"
 
 \b
 Rate the seller after your purchase
@@ -103,6 +105,8 @@ main.add_command(publish)
 main.add_command(rate)
 main.add_command(search)
 #main.add_command(sell)
+sell_with_subcommand.add_command(sell_file, name='file')
+main.add_command(sell_with_subcommand, name='sell')
 main.add_command(status)
 main.add_command(update)
 
