@@ -5,12 +5,12 @@ from django.core.files.uploadhandler import InMemoryUploadedFile
 from rest_framework.decorators import api_view, authentication_classes
 from PIL import Image, ImageFile
 
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 def getImage(req):
   return req.FILES.get("image", None)
 
-class ImageProcessingPaymentRequired(PaymentRequiredAuthentication):
+class ImageProcessingPaymentRequired(BasicPaymentRequiredAuthentication):
     pricePerByte = 0.3;
     def getQuoteFor(self, request):
       image = getImage(request);

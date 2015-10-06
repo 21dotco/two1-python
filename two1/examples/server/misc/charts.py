@@ -3,7 +3,7 @@ import sys
 import pygal
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 """
 {
@@ -19,7 +19,7 @@ from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
 
 
 @api_view(['POST'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def chart(request):
     """
     Plots a bar chart as an SVG

@@ -6,6 +6,7 @@ from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import hex_str_to_bytes
 from two1.lib.bitcoin.utils import key_hash_to_address
 
+
 class ChainProviderHelper(object):
 
     """Api interface built on top of a bitcoin provider.
@@ -13,6 +14,13 @@ class ChainProviderHelper(object):
     Purpose is to call lower level bitcoin api calls
     to serve higher level djangobitcoin functionality.
     """
+
+    @staticmethod
+    def transaction_hex_str_to_tx(tx):
+        """Hex tranasction string to Transaction."""
+        return Transaction.from_bytes(
+            hex_str_to_bytes(tx)
+        )
 
     def __init__(self):
         """Initalization of the Chain Provider."""
@@ -30,23 +38,21 @@ class ChainProviderHelper(object):
     def validate_payment(self, tx, address, amount):
         """Ensure tx, reciepient & amount are valid.
 
-        Deconstructs a tranasction, and ensures that 
-        1) Tranasaction is valid.
+        Deconstructs a tranasction, and ensures that
+        1) Transaction is valid.
         2) Address the tx is paying is the address inputted
         3) The amount that the tranasction is paying
-        
+
         Args:
             tx (str): raw signed tranasction
             address (str): base58 bitcoin address
             amount (int): bitcoin in satoshis
-                
+
         Raises:
-            ValueError: if one of the condtions are 
+            ValueError: if one of the condtions are
             invalid or not met
         """
-        tx, _ = Transaction.from_bytes(
-            hex_str_to_bytes(tx)
-        )
+        tx, _ = ChainProviderHelper.transaction_hex_str_to_tx(tx)
         if tx.outputs[0].value != amount:
             raise ValueError("Insufficient Payment")
         payout_hash160 = tx.outputs[0].script.get_hash160()

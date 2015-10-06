@@ -11,6 +11,7 @@ from . import views
 urlpatterns = [
     url(r'^$', views.default),
     url(r'^docs/', include('rest_framework_swagger.urls')),
+    url(r'^bitcoin_auth/', include('bitcoin_auth.urls'))
 ]
 
 

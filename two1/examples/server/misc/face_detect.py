@@ -4,11 +4,11 @@ from django.http import HttpResponse
 import requests
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def detect_from_url(request):
     """
     Detects faces using an image uri
@@ -40,7 +40,7 @@ def detect_from_url(request):
 
 
 @api_view(['POST'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def detect_from_file(request):
     """
     Detects faces using an image file
@@ -75,7 +75,7 @@ def detect_from_file(request):
 
 
 @api_view(['POST'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def detect2_from_file(request):
     """
     Detects faces using an image file
@@ -107,7 +107,7 @@ def detect2_from_file(request):
 
 
 @api_view(['POST'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def extract_from_file(request):
     """
     Extracts faces from an image file

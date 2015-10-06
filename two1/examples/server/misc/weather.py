@@ -1,10 +1,16 @@
 import json
+import requests
 
 from django.http import HttpResponse
-import requests
-from rest_framework.decorators import api_view, authentication_classes
+
 from rest_framework.response import Response
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from rest_framework.decorators import api_view
+from rest_framework.decorators import permission_classes
+from rest_framework.decorators import authentication_classes
+
+from bitcoin_auth.permissions import IsBitcoinAuthenticated
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
+from bitcoin_auth.authentication import SessionPaymentRequiredAuthentication
 
 
 def wunderground_request(query, place):
@@ -19,7 +25,8 @@ def wunderground_radar_request(query, place):
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes((SessionPaymentRequiredAuthentication,))
+@permission_classes((IsBitcoinAuthenticated,))
 def current_temperature(request):
     """
     Current temperature for location
@@ -39,7 +46,6 @@ def current_temperature(request):
           type: string
           paramType: query
     """
-
     place = request.query_params.get("place", None)
     if not place:
         return Response("Must provide value for Place parameter", code=400)
@@ -47,7 +53,7 @@ def current_temperature(request):
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def forecast(request):
     """
     Weather forecast by location
@@ -75,7 +81,7 @@ def forecast(request):
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def radar(request):
     """
     Radar image by location

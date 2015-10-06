@@ -4,11 +4,11 @@ from lxml import etree
 from lxml.cssselect import CSSSelector
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def scrape_text(request):
     """
     Page text scraper
@@ -44,7 +44,7 @@ def scrape_text(request):
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def scrape_text_with_selector(request):
     """
     Page text scraper using XPath or CSS selector

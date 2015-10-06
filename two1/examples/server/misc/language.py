@@ -2,14 +2,14 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes
 from textblob import TextBlob
 
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 
 def get_text_to_be_processed(request):
     return request.data.get("text", None)
 
 
-class LanguageProcessingPaymentRequired(PaymentRequiredAuthentication):
+class LanguageProcessingPaymentRequired(BasicPaymentRequiredAuthentication):
     def getQuoteFor(self, request):
         text = get_text_to_be_processed(request)
         if not text:
