@@ -3,6 +3,7 @@ import getpass
 import click
 import types
 from two1.lib.blockchain.chain_provider import ChainProvider
+from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet.two1_wallet import Two1Wallet
@@ -12,8 +13,9 @@ from two1.lib.wallet import exceptions
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret']}
-
+REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
+                                 'twentyone': []}
+TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
 def get_passphrase():
     """ Prompts the user for a passphrase.
@@ -124,6 +126,8 @@ def validate_data_provider(ctx, param, value):
             ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
 
         dp = ChainProvider(api_key_id=key, api_key_secret=secret)
+    elif value == 'twentyone':
+        dp = TwentyOneProvider(TWENTYONE_PROVIDER_HOST)
 
     ctx.obj['data_provider'] = dp
     ctx.obj['data_provider_params'] = data_provider_params
@@ -139,8 +143,8 @@ def validate_data_provider(ctx, param, value):
               is_flag=True,
               help='Prompt for a passphrase.')
 @click.option('--blockchain-data-provider', '-b',
-              default='chain',
-              type=click.Choice(['chain']),
+              default='twentyone',
+              type=click.Choice(['twentyone', 'chain']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
@@ -202,7 +206,10 @@ def startdaemon(ctx):
             dpo = dict(provider='chain',
                        api_key_id=dp_params['chain_api_key_id'],
                        api_key_secret=dp_params['chain_api_key_secret'])
-            d.install(dpo)
+        elif isinstance(ctx.obj['data_provider'], TwentyOneProvider):
+            dpo = dict(provider='twentyone')
+
+        d.install(dpo)
 
     if d.start():
         click.echo("walletd successfully started.")

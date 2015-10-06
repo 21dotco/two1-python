@@ -174,8 +174,8 @@ def sync_wallet_file():
               show_default=True,
               help='Path to wallet file')
 @click.option('--blockchain-data-provider', '-b',
-              default='chain',
-              type=click.Choice(['chain']),
+              default='twentyone',
+              type=click.Choice(['twentyone', 'chain']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
