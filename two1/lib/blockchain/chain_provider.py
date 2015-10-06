@@ -270,7 +270,7 @@ class ChainProvider(BaseProvider):
                                                              d["value"],
                                                              script,
                                                              d["confirmations"]))
-            return ret
+        return ret
 
     def broadcast_transaction(self, transaction):
         """ Broadcasts a transaction to the Bitcoin network
@@ -291,9 +291,9 @@ class ChainProvider(BaseProvider):
             raise TypeError(
                 "transaction must be one of: bytes, str, Transaction.")
 
-        data = {"signed_hex": signed_hex}
-        r = self._request("POST", "transactions/send", data=json.dumps(data))
 
+        data = {"signed_hex": signed_hex}
+        r = self._request("POST", "transactions/send", json=data)
         if r.status_code == 200:
             j = r.json()
             return j["transaction_hash"]

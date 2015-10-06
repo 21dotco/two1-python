@@ -6,7 +6,7 @@ import click
 import pkg_resources
 from codecs import open
 from path import path
-from two1.lib.blockchain.chain_provider import ChainProvider
+from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
@@ -73,10 +73,7 @@ class Config(object):
         if self.defaults.get('testwallet', None) == 'y':
             self.wallet = test_wallet.TestWallet()
         else:
-            api_key = os.environ.get('CHAIN_API_KEY_ID', default="")
-            api_secret = os.environ.get('CHAIN_API_KEY_SECRET', default="")
-            dp = ChainProvider(api_key_id=api_key,
-                               api_key_secret=api_secret)
+            dp = TwentyOneProvider(TWO1_HOST)
 
             if not Two1Wallet.is_configured():
                 # configure wallet with default options
