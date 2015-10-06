@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, authentication_classes
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 from rest_framework.response import Response
 from birdy.twitter import UserClient
 
@@ -10,7 +10,7 @@ ACCESS_TOKEN_SECRET = "ACCESS_TOKEN_SECRET"
 
 
 @api_view(['POST'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def post_update(request):
     """
     Send an SMS

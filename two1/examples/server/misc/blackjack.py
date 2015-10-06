@@ -4,7 +4,7 @@ import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.db import models
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 from .blackjack_game import GameState
 
 
@@ -15,7 +15,7 @@ class BlackjackGame(models.Model):
 
 # # # # # # # # # Bets # # # # # # # # # #
 
-class BetPaymentRequired(PaymentRequiredAuthentication):
+class BetPaymentRequired(BasicPaymentRequiredAuthentication):
     def getQuoteFor(self, request):
         return 0
 

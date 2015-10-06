@@ -69,9 +69,8 @@ def buy(config, resource, data, max_price, output=None, input=None):
     try:
         res = getattr(BitRequests, method.lower())(
             target_url,
-            config.wallet,
-            data=target_data,
-            files=files
+            config,
+            data=target_data
             )
     except Exception as e:
         config.log( str(e), fg="red")

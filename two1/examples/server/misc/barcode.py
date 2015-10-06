@@ -5,11 +5,11 @@ import requests
 from rest_framework.response import Response
 from django.http import HttpResponse
 from rest_framework.decorators import api_view, authentication_classes
-from two1.examples.auth.djangobitcoin import PaymentRequiredAuthentication
+from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def generate_qr(request):
     """
     Serves a qr code
@@ -37,7 +37,7 @@ def generate_qr(request):
 
 
 @api_view(['GET'])
-@authentication_classes([PaymentRequiredAuthentication])
+@authentication_classes([BasicPaymentRequiredAuthentication])
 def upc_lookup(request):
     """
     Searches UPC database

@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_swagger',
+    'bitcoin_auth'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -140,9 +141,11 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
-
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ),
     # Set the exeption handler so we can send 402 requests.
-    'EXCEPTION_HANDLER': 'auth.djangobitcoin.PaymentRequiredExceptionHandler'
+    'EXCEPTION_HANDLER': 'bitcoin_auth.exceptions.payment_required_exception_handler'
 }
 
 

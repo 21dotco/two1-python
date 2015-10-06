@@ -733,8 +733,8 @@ class Two1Wallet(BaseWallet):
                txn_hex0}, ...]
         """
         return self.make_signed_transaction_for_multiple({address: amount},
-                                                         use_unconfirmed=use_unconfirmed,
-                                                         accounts=accounts)
+                                                         use_unconfirmed,
+                                                         accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
                                              use_unconfirmed=False, accounts=[]):

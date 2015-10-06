@@ -1,8 +1,7 @@
 """"BitRequests, or requests with 402 ability."""
-
 import json
-
 import requests
+from urllib.parse import urlsplit
 
 
 class BitRequests(object):
@@ -24,7 +23,7 @@ class BitRequests(object):
 
     bitrequests.post(
         "http://bitcoinapiserver.com/api/",
-        mywallet,
+        config,
         data=json.dumps({"data":True})
     )
 
@@ -34,14 +33,22 @@ class BitRequests(object):
         DEF_PAYMENT_REQUIRED_STATUS_CODE (int): the 402 http code
         paid_amount (int): amount of btc paid, once transaction has
         been sent out, in satoshis
-        wallet (wallet): a wallet object from two1.
+        config (config): a config object from two1.
     """
 
+    DEF_INSUFFICIENT_FUNDS_MESSAGE = 'Insufficient Funds'
+    DEF_INVALID_TOKEN_MESSAGE = 'Invalid BitcoinToken'
     DEF_PAYMENT_REQUIRED_STATUS_CODE = 402
+    DEF_TOKEN_ENDPOINT = "bitcoin_auth/token"
     DEF_HEADERS = {'content-type': 'application/json'}
 
+    @staticmethod
+    def get_base_url(url):
+        """Derive baseurl from url."""
+        return "{0.scheme}://{0.netloc}/".format(urlsplit(url))
+
     @classmethod
-    def get(cls, url, wallet, **kwargs):
+    def get(cls, url, config, **kwargs):
         """Passthrough into BitRequests's _get.
 
         Returns:
@@ -49,13 +56,13 @@ class BitRequests(object):
 
         Args:
             url (str): endpoint to send request
-            wallet (wallet): wallet object from two1
+            config (config): a config object from two1.
             **kwargs: additional payload for requests
         """
-        return cls._get(cls, url, wallet, **kwargs)
+        return cls._get(cls, url, config, **kwargs)
 
     @classmethod
-    def post(cls, url, wallet, **kwargs):
+    def post(cls, url, config, **kwargs):
         """Passthrough into BitRequests _post.
 
         Returns:
@@ -63,14 +70,14 @@ class BitRequests(object):
 
         Args:
             url (str): endpoint to send request
-            wallet (wallet): wallet object from two1
+            config (config): a config object from two1.
             **kwargs: additional payload for requests
         """
-        return cls._post(cls, url, wallet, **kwargs)
+        return cls._post(cls, url, config, **kwargs)
 
     def __init__(self):
         """An API into bitcoin enabled requests."""
-        self.wallet = None
+        self.config = None
         self.data = None
         self.files = None
         self.paid_amount = None
@@ -90,18 +97,66 @@ class BitRequests(object):
         Raises:
             ValueError: error if request is not ok
         """
-        print("got request object: {}".format(request))
+        print("got request object: {}, body: {}".format(request, request.text))
         if request.status_code == self.DEF_PAYMENT_REQUIRED_STATUS_CODE:
-            return self._pay_endpoint(self, request)
+            # before we pay the endpoint, check to see if we've recieved
+            # an auth message particular to bitcointoken usage
+            if self._check_bitcoin_token_message(self, request):
+                return self._refresh_bitcoin_token(self, request)
+            else:
+                return self._pay_endpoint(self, request)
         elif request.ok:
-            if hasattr(self, 'paid_amount'):
-                # if request is okay, we've paid
-                # and the 402 handshake was successfull
-                # add a paid_amount to the object.
-                setattr(request, 'paid_amount', self.paid_amount)
+            # if request is okay, we've paid
+            # and the 402 handshake was successfull
+            # add a paid_amount to the object.
+            setattr(
+                request,
+                'paid_amount',
+                self.paid_amount if hasattr(self, 'paid_amount') else 0
+            )
+            if "BitcoinToken" in request.text:
+                self._write_bitcoin_token(
+                    self,
+                    request.json()['BitcoinToken']
+                )
             return request
         else:
             raise ValueError(request)
+
+    def _check_bitcoin_token_message(self, request):
+        """Check to see if the 402 text refers to token authentication."""
+        return self.DEF_INSUFFICIENT_FUNDS_MESSAGE in request.text \
+            or self.DEF_INVALID_TOKEN_MESSAGE in request.text
+
+    def _refresh_bitcoin_token(self, request):
+        """Buy another BitcoinToken from server & continue original call.
+
+        Args:
+            request (request): request object
+
+        Returns:
+            request: call back to the original call.
+        """
+        # clear bitcoin file
+        self._wipe_bitcoin_token(self)
+        # buy another one
+        self._get(
+            self,
+            self.get_base_url(request.url) + self.DEF_TOKEN_ENDPOINT,
+            self.config
+        )
+        # perform original call again
+        request_method = self._get
+        extra_request_args = {}
+        if 'post' in request.headers['allow'].lower():
+            extra_request_args['data'] = self.data
+            request_method = self._post
+        return request_method(
+            self,
+            request.url,
+            self.config,
+            **extra_request_args
+        )
 
     def _pay_endpoint(self, request):
         """Pay the endpoint using your wallet.
@@ -123,13 +178,13 @@ class BitRequests(object):
         price = int(request.headers.get("price"))
         # check if we have the funds to pay for this
         # request
-        if price > self.wallet.balance():
+        if price > self.config.wallet.balance():
             raise ValueError("Insufficient funds to purchase endpoint")
         # get the payout address from the headers
         address_to_pay = request.headers.get("bitcoin-address")
         # use wallet to make a tranasction for the recipient
-        signed_tx = self.wallet.make_signed_transaction_for(
-            address_to_pay, price)
+        signed_tx = self.config.wallet.make_signed_transaction_for(
+            address_to_pay, price, use_unconfirmed=True)
         # returns a list of transactions, since we are just paying
         # one party, take the first element, and the tx_id from it
         txid = signed_tx[0].get("txid")
@@ -139,7 +194,7 @@ class BitRequests(object):
         # insert the raw tranasction and current address into the headers
         bitcoin_headers = {
             "Bitcoin-Transaction": txn,
-            "Return-Wallet-Address": self.wallet.current_address
+            "Return-Wallet-Address": self.config.wallet.current_address
         }
         # pay the endpoint again
         print("paying the endpoint: \
@@ -174,37 +229,58 @@ class BitRequests(object):
         return request_method(
             self,
             request.url,
-            self.wallet,
+            self.config,
             **extra_request_args
         )
 
-    def _get(self, url, wallet, **kwargs):
+    def _write_bitcoin_token(self, bitcointoken):
+        """Write bitcointoken to config."""
+        self.config.update_key("bitcointoken", bitcointoken)
+        self.config.save()
+
+    def _wipe_bitcoin_token(self):
+        """Wipe bitcointoken from config."""
+        self.config.update_key("bitcointoken", None)
+        self.config.save()
+
+    def _check_for_bitcoin_token(self):
+        """Insert bitcoin token into headers if exists."""
+        if 'bitcointoken' in self.config.defaults:
+            self.DEF_HEADERS.update(
+                {'bitcoin-token': self.config.bitcointoken}
+            )
+
+    def _get(self, url, config, **kwargs):
         """Perform a bitcoin enabled GET request.
 
         Args:
             url (str): endpoint to send request
-            wallet (wallet): wallet object from two1
+            config (config): a config object from two1.
             **kwargs: additional payload for requests
 
         Returns:
             request (request) : a bitcoin request call
         """
-        self.wallet = wallet
+        self.config = config
+        if "headers" not in kwargs:
+            kwargs["headers"] = {}
+        self._check_for_bitcoin_token(self)
+        kwargs["headers"].update(self.DEF_HEADERS)
         response = requests.get(url, **kwargs)
         return self._handle_response(self, response)
 
-    def _post(self, url, wallet, **kwargs):
+    def _post(self, url, config, **kwargs):
         """Perform a bitcoin enabled POST request.
 
         Args:
             url (str): endpoint to send request
-            wallet (wallet): wallet object from two1
+            config (config): a config object from two1.
             **kwargs: additional payload for requests
 
         Returns:
             request (request) : a bitcoin request call
         """
-        self.wallet = wallet
+        self.config = config
         self.data = kwargs.get("data")
         self.files = kwargs.get("files")
         # if there are no default headers
@@ -235,7 +311,7 @@ if __name__ == "__main__":
     bitrequests = BitRequests
     req = bitrequests.post(
         "http://djangobitcoin-devel-e0ble.herokuapp.com/phone/send-sms",
-        config.wallet,
+        config,
         data=json.dumps(
             {
                 'phone': '4124809904',
