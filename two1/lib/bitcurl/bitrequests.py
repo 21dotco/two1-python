@@ -137,7 +137,7 @@ class BitRequests(object):
         # insert the raw tranasction and current address into the headers
         bitcoin_headers = {
             "Bitcoin-Transaction": txn,
-            "Wallet-Address": self.wallet.current_address
+            "Return-Wallet-Address": self.wallet.current_address
         }
         # pay the endpoint again
         print("paying the endpoint: \
