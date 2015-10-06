@@ -20,8 +20,10 @@ URL_REGEXP = re.compile(
 @click.argument('resource', nargs=1)
 @click.option('--data', default=None, help="The data/body to send to the seller")
 @click.option('--max_price',  default=5000, help="The max amount to pay for the resource")
+@click.option('--output', type=click.File('wb'), help="A file to store the seller's response")
+@click.option('--input', type=click.File('rb'), help="A file to send to the seller")
 @pass_config
-def buy(config, resource, data, max_price):
+def buy(config, resource, data, max_price, output=None, input=None):
     """Buy internet services with Bitcoin
         resource - The digital resource to buy from.
 
@@ -46,10 +48,13 @@ def buy(config, resource, data, max_price):
         target_url = ""
         seller = ""
 
+    # Select HTTP method
+    if data or input:
+        method = 'POST'
+
     # Detect Detect Data is raw or file ref
     target_data = None
     if isinstance(data, str):
-        method = 'POST'
         try:
             # NOTE: I/O bound?
             target_data = open(data, 'r')
@@ -57,18 +62,26 @@ def buy(config, resource, data, max_price):
             target_data = data
 
     # Catch Error?
+    if input:
+        files = {'file': (input.name, input)}
+    else:
+        files = None
     try:
         res = getattr(BitRequests, method.lower())(
             target_url,
             config.wallet,
-            data=target_data
+            data=target_data,
+            files=files
             )
     except Exception as e:
         config.log( str(e), fg="red")
         return
 
     # Output the response text to the console
-    config.log(res.text)
+    if output:
+        output.write(res.content)
+    else:
+        config.log(res.text)
 
     # Record the transaction
     config.log_purchase(

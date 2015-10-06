@@ -72,6 +72,7 @@ class BitRequests(object):
         """An API into bitcoin enabled requests."""
         self.wallet = None
         self.data = None
+        self.files = None
         self.paid_amount = None
 
     def _handle_response(self, request):
@@ -158,6 +159,16 @@ class BitRequests(object):
         # extra_request_args, such as the data
         if 'post' in request.headers['allow'].lower():
             extra_request_args['data'] = self.data
+
+            if self.files:
+                # We may have read the whole file if this is the second time
+                # we send it (first time we were asked to pay). So we must
+                # seek back to the beginning.
+                for file_tuple in self.files.values():
+                    if len(file_tuple) == 2:  # tuple: (file_name, file_obj)
+                        file_tuple[1].seek(0)
+                extra_request_args['files'] = self.files
+
             request_method = self._post
         return request_method(
             self,
@@ -194,13 +205,15 @@ class BitRequests(object):
         """
         self.wallet = wallet
         self.data = kwargs.get("data")
+        self.files = kwargs.get("files")
         # if there are no default headers
         # set them. 402 server
         # is very specific about json
         if "headers" not in kwargs:
             kwargs["headers"] = {}
-        # update the dictionary with standard headers
-        kwargs["headers"].update(self.DEF_HEADERS)
+        # update the dictionary with standard headers (only if there is data)
+        if self.data:
+            kwargs["headers"].update(self.DEF_HEADERS)
         # post the response to the server
         response = requests.post(url, **kwargs)
         return self._handle_response(self, response)
