@@ -1,4 +1,5 @@
 import hashlib
+import re
 import struct
 
 from two1.lib.bitcoin.exceptions import ParsingError
@@ -299,6 +300,67 @@ class Script(object):
             self._parse()
 
         return self._ast
+
+    def is_p2pkh(self):
+        """ Returns whether this script is a common Pay-to-Public-Key-Hash
+            script.
+
+        Returns:
+            bool: True if it is a common P2PKH script, False otherwise.
+        """
+        scr_str = str(self)
+        p2pkh_re = "^OP_DUP OP_HASH160 0x([0-9a-fA-F]{2}){20} OP_EQUALVERIFY OP_CHECKSIG$"
+        m = re.search(p2pkh_re, scr_str)
+
+        return bool(m)
+
+    def is_p2sh(self):
+        """ Returns whether this script is a Pay-to-Script-Hash
+            script.
+
+        Returns:
+            bool: True if it is a P2SH script, False otherwise.
+        """
+        scr_str = str(self)
+        p2sh_re = "^OP_HASH160 0x([0-9a-fA-F]{2}){20} OP_EQUAL$"
+        m = re.search(p2sh_re, scr_str)
+
+        return bool(m)
+
+    def is_multisig(self):
+        """ Returns whether this script is a multi-sig redeem script.
+
+        Returns:
+            bool: True if it is a multi-sig redeem script, False otherwise.
+        """
+        # The last byte of the raw script should be 0xae which is
+        # OP_CHECKMULTISIG
+        scr_bytes = bytes(self)
+        rv = True
+        if scr_bytes[-1] == self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']:
+            # Check m and n to be sure they are valid
+            m = scr_bytes[0] - 0x50
+            n = scr_bytes[-2] - 0x50
+
+            rv &= m > 0 and m < 16
+            rv &= n >= m and n < 16
+
+            # Now consume all the public keys and make sure those were
+            # the only things in.
+            b = scr_bytes[1:]
+            for i in range(n):
+                pk, b = unpack_var_str(b)
+                # May want to do additional checking to make
+                # sure it's a public key in the future.
+
+            # Should only be 2 bytes left
+            rv &= len(b) == 2
+            rv &= (b[0] - 0x50) == n and \
+                  b[1] == self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']
+        else:
+            rv = False
+
+        return rv
 
     def get_hash160(self):
         """ Scans the script for OP_HASH160 and returns the data
