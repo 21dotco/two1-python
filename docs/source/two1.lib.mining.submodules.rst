@@ -1,8 +1,8 @@
 
-two1.mining.coinbase
-------------------
+two1.lib.mining.coinbase
+------------------------
 
-.. automodule:: two1.mining.coinbase
+.. automodule:: two1.lib.mining.coinbase
     :members:
     :undoc-members:
     :show-inheritance:
@@ -11,7 +11,7 @@ two1.mining.coinbase
 Module contents
 ---------------
 
-.. automodule:: two1.mining
+.. automodule:: two1.lib.mining
     :members:
     :undoc-members:
     :show-inheritance:
