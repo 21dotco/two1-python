@@ -1,0 +1,66 @@
+Opening, Paying to, and Closing a Payment Channel REST API
+
+    GET http://payment.21.co/<channel>
+        -> No body.
+
+        <- 200 - Merchant Pubkey
+        {
+            "pubkey": "019032910912091021..."
+        }
+
+    POST http://payment.21.co/<channel>
+
+        -> Half-signed Refund Transaction, Customer Pubkey
+        {
+            "refund_tx": "01000000013a23928874edd1a10b5f2ee1f010feaae1def50b0c4b1c18cd4711b2406a6f09000000006a473044022053618f72a9f278ccd5ddcc65c44f6b0fb2478ae429b1803ed9444079842e0199022072fca09f8b6bd805c02cb3d1631c23cb0735f0a4d14d49ed07794d7fdefcbec0012102bcc9024bb215536da525fb08e56726a7996812906bd022d7be9c218e020ea221ffffffff01f05c45010000000017a914cd35af823e2e3e798a592b904c00ff113558a5628700000000",
+        }
+
+        <- 200 - Signed Refund Transaction
+        {
+            "deposit_txid": "f07b3af56c65ffc350b4fbc8c26ad2bc1b9fda73c74f053a4f0b7bbfa46937c3",
+            "refund_tx": "01000000013a23928874edd1a10b5f2ee1f010feaae1def50b0c4b1c18cd4711b2406a6f09000000006a473044022053618f72a9f278ccd5ddcc65c44f6b0fb2478ae429b1803ed9444079842e0199022072fca09f8b6bd805c02cb3d1631c23cb0735f0a4d14d49ed07794d7fdefcbec0012102bcc9024bb215536da525fb08e56726a7996812906bd022d7be9c218e020ea221ffffffff01f05c45010000000017a914cd35af823e2e3e798a592b904c00ff113558a5628700000000"
+        }
+
+    GET http://payment.21.co/f07b3af56c65ffc350b4fbc8c26ad2bc1b9fda73c74f053a4f0b7bbfa46937c3
+
+        -> No body.
+
+        <- 200 - Status.
+        {
+            "state": "confirming",
+            "balance": 100000,
+            "deposit": 100000,
+            ...
+        }
+
+
+    PUT http://payment.21.co/f07b3af56c65ffc350b4fbc8c26ad2bc1b9fda73c74f053a4f0b7bbfa46937c3
+
+        -> Deposit Transaction
+        {
+            "deposit_tx": "01000000013a23928874edd1a10b5f2ee1f010feaae1def50b0c4b1c18cd4711b2406a6f09000000006a473044022053618f72a9f278ccd5ddcc65c44f6b0fb2478ae429b1803ed9444079842e0199022072fca09f8b6bd805c02cb3d1631c23cb0735f0a4d14d49ed07794d7fdefcbec0012102bcc9024bb215536da525fb08e56726a7996812906bd022d7be9c218e020ea221ffffffff01f05c45010000000017a914cd35af823e2e3e798a592b904c00ff113558a5628700000000"
+        }
+
+        <- 200 - No body.
+
+    PUT http://payment.21.co/f07b3af56c65ffc350b4fbc8c26ad2bc1b9fda73c74f053a4f0b7bbfa46937c3
+
+        -> Payment Transaction
+        {
+            "payment_tx": "01000000013a23928874edd1a10b5f2ee1f010feaae1def50b0c4b1c18cd4711b2406a6f09000000006a473044022053618f72a9f278ccd5ddcc65c44f6b0fb2478ae429b1803ed9444079842e0199022072fca09f8b6bd805c02cb3d1631c23cb0735f0a4d14d49ed07794d7fdefcbec0012102bcc9024bb215536da525fb08e56726a7996812906bd022d7be9c218e020ea221ffffffff01f05c45010000000017a914cd35af823e2e3e798a592b904c00ff113558a5628700000000"
+        }
+
+        <- 200 - Signed Payment Transaction txid
+        {
+            "payment_txid": "d47e9ad295f790a3d8254092fa3a02d4478070ba25b2c6812736390e8e9d963f"
+        }
+
+    DELETE http://payment.21.co/f07b3af56c65ffc350b4fbc8c26ad2bc1b9fda73c74f053a4f0b7bbfa46937c3
+
+        -> No body.
+
+        <- 200 - Payment transaction.
+        {
+            "payment_txid": "d47e9ad295f790a3d8254092fa3a02d4478070ba25b2c6812736390e8e9d963f"
+        }
+

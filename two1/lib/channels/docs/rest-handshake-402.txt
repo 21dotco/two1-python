@@ -1,0 +1,15 @@
+402 Handshake
+
+    GET/HEAD http://api.21.co/<endpoint>
+        -> No body.
+
+        <- 402 - Payment Required.
+        Price: 50
+        Bitcoin-Micropayment-Server: http://payment.21.co/
+
+    GET/etc. http://api.21.co/<endpoint>
+        Bitcoin-Micropayment-Token: d47e9ad295f790a3d8254092fa3a02d4478070ba25b2c6812736390e8e9d963f
+
+        <- 200 - OK.
+        <resource>
+

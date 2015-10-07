@@ -1,0 +1,47 @@
+PaymentChannel
+
+    Injected dependencies: server, wallet, blockchain
+
+    open()
+        0. Assert state machine is in opening state
+        1. Call get_pubkey() on server
+        2. Call create() on state machine
+        3. Call open(refund_tx) on server
+        4. Call create(signed refund_tx) callback on state machine
+        5. Call broadcast(deposit_tx) on blockchain
+        6. Call open(deposit_txid, deposit_tx) callback on server
+
+    pay()
+        0. Assert state machine is in ready state
+        1. Call pay() on state machine
+        2. Call pay() on server
+        3. If success
+                1. Call pay_ack() on state machine
+                2. Return txid
+           else
+                1. Call pay_nack() on state machine
+                2. Call close() on state machine
+                3. Return error
+
+    sync()
+        If state == confirming deposit
+            If check_confirmed(deposit_txid) on blockchain
+                Call confirm() on state machine
+
+        If state == (confirming spend or ready)
+            if check_spent(deposit_txid, deposit_utxo) on blockchain:
+                Call close(spend_txid) on state machine
+
+                if check_confirmed(spend_txid) on blockchain
+                    Call finalize(spend_tx) on state machine
+
+        If channel expired
+            Call broadcast(refund_tx) on blockchain
+            Call close(refund_txid) on state machine
+
+    close()
+        0. Assert state machine is in ready state
+        1. Assert payment have been made on channel
+        2. Call close() on server
+        3. Call close(payment_txid) on state machine
+
