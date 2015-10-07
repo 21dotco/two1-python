@@ -1,4 +1,4 @@
-two1.crypto package
+two1.lib.crypto package
 ====================
 
 Submodules
@@ -6,5 +6,5 @@ Submodules
 
 .. toctree::
 
-    two1.crypto.submodules
+    two1.lib.crypto.submodules
 

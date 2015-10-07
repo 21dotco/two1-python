@@ -13,9 +13,14 @@ Contents:
 .. toctree::
    :maxdepth: 5
 
-   two1.bitcoin
-   two1.crypto   
-   two1.mining
+   two1.lib.bitcoin
+   two1.lib.bitcurl
+   two1.lib.blockchain
+   two1.lib.crypto   
+   two1.lib.mining
+   two1.lib.server
+   two1.lib.util
+   two1.lib.wallet
 
 Indices and tables
 ==================
