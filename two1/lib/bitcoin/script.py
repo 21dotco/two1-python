@@ -301,6 +301,54 @@ class Script(object):
 
         return self._ast
 
+    def extract_multisig_info(self):
+        """ Returns information about the multisig redeem script
+
+        Returns:
+            dict: Contains the following list of keys:
+               'm' (int): Required number of signatures.
+               'n' (int): Maximum number of signatures.
+               'public_keys' (list): List of byte strings
+                   corresponding to public keys.
+        """
+        exc = TypeError("This script is not a multisig redeem script.")
+
+        # The last byte of the raw script should be 0xae which is
+        # OP_CHECKMULTISIG
+        scr_bytes = bytes(self)
+
+        if scr_bytes[-1] != self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']:
+            raise exc
+
+        # Check m and n to be sure they are valid
+        m = scr_bytes[0] - 0x50
+        n = scr_bytes[-2] - 0x50
+
+        if m <= 0 or m >= 16:
+            raise exc
+
+        if n < m or n >= 16:
+            raise exc
+
+        # Now consume all the public keys and make sure those were
+        # the only things in.
+        b = scr_bytes[1:]
+        public_keys = []
+        for i in range(n):
+            pk, b = unpack_var_str(b)
+            public_keys.append(pk)
+            # May want to do additional checking to make
+            # sure it's a public key in the future.
+
+        # Should only be 2 bytes left
+        if len(b) != 2:
+            raise exc
+        if (b[0] - 0x50) != n or \
+           b[1] != self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']:
+            raise exc
+
+        return dict(m=m, n=n, public_keys=public_keys)
+
     def is_p2pkh(self):
         """ Returns whether this script is a common Pay-to-Public-Key-Hash
             script.
@@ -333,34 +381,11 @@ class Script(object):
         Returns:
             bool: True if it is a multi-sig redeem script, False otherwise.
         """
-        # The last byte of the raw script should be 0xae which is
-        # OP_CHECKMULTISIG
-        scr_bytes = bytes(self)
-        rv = True
-        if scr_bytes[-1] == self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']:
-            # Check m and n to be sure they are valid
-            m = scr_bytes[0] - 0x50
-            n = scr_bytes[-2] - 0x50
-
-            rv &= m > 0 and m < 16
-            rv &= n >= m and n < 16
-
-            # Now consume all the public keys and make sure those were
-            # the only things in.
-            b = scr_bytes[1:]
-            for i in range(n):
-                pk, b = unpack_var_str(b)
-                # May want to do additional checking to make
-                # sure it's a public key in the future.
-
-            # Should only be 2 bytes left
-            rv &= len(b) == 2
-            rv &= (b[0] - 0x50) == n and \
-                  b[1] == self.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']
-        else:
-            rv = False
-
-        return rv
+        try:
+            self.extract_multisig_info()
+            return True
+        except TypeError:
+            return False
 
     def get_hash160(self):
         """ Scans the script for OP_HASH160 and returns the data
