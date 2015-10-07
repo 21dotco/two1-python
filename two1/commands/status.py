@@ -27,7 +27,8 @@ Wallet''', fg='magenta')
 
     b_seed = ord(config.username[0])
     # balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
-    # balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) * 8000)
+    # balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) *
+    # 8000)
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
@@ -46,19 +47,15 @@ Wallet''', fg='magenta')
                )
 
     mining_p = int(time.time() / 9.0)
-    try:
-        share_data = client.get_shares(config.username)[config.username]
-        shares = share_data["good"]
-    except:
-        shares = UxString.Error.data_unavailable
+
+    status_shares(config, client)
 
     config.log('''
 Mining Proceeds''', fg='magenta')
     config.log('''\
     Mining Status         : Live
-    Mining Proceeds       : {}
-    Shares Sent           : {}'''
-               .format(mining_p, shares)
+    Mining Proceeds       : {}'''
+               .format(mining_p)
                )
 
     status_endpoints(config)
@@ -89,3 +86,31 @@ def status_bought_endpoints(config):
     ]
     config.log('\n')
     config.log(tabulate(purchases, headers=headers, tablefmt='psql'))
+
+
+def status_shares(config, client):
+    try:
+        share_data = client.get_shares(config.username)[config.username]
+    except:
+        share_data = None
+    headers = ("", "Total", "Today", "Past Hour")
+    data = []
+
+    # function to map None values of shares to 0
+    def none2zero(x):
+        return 0 if x is None else x
+
+    if share_data:
+        try:
+            for n in ["good", "bad"]:
+                data.append(map(none2zero, [n, share_data["total"][n],
+                                            share_data["today"][n],
+                                            share_data["hour"][n]]))
+        except KeyError:
+            data = []  # config.log(UxString.Error.data_unavailable)
+
+        if len(data):
+            config.log("\nShare statistics:", fg="magenta")
+            config.log(tabulate(data, headers=headers, tablefmt='psql'))
+            # else:
+            #    config.log(UxString.Error.data_unavailable)
