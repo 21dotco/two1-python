@@ -85,16 +85,17 @@ class HDAccount(object):
         self._discover_used_addresses()
         self._update_balance()
 
-    def _discover_used_addresses(self, max_index=0):
+    def _discover_used_addresses(self, max_index=0, check_all=False):
         for change in [0, 1]:
             found_last = False
             current_last = self.last_indices[change]
-            addr_range = current_last + 1
+            addr_range = 0 if check_all else current_last + 1
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
                 end = addr_range + self.DISCOVERY_INCREMENT
                 addresses = {}
                 addresses_to_retrieve = []
+
                 for i in range(addr_range, end):
                     addresses[i] = self.get_address(change, i)
 
