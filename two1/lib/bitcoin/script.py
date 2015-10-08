@@ -4,6 +4,7 @@ import struct
 
 from two1.lib.bitcoin.exceptions import ParsingError
 from two1.lib.bitcoin.utils import bytes_to_str
+from two1.lib.bitcoin.utils import pack_var_str
 from two1.lib.bitcoin.utils import unpack_var_str
 from two1.lib.bitcoin.utils import render_int
 
@@ -195,7 +196,7 @@ class Script(object):
         return Script('OP_HASH160 0x%s OP_EQUAL' % bytes_to_str(hash160_key))
 
     @staticmethod
-    def build_multisig(m, pub_keys):
+    def build_multisig_redeem(m, pub_keys):
         """ Builds a multisig redeem script and corresponding
             Pay-to-Script-Hash script.
 
@@ -228,6 +229,44 @@ class Script(object):
 
         return dict(pubKeyScript=pubkey_script,
                     redeemScript=redeem_script)
+
+    @staticmethod
+    def build_multisig_sig(sigs, redeem_script):
+        """ Builds a multisig signature script.
+
+            This script contains the signatures in order given
+            in sigs as well as the redeem script. It is not required
+            to have all required signatures in sigs. However, len(sigs)
+            may not be more than the max number indicated by the redeem
+            script.
+
+        Args:
+            sigs (list(bytes)): A list of signatures (in DER encoding). The
+                hash_type must already be appended to the byte string for each
+                signature. This function will take care of the relevant data
+                push operations.
+            redeem_script (Script): The script used to redeem the coins.
+
+        Returns:
+            Script: A multisig signature script. Note: if len(sigs) is less
+               than the minimum number required, the script will not be valid.
+        """
+        multisig_params = redeem_script.extract_multisig_redeem_info()
+
+        if len(sigs) > multisig_params['n']:
+            raise ValueError("Too many signatures: %d (given) > %d (max. required)." %
+                             len(sigs),
+                             multisig_params['n'])
+
+        # To correct for the early bitcoin-core off-by-1 error.
+        scr = bytes([0x00])
+
+        for s in sigs:
+            scr += pack_var_str(s)
+
+        scr += bytes(redeem_script)
+
+        return Script(scr)
 
     @staticmethod
     def build_push_str(s):
@@ -301,7 +340,7 @@ class Script(object):
 
         return self._ast
 
-    def extract_multisig_info(self):
+    def extract_multisig_redeem_info(self):
         """ Returns information about the multisig redeem script
 
         Returns:
@@ -349,6 +388,47 @@ class Script(object):
 
         return dict(m=m, n=n, public_keys=public_keys)
 
+    def extract_multisig_sig_info(self):
+        """ Returns information about a multisig signature script.
+
+        Returns:
+            dict: With the following key/value pairs:
+                'signatures' (list): List of DER-encoded signatures with
+                    hash_type appended at the end of the byte string.
+                'redeem_script' (Script): The associated redeem script.
+        """
+        ast = self.ast
+
+        # A signature script should start with OP_0
+        if ast[0] != 'OP_0':
+            raise TypeError("Script does not start with OP_0!")
+
+        # Everything after OP_0 and before the last operand is a signature.
+        # If it does not start with '0x', something is wrong.
+        sigs = []
+        for i, x in enumerate(ast[1:-1]):
+            if isinstance(x, str) and x.startswith('0x'):
+                sigs.append(bytes.fromhex(x[2:]))
+            else:
+                raise TypeError(
+                    "Operand %d does not seem to be a signature!" % i)
+
+        # The last operand should be the redeem script
+        r = ast[-1]
+        if isinstance(r, list):
+            if not r[0].startswith('OP_PUSHDATA'):
+                raise TypeError(
+                    "Expecting an OP_PUSHDATA but got %s" % r[0])
+            script_bytes = bytes.fromhex(r[-1][2:])  # Skip the 0x
+            redeem_script = Script(script_bytes)
+        else:
+            redeem_script = Script(r)
+
+        if not redeem_script.is_multisig_redeem():
+            raise TypeError("Invalid or no redeem script found!")
+
+        return dict(signatures=sigs, redeem_script=redeem_script)
+
     def is_p2pkh(self):
         """ Returns whether this script is a common Pay-to-Public-Key-Hash
             script.
@@ -375,14 +455,26 @@ class Script(object):
 
         return bool(m)
 
-    def is_multisig(self):
+    def is_multisig_redeem(self):
         """ Returns whether this script is a multi-sig redeem script.
 
         Returns:
             bool: True if it is a multi-sig redeem script, False otherwise.
         """
         try:
-            self.extract_multisig_info()
+            self.extract_multisig_redeem_info()
+            return True
+        except TypeError:
+            return False
+
+    def is_multisig_sig(self):
+        """ Returns whether this script is a multi-sig signature script.
+
+        Returns:
+            bool: True if it is a multi-sig signature script, False otherwise.
+        """
+        try:
+            self.extract_multisig_sig_info()
             return True
         except TypeError:
             return False
