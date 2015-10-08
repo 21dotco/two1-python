@@ -76,6 +76,11 @@ class TwentyOneRestClient(object):
         path = "/pool/statistics/shares/%s/" % username
         return self._request(path=path).json()
 
+    # GET /pool/statistics/earnings/{username}
+    def get_earnings(self, username):
+        path = "/pool/statistics/earnings/%s/" % username
+        return self._request(path=path).json()
+
     @staticmethod
     def params2example(parameters, url):
         """Parse Swagger output into 21 buy syntax.
