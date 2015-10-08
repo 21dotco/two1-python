@@ -16,6 +16,8 @@ from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount
 from two1.lib.wallet.base_wallet import BaseWallet
+from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
+from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 
 
@@ -67,7 +69,7 @@ class Two1Wallet(BaseWallet):
     Returns:
         Two1Wallet: The wallet instance.
     """
-    DUST_LIMIT = 5460  # Satoshis - should this be somewhere else?
+    DUST_LIMIT = 546  # Satoshis - should this be somewhere else?
     AES_BLOCK_SIZE = 16
     DEFAULT_ACCOUNT_TYPE = 'BIP32'
     DEFAULT_WALLET_PATH = os.path.join(os.path.expanduser('~'),
@@ -728,7 +730,8 @@ class Two1Wallet(BaseWallet):
                txn_hex0}, ...]
         """
         return self.make_signed_transaction_for_multiple({address: amount},
-                                                         accounts)
+                                                         use_unconfirmed=use_unconfirmed,
+                                                         accounts=accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
                                              use_unconfirmed=False, accounts=[]):
@@ -897,6 +900,81 @@ class Two1Wallet(BaseWallet):
         return self.send_to_multiple({address: amount},
                                      use_unconfirmed,
                                      accounts)
+
+    def spread_utxos(self, threshold, num_addresses, accounts=[]):
+        """ Spreads out UTXOs >= threshold satoshis to a set
+            of new change addresses.
+        """
+        # Limit the number of spreading addresses so that we don't
+        # create unnecessarily large transactions
+        if num_addresses < 1 or num_addresses > 100:
+            raise ValueError("num_addresses must be > 0 and <= 100.")
+
+        if not accounts:
+            accts = self._accounts
+        else:
+            accts = self._check_and_get_accounts(accounts)
+
+        txids = []
+        for acct in accts:
+            utxos_by_addr = self.get_utxos([acct])
+            num_conf = 0
+            for addr, utxos_addr in utxos_by_addr.items():
+                conf = list(filter(lambda u: u.num_confirmations > 0,
+                                   utxos_addr))
+                num_conf = len(conf)
+                above_thresh = list(filter(lambda u: u.value >= threshold,
+                                           conf))
+                utxos_by_addr[addr] = above_thresh
+
+            # Total up the value
+            total_value = 0
+            num_utxos = 0
+            for addr, utxos in utxos_by_addr.items():
+                num_utxos += len(utxos)
+                total_value += sum([u.value for u in utxos])
+
+            if num_utxos == 0:
+                print("No matching UTXOs for account %s (%d confirmed UTXOs). Not spreading." %
+                      (acct.name, num_conf))
+                break
+
+            # Get the next num_addresses change addresses
+            # We force address discovery here to make sure change
+            # address generation doesn't end up violating the GAP
+            # limit
+            acct._discover_used_addresses(check_all=True)
+            change_addresses = [acct.get_address(True)
+                                for i in range(num_addresses)]
+
+            # Compute an approximate fee
+            fees = num_utxos * DEFAULT_INPUT_FEE + \
+                   num_addresses * DEFAULT_OUTPUT_FEE
+
+            spread_amount = total_value - fees
+            per_addr_amount = int(spread_amount / num_addresses)
+            if per_addr_amount <= self.DUST_LIMIT:
+                print(
+                    "Amount to each address (%d satoshis) would be less than the dust limit. Choose a smaller number of addresses." %
+                    per_addr_amount)
+                break
+
+            curr_utxo_selector = self.utxo_selector
+            s = lambda data_provider, utxos_by_addr, amount, num_outputs: (utxos_by_addr, fees)
+
+            self.utxo_selector = s
+
+            addresses_and_amounts = {}
+            for c in change_addresses:
+                addresses_and_amounts[c] = per_addr_amount
+
+            txids += self.send_to_multiple(addresses_and_amounts,
+                                           False,
+                                           [acct])
+
+            self.utxo_selector = curr_utxo_selector
+
+        return txids
 
     @property
     def balances(self):
