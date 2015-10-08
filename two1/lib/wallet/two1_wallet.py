@@ -901,6 +901,30 @@ class Two1Wallet(BaseWallet):
                                      use_unconfirmed,
                                      accounts)
 
+    def get_utxos_above_threshold(self, threshold,
+                                  include_unconfirmed=False, accounts=[]):
+        if not accounts:
+            accts = self._accounts
+        else:
+            accts = self._check_and_get_accounts(accounts)
+
+        utxos_by_addr = self.get_utxos(accts)
+        num_conf = 0
+        for addr, utxos_addr in utxos_by_addr.items():
+            conf = list(filter(lambda u: u.num_confirmations > 0,
+                               utxos_addr))
+
+            num_conf += len(conf)
+
+            if include_unconfirmed:
+                conf = utxos_addr
+
+            above_thresh = list(filter(lambda u: u.value >= threshold,
+                                       conf))
+            utxos_by_addr[addr] = above_thresh
+
+        return utxos_by_addr, num_conf
+
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
             of new change addresses.
@@ -917,16 +941,9 @@ class Two1Wallet(BaseWallet):
 
         txids = []
         for acct in accts:
-            utxos_by_addr = self.get_utxos([acct])
-            num_conf = 0
-            for addr, utxos_addr in utxos_by_addr.items():
-                conf = list(filter(lambda u: u.num_confirmations > 0,
-                                   utxos_addr))
-                num_conf = len(conf)
-                above_thresh = list(filter(lambda u: u.value >= threshold,
-                                           conf))
-                utxos_by_addr[addr] = above_thresh
-
+            utxos_by_addr, num_conf = self.get_utxos_above_threshold(threshold,
+                                                                     False,
+                                                                     [acct])
             # Total up the value
             total_value = 0
             num_utxos = 0
