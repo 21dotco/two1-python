@@ -341,23 +341,54 @@ class Transaction(object):
 
         return new_txn
 
-    def sign_input(self, input_index, hash_type, private_key, sub_script):
+    def _get_public_key_bytes(self, private_key, compressed=True):
+        # In the case of extended keys (HDPublicKey), need to get
+        # the underlying key and serialize that.
+        if isinstance(private_key.public_key, crypto.HDPublicKey):
+            pub_key = private_key.public_key._key
+        else:
+            pub_key = private_key.public_key
+
+        return private_key.public_key.compressed_bytes if compressed else bytes(pub_key)
+
+    def sign_input(self, input_index, hash_type, private_key, sub_script,
+                   redeem_script=None):
         """ Signs an input.
 
         Args:
             input_index (int): The index of the input to sign.
             hash_type (int): What kind of signature hash to do.
             private_key (crypto.PrivateKey): private key with which
-               to sign the transaction.
+                to sign the transaction.
             sub_script (Script): the scriptPubKey of the corresponding
-               utxo being spent.
+                utxo being spent.
+            redeem_script (Script): If sub_script is a P2SH script, a
+                corresponding redeem script must be provided.
         """
-        sub_scr = sub_script.remove_op("OP_CODESEPARATOR")
-
         if input_index < 0 or input_index >= len(self.inputs):
             raise ValueError("Invalid input index.")
 
         inp = self.inputs[input_index]
+
+        curr_script_sig = inp.script
+        multisig = False
+        multisig_params = None
+        multisig_key_index = -1
+        if sub_script.is_p2sh():
+            if not redeem_script:
+                raise ValueError("redeem_script must not be None if sub_script is a P2SH script.")
+
+            if not redeem_script.is_multisig():
+                raise TypeError("Signing arbitrary redeem scripts is not currently supported.")
+
+            multisig = True
+            multisig_params = redeem_script.extract_multisig_redeem_info()
+            tmp_scr = redeem_script
+            raise ValueError("Can't sign a P2SH UTXO yet.")
+        else:
+            tmp_scr = sub_script
+
+        tmp_script = tmp_scr.remove_op("OP_CODESEPARATOR")
 
         compressed = False
         if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
@@ -366,46 +397,143 @@ class Transaction(object):
             # signature hash of 0x1 (little-endian)
             msg_to_sign = 0x1.to_bytes(32, 'little')
         else:
-            txn_copy = self._copy_for_sig(input_index, hash_type, sub_scr)
+            txn_copy = self._copy_for_sig(input_index, hash_type, tmp_script)
 
-            # Before signing we should verify that the address in the
-            # sub_script corresponds to that of the private key
-            script_pub_key_h160_hex = sub_scr.get_hash160()
-            if script_pub_key_h160_hex is None:
-                raise ValueError("Couldn't find public key hash in sub_script!")
+            if multisig:
+                # Determine which of the public keys this private key
+                # corresponds to.
+                public_keys = multisig_params['public_keys']
+                pub_key_full = self._get_public_key_bytes(private_key, False)
+                pub_key_comp = self._get_public_key_bytes(private_key, True)
 
-            # first try uncompressed key
-            h160 = None
-            for compressed in [True, False]:
-                h160 = private_key.public_key.hash160(compressed)
-                if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
-                    h160 = None
-                else:
-                    break
+                for i, p in enumerate(public_keys):
+                    if pub_key_full == p or pub_key_comp == p:
+                        multisig_key_index = i
+                        break
 
-            if h160 is None:
-                raise ValueError("Address derived from private key does not match sub_script!")
+                if multisig_key_index == -1:
+                    raise ValueError(
+                        "Public key derived from private key does not match any of the public keys in redeem script.")
+            else:
+                # Before signing we should verify that the address in the
+                # sub_script corresponds to that of the private key
+                script_pub_key_h160_hex = tmp_script.get_hash160()
+                if script_pub_key_h160_hex is None:
+                    raise ValueError("Couldn't find public key hash in sub_script!")
+
+                # first try uncompressed key
+                h160 = None
+                for compressed in [True, False]:
+                    h160 = private_key.public_key.hash160(compressed)
+                    if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
+                        h160 = None
+                    else:
+                        break
+
+                if h160 is None:
+                    raise ValueError("Address derived from private key does not match sub_script!")
 
             msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) +
                                            pack_u32(hash_type)))
 
         sig = private_key.sign(msg_to_sign, False)
 
-        if compressed:
-            pub_key_str = pack_var_str(private_key.public_key.compressed_bytes)
+        if multisig:
+            # For multisig, we need to determine if there are already
+            # signatures and if so, where we insert this signature
+            inp.script = self._do_multisig_script([dict(index=multisig_key_index,
+                                                        signature=sig)],
+                                                  msg_to_sign,
+                                                  curr_script_sig,
+                                                  redeem_script,
+                                                  hash_type)
         else:
-            # In the case of extended keys (HDPublicKey), need to get
-            # the underlying key and serialize that.
-            if isinstance(private_key.public_key, crypto.HDPublicKey):
-                pub_key = private_key.public_key._key
-            else:
-                pub_key = private_key.public_key
-            pub_key_str = pack_var_str(bytes(pub_key))
-        script_sig = pack_var_str(
-            sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
-        inp.script = Script(script_sig)
+            pub_key_bytes = self._get_public_key_bytes(private_key, compressed)
+            pub_key_str = pack_var_str(pub_key_bytes)
+            script_sig = pack_var_str(
+                sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
+            inp.script = Script(script_sig)
 
         return True
+
+    def _do_multisig_script(sigs, message, current_script_sig,
+                            redeem_script, hash_type):
+        # If the current script is empty or None, create it
+        sig_script = None
+        if current_script_sig is None or not str(current_script_sig):
+            sig_bytes = [s['signature'].to_der() + pack_compact_int(hash_type)
+                         for s in sigs]
+
+            sig_script = Script.build_multisig_sig(sigs=sig_bytes,
+                                                   redeem_script=redeem_script)
+        else:
+            # Need to extract all the sigs already present
+            multisig_params = redeem_script.extract_multisig_redeem_info()
+            sig_info = current_script_sig.extract_multisig_sig_info()
+
+            # Do a few quick sanity checks
+            if str(sig_info['redeem_script']) != str(redeem_script):
+                raise ValueError(
+                    "Redeem script in signature script does not match redeem_script!")
+
+            if len(sig_info['signatures']) == multisig_params['n']:
+                # Already max number of signatures
+                return current_script_sig
+
+            # Go through the signatures and match them up to the public keys
+            # in the redeem script
+            pub_keys = []
+            for pk in multisig_params['public_keys']:
+                pub_key, _ = crypto.PublicKey.from_bytes(pk)
+                pub_keys.append(pub_key)
+
+            existing_sigs = []
+            for s in sig_info['signatures']:
+                s1, h = s[:-1], s[-1]  # Last byte is hash_type
+                existing_sigs.append(crypto.Signature.from_der(s1))
+                if h != hash_type:
+                    raise ValueError("hash_type does not match that of the existing signatures.")
+
+            # Match them up
+            existing_sig_indices = self._match_sigs_to_pub_keys(existing_sigs,
+                                                                pub_keys,
+                                                                message)
+            sig_indices = {s['index']: s['signature'] for s in sigs}
+
+            # Make sure there are no dups
+            all_indices = set(list(existing_sig_indices.keys()) + \
+                              list(sig_indices.keys()))
+            if len(all_indices) < len(existing_sig_indices) + len(sig_indices):
+                raise ValueError("At least one signature matches an existing signature.")
+
+            if len(all_indices) > multisig_params['n']:
+                raise ValueError("There are too many signatures.")
+
+            all_sigs = []
+            for i in sorted(all_indices):
+                if i in existing_sig_indices:
+                    all_sigs.append(existing_sig_indices[i])
+                elif i in sig_indices:
+                    all_sigs.append(sig_indices[i])
+
+            all_sigs_bytes = [s.to_der() + pack_compact_int(hash_type)
+                              for s in all_sigs]
+            sig_script = Script.build_multisig_sig(all_sigs_bytes,
+                                                   redeem_script)
+
+        return sig_script
+
+    def _match_sigs_to_pub_keys(self, sigs, pub_keys, message):
+        sig_indices = {}
+        for sig in sigs:
+            for i, pub_key in enumerate(pub_keys):
+                if sig_indices[i]:
+                    continue
+
+                if pub_key.verify(message, sig, False):
+                    sig_indices[i] = sig
+
+        return sig_indices
 
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
