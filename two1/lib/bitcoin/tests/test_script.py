@@ -109,3 +109,6 @@ def test_multisig_sig():
     assert len(r['signatures']) == 2
     assert r['redeem_script']
     assert isinstance(r['redeem_script'], Script)
+
+    s = Script.build_multisig_sig(r['signatures'], r['redeem_script'])
+    assert bytes(s) == bytes(sig_script)
