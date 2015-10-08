@@ -1,6 +1,7 @@
 import re
 import base64
 import json
+import click
 from collections import namedtuple
 import urllib.parse
 
