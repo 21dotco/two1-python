@@ -339,6 +339,37 @@ def send_to(ctx, address, amount, use_unconfirmed, account):
         click.echo("Problem sending coins: %s" % e)
 
 
+@click.command(name="spreadutxos")
+@click.argument('num_addresses',
+                type=click.IntRange(min=2, max=100))
+@click.argument('threshold',
+                type=click.FLOAT)
+@click.option('--account',
+              metavar="STRING",
+              multiple=True,
+              help="List of accounts to use")
+@click.pass_context
+def spread_utxos(ctx, num_addresses, threshold, account):
+    """ Spreads out all UTXOs with value > threshold into
+        multiple change addresses.
+    """
+    w = ctx.obj['wallet']
+    satoshis = int(threshold * satoshi_to_btc)
+
+    try:
+        txids = _call_wallet_method(w, 'spread_utxos',
+                                    threshold=satoshis,
+                                    num_addresses=num_addresses,
+                                    accounts=list(account))
+        if txids:
+            click.echo("Successfully spread UTXOs in the following txids:")
+            for t in txids:
+                click.echo(t['txid'])
+
+    except Exception as e:
+        click.echo("Problem spreading utxos: %s" % e)
+
+
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
 main.add_command(create)
@@ -346,6 +377,7 @@ main.add_command(payout_address)
 main.add_command(confirmed_balance)
 main.add_command(balance)
 main.add_command(send_to)
+main.add_command(spread_utxos)
 
 if __name__ == "__main__":
     main()
