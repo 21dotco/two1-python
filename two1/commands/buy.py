@@ -83,6 +83,9 @@ def buy(config, resource, data, max_price, output=None, input=None):
     else:
         config.log(res.text)
 
-    # Record the transaction
-    config.log_purchase(
-        s=seller, r=resource, p=res.paid_amount, d=str(datetime.datetime.today()))
+    # Record the transaction if it was a payable request
+    if hasattr(res, 'paid_amount'):
+        config.log_purchase(s=seller,
+                            r=resource,
+                            p=res.paid_amount,
+                            d=str(datetime.datetime.today()))

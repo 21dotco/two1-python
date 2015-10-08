@@ -94,10 +94,11 @@ class BitRequests(object):
         if request.status_code == self.DEF_PAYMENT_REQUIRED_STATUS_CODE:
             return self._pay_endpoint(self, request)
         elif request.ok:
-            # if request is okay, we've paid
-            # and the 402 handshake was successfull
-            # add a paid_amount to the object.
-            setattr(request, 'paid_amount', self.paid_amount)
+            if hasattr(self, 'paid_amount'):
+                # if request is okay, we've paid
+                # and the 402 handshake was successfull
+                # add a paid_amount to the object.
+                setattr(request, 'paid_amount', self.paid_amount)
             return request
         else:
             raise ValueError(request)
