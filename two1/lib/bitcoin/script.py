@@ -264,7 +264,7 @@ class Script(object):
         for s in sigs:
             scr += pack_var_str(s)
 
-        scr += bytes(redeem_script)
+        scr += Script.build_push_str(bytes(redeem_script))
 
         return Script(scr)
 
@@ -293,7 +293,9 @@ class Script(object):
         else:
             pd_index = 4
 
-        return bytes(Script('OP_PUSHDATA%d 0x%s' % (pd_index, hexstr)))
+        p = bytes([Script.BTC_OPCODE_TABLE['OP_PUSHDATA%d' % (pd_index)]])
+        p += bytes([ls]) + s
+        return p
 
     @staticmethod
     def build_push_int(i):
