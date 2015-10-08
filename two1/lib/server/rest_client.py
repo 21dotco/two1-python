@@ -8,6 +8,7 @@ import requests
 
 from two1.lib.bitcoin.crypto import PrivateKey
 from two1.lib.server.machine_auth import MachineAuth
+from two1.commands.exceptions import ServerRequestError
 
 
 class TwentyOneRestClient(object):
