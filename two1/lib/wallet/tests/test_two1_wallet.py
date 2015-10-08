@@ -240,7 +240,7 @@ def test_rest():
     with pytest.raises(exceptions.WalletSigningError):
         txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                               use_unconfirmed=False,
-                              amount=10000)
+                              amount=12700)
 
     utxo = UnspentTransactionOutput(transaction_hash=Hash('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52'),
                                     outpoint_index=3,
@@ -253,7 +253,7 @@ def test_rest():
     with pytest.raises(exceptions.WalletSigningError):
         txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                               use_unconfirmed=True,
-                              amount=415000)
+                              amount=417600)
 
     # Finally check storing to a file
     params = {}

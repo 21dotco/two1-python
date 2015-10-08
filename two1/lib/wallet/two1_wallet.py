@@ -903,6 +903,14 @@ class Two1Wallet(BaseWallet):
 
     def get_utxos_above_threshold(self, threshold,
                                   include_unconfirmed=False, accounts=[]):
+        """ Returns all UTXOs >= threshold satoshis.
+
+        Args:
+            threshold (int): UTXO value must be >= to this value.
+            include_unconfirmed (bool): Include unconfirmed UTXOs.
+            accounts (list(str or int)): List of accounts to use. If
+                not provided, all discovered accounts will be done.
+        """
         if not accounts:
             accts = self._accounts
         else:
@@ -928,6 +936,13 @@ class Two1Wallet(BaseWallet):
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
             of new change addresses.
+
+        Args:
+            threshold (int): UTXO value must be >= to this value.
+            num_addresses (int): Number of addresses to spread out the
+                matching UTXOs over. This must be > 1 and <= 100.
+            accounts (list(str or int)): List of accounts to use. If
+                not provided, all discovered accounts will be done.
         """
         # Limit the number of spreading addresses so that we don't
         # create unnecessarily large transactions
