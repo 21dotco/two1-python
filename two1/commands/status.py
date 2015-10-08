@@ -15,7 +15,17 @@ def status(config):
 
     client = rest_client.TwentyOneRestClient(TWO1_HOST)
 
-    foo = config.fmt()
+    status_account(config)
+    status_wallet(config)
+    status_shares(config, client)
+    status_earnings(config, client)
+
+    config.log("")
+    # status_endpoints(config)
+    # status_bought_endpoints(config)
+
+
+def status_account(config):
     config.log('''
 21.co Account''', fg='magenta')
     config.log('''\
@@ -25,10 +35,8 @@ def status(config):
     config.log('''
 Wallet''', fg='magenta')
 
-    b_seed = ord(config.username[0])
-    # balance_c = int(b_seed * 10000 + datetime.datetime.now().minute * 8000)
-    # balance_u = int(b_seed * 10000 + (datetime.datetime.now().minute+1) *
-    # 8000)
+
+def status_wallet(config):
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
@@ -45,21 +53,6 @@ Wallet''', fg='magenta')
     Payout Address        :   {}'''
                .format(balance_c, pending_transactions, bitcoin_address)
                )
-
-    mining_p = int(time.time() / 9.0)
-
-    status_shares(config, client)
-
-    config.log('''
-Mining Proceeds''', fg='magenta')
-    config.log('''\
-    Mining Status         : Live
-    Mining Proceeds       : {}'''
-               .format(mining_p)
-               )
-
-    status_endpoints(config)
-    status_bought_endpoints(config)
 
 
 def status_endpoints(config):
@@ -88,6 +81,22 @@ def status_bought_endpoints(config):
     config.log(tabulate(purchases, headers=headers, tablefmt='psql'))
 
 
+def status_earnings(config, client):
+    try:
+        data = client.get_earnings(config.username)[config.username]
+        total_earnings = data["total_earnings"]
+        total_payouts = data["total_payouts"]
+        config.log('\nMining Proceeds', fg='magenta')
+        config.log('''\
+    Total Earnings        : {}
+    Total Payouts         : {}'''
+                   .format(none2zero(total_earnings),
+                           none2zero(total_payouts))
+                   )
+    except:
+        pass
+
+
 def status_shares(config, client):
     try:
         share_data = client.get_shares(config.username)[config.username]
@@ -95,10 +104,6 @@ def status_shares(config, client):
         share_data = None
     headers = ("", "Total", "Today", "Past Hour")
     data = []
-
-    # function to map None values of shares to 0
-    def none2zero(x):
-        return 0 if x is None else x
 
     if share_data:
         try:
@@ -114,3 +119,8 @@ def status_shares(config, client):
             config.log(tabulate(data, headers=headers, tablefmt='psql'))
             # else:
             #    config.log(UxString.Error.data_unavailable)
+
+
+def none2zero(x):
+    # function to map None values of shares to 0
+    return 0 if x is None else x
