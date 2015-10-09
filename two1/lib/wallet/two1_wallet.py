@@ -813,9 +813,13 @@ class Two1Wallet(BaseWallet):
                                                sequence_num=0xffffffff))
 
         for addr, amount in addresses_and_amounts.items():
-            _, key_hash = utils.address_to_key_hash(addr)
+            addr_prefix, key_hash = utils.address_to_key_hash(addr)
+            if addr_prefix in [0x05, 0xC4]:
+                script = Script.build_p2sh(key_hash)
+            else:
+                script = Script.build_p2pkh(key_hash)
             outputs.append(TransactionOutput(value=amount,
-                                             script=Script.build_p2pkh(key_hash)))
+                                             script=script))
 
         # one more output for the change, if the change is above the dust limit
         change = total_utxo_amount - total_with_fees
