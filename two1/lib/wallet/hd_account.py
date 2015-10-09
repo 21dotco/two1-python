@@ -124,8 +124,12 @@ class HDAccount(object):
                     elif bool(txns[addr]):
                         # For now we keep only txn hashes
                         # around. Revisit later.
-                        txn_hashes = [str(t.hash) for t in txns[addr]]
-                        self._txn_cache[addr] = txn_hashes
+                        seen = set()
+                        for t in txns[addr]:
+                            txid = str(t.hash)
+                            seen.add(txid)
+                        self._txn_cache[addr] = list(seen)
+
                         current_last = i
 
                 addr_range += self.DISCOVERY_INCREMENT
