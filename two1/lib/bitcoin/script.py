@@ -1,3 +1,4 @@
+import base58
 import hashlib
 import re
 import struct
@@ -341,6 +342,40 @@ class Script(object):
             self._parse()
 
         return self._ast
+
+    def hash160(self):
+        """ Return the RIPEMD-160 hash of the SHA-256 hash of a
+            multisig redeem script.
+
+        Returns
+            bytes: RIPEMD-160 byte string or b"" if this script
+                is not a multisig redeem script.
+        """
+        rv = b""
+        if self.is_multisig_redeem():
+            r = hashlib.new('ripemd160')
+            r.update(hashlib.sha256(bytes(self)).digest())
+            rv = r.digest()
+
+        return rv
+
+    def address(self, testnet=False):
+        """ Returns the Base58Check encoded version of the HASH160.
+
+        Args:
+            testnet (bool): Whether or not the key is intended for testnet
+               usage. False indicates mainnet usage.
+
+        Returns:
+            bytes: Base58Check encoded string
+        """
+        hash160 = self.hash160()
+        rv = ""
+        if hash160:
+            prefix = bytes([0xC4 if testnet else 0x05])
+            rv = base58.b58encode_check(prefix + hash160)
+
+        return rv
 
     def extract_multisig_redeem_info(self):
         """ Returns information about the multisig redeem script
