@@ -15,10 +15,12 @@ import requests
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
 from rest_framework.authentication import BaseAuthentication
 
 from two1.lib.blockchain.exceptions import DataProviderError
+from two1.examples.payment.paymentserver import (
+    PaymentServer, PaymentServerError
+)
 from two1.examples.bitcoin_auth.helpers.bitcoin_auth_provider_helper import (
     BitcoinAuthProvider
 )
@@ -291,3 +293,74 @@ class BitTransferAuthentication(BaseAuthentication):
                     raise ServiceUnavailable
         except requests.ConnectionError:
             return False
+
+
+class PaymentChannelAuthentication(BaseBitcoinAuthentication):
+
+    """Authenticates a payment within a payment channel.
+
+    Attempts to use the transaction id of a payment to look up an existing
+    payment channel, and see if the payment can be redeemed to pay for the
+    requested resource.
+    """
+
+    def __init__(self):
+        """Initialize payment channel authentization module.
+
+        This specifically creates a re-usable `payment_channel_user` for auth
+        purposes, as channels rely on other metrics for payment authentication.
+        """
+        self.pc_user, _ = get_user_model().objects.get_or_create(
+            username='payment_channel_user')
+
+    def get_payment_from_header(self, request):
+        """Fetch bitcoin transaction from HTTP header.
+
+        Args:
+            request (request): object representing the client's http request
+
+        Returns (one of the following):
+            (string): the payment transaction id found in the headers
+            (None): if a payment transaction id does not exist
+
+        """
+        return request.META.get("HTTP_BITCOIN_MICROPAYMENT_TOKEN")
+
+    def validate_payment(self, txid, request):
+        """Validate a bitcoin payment.
+
+        Args:
+            txid (string): payment transaction id
+            request (request): object representing the client's http request
+
+        Raises:
+            PaymentRequiredException: raised if the payment is invalid in the
+                channel for any reason or if the payment amount is not enough
+                to pay for the requested resource.
+        """
+        try:
+            # Attempt to redeem the transaction in its payment channel
+            amount = PaymentChannel.redeem(txid)
+            # Verify the amount of the payment against the resource price
+            if amount == get_price_for_request(request):
+                return amount
+
+        finally:
+            return None
+
+    def authenticate(self, request):
+        """Handle bitcoin authentication.
+
+        Args:
+            request (request): object representing the client's http request
+
+        Raises:
+            PaymentRequiredException: payment is nonexistent or insufficient
+        """
+        print("started: PaymentChannelAuthentication")
+        txid = self.get_payment_from_header(request)
+        if txid:
+            amount = self.validate_payment(txid, request)
+            return (self.pc_user, amount)
+        else:
+            return None
