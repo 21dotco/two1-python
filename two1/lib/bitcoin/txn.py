@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import struct
 
 from two1.lib.bitcoin import crypto
@@ -532,6 +533,73 @@ class Transaction(object):
                     sig_indices[i] = sig
 
         return sig_indices
+
+    def verify_input_signature(self, input_index, sub_script):
+        """
+        """
+        # First extract the signature script
+        sig_script = self.inputs[input_index].script
+
+        # Both of these will eventually get replaced with a generic
+        # script interpreter & verifier.
+        rv = False
+        if sig_script.is_multisig_sig():
+            rv = self._verify_p2sh_multisig_input(input_index, sub_script)
+        elif sub_script.is_p2pkh():
+            rv = self._verify_p2pkh_input(input_index, sub_script)
+
+        return rv
+
+    def _verify_p2pkh_input(self, input_index, sub_script):
+        if not sub_script.is_p2pkh():
+            raise TypeError("sub_script is not a P2PKH script!")
+
+        rv = False
+        sig_script = self.inputs[input_index].script
+
+        # Use a fake stack
+        stack = []
+
+        # Push sigScript and publicKey onto stack
+        stack.append(bytes.fromhex(sig_script.ast[0][2:]))
+        stack.append(bytes.fromhex(sig_script.ast[1][2:]))
+
+        # OP_DUP
+        stack.append(stack[-1])
+
+        # OP_HASH160
+        pub_key_bytes = stack.pop()
+        pub_key = crypto.PublicKey.from_bytes(pub_key_bytes)
+        # Was it compressed?
+        compressed = pub_key_bytes[0] in [0x02, 0x03]
+        hash160 = pub_key.hash160(compressed=compressed)
+
+        # OP_EQUALVERIFY - this pub key must match the one in
+        # sub_script
+        sub_script_pub_key_hash = bytes.fromhex(sub_script.get_hash160()[2:])
+        rv = hash160 == sub_script_pub_key_hash
+
+        # OP_CHECKSIG
+        stack.pop()  # pop duplicate pub key off stack
+        script_sig_complete = stack.pop()
+        script_sig, hash_type = script_sig_complete[:-1], script_sig_complete[-1]
+
+        # Re-create txn for sig verification
+        txn_copy_bytes = bytes(self._copy_for_sig(input_index,
+                                                  hash_type,
+                                                  sub_script))
+
+        # Now verify
+        sig = crypto.Signature.from_der(script_sig)
+        msg = txn_copy_bytes + pack_u32(hash_type)
+        tx_digest = hashlib.sha256(msg).digest()
+        rv &= pub_key.verify(tx_digest, sig)
+
+        return rv
+
+    def _verify_p2sh_multisig_input(self, input_index, sub_script):
+        # Return false until implemented
+        return False
 
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
