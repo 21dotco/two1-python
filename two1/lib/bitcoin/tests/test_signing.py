@@ -74,3 +74,51 @@ def test_sign_txn():
 
     assert transaction.verify_input_signature(0, prev_script_pub_key)
     assert not transaction.verify_input_signature(0, out_script_pub_key)
+
+
+def test_multisig_sign():
+    # This test case taken from:
+    # https://github.com/libbitcoin/libbitcoin-explorer/wiki/How-to-Spend-From-a-Multisig-Address
+
+    unsigned_hex = "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f70100000000ffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
+
+    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+
+    pub_keys_hex = ["02b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b",
+                    "025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c",
+                    "021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f010"]
+    pub_keys = [bytes.fromhex(p) for p in pub_keys_hex]
+    r = script.Script.build_multisig_redeem(2, pub_keys)
+    redeem_script = r['redeemScript']
+    script_pub_key = r['pubKeyScript']
+    outpoint_script_pub_key = script.Script.build_p2sh(
+        bytes.fromhex("5c406de4915e37a7e71c7ef9bff42fbf1404daa0"))
+
+    assert str(script_pub_key) == str(outpoint_script_pub_key)
+
+    priv_keys_hex = ["0x9d695afea1c3ab99e11248e4b74e698332b11f5c5c051e6e80da61aa19ae7c89",
+                     "0x68ebab45a918444d7e088c49bda76d7df89b9ea6ba5ddeb1aab5945391828b83"]
+    priv_keys = [crypto.PrivateKey.from_int(int(p, 0))
+                 for p in priv_keys_hex]
+
+    # Now sign the input with the first private key
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[0],
+                  sub_script=outpoint_script_pub_key,
+                  redeem_script=redeem_script)
+
+    # Check the sig script
+    assert tx.inputs[0].script.ast[1] == "0x30440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b901"
+
+    # Now sign with the second private key
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[1],
+                  sub_script=outpoint_script_pub_key,
+                  redeem_script=redeem_script)
+
+    assert tx.inputs[0].script.ast[2] == "0x3045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b01"
+
+    # Now make sure the entire serialized txn is correct
+    assert utils.bytes_to_str(bytes(tx)) == "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd00004730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b901483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
