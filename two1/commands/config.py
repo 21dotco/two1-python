@@ -8,6 +8,7 @@ from codecs import open
 from path import path
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.two1_wallet import Two1Wallet
+from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
 
@@ -84,8 +85,8 @@ class Config(object):
                 click.pause(UxString.create_wallet_done)
 
             wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
-            self.wallet = Two1Wallet(params_or_file=wallet_path,
-                                     data_provider=dp)
+            self.wallet = Two1WalletProxy(wallet_path=wallet_path,
+                                          data_provider=dp)
 
     # pulls attributes from the self.defaults dict
     def __getattr__(self, name):
