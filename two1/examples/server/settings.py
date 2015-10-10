@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 import sys
 import dj_database_url
+from two1.commands.config import Config
 
 
 def str2bool(v):
@@ -57,7 +58,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_swagger',
-    'bitcoin_auth'
+    'bitcoin_auth',
+    'two1.examples.payment',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -212,6 +214,7 @@ REST_FRAMEWORK = {
         'bitcoin_auth.authentication.BasicPaymentRequiredAuthentication',
         'bitcoin_auth.authentication.SessionPaymentRequiredAuthentication',
         'bitcoin_auth.authentication.BitTransferAuthentication',
+        'bitcoin_auth.authentication.PaymentChannelAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'bitcoin_auth.permissions.IsBitcoinAuthenticated',

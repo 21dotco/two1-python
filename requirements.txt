@@ -22,6 +22,7 @@ protobuf==3.0.0a3
 pygal==1.7.0
 pytest
 pytest-django
+pytz==2015.6
 qrcode==5.1
 requests==2.7.0
 responses
