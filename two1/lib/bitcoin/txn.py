@@ -378,13 +378,12 @@ class Transaction(object):
             if not redeem_script:
                 raise ValueError("redeem_script must not be None if sub_script is a P2SH script.")
 
-            if not redeem_script.is_multisig():
+            if not redeem_script.is_multisig_redeem():
                 raise TypeError("Signing arbitrary redeem scripts is not currently supported.")
 
             multisig = True
             multisig_params = redeem_script.extract_multisig_redeem_info()
             tmp_scr = redeem_script
-            raise ValueError("Can't sign a P2SH UTXO yet.")
         else:
             tmp_scr = sub_script
 
