@@ -483,8 +483,7 @@ class Transaction(object):
             # in the redeem script
             pub_keys = []
             for pk in multisig_params['public_keys']:
-                pub_key, _ = crypto.PublicKey.from_bytes(pk)
-                pub_keys.append(pub_key)
+                pub_keys.append(crypto.PublicKey.from_bytes(pk))
 
             existing_sigs = []
             for s in sig_info['signatures']:
@@ -526,7 +525,7 @@ class Transaction(object):
         sig_indices = {}
         for sig in sigs:
             for i, pub_key in enumerate(pub_keys):
-                if sig_indices[i]:
+                if i in sig_indices:
                     continue
 
                 if pub_key.verify(message, sig, False):
