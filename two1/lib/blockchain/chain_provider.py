@@ -152,7 +152,7 @@ class ChainProvider(BaseProvider):
             containing the confirmed and total balances.
         """
         ret = {}
-        for addresses in self._list_chunks(address_list, 199):
+        for addresses in self._list_chunks(address_list, 25):
             r = self._request("GET", "addresses/" + ",".join(addresses))
             data = r.json()
 
