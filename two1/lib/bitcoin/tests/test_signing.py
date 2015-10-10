@@ -72,43 +72,5 @@ def test_sign_txn():
     # See: https://www.blocktrail.com/BTC/tx/695f0b8605cc8a117c3fe5b959e6ee2fabfa49dcc615ac496b5dd114105cd360
     assert signed_txn_hex == "0100000001205607fb482a03600b736fb0c257dfd4faa49e45db3990e2c4994796031eae6e000000008b483045022100ed84be709227397fb1bc13b749f235e1f98f07ef8216f15da79e926b99d2bdeb02206ff39819d91bc81fecd74e59a721a38b00725389abb9cbecb42ad1c939fd8262014104e674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbefffffffff0128230000000000001976a914f1fd1dc65af03c30fe743ac63cef3a120ffab57d88ac00000000"
 
-    # Try verifying it very manually - pretend we're doing actual stack operations
-    stack = []
-    # Start by pushing the sigScript and publicKey onto the stack
-    stack.append(bytes.fromhex(transaction.inputs[0].script.ast[0][2:]))
-    stack.append(bytes.fromhex(transaction.inputs[0].script.ast[1][2:]))
-
-    # OP_DUP
-    stack.append(stack[-1])
-
-    # OP_HASH160
-    pub_key = crypto.PublicKey.from_bytes(stack.pop())
-    hash160 = pub_key.hash160(compressed=False)
-
-    # OP_EQUALVERIFY - this pub key has to match the one in the previous tx output.
-    assert pub_key.address(compressed=False) == address1
-
-    # OP_CHECKSIG
-    # Here we need to restructure the txn
-    pub_key_dup = stack.pop()
-    script_sig_complete = stack.pop()
-    script_sig, hash_code_type = script_sig_complete[:-1], script_sig_complete[-1]
-
-    new_txn_input = txn.TransactionInput(prev_txn_hash,
-                                         0,
-                                         script.Script.build_p2pkh(hash160),
-                                         0xffffffff)
-
-    new_txn = txn.Transaction(txn.Transaction.DEFAULT_TRANSACTION_VERSION,
-                              [new_txn_input],
-                              [txn_output],
-                              0)
-
-    new_txn_bytes = bytes(new_txn)
-    
-
-    # Now verify
-    sig = crypto.Signature.from_der(script_sig)
-    assert pub_key.verify(hashlib.sha256(new_txn_bytes + utils.pack_u32(hash_code_type)).digest(), sig)
-
-    assert not pub_key.verify(bytes(hash.Hash.dhash(new_txn_bytes)), sig)
+    assert transaction.verify_input_signature(0, prev_script_pub_key)
+    assert not transaction.verify_input_signature(0, out_script_pub_key)
