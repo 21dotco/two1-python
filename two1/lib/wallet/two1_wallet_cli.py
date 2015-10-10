@@ -1,21 +1,21 @@
 import getpass
 
 import click
-import types
 from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet.two1_wallet import Two1Wallet
+from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet.daemonizer import get_daemonizer
-from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
-from two1.lib.wallet import exceptions
+
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
                                  'twentyone': []}
 TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
+
 
 def get_passphrase():
     """ Prompts the user for a passphrase.
@@ -25,65 +25,6 @@ def get_passphrase():
     """
     return getpass.getpass("Passphrase to unlock wallet: ")
 
-
-def check_daemon_running(wallet_path):
-    """ Checks whether the wallet daemon is running.
-
-    Args:
-        wallet_path (str): The path to the wallet that the daemon
-            should have loaded up.
-
-    Returns:
-        UnixSocketServerProxy: Returns the wallet proxy object
-            used to communicate with the daemon, or None if the
-            daemon is not running.
-    """
-    rv = None
-    try:
-        w = UnixSocketServerProxy()
-
-        # Check the path to make sure it's the same
-        wp = w.wallet_path()
-        rv = w if wp == wallet_path else None
-
-    except exceptions.DaemonNotRunningError:
-        rv = None
-
-    return rv
-
-
-def check_wallet_proxy_unlocked(w, passphrase):
-    """ Checks if the wallet currently loaded by the daemon
-        is unlocked.
-
-    Args:
-        w (UnixSocketServerProxy): The wallet proxy object to check.
-        passphrase (str): The passphrase to send if the wallet is
-            locked.
-    """
-    if w.is_locked():
-        if not passphrase:
-            click.echo("The wallet is locked and requires a passphrase.")
-            passphrase = get_passphrase()
-
-        w.unlock(passphrase)
-
-    return not w.is_locked()
-
-
-def _call_wallet_method(wallet, method_name, *args, **kwargs):
-    rv = None
-    if hasattr(wallet, method_name):
-        attr = getattr(wallet, method_name)
-        if isinstance(attr, types.FunctionType) or \
-           isinstance(attr, types.MethodType):
-            rv = attr(*args, **kwargs)
-        else:
-            rv = attr
-    else:
-        raise exceptions.UndefinedMethodError("wallet has no method or property: %s" % method_name)
-
-    return rv
 
 @click.pass_context
 def validate_data_provider(ctx, param, value):
@@ -173,18 +114,10 @@ def main(ctx, wallet_path, passphrase,
     if ctx.invoked_subcommand not in ['create', 'startdaemon']:
         p = get_passphrase() if passphrase else ''
 
-        # Check if the daemon is running
-        w = check_daemon_running(wallet_path)
-        if w is not None:
-            ctx.obj['wallet'] = w
-            check_wallet_proxy_unlocked(w, p)
-        else:
-            # instantiate a wallet object here and pass it into the context
-            ctx.obj['wallet'] = Two1Wallet(params_or_file=wallet_path,
-                                           data_provider=ctx.obj['data_provider'],
-                                           passphrase=p)
-
-            ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
+        ctx.obj['wallet'] = Two1WalletProxy(wallet_path=wallet_path,
+                                            data_provider=ctx.obj['data_provider'],
+                                            passphrase=p)
+        ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
 
 @click.command()
@@ -276,7 +209,7 @@ def payout_address(ctx):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    click.echo(_call_wallet_method(w, 'current_address'))
+    click.echo(w.current_address)
 
 
 @click.command(name="confirmedbalance")
@@ -285,7 +218,7 @@ def confirmed_balance(ctx):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
-    cb = _call_wallet_method(w, 'confirmed_balance')
+    cb = w.confirmed_balance()
     click.echo("Confirmed balance: %f BTC" %
                (cb / satoshi_to_btc))
 
@@ -296,7 +229,7 @@ def balance(ctx):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
-    ucb = _call_wallet_method(w, 'unconfirmed_balance')
+    ucb = w.unconfirmed_balance()
     click.echo("Total balance (including unconfirmed txns): %f BTC" %
                (ucb / satoshi_to_btc))
 
@@ -327,11 +260,10 @@ def send_to(ctx, address, amount, use_unconfirmed, account):
           (satoshis, address, list(account)))
 
     try:
-        txids = _call_wallet_method(w, 'send_to',
-                                    address=address,
-                                    amount=satoshis,
-                                    use_unconfirmed=use_unconfirmed,
-                                    accounts=list(account))
+        txids = w.send_to(address=address,
+                          amount=satoshis,
+                          use_unconfirmed=use_unconfirmed,
+                          accounts=list(account))
         if txids:
             click.echo("Successfully sent %f BTC to %s. txid = %r" %
                        (amount, address, [t['txid'] for t in txids]))
@@ -357,10 +289,9 @@ def spread_utxos(ctx, num_addresses, threshold, account):
     satoshis = int(threshold * satoshi_to_btc)
 
     try:
-        txids = _call_wallet_method(w, 'spread_utxos',
-                                    threshold=satoshis,
-                                    num_addresses=num_addresses,
-                                    accounts=list(account))
+        txids = w.spread_utxos(threshold=satoshis,
+                               num_addresses=num_addresses,
+                               accounts=list(account))
         if txids:
             click.echo("Successfully spread UTXOs in the following txids:")
             for t in txids:

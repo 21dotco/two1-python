@@ -1,4 +1,6 @@
+import getpass
 import json
+import types
 
 import base64
 import os
@@ -18,6 +20,7 @@ from two1.lib.wallet.hd_account import HDAccount
 from two1.lib.wallet.base_wallet import BaseWallet
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
+from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 
 
@@ -1050,3 +1053,101 @@ class Two1Wallet(BaseWallet):
             list(HDAccount): List of HDAccount objects.
         """
         return self._accounts
+
+
+class Two1WalletProxy(object):
+    """ Abstraction layer between wallet object and wallet daemon proxy.
+
+        This class implements abstracts away between usage of a wallet
+        object when a daemon is not found/running and a daemon proxy object
+        when a daemon is running.
+
+    Args:
+        wallet_path (str): Path to the wallet to be opened.
+        data_provider (BaseProvider): A blockchain data provider object.
+        passphrase (str): Passphrase used to unlock the wallet, if necessary.
+
+    Returns:
+        Two1WalletProxy: A proxy object.
+    """
+
+    @staticmethod
+    def check_daemon_running(wallet_path=Two1Wallet.DEFAULT_WALLET_PATH):
+        """ Checks whether the wallet daemon is running.
+
+        Args:
+            wallet_path (str): The path to the wallet that the daemon
+                should have loaded up.
+
+        Returns:
+            UnixSocketServerProxy: Returns the wallet proxy object
+                used to communicate with the daemon, or None if the
+                daemon is not running.
+        """
+        rv = None
+        try:
+            w = UnixSocketServerProxy()
+
+            # Check the path to make sure it's the same
+            wp = w.wallet_path()
+            rv = w if wp == wallet_path else None
+
+        except exceptions.DaemonNotRunningError:
+            rv = None
+
+        return rv
+
+    @staticmethod
+    def check_wallet_proxy_unlocked(w, passphrase):
+        """ Checks if the wallet currently loaded by the daemon
+            is unlocked.
+
+        Args:
+            w (UnixSocketServerProxy): The wallet proxy object to check.
+            passphrase (str): The passphrase to send if the wallet is
+                locked.
+        """
+        if w.is_locked():
+            if not passphrase:
+                print("The wallet is locked and requires a passphrase.")
+                passphrase = getpass.getpass("Passphrase to unlock wallet: ")
+
+            w.unlock(passphrase)
+
+        return not w.is_locked()
+
+    def __init__(self, wallet_path, data_provider, passphrase=''):
+        w = Two1WalletProxy.check_daemon_running(wallet_path)
+        if w is not None:
+            self.w = w
+            Two1WalletProxy.check_wallet_proxy_unlocked(w, passphrase)
+        else:
+            self.w = Two1Wallet(params_or_file=wallet_path,
+                                data_provider=data_provider,
+                                passphrase=passphrase)
+
+    def __getattr__(self, method_name):
+        rv = None
+        if hasattr(self.w, method_name):
+            attr = getattr(self.w, method_name)
+
+            def wrapper(*args, **kwargs):
+                return attr(*args, **kwargs)
+
+            if isinstance(self.w, Two1Wallet):
+                # If it's the actual wallet object, just return the
+                # attribute
+                rv = attr
+            else:
+                # If it's the proxy object we need to be a bit more
+                # creative: we should look up whether this is a
+                # property and if it is actually call the function.
+                if isinstance(getattr(Two1Wallet, method_name), property):
+                    rv = attr()
+                else:
+                    rv = wrapper
+        else:
+            raise exceptions.UndefinedMethodError(
+                "wallet has no method or property: %s" % (method_name))
+
+        return rv
