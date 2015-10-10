@@ -457,9 +457,9 @@ class Script(object):
                 raise TypeError(
                     "Expecting an OP_PUSHDATA but got %s" % r[0])
             script_bytes = bytes.fromhex(r[-1][2:])  # Skip the 0x
-            redeem_script = Script(script_bytes)
         else:
-            redeem_script = Script(r)
+            script_bytes = bytes.fromhex(r[2:])  # Skip the 0x
+        redeem_script = Script(script_bytes)
 
         if not redeem_script.is_multisig_redeem():
             raise TypeError("Invalid or no redeem script found!")

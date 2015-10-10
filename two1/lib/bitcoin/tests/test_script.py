@@ -118,3 +118,14 @@ def test_multisig_sig():
 
     s = Script.build_multisig_sig(r['signatures'], r['redeem_script'])
     assert bytes(s) == bytes(sig_script)
+
+    # This is a test case where there is no OP_PUSHDATA
+    raw_scr = "00483045022100fa1225f8828fd6fe52665c3c4258169a84af52b41525f2e288082f174c032f47022022758d5519db3ab2cec4a330e96568b9289fb77c5653bce49397df01a3fcff5101475221038b5fa60aee4c4e9ab3a66e6bb32211a54da6b054c6143dd221c122ce936315d921023180e1b49b7f3fd1254a19c7aa8016ad995089b99c9dac89752cd17e40d9072d52ae"
+    s, _ = Script.from_bytes(pack_var_str(bytes.fromhex(raw_scr)))
+
+    assert sig_script.is_multisig_sig()
+
+    r = s.extract_multisig_sig_info()
+    assert len(r['signatures']) == 1
+    assert r['redeem_script']
+    assert isinstance(r['redeem_script'], Script)
