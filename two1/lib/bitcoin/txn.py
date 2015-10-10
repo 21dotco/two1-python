@@ -455,7 +455,7 @@ class Transaction(object):
 
         return True
 
-    def _do_multisig_script(sigs, message, current_script_sig,
+    def _do_multisig_script(self, sigs, message, current_script_sig,
                             redeem_script, hash_type):
         # If the current script is empty or None, create it
         sig_script = None
