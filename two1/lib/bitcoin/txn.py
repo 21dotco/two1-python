@@ -525,7 +525,8 @@ class Transaction(object):
 
         return sig_indices
 
-    def verify_input_signature(self, input_index, sub_script):
+    def verify_input_signature(self, input_index, sub_script,
+                               redeem_script=None):
         """
         """
         # First extract the signature script
@@ -589,8 +590,91 @@ class Transaction(object):
         return rv
 
     def _verify_p2sh_multisig_input(self, input_index, sub_script):
-        # Return false until implemented
-        return False
+        if not sub_script.is_p2sh():
+            raise TypeError("sub_script is not a P2SH script!")
+
+        rv = False
+        sig_script = self.inputs[input_index].script
+
+        if not sig_script.is_multisig_sig():
+            raise TypeError("sigScript doesn't appear to be a multisig signature script")
+
+        stack = []
+        sig_info = sig_script.extract_multisig_sig_info()
+
+        stack.append(Script.BTC_OPCODE_TABLE[sig_script.ast[0]])  # Push OP_0
+
+        # Push all the signatures
+        for s in sig_info['signatures']:
+            stack.append(s)
+
+        redeem_script = sig_info['redeem_script']
+        redeem_script_h160 = redeem_script.hash160()
+
+        sub_script_h160 = bytes.fromhex(sub_script.get_hash160()[2:])
+        rv = redeem_script_h160 == sub_script_h160
+
+        rs_info = redeem_script.extract_multisig_redeem_info()
+        # Now start pushing the elements of the redeem script
+        stack.append(bytes([0x50 + rs_info['m']]))
+        for p in rs_info['public_keys']:
+            stack.append(p)
+        stack.append(bytes([0x50 + rs_info['n']]))
+
+        rv &= self._op_checkmultisig(input_index, stack, redeem_script)
+        return rv
+
+    def _op_checkmultisig(self, input_index, stack, redeem_script):
+        # This belongs in Script, and will get moved later
+        num_keys = int.from_bytes(stack.pop(), byteorder='big') - 0x50
+        keys_bytes = []
+        for i in range(num_keys):
+            keys_bytes.insert(0, stack.pop())
+        public_keys = [crypto.PublicKey.from_bytes(p) for p in keys_bytes]
+
+        min_num_sigs = int.from_bytes(stack.pop(), byteorder='big') - 0x50
+
+        # Although "m" is the *minimum* number of required signatures, bitcoin
+        # core only consumes "m" signatures and then expects an OP_0. This
+        # means that if m < min_num_sigs <= n, bitcoin core will return a
+        # script failure. See:
+        # https://github.com/bitcoin/bitcoin/blob/0.10/src/script/interpreter.cpp#L840
+        # We will do the same.
+        sigs = []
+        for i in range(min_num_sigs):
+            sigs.insert(0, stack.pop())
+
+        # Now we verify
+        last_match = -1
+        rv = True
+        for s in sigs:
+            s1, hash_type = s[:-1], s[-1]
+            sig = crypto.Signature.from_der(s1)
+
+            # Re-create txn for sig verification
+            txn_copy_bytes = bytes(self._copy_for_sig(input_index,
+                                                      hash_type,
+                                                      redeem_script))
+            msg = txn_copy_bytes + pack_u32(hash_type)
+            tx_digest = hashlib.sha256(msg).digest()
+
+            matched_any = False
+            for i, pub_key in enumerate(public_keys[last_match+1:]):
+                if pub_key.verify(tx_digest, sig):
+                    last_match = i
+                    matched_any = True
+
+            if not matched_any:
+                # Bail early if the sig couldn't be verified
+                # by any public key
+                rv = False
+                break
+
+        # Now make sure the last thing on the stack is OP_0
+        rv &= stack.pop() == 0
+        rv &= len(stack) == 0
+
+        return rv
 
     def __str__(self):
         """ Returns a human readable formatting of this transaction.
