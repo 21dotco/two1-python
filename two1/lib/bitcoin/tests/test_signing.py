@@ -129,3 +129,45 @@ def test_multisig_sign():
     wrong_script_pub_key = script.Script(
         "OP_HASH160 0x5c406de4915e37a7e71c7ef9bff42fbf1404daa1 OP_EQUAL")
     assert not tx.verify_input_signature(0, wrong_script_pub_key)
+
+    # Test not enough signatures
+    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+
+    # Sign the input with only the first private key
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[0],
+                  sub_script=redeem_script)
+
+    assert not tx.verify_input_signature(0, script_pub_key)
+
+    # Try doing it with the 2nd private key but not the first
+    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[1],
+                  sub_script=redeem_script)
+
+    assert not tx.verify_input_signature(0, script_pub_key)
+
+    # Now try doing the sigs in reverse order
+    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[1],
+                  sub_script=redeem_script)
+    tx.sign_input(input_index=0,
+                  hash_type=txn.Transaction.SIG_HASH_ALL,
+                  private_key=priv_keys[0],
+                  sub_script=redeem_script)
+
+    # This should still work
+    assert tx.verify_input_signature(0, script_pub_key)
+
+    # Now hack the txn bytes to have the sigs in reverse order.
+    # This should fail.
+    txn_bytes = bytes.fromhex("01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd0000483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b9014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000")
+
+    tx, _ = txn.Transaction.from_bytes(txn_bytes)
+
+    assert not tx.verify_input_signature(0, script_pub_key)
