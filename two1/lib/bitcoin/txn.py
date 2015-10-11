@@ -352,8 +352,7 @@ class Transaction(object):
 
         return private_key.public_key.compressed_bytes if compressed else bytes(pub_key)
 
-    def sign_input(self, input_index, hash_type, private_key, sub_script,
-                   redeem_script=None):
+    def sign_input(self, input_index, hash_type, private_key, sub_script):
         """ Signs an input.
 
         Args:
@@ -362,9 +361,8 @@ class Transaction(object):
             private_key (crypto.PrivateKey): private key with which
                 to sign the transaction.
             sub_script (Script): the scriptPubKey of the corresponding
-                utxo being spent.
-            redeem_script (Script): If sub_script is a P2SH script, a
-                corresponding redeem script must be provided.
+                utxo being spent if the outpoint is P2PKH or the redeem
+                script if the outpoint is P2SH.
         """
         if input_index < 0 or input_index >= len(self.inputs):
             raise ValueError("Invalid input index.")
@@ -375,20 +373,13 @@ class Transaction(object):
         multisig = False
         multisig_params = None
         multisig_key_index = -1
-        if sub_script.is_p2sh():
-            if not redeem_script:
-                raise ValueError("redeem_script must not be None if sub_script is a P2SH script.")
-
-            if not redeem_script.is_multisig_redeem():
-                raise TypeError("Signing arbitrary redeem scripts is not currently supported.")
-
+        if sub_script.is_multisig_redeem():
             multisig = True
-            multisig_params = redeem_script.extract_multisig_redeem_info()
-            tmp_scr = redeem_script
-        else:
-            tmp_scr = sub_script
+            multisig_params = sub_script.extract_multisig_redeem_info()
+        elif not sub_script.is_p2pkh():
+            raise TypeError("Signing arbitrary redeem scripts is not currently supported.")
 
-        tmp_script = tmp_scr.remove_op("OP_CODESEPARATOR")
+        tmp_script = sub_script.remove_op("OP_CODESEPARATOR")
 
         compressed = False
         if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
@@ -445,7 +436,7 @@ class Transaction(object):
                                                         signature=sig)],
                                                   msg_to_sign,
                                                   curr_script_sig,
-                                                  redeem_script,
+                                                  tmp_script,
                                                   hash_type)
         else:
             pub_key_bytes = self._get_public_key_bytes(private_key, compressed)
