@@ -105,8 +105,7 @@ def test_multisig_sign():
     tx.sign_input(input_index=0,
                   hash_type=txn.Transaction.SIG_HASH_ALL,
                   private_key=priv_keys[0],
-                  sub_script=outpoint_script_pub_key,
-                  redeem_script=redeem_script)
+                  sub_script=redeem_script)
 
     # Check the sig script
     assert tx.inputs[0].script.ast[1] == "0x30440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b901"
@@ -115,8 +114,7 @@ def test_multisig_sign():
     tx.sign_input(input_index=0,
                   hash_type=txn.Transaction.SIG_HASH_ALL,
                   private_key=priv_keys[1],
-                  sub_script=outpoint_script_pub_key,
-                  redeem_script=redeem_script)
+                  sub_script=redeem_script)
 
     assert tx.inputs[0].script.ast[2] == "0x3045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b01"
 
