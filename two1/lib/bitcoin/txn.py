@@ -621,7 +621,11 @@ class Transaction(object):
             stack.append(p)
         stack.append(bytes([0x50 + rs_info['n']]))
 
-        rv &= self._op_checkmultisig(input_index, stack, redeem_script)
+        try:
+            rv &= self._op_checkmultisig(input_index, stack, redeem_script)
+        except:
+            rv = False
+
         return rv
 
     def _op_checkmultisig(self, input_index, stack, redeem_script):
@@ -642,14 +646,23 @@ class Transaction(object):
         # We will do the same.
         sigs = []
         for i in range(min_num_sigs):
-            sigs.insert(0, stack.pop())
+            sig = stack.pop()
+            # A sig should always be either 71 or 72 bytes (with the hash-type)
+            if len(sig) not in [71, 72]:
+                raise TypeError("Invalid signature")
+            sigs.insert(0, sig)
 
         # Now we verify
         last_match = -1
         rv = True
+        match_count = 0
         for s in sigs:
             s1, hash_type = s[:-1], s[-1]
-            sig = crypto.Signature.from_der(s1)
+            try:
+                sig = crypto.Signature.from_der(s1)
+            except ValueError:
+                rv = False
+                break
 
             # Re-create txn for sig verification
             txn_copy_bytes = bytes(self._copy_for_sig(input_index,
@@ -662,13 +675,17 @@ class Transaction(object):
             for i, pub_key in enumerate(public_keys[last_match+1:]):
                 if pub_key.verify(tx_digest, sig):
                     last_match = i
+                    match_count += 1
                     matched_any = True
+                    break
 
             if not matched_any:
                 # Bail early if the sig couldn't be verified
                 # by any public key
                 rv = False
                 break
+
+        rv &= match_count >= min_num_sigs
 
         # Now make sure the last thing on the stack is OP_0
         rv &= stack.pop() == 0
