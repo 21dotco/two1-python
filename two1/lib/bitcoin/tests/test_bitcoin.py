@@ -1,13 +1,16 @@
 import arrow
 from calendar import timegm
-import json
-import pytest
-from two1.lib.bitcoin.utils import *
-from two1.lib.bitcoin.block import Block, BlockHeader
-from two1.lib.bitcoin.crypto import PublicKey, PrivateKey
+from two1.lib.bitcoin.block import Block
+from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import CoinbaseInput, Transaction, TransactionInput, TransactionOutput
+from two1.lib.bitcoin.txn import CoinbaseInput
+from two1.lib.bitcoin.txn import Transaction
+from two1.lib.bitcoin.txn import TransactionInput
+from two1.lib.bitcoin.txn import TransactionOutput
+from two1.lib.bitcoin.utils import bytes_to_str
+from two1.lib.bitcoin.utils import difficulty_to_target
+from two1.lib.bitcoin.utils import target_to_bits
 
 
 def txn_from_json(txn_json):
@@ -21,9 +24,9 @@ def txn_from_json(txn_json):
                                    script,
                                    i['sequence'])
         else:
-            # Coinbase txn, we pass in a block version of 1 since the coinbase script
-            # from api.chain.com already has the height in there. Don't want our stuff
-            # to repack it in.
+            # Coinbase txn, we pass in a block version of 1 since the
+            # coinbase script from api.chain.com already has the
+            # height in there. Don't want our stuff to repack it in.
             inp = CoinbaseInput(txn_json['block_height'],
                                 bytes.fromhex(i['coinbase']),
                                 i['sequence'],
@@ -31,7 +34,7 @@ def txn_from_json(txn_json):
 
         inputs.append(inp)
 
-    outputs = []    
+    outputs = []
     for o in txn_json['outputs']:
         scr = Script(bytes.fromhex(o['script_hex']))
         out = TransactionOutput(o['value'], scr)
@@ -44,11 +47,11 @@ def txn_from_json(txn_json):
 
     return txn
 
-def test_txn(txn_json):
+
+def test_txn_serialization(txn_json):
     ''' txn_json: a JSON dict from api.chain.com that also contains
                  the raw hex of the transaction in the 'hex' key
     '''
-
     txn = txn_from_json(txn_json)
     txn_bytes = bytes(txn)
     txn_hash = txn.hash
@@ -57,24 +60,25 @@ def test_txn(txn_json):
         assert txn.num_inputs == len(txn_json['inputs'])
         assert txn.num_outputs == len(txn_json['outputs'])
         assert str(txn_hash) == txn_json['hash'], \
-            "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (txn_json['hash'],
-                                                                                                        txn_json['hex'],
-                                                                                                        bytes_to_str(txn_bytes),
-                                                                                                        txn_json)
+            "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (
+                txn_json['hash'],
+                txn_json['hex'],
+                bytes_to_str(txn_bytes),
+                txn_json)
     except AssertionError as e:
         print(e)
         raise
-        
+
+
 def test_block(block_json):
     # Why is it so f*ing hard to get a UNIX-time from a time string?
-    #print("block keys = %r, time = %r" % (block_json.keys(), block_json['time']))
     a = arrow.get(block_json['time'])
     time = timegm(a.datetime.timetuple())
 
     # TODO: Need to have a make_txn_from_json() method that's shared
     # between here and test_txn()
     txns = [txn_from_json(t) for t in block_json['transactions']]
-    
+
     # Create a new Block object
     block = Block(block_json['height'],
                   block_json['version'],
@@ -85,7 +89,7 @@ def test_block(block_json):
                   txns)
 
     block_hash = block.hash
-    
+
     try:
         assert len(block.txns) == len(block_json['transactions'])
         assert block.height == block_json['height']
@@ -134,7 +138,8 @@ def test_crypto():
         assert pk.point.y == pt[1]
         assert b == pk.compressed_bytes
         assert b_full == bytes(pk)
-    
+
+
 def test_utils():
     assert difficulty_to_target(16307.420938523983) == 0x404cb000000000000000000000000000000000000000000000000
     assert target_to_bits(0x00000000000404CB000000000000000000000000000000000000000000000000) == 0x1b0404cb
@@ -151,7 +156,7 @@ def test_txn():
     txn_str = "0100000002cb246d110b6087cd3b5e3d3b7a74505ea995721208ddfc15b6b3b718271e0b41010000006b48304502201f2cf747f9f8e3f770bef848e6787c9fca31e3086c390e505c1339936a15a78f022100a9e5f761162b8a4387c4009ce9469e92302fda68afe85371181b6e13b84f052d01210339e1274cd66db3dbe23e4def7ae9eb81644c15347cf0b39c741fb947c8ef1f12ffffffffb828405fca4f578073fe02bb00e999407bbaa3f5556f4c3571fd5fef28e47de8010000006a47304402206b7a8851fb2284201f31854bc857a8e1a1c4d5dbd19efe76d89d2c02083ff397022029a231c2750005b5ec4c437a8fa7163eaffe02e5fb51d9b8bb5edc5bb88040720121036744acff73b223a6f04190b60a980f8de1ed0271bba92144850e90c1af489fb3ffffffff0232530000000000001976a9146037aac7480f0fa0c7740560a7bf2f37ec17597988acb0ad01000000000017a914ef5a22f491632b2f18c59352dd64fa4ec346a8118700000000"
 
     tx, _ = Transaction.from_bytes(bytes.fromhex(txn_str))
-    
+
     output_address = "19mkZEZinQ77SrXbzxd5QJksikQFmfUNfo"
     assert tx.output_index_for_address(output_address) == 0
 
