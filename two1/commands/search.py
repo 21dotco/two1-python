@@ -1,6 +1,7 @@
 import click
 from tabulate import tabulate
-
+from two1.commands.config import TWO1_HOST
+from two1.commands.exceptions import ServerRequestError
 from two1.commands.config import pass_config
 from two1.commands.config import TWO1_API_HOST
 from two1.lib.server.rest_client import TwentyOneRestClient
