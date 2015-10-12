@@ -25,30 +25,33 @@ def _get_utxos_addr_tuple_list(utxos_by_addr):
 
 
 def utxo_selector_smallest_first(data_provider, utxos_by_addr, amount,
-                                 num_outputs):
+                                 num_outputs, fees=None):
     # Order the utxos by amount
     utxo_tuple_list = _get_utxos_addr_tuple_list(utxos_by_addr)
     ordered_utxos = sorted(utxo_tuple_list,
                            key=lambda utxo_addr_tuple: utxo_addr_tuple[1].value)
 
-    fees = num_outputs * DEFAULT_OUTPUT_FEE
+    calc_fees = num_outputs * DEFAULT_OUTPUT_FEE
     utxos_to_use = {}
     utxo_sum = 0
 
     for addr, utxo in ordered_utxos:
-        if utxo_sum < amount + fees + DEFAULT_INPUT_FEE:
+        tf = fees if fees is not None else calc_fees + DEFAULT_INPUT_FEE
+        if utxo_sum < amount + tf:
             utxo_sum += utxo.value
             if addr in utxos_to_use:
                 utxos_to_use[addr].append(utxo)
             else:
                 utxos_to_use[addr] = [utxo]
 
-            fees += DEFAULT_INPUT_FEE
+            calc_fees += DEFAULT_INPUT_FEE
         else:
             break
 
-    rv = utxos_to_use, fees
-    if utxo_sum < amount + fees:
-        rv = {}, fees
+    f = fees if fees is not None else calc_fees
+
+    rv = utxos_to_use, f
+    if utxo_sum < amount + f:
+        rv = {}, f
 
     return rv

@@ -42,7 +42,7 @@ class Two1Wallet(BaseWallet):
         utxo_selector should be a filtering function with prototype:
             selected, fees = utxo_selector_func(data_provider,
                                                 list(UnspentTransactionOutput),
-                                                int, int)
+                                                int, int, fees=None)
 
         The job of the selector is to choose from the input list of UTXOs which
         are to be used in a transaction such that there are sufficient coins
@@ -50,7 +50,8 @@ class Two1Wallet(BaseWallet):
         Since transaction fees are computed based on size of transaction, which
         is in turn (partially) determined by number of inputs and number of
         outputs (4th passed argument), the selector must determine the required
-        fees and return that amount as well.
+        fees and return that amount as well, unless fees (5th passed argument)
+        is not None in which case the application is specifiying the fees.
 
         The return value must be a tuple where the first item is a dict keyed
         by address with a list of selected UnspentTransactionOutput objects and
@@ -743,7 +744,7 @@ class Two1Wallet(BaseWallet):
         return res
 
     def build_signed_transaction(self, addresses_and_amounts,
-                                 use_unconfirmed=False, accounts=[]):
+                                 use_unconfirmed=False, fees=None, accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
             In the future, this function may create multiple transactions
@@ -754,6 +755,7 @@ class Two1Wallet(BaseWallet):
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -788,7 +790,8 @@ class Two1Wallet(BaseWallet):
         selected_utxos, fees = self.utxo_selector(data_provider=self.data_provider,
                                                   utxos_by_addr=utxos_by_addr,
                                                   amount=total_amount,
-                                                  num_outputs=len(addresses_and_amounts))
+                                                  num_outputs=len(addresses_and_amounts),
+                                                  fees=fees)
 
         # Verify we have enough money
         total_with_fees = total_amount + fees
@@ -860,13 +863,15 @@ class Two1Wallet(BaseWallet):
         return [txn]
 
     def make_signed_transaction_for(self, address, amount,
-                                    use_unconfirmed=False, accounts=[]):
+                                    use_unconfirmed=False, fees=None,
+                                    accounts=[]):
         """ Makes a raw signed unbroadcasted transaction for the specified amount.
 
         Args:
             address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -878,10 +883,12 @@ class Two1Wallet(BaseWallet):
         """
         return self.make_signed_transaction_for_multiple({address: amount},
                                                          use_unconfirmed=use_unconfirmed,
+                                                         fees=fees,
                                                          accounts=accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
-                                             use_unconfirmed=False, accounts=[]):
+                                             use_unconfirmed=False, fees=None,
+                                             accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
             In the future, this function may create multiple transactions
@@ -892,6 +899,7 @@ class Two1Wallet(BaseWallet):
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -904,12 +912,13 @@ class Two1Wallet(BaseWallet):
 
         txns = self.build_signed_transaction(addresses_and_amounts,
                                              use_unconfirmed=use_unconfirmed,
+                                             fees=fees,
                                              accounts=accounts)
         return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}
                 for txn in txns]
 
     def send_to_multiple(self, addresses_and_amounts,
-                         use_unconfirmed=False, accounts=[]):
+                         use_unconfirmed=False, fees=None, accounts=[]):
         """ Sends bitcoins to multiple addresses.
 
         Args:
@@ -917,6 +926,7 @@ class Two1Wallet(BaseWallet):
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -926,6 +936,7 @@ class Two1Wallet(BaseWallet):
         """
         txn_dict = self.make_signed_transaction_for_multiple(addresses_and_amounts,
                                                              use_unconfirmed,
+                                                             fees,
                                                              accounts)
 
         res = []
@@ -941,13 +952,15 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    def send_to(self, address, amount, use_unconfirmed=False, accounts=[]):
+    def send_to(self, address, amount,
+                use_unconfirmed=False, fees=None, accounts=[]):
         """ Sends Bitcoin to the provided address for the specified amount.
 
         Args:
             address (str): The address to send the Bitcoin too.
             amount (number): The amount of Bitcoin to send.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
@@ -957,9 +970,10 @@ class Two1Wallet(BaseWallet):
                and raw transactions.  e.g.: [{"txid": txid0, "txn":
                txn_hex0}, ...]
         """
-        return self.send_to_multiple({address: amount},
-                                     use_unconfirmed,
-                                     accounts)
+        return self.send_to_multiple(addresses_and_amounts={address: amount},
+                                     use_unconfirmed=use_unconfirmed,
+                                     fees=fees,
+                                     accounts=accounts)
 
     def get_utxos_above_threshold(self, threshold,
                                   include_unconfirmed=False, accounts=[]):

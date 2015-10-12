@@ -244,12 +244,17 @@ def balance(ctx):
               default=False,
               show_default=True,
               help="Use unconfirmed inputs if necessary")
+@click.option('--fees', '-f',
+              type=click.INT,
+              default=None,
+              show_default=True,
+              help="Manually specify the fees (in Satoshis)")
 @click.option('--account',
               metavar="STRING",
               multiple=True,
               help="List of accounts to use")
 @click.pass_context
-def send_to(ctx, address, amount, use_unconfirmed, account):
+def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
     """
     w = ctx.obj['wallet']
@@ -263,6 +268,7 @@ def send_to(ctx, address, amount, use_unconfirmed, account):
         txids = w.send_to(address=address,
                           amount=satoshis,
                           use_unconfirmed=use_unconfirmed,
+                          fees=fees,
                           accounts=list(account))
         if txids:
             click.echo("Successfully sent %f BTC to %s. txid = %r" %
