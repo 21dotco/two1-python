@@ -316,7 +316,7 @@ class Script(object):
         else:
             return Script.build_push_str(render_int(i))
 
-    def __init__(self, script):
+    def __init__(self, script=""):
         if Script._ser_dispatch_table is None:
             Script._build_serializer_dispatch_table()
         if isinstance(script, bytes):
