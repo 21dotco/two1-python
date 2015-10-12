@@ -522,7 +522,7 @@ class Two1Wallet(BaseWallet):
         pkeys = self.get_private_keys([address])
         return pkeys[address] if address in pkeys else None
 
-    def get_private_from_public(self, public_key):
+    def get_private_for_public(self, public_key):
         """ Returns the private key for the given public_key, if it is
             a part of this wallet.
 
