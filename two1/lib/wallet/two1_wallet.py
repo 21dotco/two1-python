@@ -515,9 +515,25 @@ class Two1Wallet(BaseWallet):
 
         Args:
             address (str): A Base58Check encoded bitcoin address
+
+        Returns:
+            PrivateKey: A private key object or None.
         """
         pkeys = self.get_private_keys([address])
         return pkeys[address] if address in pkeys else None
+
+    def get_private_from_public(self, public_key):
+        """ Returns the private key for the given public_key, if it is
+            a part of this wallet.
+
+        Args:
+            public_key (PublicKey): The public key object to retrieve
+                the private key for.
+
+        Returns:
+            PrivateKey: A private key object or None.
+        """
+        return self.get_private_key(public_key.address())
 
     def find_addresses(self, addresses):
         """ Returns the paths to the address, if found.
