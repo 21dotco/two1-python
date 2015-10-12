@@ -742,30 +742,9 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    def make_signed_transaction_for(self, address, amount,
-                                    use_unconfirmed=False, accounts=[]):
-        """ Makes a raw signed unbroadcasted transaction for the specified amount.
-
-        Args:
-            address (str): The address to send the Bitcoin to.
-            amount (number): The amount of Bitcoin to send.
-            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
-            accounts (list(str or int)): List of accounts to use. If
-               not provided, all discovered accounts may be used based
-               on the chosen UTXO selection algorithm.
-
-        Returns:
-            list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
-        """
-        return self.make_signed_transaction_for_multiple({address: amount},
-                                                         use_unconfirmed,
-                                                         accounts)
-
-    def make_signed_transaction_for_multiple(self, addresses_and_amounts,
-                                             use_unconfirmed=False, accounts=[]):
-        """ Makes raw signed unbrodcasted transaction(s) for the specified amount.
+    def build_signed_transaction(self, addresses_and_amounts,
+                                 use_unconfirmed=False, accounts=[]):
+        """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
             In the future, this function may create multiple transactions
             if a single one would be too big.
@@ -780,9 +759,7 @@ class Two1Wallet(BaseWallet):
                on the chosen UTXO selection algorithm.
 
         Returns:
-            list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            list(Transaction): A list of Transaction objects
         """
         total_amount = sum([amt for amt in addresses_and_amounts.values()])
 
@@ -880,7 +857,56 @@ class Two1Wallet(BaseWallet):
 
                 i += 1
 
-        return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}]
+        return [txn]
+
+    def make_signed_transaction_for(self, address, amount,
+                                    use_unconfirmed=False, accounts=[]):
+        """ Makes a raw signed unbroadcasted transaction for the specified amount.
+
+        Args:
+            address (str): The address to send the Bitcoin to.
+            amount (number): The amount of Bitcoin to send.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            accounts (list(str or int)): List of accounts to use. If
+               not provided, all discovered accounts may be used based
+               on the chosen UTXO selection algorithm.
+
+        Returns:
+            list(dict): A list of dicts containing transaction names
+               and raw transactions.  e.g.: [{"txid": txid0, "txn":
+               txn_hex0}, ...]
+        """
+        return self.make_signed_transaction_for_multiple({address: amount},
+                                                         use_unconfirmed=use_unconfirmed,
+                                                         accounts=accounts)
+
+    def make_signed_transaction_for_multiple(self, addresses_and_amounts,
+                                             use_unconfirmed=False, accounts=[]):
+        """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
+
+            In the future, this function may create multiple transactions
+            if a single one would be too big.
+
+        Args:
+            addresses_and_amounts (dict): A dict keyed by recipient address
+               and corresponding values being the amount - *in satoshis* - to
+               send to that address.
+            use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            accounts (list(str or int)): List of accounts to use. If
+               not provided, all discovered accounts may be used based
+               on the chosen UTXO selection algorithm.
+
+        Returns:
+            list(dict): A list of dicts containing transaction names
+               and raw transactions.  e.g.: [{"txid": txid0, "txn":
+               txn_hex0}, ...]
+        """
+
+        txns = self.build_signed_transaction(addresses_and_amounts,
+                                             use_unconfirmed=use_unconfirmed,
+                                             accounts=accounts)
+        return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}
+                for txn in txns]
 
     def send_to_multiple(self, addresses_and_amounts,
                          use_unconfirmed=False, accounts=[]):
