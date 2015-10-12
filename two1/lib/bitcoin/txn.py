@@ -5,6 +5,7 @@ import struct
 from two1.lib.bitcoin import crypto
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.bitcoin.utils import pack_compact_int
 from two1.lib.bitcoin.utils import pack_u32
@@ -690,6 +691,29 @@ class Transaction(object):
         # Now make sure the last thing on the stack is OP_0
         rv &= stack.pop() == 0
         rv &= len(stack) == 0
+
+        return rv
+
+    def output_index_for_address(self, address):
+        """ Returns the index of the output in this transaction
+            that pays to the provided address.
+
+        Args:
+            address (str): A Base58Check encoded address.
+
+        Returns:
+            int: The index of the corresponding output or None.
+        """
+        ver, h160_bytes = address_to_key_hash(address)
+        h160 = bytes_to_str(h160_bytes)
+
+        rv = None
+        for i, o in enumerate(self.outputs):
+            scr = o.script
+            if scr.is_p2pkh() or scr.is_p2sh():
+                if scr.get_hash160()[2:] == h160:
+                    rv = i
+                    break
 
         return rv
 
