@@ -494,7 +494,7 @@ class Two1Wallet(BaseWallet):
         for a in self._accounts:
             a._update_balance()
 
-    def _get_private_keys(self, addresses):
+    def get_private_keys(self, addresses):
         """ Returns private keys for a list of addresses, if they
             are a part of this wallet.
         """
@@ -508,6 +508,16 @@ class Two1Wallet(BaseWallet):
             private_keys[addr] = acct.get_private_key(path[1], path[2])
 
         return private_keys
+
+    def get_private_key(self, address):
+        """ Returns the private key corresponding to address, if it is
+            a part of this wallet.
+
+        Args:
+            address (str): A Base58Check encoded bitcoin address
+        """
+        pkeys = self.get_private_keys([address])
+        return pkeys[address] if address in pkeys else None
 
     def find_addresses(self, addresses):
         """ Returns the paths to the address, if found.
@@ -798,7 +808,7 @@ class Two1Wallet(BaseWallet):
             print("Warning: using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
-        private_keys = self._get_private_keys(list(selected_utxos.keys()))
+        private_keys = self.get_private_keys(list(selected_utxos.keys()))
 
         # Build up the transaction
         inputs = []
