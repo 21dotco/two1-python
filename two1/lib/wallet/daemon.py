@@ -109,19 +109,25 @@ def current_address():
 
 
 @dispatcher.method('send_to')
-def send_to(address, amount, account):
+def send_to(address, amount, use_unconfirmed, fees, accounts):
     """ RPC method to send BTC to an address.
 
     Args:
         address (str): Base58Check encoded bitcoin address to send coins to.
         amount (int): Amount in satoshis to send.
-        account (list): List of accounts to use in sending coins.
+        use_unconfirmed (bool): Use unconfirmed UTXOs if True.
+        fees (int): User-specified fee amount
+        accounts (list): List of accounts to use in sending coins.
 
     Returns:
         list: List of txids used to send the coins.
     """
     check_unlocked()
-    return wallet['obj'].send_to(address, amount, account)
+    return wallet['obj'].send_to(address=address,
+                                 amount=amount,
+                                 use_unconfirmed=use_unconfirmed,
+                                 fees=fees,
+                                 accounts=accounts)
 
 
 @dispatcher.method('unlock')
