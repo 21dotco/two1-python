@@ -733,18 +733,25 @@ class Transaction(object):
 
         return rv, match_count
 
-    def output_index_for_address(self, address):
+    def output_index_for_address(self, address_or_hash160):
         """ Returns the index of the output in this transaction
             that pays to the provided address.
 
         Args:
-            address (str): A Base58Check encoded address.
+            address_or_hash160 (str or bytes): If a string, a
+                Base58Check encoded address. If bytes, the hash160
+                of the public key.
 
         Returns:
             int: The index of the corresponding output or None.
         """
-        ver, h160_bytes = address_to_key_hash(address)
-        h160 = bytes_to_str(h160_bytes)
+        if isinstance(address_or_hash160, str):
+            ver, h160_bytes = address_to_key_hash(address_or_hash160)
+            h160 = bytes_to_str(h160_bytes)
+        elif isinstance(address_or_hash160, bytes):
+            h160 = bytes_to_str(address_or_hash160)
+        else:
+            raise TypeError("address_or_hash160 can only be bytes or str")
 
         rv = None
         for i, o in enumerate(self.outputs):
