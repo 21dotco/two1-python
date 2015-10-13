@@ -9,7 +9,12 @@ class TwentyOneProvider(ChainProvider):
             // TODO: Use the MachineAuth here to avoid spam
     """
 
-    def __init__(self, twentyone_host_name):
-        super().__init__(None, None)
+    def __init__(self, twentyone_host_name, testnet=False):
+        self.host_name = twentyone_host_name
+
+        super().__init__(None, None, testnet)
+        self.testnet = testnet
         self.auth = None
-        self.server_url = urljoin(twentyone_host_name, "bitcoin") + "/"
+
+    def _set_url(self):
+        self.server_url = urljoin(self.host_name, "blockchain") + "/" + self.chain + "/"
