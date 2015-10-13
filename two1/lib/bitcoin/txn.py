@@ -590,7 +590,8 @@ class Transaction(object):
 
         return rv
 
-    def _verify_p2sh_multisig_input(self, input_index, sub_script):
+    def _verify_p2sh_multisig_input(self, input_index, sub_script,
+                                    partial=False):
         if not sub_script.is_p2sh():
             raise TypeError("sub_script is not a P2SH script!")
 
@@ -606,11 +607,25 @@ class Transaction(object):
         stack.append(Script.BTC_OPCODE_TABLE[sig_script.ast[0]])  # Push OP_0
 
         # Push all the signatures
+        hash_types = set()
         for s in sig_info['signatures']:
-            stack.append(s)
+            s1, hash_type = s[:-1], s[-1]
+            stack.append(s1)
+            hash_types.add(hash_type)
 
+        if len(hash_types) != 1:
+            raise TypeError("Not all signatures have the same hash type!")
+
+        hash_type = hash_types.pop()
         redeem_script = sig_info['redeem_script']
         redeem_script_h160 = redeem_script.hash160()
+
+        # Re-create txn for sig verification
+        txn_copy_bytes = bytes(self._copy_for_sig(input_index,
+                                                  hash_type,
+                                                  redeem_script))
+        msg = txn_copy_bytes + pack_u32(hash_type)
+        txn_digest = hashlib.sha256(msg).digest()
 
         sub_script_h160 = bytes.fromhex(sub_script.get_hash160()[2:])
         rv = redeem_script_h160 == sub_script_h160
@@ -623,13 +638,15 @@ class Transaction(object):
         stack.append(bytes([0x50 + rs_info['n']]))
 
         try:
-            rv &= self._op_checkmultisig(input_index, stack, redeem_script)
+            rv &= self._op_checkmultisig(stack=stack,
+                                         txn_digest=txn_digest,
+                                         partial=partial)
         except:
             rv = False
 
         return rv
 
-    def _op_checkmultisig(self, input_index, stack, redeem_script):
+    def _op_checkmultisig(self, stack, txn_digest, partial=False):
         # This belongs in Script, and will get moved later
         num_keys = int.from_bytes(stack.pop(), byteorder='big') - 0x50
         keys_bytes = []
@@ -647,34 +664,26 @@ class Transaction(object):
         # We will do the same.
         sigs = []
         for i in range(min_num_sigs):
-            sig = stack.pop()
-            # A sig should always be either 71 or 72 bytes (with the hash-type)
-            if len(sig) not in [71, 72]:
+            s = stack.pop()
+            # A sig should always be either 70 or 71 bytes
+            if len(s) not in [70, 71]:
                 raise TypeError("Invalid signature")
+            try:
+                sig = crypto.Signature.from_der(s)
+            except ValueError:
+                rv = False
+                break
+
             sigs.insert(0, sig)
 
         # Now we verify
         last_match = -1
         rv = True
         match_count = 0
-        for s in sigs:
-            s1, hash_type = s[:-1], s[-1]
-            try:
-                sig = crypto.Signature.from_der(s1)
-            except ValueError:
-                rv = False
-                break
-
-            # Re-create txn for sig verification
-            txn_copy_bytes = bytes(self._copy_for_sig(input_index,
-                                                      hash_type,
-                                                      redeem_script))
-            msg = txn_copy_bytes + pack_u32(hash_type)
-            tx_digest = hashlib.sha256(msg).digest()
-
+        for sig in sigs:
             matched_any = False
             for i, pub_key in enumerate(public_keys[last_match+1:]):
-                if pub_key.verify(tx_digest, sig):
+                if pub_key.verify(txn_digest, sig):
                     last_match = i
                     match_count += 1
                     matched_any = True
