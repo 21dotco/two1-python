@@ -9,6 +9,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.decorators import authentication_classes
 
 from bitcoin_auth.permissions import IsBitcoinAuthenticated
+from bitcoin_auth.authentication import BitChequeAuthentication
 from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 from bitcoin_auth.authentication import SessionPaymentRequiredAuthentication
 
@@ -25,8 +26,6 @@ def wunderground_radar_request(query, place):
 
 
 @api_view(['GET'])
-@authentication_classes((SessionPaymentRequiredAuthentication,))
-@permission_classes((IsBitcoinAuthenticated,))
 def current_temperature(request):
     """
     Current temperature for location
