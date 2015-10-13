@@ -23,6 +23,7 @@ def payment_required_exception_handler(exc, context):
                 get_price_for_request(
                     context['request']
                 )
+            response['Username'] = settings.TWO1_USERNAME
     return response
 
 

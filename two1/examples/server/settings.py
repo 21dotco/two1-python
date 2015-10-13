@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
+from two1.commands.config import Config
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -118,7 +119,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Static Serve 402 Configuration
-STATIC_SERVE_CONFIG = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static_serve')) + '/ss_config.yaml'
+STATIC_SERVE_CONFIG = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'static_serve')
+) + '/ss_config.yaml'
 
 # 402 settings
 # TODO: Refactor into per API call price
@@ -132,22 +135,37 @@ BITSERV_DEFAULT_PRICE = int(
     )
 )
 
+# for inclusion in 402 payments, username of the seller.
+TWO1_USERNAME = os.environ.get(
+    'TWO1_USERNAME', Config().username
+)
+
+# endpoint of the bitcheque verifier
+BITCHEQUE_VERIFICIATION_URL = os.environ.get(
+    "BITCHEQUE_VERIFICIATION_URL",
+    "http://localhost:8000/pool/account/{}/21satoshi/"
+)
+
 # allows posting "paid" as tx
 BITSERV_DEBUG = True
 
-#REST FRAMEWORK
+# REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'bitcoin_auth.authentication.BasicPaymentRequiredAuthentication',
+        'bitcoin_auth.authentication.SessionPaymentRequiredAuthentication',
+        'bitcoin_auth.authentication.BitChequeAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'bitcoin_auth.permissions.IsBitcoinAuthenticated',
+    ),
     # Set the exeption handler so we can send 402 requests.
     'EXCEPTION_HANDLER': 'bitcoin_auth.exceptions.payment_required_exception_handler'
 }
-
 
 
 SWAGGER_SETTINGS = {
@@ -169,4 +187,3 @@ SWAGGER_SETTINGS = {
     },
     'doc_expansion': 'list',
 }
-

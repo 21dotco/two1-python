@@ -58,7 +58,6 @@ def translate(request):
 
 
 @api_view(['POST'])
-@authentication_classes([LanguageProcessingPaymentRequired])
 def sentiment_analysis(request):
     """
     Translates provided text from English to Spanish

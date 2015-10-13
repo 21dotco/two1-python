@@ -10,9 +10,11 @@ https://github.com/tomchristie/django-rest-framework/blob/master/rest_framework/
 Custom Exception Handling:
 https://github.com/tomchristie/django-rest-framework/blob/master/docs/api-guide/exceptions.md#custom-exception-handling
 """
+import json
+import requests
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 
 from rest_framework.authentication import BaseAuthentication
 
@@ -37,8 +39,29 @@ class BaseBitcoinAuthentication(BaseAuthentication):
 
     bitcoin_provider_helper = ChainProviderHelper()
 
-    @staticmethod
-    def get_payment_from_header(request):
+    def authenticate(self, request):
+        """Passthrough to subclasses authenticate method.
+
+        Args:
+            request (request): client side request
+
+        Returns:
+            None or Tuple: None or tuple of User, None
+                depending if authentication was successfull.
+        """
+        pass
+
+
+class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
+
+    """Single authentication using bitcoin.
+
+    Most basic authentication use case, where a
+    client uses a single transaction to purchase
+    a bitcoin-enabled api call.
+    """
+
+    def get_payment_from_header(self, request):
         """Fetch bitcoin transaction from HTTP header.
 
         Args:
@@ -98,28 +121,6 @@ class BaseBitcoinAuthentication(BaseAuthentication):
             raise PaymentRequiredException(e)
 
     def authenticate(self, request):
-        """Passthrough to subclasses authenticate method.
-
-        Args:
-            request (request): client side request
-
-        Returns:
-            None or Tuple: None or tuple of User, None
-                depending if authentication was successfull.
-        """
-        pass
-
-
-class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
-
-    """Single authentication using bitcoin.
-
-    Most basic authentication use case, where a
-    client uses a single transaction to purchase
-    a bitcoin-enabled api call.
-    """
-
-    def authenticate(self, request):
         """Handle bitcoin authentication.
 
         Args:
@@ -129,26 +130,26 @@ class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
             PaymentRequiredException: If payment is non
                 existant or insufficient
         """
+        print("started: BasicPaymentRequiredAuthentication")
         tx = self.get_payment_from_header(request)
         if not tx:
-            raise PaymentRequiredException
-        if not self.validate_payment(tx, request):
             return None
+        if not self.validate_payment(tx, request):
+            return PaymentRequiredException
         else:
             if not (settings.BITSERV_DEBUG and tx == "paid"):
-                User = get_user_model()
                 transaction, _ = ChainProviderHelper.transaction_hex_str_to_tx(
                     tx
                 )
-                paying_user = User(username=(transaction.hash))
-                try:
-                    paying_user.validate_unique()
-                    paying_user.save()
-                except ValidationError:
-                    # Means that user is trying to spend the same
-                    # transaction twice! This is a double spend.
+                sso_user, created = get_user_model().objects.get_or_create(
+                    username=transaction.hash
+                )
+                if not created:
+                    # we should not have any user that has already been created
+                    # in this authentication class, given an username (txid)
+                    # should be uniuqe per endpoint use.
                     raise PaymentRequiredException("Double Spend Detected")
-                return (paying_user, transaction.outputs[0].value)
+                return (sso_user, transaction.outputs[0].value)
 
 
 class SessionPaymentRequiredAuthentication(BaseBitcoinAuthentication):
@@ -183,6 +184,7 @@ class SessionPaymentRequiredAuthentication(BaseBitcoinAuthentication):
         """
         # check to see if header already includes a bitcoin token
         # for a valid session
+        print('started: SessionPaymentRequiredAuthentication')
         bitcoin_token = self.get_bitcoin_token_from_header(request)
         if not bitcoin_token:
             return None
@@ -195,3 +197,79 @@ class SessionPaymentRequiredAuthentication(BaseBitcoinAuthentication):
                     raise PaymentRequiredException("Insufficient Funds")
             except BitcoinToken.DoesNotExist:
                 raise PaymentRequiredException("Invalid BitcoinToken")
+
+
+class BitChequeAuthentication(BaseAuthentication):
+
+    """Authentication using Bitcoin-Cheque (off-chain)."""
+
+    @staticmethod
+    def get_bitcheque_from_header(request):
+        """Get bitcoin-cheque from HTTP headers."""
+        return (
+            request.META.get("HTTP_BITCOIN_CHEQUE"),
+            request.META.get("HTTP_AUTHORIZATION")
+            )
+
+    def authenticate(self, request):
+        """Authenticate using Bitcoin-Cheque.
+
+        Strip headers for Bitcoin-Cheque and signature
+        of the check, send the data to a Bitcoin-Cheque
+        verifier (ie: 21.co server), and if that response
+        is ok, serve the client.
+
+        Args:
+            request (request): a client side request
+
+        Raises:
+            PaymentRequiredException: if malformed / insufficient
+                / non existant bitcheque.
+        """
+        print("started: BitChequeAuthentication")
+        bitcheque, signature = self.get_bitcheque_from_header(request)
+        if not bitcheque:
+            return None
+        if not bitcheque:
+            raise PaymentRequiredException
+        else:
+            print("cheque: {} \nsignature: {}".format(
+                    bitcheque, signature
+                )
+            )
+            # now verify with server that cheque is valid
+            # else raise another PaymentRequiredException.
+            if self.verify_cheque(bitcheque, signature):
+                user, created = get_user_model().objects.get_or_create(
+                    username=json.loads(bitcheque)["payer"]
+                )
+                return (user, bitcheque)
+            else:
+                raise PaymentRequiredException
+
+    def verify_cheque(self, bitcheque, signature):
+        """Verify that cheque is valid.
+
+        Done via 3rd party server.
+
+        Args:
+            bitcheque (str): bitcoin cheque
+            signature (TYPE): signature on cheque
+        """
+        if settings.BITSERV_DEBUG and signature == "paidsig":
+            return True
+
+        try:
+            verification_response = requests.post(
+                settings.BITCHEQUE_VERIFICIATION_URL.format(
+                    settings.TWO1_USERNAME
+                ),
+                data=json.dumps({
+                    "bitcheque": bitcheque,
+                    "signature": signature
+                }),
+                headers={'content-type': 'application/json'}
+            )
+            return verification_response.ok
+        except requests.ConnectionError:
+            return False

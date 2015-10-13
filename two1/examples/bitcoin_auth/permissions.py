@@ -19,10 +19,12 @@ class IsBitcoinAuthenticated(BasePermission):
     def has_permission(self, request, view):
         """Check if user is authenticated, if not raise 402."""
         # check for debug/test mode.
-        if request.GET.get("tx") == "paid" and settings.BITSERV_DEBUG:
+        if (request.GET.get("tx") == "paid" or
+            request.META.get("HTTP_AUTHORIZATION") == "paidsig") \
+                and settings.BITSERV_DEBUG:
             return True
         authenticated = request.user and request.user.is_authenticated()
         if not authenticated:
-            raise PaymentRequiredException("Insufficient Funds")
+            raise PaymentRequiredException
         else:
             return authenticated

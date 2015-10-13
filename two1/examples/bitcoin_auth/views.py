@@ -2,14 +2,11 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework.decorators import authentication_classes
 
 from .models import BitcoinToken
-from .authentication import BasicPaymentRequiredAuthentication
 
 
 @api_view(['GET'])
-@authentication_classes([BasicPaymentRequiredAuthentication])
 def token(request):
     """Request a BitcoinToken.
 
@@ -32,7 +29,7 @@ def token(request):
     """
     token = BitcoinToken(
         user=request.user,
-        balance=request.auth * 5
+        balance=request.auth
     )
     token.save()
     return Response(

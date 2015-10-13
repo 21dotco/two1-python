@@ -5,6 +5,7 @@ import re
 from two1.commands.config import pass_config
 from two1.lib.bitcurl.bitrequests import BitRequests
 
+
 DEFAULT_SELLER_NAME = "---"
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -18,12 +19,13 @@ URL_REGEXP = re.compile(
 
 @click.command()
 @click.argument('resource', nargs=1)
+@click.option('--onchain', default=False, is_flag=True, help="Perform an on-chain transaction")
 @click.option('--data', default=None, help="The data/body to send to the seller")
 @click.option('--max_price',  default=5000, help="The max amount to pay for the resource")
 @click.option('--output', type=click.File('wb'), help="A file to store the seller's response")
 @click.option('--input', type=click.File('rb'), help="A file to send to the seller")
 @pass_config
-def buy(config, resource, data, max_price, output=None, input=None):
+def buy(config, resource, onchain, data, max_price, output=None, input=None):
     """Buy internet services with Bitcoin
         resource - The digital resource to buy from.
 
@@ -67,11 +69,12 @@ def buy(config, resource, data, max_price, output=None, input=None):
     else:
         files = None
     try:
-        res = getattr(BitRequests, method.lower())(
+        br = BitRequests(config, "onchain" if onchain else "bitcheque")
+        res = getattr(br, method.lower())(
             target_url,
-            config,
-            data=target_data
-            )
+            data=target_data,
+            files=files
+        )
     except Exception as e:
         config.log( str(e), fg="red")
         return
