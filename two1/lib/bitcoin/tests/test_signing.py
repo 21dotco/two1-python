@@ -160,6 +160,8 @@ def test_multisig_sign():
 
     # This should still work
     assert tx.verify_input_signature(0, script_pub_key)
+    # The partial should also work
+    assert tx.verify_partial_multisig(0, script_pub_key)
 
     # Now hack the txn bytes to have the sigs in reverse order.
     # This should fail.
@@ -168,3 +170,14 @@ def test_multisig_sign():
     tx, _ = txn.Transaction.from_bytes(txn_bytes)
 
     assert not tx.verify_input_signature(0, script_pub_key)
+
+    # Test a partially signed txn
+    txn_bytes = bytes.fromhex("0100000001124f2e9522043794a438bfa44dd161b8976af246e4850948f85a2b50c113611a000000009200483045022100ec2e3fd3e116eb25644f055ba7945d940f828b39060d4a93c7d2b6d3cbd9d41802203c9f1ad2208122e1ffcbeba09d37a596ae5ce445be465b9417481f66ab804b070147522102395a983fd92e55200fbde624f62cda10f8d0adf8261506e5c983cfe92326c5aa2102bb70b001d807721e74d96bda71d225dc6c09fe8d541d260258145b42afac93e152ae0000000001a0860100000000001976a914e205124b0e25dc77e2b29b2e57c2f56ed10771eb88ac095635ac")
+
+    tx, _ = txn.Transaction.from_bytes(txn_bytes)
+
+    sig_info = tx.inputs[0].script.extract_multisig_sig_info()
+    script_pub_key = script.Script.build_p2sh(sig_info['redeem_script'].hash160())
+    assert not tx.verify_input_signature(0, script_pub_key)
+
+    assert tx.verify_partial_multisig(0, script_pub_key)
