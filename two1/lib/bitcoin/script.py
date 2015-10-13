@@ -207,7 +207,7 @@ class Script(object):
                corresponding private keys can be used to sign when redeeming.
 
         Returns:
-            dict: Containing two keys: 'pubKeyScript' and 'redeemScript'.
+            Script: The redeem script object
         """
         if m < 1 or m > len(pub_keys):
             raise ValueError("m must be > 0 and <= len(pub_keys)!")
@@ -219,17 +219,7 @@ class Script(object):
         raw_redeem_script += bytes([0x50 + len(pub_keys)])
         raw_redeem_script += bytes([Script.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']])
 
-        redeem_script = Script(raw_redeem_script)
-
-        # Get the hash160
-        r = hashlib.new('ripemd160')
-        r.update(hashlib.sha256(raw_redeem_script).digest())
-        hash160 = r.digest()
-
-        pubkey_script = Script.build_p2sh(hash160)
-
-        return dict(pubKeyScript=pubkey_script,
-                    redeemScript=redeem_script)
+        return Script(raw_redeem_script)
 
     @staticmethod
     def build_multisig_sig(sigs, redeem_script):
