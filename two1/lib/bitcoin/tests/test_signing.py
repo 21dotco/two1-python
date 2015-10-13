@@ -66,7 +66,7 @@ def test_sign_txn():
     transaction.sign_input(0, txn.Transaction.SIG_HASH_ALL, keys[0][0], prev_script_pub_key)
 
     # Dump it out as hex
-    signed_txn_hex = utils.bytes_to_str(bytes(transaction))
+    signed_txn_hex = transaction.to_hex()
 
     # The above txn was submitted via bitcoin-cli.
     # See: https://www.blocktrail.com/BTC/tx/695f0b8605cc8a117c3fe5b959e6ee2fabfa49dcc615ac496b5dd114105cd360
@@ -82,7 +82,7 @@ def test_multisig_sign():
 
     unsigned_hex = "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f70100000000ffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
 
-    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx = txn.Transaction.from_hex(unsigned_hex)
 
     pub_keys_hex = ["02b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b",
                     "025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c",
@@ -115,7 +115,7 @@ def test_multisig_sign():
     assert tx.inputs[0].script.ast[2] == "0x3045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b01"
 
     # Now make sure the entire serialized txn is correct
-    assert utils.bytes_to_str(bytes(tx)) == "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd00004730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b901483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
+    assert tx.to_hex() == "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd00004730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b901483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
 
     script_pub_key = script.Script.build_p2sh(redeem_script.hash160())
     assert tx.verify_input_signature(0, script_pub_key)
@@ -128,7 +128,7 @@ def test_multisig_sign():
     assert not tx.verify_input_signature(0, wrong_script_pub_key)
 
     # Test not enough signatures
-    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx = txn.Transaction.from_hex(unsigned_hex)
 
     # Sign the input with only the first private key
     tx.sign_input(input_index=0,
@@ -139,7 +139,7 @@ def test_multisig_sign():
     assert not tx.verify_input_signature(0, script_pub_key)
 
     # Try doing it with the 2nd private key but not the first
-    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx = txn.Transaction.from_hex(unsigned_hex)
     tx.sign_input(input_index=0,
                   hash_type=txn.Transaction.SIG_HASH_ALL,
                   private_key=priv_keys[1],
@@ -148,7 +148,7 @@ def test_multisig_sign():
     assert not tx.verify_input_signature(0, script_pub_key)
 
     # Now try doing the sigs in reverse order
-    tx, _ = txn.Transaction.from_bytes(bytes.fromhex(unsigned_hex))
+    tx = txn.Transaction.from_hex(unsigned_hex)
     tx.sign_input(input_index=0,
                   hash_type=txn.Transaction.SIG_HASH_ALL,
                   private_key=priv_keys[1],
@@ -165,16 +165,16 @@ def test_multisig_sign():
 
     # Now hack the txn bytes to have the sigs in reverse order.
     # This should fail.
-    txn_bytes = bytes.fromhex("01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd0000483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b9014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000")
+    txn_hex = "01000000010506344de69d47e432eb0174500d6e188a9e63c1e84a9e8796ec98c99b7559f701000000fdfd0000483045022100aa9096ce71995c24545694f20ab0482099a98c99b799c706c333c521e51db66002206578f023fa46f4a863a6fa7f18b95eebd1a91fcdf6ce714e8795d902bd6b682b014730440220695a28c42daa23c13e192e36a20d03a2a79994e0fe1c3c6b612d0ae23743064602200ca19003e7c1ce0cecb0bbfba9a825fc3b83cf54e4c3261cd15f080d24a8a5b9014c69522102b66fcb1064d827094685264aaa90d0126861688932eafbd1d1a4ba149de3308b21025cab5e31095551582630f168280a38eb3a62b0b3e230b20f8807fc5463ccca3c21021098babedb3408e9ac2984adcf2a8e4c48e56a785065893f76d0fa0ff507f01053aeffffffff01c8af0000000000001976a91458b7a60f11a904feef35a639b6048de8dd4d9f1c88ac00000000"
 
-    tx, _ = txn.Transaction.from_bytes(txn_bytes)
+    tx = txn.Transaction.from_hex(txn_hex)
 
     assert not tx.verify_input_signature(0, script_pub_key)
 
     # Test a partially signed txn
-    txn_bytes = bytes.fromhex("0100000001124f2e9522043794a438bfa44dd161b8976af246e4850948f85a2b50c113611a000000009200483045022100ec2e3fd3e116eb25644f055ba7945d940f828b39060d4a93c7d2b6d3cbd9d41802203c9f1ad2208122e1ffcbeba09d37a596ae5ce445be465b9417481f66ab804b070147522102395a983fd92e55200fbde624f62cda10f8d0adf8261506e5c983cfe92326c5aa2102bb70b001d807721e74d96bda71d225dc6c09fe8d541d260258145b42afac93e152ae0000000001a0860100000000001976a914e205124b0e25dc77e2b29b2e57c2f56ed10771eb88ac095635ac")
+    txn_hex = "0100000001124f2e9522043794a438bfa44dd161b8976af246e4850948f85a2b50c113611a000000009200483045022100ec2e3fd3e116eb25644f055ba7945d940f828b39060d4a93c7d2b6d3cbd9d41802203c9f1ad2208122e1ffcbeba09d37a596ae5ce445be465b9417481f66ab804b070147522102395a983fd92e55200fbde624f62cda10f8d0adf8261506e5c983cfe92326c5aa2102bb70b001d807721e74d96bda71d225dc6c09fe8d541d260258145b42afac93e152ae0000000001a0860100000000001976a914e205124b0e25dc77e2b29b2e57c2f56ed10771eb88ac095635ac"
 
-    tx, _ = txn.Transaction.from_bytes(txn_bytes)
+    tx = txn.Transaction.from_hex(txn_hex)
 
     sig_info = tx.inputs[0].script.extract_multisig_sig_info()
     script_pub_key = script.Script.build_p2sh(sig_info['redeem_script'].hash160())
