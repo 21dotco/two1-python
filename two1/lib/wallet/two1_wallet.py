@@ -382,7 +382,8 @@ class Two1Wallet(BaseWallet):
 
         acct_type = params.get('account_type', None)
         self.account_type = account_types[acct_type]
-        self._testnet = self.account_type == 'BIP44Testnet'
+        self._testnet = self.account_type == account_types['BIP44Testnet']
+        self.data_provider.testnet = self._testnet
 
         self._root_keys = HDKey.from_path(self._master_key,
                                           self.account_type.account_derivation_prefix)

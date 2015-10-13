@@ -20,13 +20,27 @@ class ChainProvider(BaseProvider):
         Args:
             api_key_id (str): chain.com API key
             api_key_secret (str): chain.com API secret
-            chain (str, optional): 'bitcoin' for mainnet (default).
-            'testnet3' for testnet
+            testnet (bool, optional): True for testnet, False for
+            mainnet (default)
     """
 
-    def __init__(self, api_key_id, api_key_secret, chain="bitcoin"):
+    def __init__(self, api_key_id, api_key_secret, testnet=False):
+        self.testnet = testnet
         self.auth = (api_key_id, api_key_secret)
-        self.server_url = 'https://api.chain.com/v2/' + chain + "/"
+        self._set_url()
+
+    @property
+    def testnet(self):
+        return self._testnet
+
+    @testnet.setter
+    def testnet(self, v):
+        self._testnet = bool(v)
+        self.chain = "testnet3" if self._testnet else "bitcoin"
+        self._set_url()
+
+    def _set_url(self):
+        self.server_url = 'https://api.chain.com/v2/' + self.chain + "/"
 
     @staticmethod
     def txn_from_json(txn_json):

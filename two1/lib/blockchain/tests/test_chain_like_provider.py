@@ -19,22 +19,31 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 twentyone_provider = TwentyOneProvider("https://dotco-devel-pool2.herokuapp.com")
+#twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
 
-@pytest.mark.parametrize("provider",
+@pytest.mark.parametrize("provider, testnet",
                          [
-                             (chain_provider),
-                             (twentyone_provider)
+                             (chain_provider, False),
+                             (chain_provider, True),
+                             (twentyone_provider, False),
+                             (twentyone_provider, True)
                          ])
-def test_get_balance(provider):
-    cp = provider
-    address_list = ["17x23dNjXJLzGMev6R63uyRhMWP1VHawKc"]
+def test_get_balance(provider, testnet):
+    cp = provider    
+    cp.testnet = testnet
+
+    if testnet:
+        address_list = ["myTpteaBCwuHsDsoBQfrN4YjKEBpmoLBii"]
+        exp_data = {'confirmed': 2000000, 'total': 2000000}
+    else:
+        address_list = ["17x23dNjXJLzGMev6R63uyRhMWP1VHawKc"]
+        exp_data = {'confirmed': 5000000000, 'total': 5000000000}
     data = cp.get_balance(address_list)
     assert len(data) == 1
     assert list(data.keys())[0] == address_list[0]
     # test satoshi's address. If the following fails, Satoshi has moved coins
-    assert data[address_list[0]] == {'confirmed': 5000000000,
-                                     'total': 5000000000}
+    assert data[address_list[0]] == exp_data
 
     # empty addresslist
     data = cp.get_balance([])
@@ -50,53 +59,83 @@ def test_get_balance(provider):
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 twentyone_provider = TwentyOneProvider("https://dotco-devel-pool2.herokuapp.com")
+#twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
-
-@pytest.mark.parametrize("provider",
+@pytest.mark.parametrize("provider, testnet",
                          [
-                             (chain_provider),
-                             (twentyone_provider)
+                             (chain_provider, False),
+                             (chain_provider, True),
+                             (twentyone_provider, False)
                          ])
-def test_utxo(provider):
+def test_utxo(provider, testnet):
     cp = provider
-    address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
-    data = cp.get_utxos(address_list)
-    assert len(data) == 1
-    assert list(data.keys())[0] == address_list[0]
-    assert len(data[address_list[0]]) == 3
-#    assert data[address_list[0]].transaction_hash ==
-    address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb", "1EX1E9n3bPA1zGKDV5iHY2MnM7n5tDfnfH"]
-    data = cp.get_utxos(address_list)
-    assert len(data) == 2
-    assert set(address_list) == set(data.keys())
-    assert len(data[address_list[0]]) == 3
-    assert len(data[address_list[1]]) == 1
+    cp.testnet = testnet
+
+    if testnet:
+        address_list = ["myTpteaBCwuHsDsoBQfrN4YjKEBpmoLBii"]
+        data = cp.get_utxos(address_list)
+        assert len(data) == 1
+        assert set(address_list) == set(data.keys())
+        assert len(data[address_list[0]]) == 2
+    else:
+        address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
+        data = cp.get_utxos(address_list)
+        assert len(data) == 1
+        assert list(data.keys())[0] == address_list[0]
+        assert len(data[address_list[0]]) == 3
+        # assert data[address_list[0]].transaction_hash ==
+        address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb",
+                        "1EX1E9n3bPA1zGKDV5iHY2MnM7n5tDfnfH"]
+        data = cp.get_utxos(address_list)
+        assert len(data) == 2
+        assert set(address_list) == set(data.keys())
+        assert len(data[address_list[0]]) == 3
+        assert len(data[address_list[1]]) == 1
 
 
-@pytest.mark.parametrize("provider",
+@pytest.mark.parametrize("provider, testnet",
                          [
-                             (chain_provider),
-                             (twentyone_provider)
+                             (chain_provider, False),
+                             (chain_provider, True),
+                             (twentyone_provider, False),
+                             (twentyone_provider, True)
                          ])
-def test_get_transactions(provider):
+def test_get_transactions(provider, testnet):
     cp = provider
-    address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
-    data = cp.get_transactions(address_list)
-    assert len(data) == 1
-    assert len(data[address_list[0]]) == 9
+    cp.testnet = testnet
+    if testnet:
+        address_list = ["myTpteaBCwuHsDsoBQfrN4YjKEBpmoLBii"]
+        data = cp.get_transactions(address_list)
+        exp = (1, 2)
+    else:
+        address_list = ["1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"]
+        data = cp.get_transactions(address_list)
+        exp = (1, 9)
+
+    assert len(data) == exp[0]
+    assert len(data[address_list[0]]) == exp[1]
 
 
-@pytest.mark.parametrize("provider",
+@pytest.mark.parametrize("provider, testnet",
                          [
-                             (chain_provider),
-                             (twentyone_provider)
+                             (chain_provider, False),
+                             (chain_provider, True),
+                             (twentyone_provider, False),
+                             (twentyone_provider, True)
                          ])
-def test_get_transactions_by_id(provider):
+def test_get_transactions_by_id(provider, testnet):
     cp = provider
-    txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
-             "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
+    cp.testnet = testnet
+    if testnet:
+        txids = ["f19b101e3ede105b47c98dc54953f4dff195efb6654a168a22659585f92858b4"]
+        exp_len = 1
+    else:
+        txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
+                 "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
+        exp_len = 2
+
     data = cp.get_transactions_by_id(txids)
-    assert len(data) == 2
+    assert len(data) == exp_len
     for txid, txn in data.items():
         assert txid in txids
         assert isinstance(txn, Transaction)
