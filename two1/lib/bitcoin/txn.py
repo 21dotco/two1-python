@@ -287,6 +287,19 @@ class Transaction(object):
 
         return (Transaction(version, inputs, outputs, lock_time), b1[4:])
 
+    @staticmethod
+    def from_hex(h):
+        """ Deserializes a hex-ecnoded string into a Transaction.
+
+        Args:
+            h (str): hex-encoded string starting with the version.
+
+        Returns:
+            Transaction: the deserialized Transaction object.
+        """
+        tx, _ = Transaction.from_bytes(bytes.fromhex(h))
+        return tx
+
     def __init__(self, version, inputs, outputs, lock_time):
         self.version = version
         self.inputs = inputs
@@ -803,3 +816,11 @@ class Transaction(object):
             dhash (bytes): Double SHA-256 hash of the serialized transaction.
         """
         return Hash.dhash(bytes(self))
+
+    def to_hex(self):
+        """ Generates a hex encoding of the serialized transaction.
+
+        Returns:
+            str: Hex-encoded serialization.
+        """
+        return bytes_to_str(bytes(self))

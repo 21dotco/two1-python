@@ -914,7 +914,7 @@ class Two1Wallet(BaseWallet):
                                              use_unconfirmed=use_unconfirmed,
                                              fees=fees,
                                              accounts=accounts)
-        return [{"txid": str(txn.hash), "txn": utils.bytes_to_str(bytes(txn))}
+        return [{"txid": str(txn.hash), "txn": txn.to_hex()}
                 for txn in txns]
 
     def send_to_multiple(self, addresses_and_amounts,
