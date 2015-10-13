@@ -526,9 +526,18 @@ class Transaction(object):
 
         return sig_indices
 
-    def verify_input_signature(self, input_index, sub_script,
-                               redeem_script=None):
-        """
+    def verify_input_signature(self, input_index, sub_script):
+        """ Verifies the signature for an input.
+
+            This also confirms that the HASH160 in the provided sub_script
+            corresponds with that found in the input sigScript.
+
+        Args:
+            input_index (int): The index of the input to verify.
+            sub_script (Script): The P2SH script in the corresponding outpoint.
+
+        Returns:
+            bool: True if the sigScript is verified, False otherwise.
         """
         # First extract the signature script
         sig_script = self.inputs[input_index].script
@@ -542,6 +551,21 @@ class Transaction(object):
             rv = self._verify_p2pkh_input(input_index, sub_script)
 
         return rv
+
+    def verify_partial_multisig(self, input_index, sub_script):
+        """ Verifies a partially signed multi-sig input.
+
+            This also confirms that the HASH160 in the provided sub_script
+            corresponds with that found in the input sigScript.
+
+        Args:
+            input_index (int): The index of the input to verify.
+            sub_script (Script): The P2SH script in the corresponding outpoint.
+
+        Returns:
+            bool: True if > 1 and <= m signatures verify the input.
+        """
+        return self._verify_p2sh_multisig_input(input_index, sub_script, True)
 
     def _verify_p2pkh_input(self, input_index, sub_script):
         if not sub_script.is_p2pkh():
@@ -604,7 +628,7 @@ class Transaction(object):
         stack = []
         sig_info = sig_script.extract_multisig_sig_info()
 
-        stack.append(Script.BTC_OPCODE_TABLE[sig_script.ast[0]])  # Push OP_0
+        stack.append(bytes([Script.BTC_OPCODE_TABLE[sig_script.ast[0]]]))  # Push OP_0
 
         # Push all the signatures
         hash_types = set()
@@ -638,10 +662,14 @@ class Transaction(object):
         stack.append(bytes([0x50 + rs_info['n']]))
 
         try:
-            rv &= self._op_checkmultisig(stack=stack,
-                                         txn_digest=txn_digest,
-                                         partial=partial)
-        except:
+            res, match_count = self._op_checkmultisig(stack=stack,
+                                                      txn_digest=txn_digest,
+                                                      partial=partial)
+            if partial:
+                rv &= match_count > 0 and match_count <= len(sig_info['signatures'])
+            else:
+                rv &= res
+        except Exception as e:
             rv = False
 
         return rv
@@ -665,16 +693,18 @@ class Transaction(object):
         sigs = []
         for i in range(min_num_sigs):
             s = stack.pop()
-            # A sig should always be either 70 or 71 bytes
-            if len(s) not in [70, 71]:
-                raise TypeError("Invalid signature")
             try:
                 sig = crypto.Signature.from_der(s)
+                sigs.insert(0, sig)
             except ValueError:
-                rv = False
+                if partial:
+                    # Put it back on stack
+                    stack.append(s)
+                else:
+                    # If not a partial evaluation there are not enough
+                    # sigs
+                    rv = False
                 break
-
-            sigs.insert(0, sig)
 
         # Now we verify
         last_match = -1
@@ -698,10 +728,10 @@ class Transaction(object):
         rv &= match_count >= min_num_sigs
 
         # Now make sure the last thing on the stack is OP_0
-        rv &= stack.pop() == 0
+        rv &= stack.pop() == bytes([0])
         rv &= len(stack) == 0
 
-        return rv
+        return rv, match_count
 
     def output_index_for_address(self, address):
         """ Returns the index of the output in this transaction
