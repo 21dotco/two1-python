@@ -534,7 +534,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             PrivateKey: A private key object or None.
         """
-        return self.get_private_key(public_key.address())
+        return self.get_private_key(public_key.address(testnet=self._testnet))
 
     def find_addresses(self, addresses):
         """ Returns the paths to the address, if found.
