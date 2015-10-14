@@ -311,6 +311,32 @@ def spread_utxos(ctx, num_addresses, threshold, account):
         click.echo("Problem spreading utxos: %s" % e)
 
 
+@click.command(name="createaccount")
+@click.argument('name',
+                metavar="STRING")
+@click.pass_context
+def create_account(ctx, name):
+    """ Creates a named account within the wallet
+    """
+    w = ctx.obj['wallet']
+    rv = w.create_account(name)
+
+    if rv:
+        click.echo("Successfully created account '%s'." % name)
+    else:
+        click.echo("Account creation failed.")
+
+
+@click.command(name="listaccounts")
+@click.pass_context
+def list_accounts(ctx):
+    """ Lists all accounts in the wallet
+    """
+    w = ctx.obj['wallet']
+    for i, n in enumerate(w.account_names):
+        click.echo("Account %d: %s" % (i, n))
+
+
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
 main.add_command(create)
@@ -319,6 +345,8 @@ main.add_command(confirmed_balance)
 main.add_command(balance)
 main.add_command(send_to)
 main.add_command(spread_utxos)
+main.add_command(create_account)
+main.add_command(list_accounts)
 
 if __name__ == "__main__":
     main()
