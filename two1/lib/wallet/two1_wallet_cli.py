@@ -217,26 +217,52 @@ def payout_address(ctx, account):
 
 
 @click.command(name="confirmedbalance")
+@click.option('--account',
+              metavar="STRING",
+              default=None,
+              help="Account")
 @click.pass_context
-def confirmed_balance(ctx):
+def confirmed_balance(ctx, account):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
-    cb = w.confirmed_balance()
+    cb = w.confirmed_balance(account)
     click.echo("Confirmed balance: %f BTC" %
                (cb / satoshi_to_btc))
 
 
 @click.command()
+@click.option('--account',
+              metavar="STRING",
+              default=None,
+              help="Account")
 @click.pass_context
-def balance(ctx):
+def balance(ctx, account):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
-    ucb = w.unconfirmed_balance()
+    ucb = w.unconfirmed_balance(account)
     click.echo("Total balance (including unconfirmed txns): %f BTC" %
                (ucb / satoshi_to_btc))
 
+
+@click.command(name='listbalances')
+@click.pass_context
+def list_balances(ctx):
+    """ Prints the current balances of each account.
+    """
+    w = ctx.obj['wallet']
+    for a in w.account_names:
+        ucb = w.unconfirmed_balance(a)
+        cb = w.confirmed_balance(a)
+        click.echo("%s confirmed: %f BTC, total: %f BTC" %
+                   (a,
+                    (cb / satoshi_to_btc),
+                    (ucb / satoshi_to_btc)))
+
+    click.echo("\nTotal confirmed %f BTC, total: %f BTC" %
+               ((w.confirmed_balance() / satoshi_to_btc),
+                (w.unconfirmed_balance() / satoshi_to_btc)))
 
 @click.command(name="sendto")
 @click.argument('address',
@@ -347,6 +373,7 @@ main.add_command(send_to)
 main.add_command(spread_utxos)
 main.add_command(create_account)
 main.add_command(list_accounts)
+main.add_command(list_balances)
 
 if __name__ == "__main__":
     main()
