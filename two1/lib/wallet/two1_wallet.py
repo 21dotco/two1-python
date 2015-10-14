@@ -880,10 +880,14 @@ class Two1Wallet(BaseWallet):
 
         # Verify we have enough money
         total_with_fees = total_amount + fees
-        if total_with_fees > balance or not selected_utxos:
+        if total_with_fees > balance:
             raise exceptions.WalletBalanceError(
                 "Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)." %
                 (balance, total_amount, fees))
+
+        if not selected_utxos and not use_unconfirmed:
+            raise exceptions.WalletBalanceError(
+                "There are not enough confirmed UTXOs to complete this transaction.")
 
         if use_unconfirmed and total_with_fees > c_balance:
             print("Warning: using unconfirmed inputs to complete transaction.")
