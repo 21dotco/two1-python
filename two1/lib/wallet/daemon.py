@@ -78,25 +78,25 @@ def check_unlocked():
 
 
 @dispatcher.method('confirmed_balance')
-def confirmed_balance():
+def confirmed_balance(account=None):
     """ RPC method to get the current confirmed balance.
 
     Returns:
         int: Current confirmed balance in satoshis.
     """
     check_unlocked()
-    return wallet['obj'].confirmed_balance()
+    return wallet['obj'].confirmed_balance(account)
 
 
 @dispatcher.method('unconfirmed_balance')
-def unconfirmed_balance():
+def unconfirmed_balance(account=None):
     """ RPC method to get the current unconfirmed balance.
 
     Returns:
         int: Current unconfirmed balance in satoshis.
     """
     check_unlocked()
-    return wallet['obj'].unconfirmed_balance()
+    return wallet['obj'].unconfirmed_balance(account)
 
 
 @dispatcher.method('get_private_for_public')

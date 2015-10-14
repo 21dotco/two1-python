@@ -1184,22 +1184,46 @@ class Two1Wallet(BaseWallet):
 
         return balances
 
-    def confirmed_balance(self):
+    def confirmed_balance(self, account_name_or_index=None):
         """ Gets the current confirmed balance of the wallet in Satoshi.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               payout address from. If not provided, the default account (0')
+               is used.
 
         Returns:
             number: The current confirmed balance.
         """
-        return self.balances['confirmed']
+        rv = None
+        if account_name_or_index is None:
+            rv = self.balances['confirmed']
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+            rv = acct.balance['confirmed']
 
-    def unconfirmed_balance(self):
+        return rv
+
+    def unconfirmed_balance(self, account_name_or_index=None):
         """ Gets the current total balance of the wallet in Satoshi,
             including unconfirmed transactions
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               payout address from. If not provided, the default account (0')
+               is used.
 
         Returns:
             number: The current unconfirmed balance.
         """
-        return self.balances['total']
+        rv = None
+        if account_name_or_index is None:
+            rv = self.balances['confirmed']
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+            rv = acct.balance['confirmed']
+
+        return rv
 
     @property
     def accounts(self):
