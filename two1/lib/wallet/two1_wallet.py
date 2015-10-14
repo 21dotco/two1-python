@@ -852,11 +852,16 @@ class Two1Wallet(BaseWallet):
 
         if not accounts:
             accts = self._accounts
+            c_balance = self.confirmed_balance()
+            u_balance = self.unconfirmed_balance()
         else:
             accts = self._check_and_get_accounts(accounts)
+            c_balance = 0
+            u_balance = 0
+            for a in accts:
+                c_balance += a.balance['confirmed']
+                u_balance += a.balance['total']
 
-        c_balance = self.confirmed_balance()
-        u_balance = self.unconfirmed_balance()
         if use_unconfirmed:
             balance = u_balance
         else:
@@ -1222,10 +1227,10 @@ class Two1Wallet(BaseWallet):
         """
         rv = None
         if account_name_or_index is None:
-            rv = self.balances['confirmed']
+            rv = self.balances['total']
         else:
             acct = self._check_and_get_accounts([account_name_or_index])[0]
-            rv = acct.balance['confirmed']
+            rv = acct.balance['total']
 
         return rv
 
