@@ -8,6 +8,7 @@ import pyaes
 from pbkdf2 import PBKDF2
 from two1.lib.bitcoin.crypto import HDKey
 from two1.lib.bitcoin.crypto import HDPrivateKey
+from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.txn import TransactionInput
@@ -743,6 +744,42 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(True)
 
+    def payout_public_key(self, account_name_or_index=None):
+        """ Gets the next payout public key.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               payout address from. If not provided, the default account (0')
+               is used.
+
+        Returns:
+            PublicKey: A public key object
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        return acct.get_next_public_key(False)
+
+    def change_public_key(self, account_name_or_index=None):
+        """ Gets the next change public_key.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               change address from. If not provided, the default account (0')
+               is used.
+
+        Returns:
+            PublicKey: A public key object
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        return acct.get_next_public_key(True)
+
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.
 
@@ -1214,6 +1251,26 @@ class Two1WalletProxy(object):
             self.w = Two1Wallet(params_or_file=wallet_path,
                                 data_provider=data_provider,
                                 passphrase=passphrase)
+
+    def change_public_key(self, account=None):
+        rv = None
+        if isinstance(self.w, Two1Wallet):
+            rv = self.w.change_public_key(account)
+        else:
+            rv = HDPublicKey.from_b58check(
+                self.w.change_public_key(account))
+
+        return rv
+
+    def payout_public_key(self, account=None):
+        rv = None
+        if isinstance(self.w, Two1Wallet):
+            rv = self.w.payout_public_key(account)
+        else:
+            rv = HDPublicKey.from_b58check(
+                self.w.payout_public_key(account))
+
+        return rv
 
     def __getattr__(self, method_name):
         rv = None

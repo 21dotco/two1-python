@@ -132,6 +132,28 @@ def payout_address(account=None):
     return wallet['obj'].payout_address(account)
 
 
+@dispatcher.method('change_public_key')
+def change_public_key(account=None):
+    """ RPC method to get the current change public key.
+
+    Returns:
+        str: A Base58Check encoded serialization of the public key
+    """
+    check_unlocked()
+    return wallet['obj'].change_public_key(account).to_b58check()
+
+
+@dispatcher.method('payout_public_key')
+def payout_public_key(account=None):
+    """ RPC method to get the current payout public key.
+
+    Returns:
+        str: A Base58Check encoded serialization of the public key
+    """
+    check_unlocked()
+    return wallet['obj'].payout_public_key(account).to_b58check()
+
+
 @dispatcher.method('send_to')
 def send_to(address, amount, use_unconfirmed, fees, accounts):
     """ RPC method to send BTC to an address.
