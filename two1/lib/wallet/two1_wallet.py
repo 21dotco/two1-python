@@ -706,7 +706,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             str: The current preferred payment address.
         """
-        return self.payout_address()
+        return self.get_payout_address()
 
     def get_payout_address(self, account_name_or_index=None):
         """ Gets the next payout address.
