@@ -39,7 +39,7 @@ for i, w in enumerate(wallets):
         print("Acct: %d, last_used_indices: %r" %
               (acct.index & 0x7fffffff, acct.last_indices))
 
-    print("Next payout address: %s" % w.get_new_payout_address())
+    print("Next payout address: %s" % w.payout_address())
 
 print()
 

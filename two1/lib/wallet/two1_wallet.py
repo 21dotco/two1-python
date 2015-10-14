@@ -705,9 +705,9 @@ class Two1Wallet(BaseWallet):
         Returns:
             str: The current preferred payment address.
         """
-        return self.get_new_payout_address()
+        return self.payout_address()
 
-    def get_new_payout_address(self, account_name_or_index=None):
+    def payout_address(self, account_name_or_index=None):
         """ Gets the next payout address.
 
         Args:
@@ -724,6 +724,24 @@ class Two1Wallet(BaseWallet):
             acct = self._check_and_get_accounts([account_name_or_index])[0]
 
         return acct.get_next_address(False)
+
+    def change_address(self, account_name_or_index=None):
+        """ Gets the next change address.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               change address from. If not provided, the default account (0')
+               is used.
+
+        Returns:
+            str: A Base58Check encoded bitcoin address.
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        return acct.get_next_address(True)
 
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.

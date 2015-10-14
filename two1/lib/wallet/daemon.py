@@ -108,6 +108,30 @@ def current_address():
     return wallet['obj'].current_address
 
 
+@dispatcher.method('change_address')
+def change_address(account=None):
+    """ RPC method to get the current change address.
+
+    Returns:
+        str: Base58Check encoded bitcoin address.
+    """
+    check_unlocked()
+    return wallet['obj'].change_address(account)
+
+
+@dispatcher.method('payout_address')
+def payout_address(account=None):
+    """ RPC method to get the current payout address.
+
+        This is an alias for current_address but allows
+        passing in an account
+    Returns:
+        str: Base58Check encoded bitcoin address.
+    """
+    check_unlocked()
+    return wallet['obj'].payout_address(account)
+
+
 @dispatcher.method('send_to')
 def send_to(address, amount, use_unconfirmed, fees, accounts):
     """ RPC method to send BTC to an address.

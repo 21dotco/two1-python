@@ -204,12 +204,16 @@ def create(ctx, account_type, testnet):
 
 
 @click.command(name="payoutaddress")
+@click.option('--account',
+              metavar="STRING",
+              default=None,
+              help="Account")
 @click.pass_context
-def payout_address(ctx):
+def payout_address(ctx, account):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    click.echo(w.current_address)
+    click.echo(w.payout_address(account))
 
 
 @click.command(name="confirmedbalance")
