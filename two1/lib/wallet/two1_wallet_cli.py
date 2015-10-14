@@ -213,7 +213,7 @@ def payout_address(ctx, account):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    click.echo(w.payout_address(account))
+    click.echo(w.get_payout_address(account))
 
 
 @click.command(name="confirmedbalance")

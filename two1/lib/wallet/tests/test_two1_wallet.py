@@ -192,7 +192,7 @@ def test_rest():
     for i in range(3):
         m.set_num_used_addresses(0, i, 0)
         m.set_txn_side_effect_for_index(0, i, 0)
-        ext_addr = wallet.payout_address("default")
+        ext_addr = wallet.get_payout_address("default")
         assert ext_addr == ext_addrs[i + 1]
         assert wallet.accounts[0].last_indices[0] == i + 1
         assert wallet.accounts[0].current_payout_address == ext_addr
