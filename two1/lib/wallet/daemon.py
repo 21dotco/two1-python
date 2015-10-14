@@ -154,6 +154,61 @@ def payout_public_key(account=None):
     return wallet['obj'].payout_public_key(account).to_b58check()
 
 
+@dispatcher.method('build_signed_transaction')
+def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
+                             fees=None, accounts=[]):
+    """ RPC method to build and sign a transaction.
+
+    Args:
+        addresses_and_amounts (dict): A dict keyed by recipient address
+           and corresponding values being the amount - *in satoshis* - to
+           send to that address.
+        use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+        fees (int): Specify the fee amount manually.
+        accounts (list(str or int)): List of accounts to use. If
+           not provided, all discovered accounts may be used based
+           on the chosen UTXO selection algorithm.
+
+    Returns:
+        list(Transaction): A list of Transaction objects
+    """
+    check_unlocked()
+    txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
+                                                  use_unconfirmed,
+                                                  fees,
+                                                  accounts)
+
+    return [t.to_hex() for t in txns]
+
+
+@dispatcher.method('make_signed_transaction_for')
+def make_signed_transaction_for(address, amount,
+                                use_unconfirmed=False, fees=None,
+                                accounts=[]):
+    """ Makes a raw signed unbroadcasted transaction for the specified amount.
+
+    Args:
+        address (str): The address to send the Bitcoin to.
+        amount (number): The amount of Bitcoin to send.
+        use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+        fees (int): Specify the fee amount manually.
+        accounts (list(str or int)): List of accounts to use. If
+           not provided, all discovered accounts may be used based
+           on the chosen UTXO selection algorithm.
+
+    Returns:
+        list(dict): A list of dicts containing transaction names
+           and raw transactions.  e.g.: [{"txid": txid0, "txn":
+           txn_hex0}, ...]
+    """
+    check_unlocked()
+    w = wallet['obj']
+    return w.make_signed_transaction_for(address, amount,
+                                         use_unconfirmed,
+                                         fees,
+                                         accounts)
+
+
 @dispatcher.method('send_to')
 def send_to(address, amount, use_unconfirmed, fees, accounts):
     """ RPC method to send BTC to an address.

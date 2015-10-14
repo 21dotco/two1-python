@@ -1253,22 +1253,29 @@ class Two1WalletProxy(object):
                                 passphrase=passphrase)
 
     def change_public_key(self, account=None):
-        rv = None
-        if isinstance(self.w, Two1Wallet):
-            rv = self.w.change_public_key(account)
-        else:
-            rv = HDPublicKey.from_b58check(
-                self.w.change_public_key(account))
+        rv = self.w.change_public_key(account)
+        if not isinstance(self.w, Two1Wallet):
+            rv = HDPublicKey.from_b58check(rv)
 
         return rv
 
     def payout_public_key(self, account=None):
-        rv = None
-        if isinstance(self.w, Two1Wallet):
-            rv = self.w.payout_public_key(account)
-        else:
-            rv = HDPublicKey.from_b58check(
-                self.w.payout_public_key(account))
+        rv = self.w.payout_public_key(account)
+        if not isinstance(self.w, Two1Wallet):
+            rv = HDPublicKey.from_b58check(rv)
+
+        return rv
+
+    def build_signed_transaction(self, addresses_and_amounts,
+                                 use_unconfirmed=False,
+                                 fees=None, accounts=[]):
+
+        rv = self.w.build_signed_transaction(addresses_and_amounts,
+                                             use_unconfirmed,
+                                             fees,
+                                             accounts)
+        if not isinstance(self.w, Two1Wallet):
+            rv = [Transaction.from_hex(t) for t in rv]
 
         return rv
 
