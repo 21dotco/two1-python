@@ -708,7 +708,7 @@ class Two1Wallet(BaseWallet):
         """
         return self.payout_address()
 
-    def payout_address(self, account_name_or_index=None):
+    def get_payout_address(self, account_name_or_index=None):
         """ Gets the next payout address.
 
         Args:
@@ -726,7 +726,7 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(False)
 
-    def change_address(self, account_name_or_index=None):
+    def get_change_address(self, account_name_or_index=None):
         """ Gets the next change address.
 
         Args:
@@ -744,7 +744,7 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(True)
 
-    def payout_public_key(self, account_name_or_index=None):
+    def get_payout_public_key(self, account_name_or_index=None):
         """ Gets the next payout public key.
 
         Args:
@@ -762,7 +762,7 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_public_key(False)
 
-    def change_public_key(self, account_name_or_index=None):
+    def get_change_public_key(self, account_name_or_index=None):
         """ Gets the next change public_key.
 
         Args:
@@ -1252,15 +1252,30 @@ class Two1WalletProxy(object):
                                 data_provider=data_provider,
                                 passphrase=passphrase)
 
-    def change_public_key(self, account=None):
-        rv = self.w.change_public_key(account)
+    def get_private_for_public(self, public_key):
+        rv = None
+        if isinstance(self.w, Two1Wallet):
+            rv = self.w.get_private_for_public(public_key)
+        else:
+            if isinstance(public_key, HDPublicKey):
+                pub_key = public_key.to_b58check()
+            else:
+                pub_key = public_key.to_base64().decode()
+            rv = self.w.get_private_for_public(pub_key)
+            if rv is not None:
+                rv = HDPrivateKey.from_b58check(rv)
+
+        return rv
+
+    def get_change_public_key(self, account=None):
+        rv = self.w.get_change_public_key(account)
         if not isinstance(self.w, Two1Wallet):
             rv = HDPublicKey.from_b58check(rv)
 
         return rv
 
-    def payout_public_key(self, account=None):
-        rv = self.w.payout_public_key(account)
+    def get_payout_public_key(self, account=None):
+        rv = self.w.get_payout_public_key(account)
         if not isinstance(self.w, Two1Wallet):
             rv = HDPublicKey.from_b58check(rv)
 

@@ -6,6 +6,8 @@ import time
 import click
 from jsonrpcserver import Dispatcher
 from jsonrpcserver.exceptions import ServerError
+from two1.lib.bitcoin.crypto import PublicKey
+from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet_cli import validate_data_provider
@@ -97,6 +99,29 @@ def unconfirmed_balance():
     return wallet['obj'].unconfirmed_balance()
 
 
+@dispatcher.method('get_private_for_public')
+def get_private_for_public(public_key):
+    """ RPC method to get the private key for the given public_key, if it is
+        a part of this wallet.
+
+    Args:
+        public_key (str): Base58Check encoded serialization of the public key.
+
+    Returns:
+        str: A Base58Check encoded serialization of the private key object
+           or None.
+    """
+    check_unlocked()
+    w = wallet['obj']
+    try:
+        pub_key = HDPublicKey.from_b58check(public_key)
+    except ValueError:
+        pub_key = PublicKey.from_base64(public_key)
+    priv_key = w.get_private_key(pub_key.address(testnet=w._testnet))
+
+    return priv_key.to_b58check() if priv_key is not None else None
+
+
 @dispatcher.method('current_address')
 def current_address():
     """ RPC method to get the current payout address.
@@ -108,19 +133,19 @@ def current_address():
     return wallet['obj'].current_address
 
 
-@dispatcher.method('change_address')
-def change_address(account=None):
+@dispatcher.method('get_change_address')
+def get_change_address(account=None):
     """ RPC method to get the current change address.
 
     Returns:
         str: Base58Check encoded bitcoin address.
     """
     check_unlocked()
-    return wallet['obj'].change_address(account)
+    return wallet['obj'].get_change_address(account)
 
 
-@dispatcher.method('payout_address')
-def payout_address(account=None):
+@dispatcher.method('get_payout_address')
+def get_payout_address(account=None):
     """ RPC method to get the current payout address.
 
         This is an alias for current_address but allows
@@ -129,29 +154,29 @@ def payout_address(account=None):
         str: Base58Check encoded bitcoin address.
     """
     check_unlocked()
-    return wallet['obj'].payout_address(account)
+    return wallet['obj'].get_payout_address(account)
 
 
-@dispatcher.method('change_public_key')
-def change_public_key(account=None):
+@dispatcher.method('get_change_public_key')
+def get_change_public_key(account=None):
     """ RPC method to get the current change public key.
 
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
     check_unlocked()
-    return wallet['obj'].change_public_key(account).to_b58check()
+    return wallet['obj'].get_change_public_key(account).to_b58check()
 
 
 @dispatcher.method('payout_public_key')
-def payout_public_key(account=None):
+def get_payout_public_key(account=None):
     """ RPC method to get the current payout public key.
 
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
     check_unlocked()
-    return wallet['obj'].payout_public_key(account).to_b58check()
+    return wallet['obj'].get_payout_public_key(account).to_b58check()
 
 
 @dispatcher.method('build_signed_transaction')
