@@ -299,6 +299,20 @@ def sync_wallet_file():
     return wallet['obj'].sync_wallet_file()
 
 
+@dispatcher.method('create_account')
+def create_account(name):
+    """ RPC method to create an account
+    """
+    return wallet['obj'].create_account(name)
+
+
+@dispatcher.method('account_names')
+def account_names():
+    """ RPC method to return all account names
+    """
+    return wallet['obj'].account_names
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--wallet-path', '-wp',
               default=Two1Wallet.DEFAULT_WALLET_PATH,

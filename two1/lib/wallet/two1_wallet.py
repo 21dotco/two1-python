@@ -428,6 +428,36 @@ class Two1Wallet(BaseWallet):
         if len(self._accounts) > 1:
             del self._accounts[-1]
 
+    def create_account(self, name):
+        """ Creates an account.
+
+        Note:
+            Account creation may fail if:
+            1. There is an existing account that has no transactions
+               associated with it as creating a new account would
+               violate the BIP-44 account discovery protocol:
+
+               https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#Account_discovery
+            2. There is an existing account with the same name.
+
+        Args:
+            name (str): The name of the account.
+
+        Returns:
+            bool: True if account creation was successful, False otherwise.
+        """
+        rv = False
+        last_index = len(self._accounts) - 1
+        if self._accounts[last_index].has_txns() and \
+           name not in self._accounts:
+            self._init_account(index=last_index + 1,
+                               name=name)
+            rv = name in self._account_map
+        else:
+            rv = False
+
+        return rv
+
     def _init_account(self, index, name="", account_state=None):
         # Account keys use hardened deriviation, so make sure the MSB is set
         acct_index = index | 0x80000000
@@ -1179,6 +1209,15 @@ class Two1Wallet(BaseWallet):
             list(HDAccount): List of HDAccount objects.
         """
         return self._accounts
+
+    @property
+    def account_names(self):
+        """ Names of all accounts in the wallet.
+
+        Returns:
+            list(str): All account names.
+        """
+        return list(self._account_map.keys())
 
 
 class Two1WalletProxy(object):
