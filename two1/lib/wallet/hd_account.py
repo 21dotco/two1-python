@@ -246,6 +246,28 @@ class HDAccount(object):
         # Always do compressed keys
         return self.get_public_key(change, n).address(True, self.testnet)
 
+    def _new_key_or_address(self, change, key=False):
+        c = int(change)
+        last_index = self.last_indices[c]
+
+        # Check to see if the current address has any txns
+        # associated with it before giving out a new one.
+        ret = None
+        need_new = False
+        if last_index >= 0:
+            current_addr = self._address_cache[c][last_index]
+            txns = self.data_provider.get_transactions([current_addr])
+            need_new = current_addr in txns and txns[current_addr]
+        else:
+            need_new = True
+
+        if need_new:
+            ret = self.get_public_key(change) if key else self.get_address(change)
+        else:
+            ret = self.get_public_key(change, last_index) if key else current_addr
+
+        return ret
+
     def get_next_address(self, change):
         """ Returns the next public address in the specified chain.
 
@@ -259,26 +281,22 @@ class HDAccount(object):
         Returns:
             str: A bitcoin address
         """
-        # Check to see if the current address has any txns
-        # associated with it before giving out a new one.
-        ret = None
-        c = int(change)
-        last_index = self.last_indices[c]
+        return self._new_key_or_address(change)
 
-        need_new = False
-        if last_index >= 0:
-            current_addr = self._address_cache[c][last_index]
-            txns = self.data_provider.get_transactions([current_addr])
-            need_new = current_addr in txns and txns[current_addr]
-        else:
-            need_new = True
+    def get_next_public_key(self, change):
+        """ Returns the next public key in the specified chain.
 
-        if need_new:
-            ret = self.get_address(change)
-        else:
-            ret = current_addr
+            A new key is only returned if there are transactions found
+            for the current key.
 
-        return ret
+        Args:
+            change (bool): If True, returns a PublicKey for change purposes,
+               otherwise returns a PublicKey for payment.
+
+        Returns:
+            PublicKey: A public key
+        """
+        return self._new_key_or_address(change, True)
 
     def get_utxos(self):
         """ Gets all unspent transactions associated with all addresses
