@@ -125,7 +125,11 @@ STATIC_SERVE_CONFIG = os.path.abspath(
 
 # 402 settings
 # TODO: Refactor into per API call price
-BITSERV_DEFAULT_PAYMENT_ADDRESS = "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5"
+BITSERV_DEFAULT_PAYMENT_ADDRESS = os.environ.get(
+    "BITSERV_DEFAULT_PAYMENT_ADDRESS",
+    "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5"
+)
+
 
 # In satoshi
 BITSERV_DEFAULT_PRICE = int(

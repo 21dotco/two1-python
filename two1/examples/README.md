@@ -1,33 +1,19 @@
-# djangobitcoin
+# bitcoin_auth
 
-Demonstrates how to implement 402 endpoints that accept payment with Bitcoin using the Django framework.
+Demonstrates how to implement 402 [Payment Required](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_Error) endpoints that accept payment with Bitcoin using Django & Django REST Framework.
 
-## Install w/ VirtualEnv
+## Install two1 dependencies.
 
-Get a VirtualEnv setup with Python 3.4 using the instructions here: http://hackercodex.com/guide/python-development-environment-on-mac-osx/
+Read about performing this step [here](https://github.com/21dotco/two1#developer-installation)
 
-Install requirements.
+## Running locally
 
-```bash
-
-$ git clone git@github.com:21dotco/djangobitcoin.git
-$ pip install -r requirements.txt
-
-```
-
-Start a local server:
+Given that you have already set up a two1 wallet & account perform the following steps:
 
 ```bash
 
-$ python manage.py runserver
-
-Performing system checks...
-
-System check identified no issues (0 silenced).
-July 05, 2015 - 06:46:11
-Django version 1.8.2, using settings 'server.settings'
-Starting development server at http://127.0.0.1:8000/
-Quit the server with CONTROL-C.
+$ python two1/examples/manage.py migrate
+$ heroku local
 
 ```
 
@@ -39,34 +25,24 @@ The app already includes the required files to configure and run on Heroku:
 ```bash
 
 $ heroku create
-
-Creating lit-bastion-5032 in organization heroku... done, stack is cedar-14
-http://lit-bastion-5032.herokuapp.com/ | https://git.heroku.com/litbastion-503.git
-Git remote heroku added
-
-```
-
-```bash
-
-$ git push heroku master
-
-Counting objects: 6, done.
-Delta compression using up to 8 threads.
-Compressing objects: 100% (6/6), done.
-Writing objects: 100% (6/6), 878 bytes | 0 bytes/s, done.
-...
-...
+$ git push heroku devel:master
+$ heroku config:set TWO1_USERNAME="yourusername" # Your TWO1 Username as seen in `$21 status`
+$ heroku config:set BITSERV_DEFAULT_PAYMENT_ADDRESS="1yourbitcoinaddress" # The address you want to collect payment to 
+$ heroku run python two1/examples/manage.py migrate
+$ heroku config:set BITCHEQUE_VERIFICIATION_URL=$DOTCO_BITCHEQUE_API_ENDPOINT # obtain this via your dotco deployment.
 
 ```
 
 
-### Curling a 402 endpoint with bitcurl
+### Purchasing a 402 endpoint via 21 buy 
 
 ```bash
 
-$ bitcurl -X POST \
-          -d '{"Text":"Translate this into Spanish"}' \
-          http://<app-name>..herokuapp.com/translate/
+# Purchase using earnings
+$ 21 buy http://rocky-peak-2931.herokuapp.com/weather/current-temperature?place=94103
+# Purchase using onchain bitcoin
+$ 21 buy http://rocky-peak-2931.herokuapp.com/weather/current-temperature?place=94103 --onchain
+<Response [402]> {"status_code":402,"detail":"Payment Required"}
 
 ```
 
