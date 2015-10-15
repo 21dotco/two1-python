@@ -168,7 +168,7 @@ def get_change_public_key(account=None):
     return wallet['obj'].get_change_public_key(account).to_b58check()
 
 
-@dispatcher.method('payout_public_key')
+@dispatcher.method('get_payout_public_key')
 def get_payout_public_key(account=None):
     """ RPC method to get the current payout public key.
 
