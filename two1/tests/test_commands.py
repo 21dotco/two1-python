@@ -1,7 +1,7 @@
 import unittest
 
 import os
-from mock import patch
+# from mock import patch
 import pytest
 from two1.commands import config
 import two1.cli as cli

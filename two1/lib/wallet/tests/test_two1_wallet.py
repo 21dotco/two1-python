@@ -1,5 +1,5 @@
 import json
-from mock import MagicMock
+from unittest.mock import MagicMock
 import pytest
 from pbkdf2 import PBKDF2
 import tempfile
