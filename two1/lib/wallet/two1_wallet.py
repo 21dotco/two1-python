@@ -257,7 +257,7 @@ class Two1Wallet(BaseWallet):
         # 1. master key seed + mnemonic
         # 2. First account
         # Store info to file
-        account_type = "BIP44Testnet" if testnet else Two1Wallet.DEFAULT_ACCOUNT_TYPE
+        account_type = "BIP44Testnet" if testnet else account_type
         master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
         passphrase_hash = PBKDF2.crypt(passphrase)
         key_salt = utils.rand_bytes(8)
@@ -271,11 +271,6 @@ class Two1Wallet(BaseWallet):
         else:
             mkey = master_key_b58
             mseed = mnemonic
-
-        adder = " (and your passphrase) " if passphrase else " "
-        print("Your wallet can be recovered using the following set of words (in that order).")
-        print("Please store them%ssafely." % adder)
-        print("\n%s\n" % mnemonic)
 
         config = {"master_key": mkey,
                   "master_seed": mseed,
