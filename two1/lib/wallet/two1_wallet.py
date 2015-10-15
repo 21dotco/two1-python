@@ -1101,6 +1101,59 @@ class Two1Wallet(BaseWallet):
 
         return utxos_by_addr, num_conf
 
+    def _sum_utxos(self, utxos_by_addr):
+        total_value = 0
+        num_utxos = 0
+        for addr, utxos in utxos_by_addr.items():
+            num_utxos += len(utxos)
+            total_value += sum([u.value for u in utxos])
+
+        return total_value, num_utxos
+
+    def sweep(self, address, accounts=[]):
+        """ Sweeps the entire balance to a single address
+
+        Args:
+            address (str): Bitcoin address to send entire balance to.
+            accounts (list(str or int)): List of accounts to use. If
+                not provided, all discovered accounts will be done.
+
+        Returns:
+            list(str): List of txids used to complete the sweep.
+        """
+        if not accounts:
+            accts = self._accounts
+        else:
+            accts = self._check_and_get_accounts(accounts)
+
+        # Force address discovery
+        for a in accts:
+            a._discover_used_addresses(check_all=True)
+
+        utxos_by_addr = self.get_utxos(accts)
+        total_value, num_utxos = self._sum_utxos(utxos_by_addr)
+
+        if total_value < self.DUST_LIMIT:
+            print("Total balance is less than the dust limit. Not sweeping.")
+            return []
+
+        # Compute an approximate fee
+        fees = num_utxos * DEFAULT_INPUT_FEE + DEFAULT_OUTPUT_FEE
+
+        curr_utxo_selector = self.utxo_selector
+        s = lambda data_provider, utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
+
+        self.utxo_selector = s
+        tx_list = self.send_to(address=address,
+                               amount=total_value - fees,
+                               use_unconfirmed=True,
+                               fees=fees,
+                               accounts=accts)
+
+        self.utxo_selector = curr_utxo_selector
+
+        return [t['txid'] for t in tx_list]
+
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
             of new change addresses.
@@ -1128,11 +1181,7 @@ class Two1Wallet(BaseWallet):
                                                                      False,
                                                                      [acct])
             # Total up the value
-            total_value = 0
-            num_utxos = 0
-            for addr, utxos in utxos_by_addr.items():
-                num_utxos += len(utxos)
-                total_value += sum([u.value for u in utxos])
+            total_value, num_utxos = self._sum_utxos(utxos_by_addr)
 
             if num_utxos == 0:
                 print("No matching UTXOs for account %s (%d confirmed UTXOs). Not spreading." %
@@ -1160,7 +1209,7 @@ class Two1Wallet(BaseWallet):
                 break
 
             curr_utxo_selector = self.utxo_selector
-            s = lambda data_provider, utxos_by_addr, amount, num_outputs: (utxos_by_addr, fees)
+            s = lambda data_provider, utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
 
             self.utxo_selector = s
 

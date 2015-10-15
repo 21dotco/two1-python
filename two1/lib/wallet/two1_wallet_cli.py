@@ -363,6 +363,28 @@ def list_accounts(ctx):
         click.echo("Account %d: %s" % (i, n))
 
 
+@click.command(name="sweep")
+@click.argument('address',
+                metavar="STRING")
+@click.option('--account',
+              metavar="STRING",
+              multiple=True,
+              help="List of accounts to sweep")
+@click.pass_context
+def sweep(ctx, address, account):
+    """ Lists all accounts in the wallet
+    """
+    w = ctx.obj['wallet']
+    txids = w.sweep(address=address,
+                    accounts=list(account))
+
+    if txids:
+        click.echo("Swept balance in the following transactions:")
+
+    for txid in txids:
+        click.echo(txid)
+
+
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
 main.add_command(create)
@@ -374,6 +396,7 @@ main.add_command(spread_utxos)
 main.add_command(create_account)
 main.add_command(list_accounts)
 main.add_command(list_balances)
+main.add_command(sweep)        
 
 if __name__ == "__main__":
     main()

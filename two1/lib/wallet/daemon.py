@@ -313,6 +313,13 @@ def account_names():
     return wallet['obj'].account_names
 
 
+@dispatcher.method('sweep')
+def sweep(address, accounts=[]):
+    """ RPC method to sweep balance to a single address
+    """
+    return wallet['obj'].sweep(address, accounts)
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--wallet-path', '-wp',
               default=Two1Wallet.DEFAULT_WALLET_PATH,
