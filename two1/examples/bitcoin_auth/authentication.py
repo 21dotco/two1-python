@@ -19,8 +19,8 @@ from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 
 from two1.lib.blockchain.exceptions import DataProviderError
-from two1.examples.bitcoin_auth.helpers.chain_provider_helper import (
-    ChainProviderHelper
+from two1.examples.bitcoin_auth.helpers.bitcoin_auth_provider_helper import (
+    BitcoinAuthProvider
 )
 
 from .models import BitcoinToken
@@ -37,7 +37,7 @@ class BaseBitcoinAuthentication(BaseAuthentication):
             an api & helper methods into the blockchain.
     """
 
-    bitcoin_provider_helper = ChainProviderHelper()
+    bitcoin_provider_helper = BitcoinAuthProvider()
 
     def authenticate(self, request):
         """Passthrough to subclasses authenticate method.
@@ -138,7 +138,7 @@ class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
             return PaymentRequiredException
         else:
             if not (settings.BITSERV_DEBUG and tx == "paid"):
-                transaction, _ = ChainProviderHelper.transaction_hex_str_to_tx(
+                transaction, _ = BitcoinAuthProvider.transaction_hex_str_to_tx(
                     tx
                 )
                 sso_user, created = get_user_model().objects.get_or_create(
