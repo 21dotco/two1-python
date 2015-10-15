@@ -3,6 +3,7 @@
 import codecs
 from pytz import utc
 from datetime import datetime
+import two1.examples.server.settings as settings
 
 from .utils import PCUtil
 from .wallet import Two1WalletWrapper
@@ -10,7 +11,15 @@ from .blockchain import InsightBlockchain
 from two1.examples.payment.models import Channel, PublicKey, Transaction
 
 
-class PaymentServerError(Exception):
+WALLET_ACCOUNT = os.environ.get('WALLET_ACCOUNT', 'default')
+wallet = settings.TWO1_WALLET
+
+
+class PaymentChannelError(Exception):
+    pass
+
+
+class InvalidPaymentError(PaymentChannelError):
     pass
 
 
@@ -381,7 +390,7 @@ def get_pc_public_key():
         public_key (string): a string representation of a public key's hex.
     """
     # Get preferred address from our wallet
-    pubkey = wallet.get_change_public_key().compressed_bytes
+    pubkey = wallet.get_payout_public_key(WALLET_ACCOUNT).compressed_bytes
     public_key = binascii.hexlify(pubkey).decode('utf-8')
 
     return public_key
@@ -423,22 +432,11 @@ def get_tx_public_keys(transaction):
     multisig_info = _get_multisig_info(transaction)
     redeem_script = multisig_info['redeem_script']
     pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
+    # TODO lookup merchant public key in database
     res = {
         'customer': PublicKey_t.from_bytes(pubkeys[0]),
         'merchant': PublicKey_t.from_bytes(pubkeys[1]),
     }
-    return res
-
-    # TODO fix this
-    # Search the transaction for a public key that we own
-    for pubkey in pubkeys:
-        public_key = PublicKey_t.from_bytes(pubkey)
-        # FIXME: less expensive membership check (testnet address check)
-        if wallet.get_private_for_public(public_key):
-            res['merchant'] = public_key
-        else:
-            res['customer'] = public_key
-
     return res
 
 

@@ -4,6 +4,9 @@ import os
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework.decorators import authentication_classes
+from rest_framework.authentication import BaseAuthentication
 
 from .utils import PCUtil
 from .models import Transaction
@@ -24,7 +27,7 @@ class BadParametersError(PaymentAPIError):
     pass
 
 
-class PaymentServerAuthBypass(BaseAuthentication):
+class PaymentChannelAuthBypass(BaseAuthentication):
 
     """Authenticates users for the purpose of opening a payment channel.
 
@@ -34,14 +37,14 @@ class PaymentServerAuthBypass(BaseAuthentication):
     """
 
     def authenticate(self, request):
-        print("started: PaymentServerAuthBypass")
+        print("started: PaymentChannelAuthBypass")
         """Return an anonymous payment channel user for auth purposes."""
         user, _ = get_user_model().objects.get_or_create(
             username='payment_channel_user')
         return (user, None)
 
 
-@authentication_classes([PaymentServerAuthBypass])
+@authentication_classes([PaymentChannelAuthBypass])
 class Handshake(APIView):
 
     """View to handle the payment channel handshake.
@@ -52,8 +55,8 @@ class Handshake(APIView):
     2. Initialization (POST '/')
     3. Completion (PUT '/<deposit_transaction_id>')
         Note that the completion URI references a specific resource. This is
-        because the handshake is actually completed inside  the channel (see
-        the Channel View below).
+        because that part of the handshake is actually completed inside the
+        channel itself (see the Channel APIView below).
     """
 
     def get(self, request, format='json'):
@@ -105,7 +108,7 @@ class Handshake(APIView):
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
 
-@authentication_classes([PaymentServerAuthBypass])
+@authentication_classes([PaymentChannelAuthBypass])
 class Channel(APIView):
 
     """View to handle the payment channel.
