@@ -1,6 +1,6 @@
 import getpass
 import json
-import types
+import logging
 
 import base64
 import os
@@ -99,6 +99,7 @@ class Two1Wallet(BaseWallet):
 
     required_params = ['master_key', 'locked', 'key_salt', 'passphrase_hash',
                        'account_type']
+    logger = logging.getLogger('wallet')
 
     @staticmethod
     def is_locked(wallet_path=DEFAULT_WALLET_PATH):
@@ -114,8 +115,9 @@ class Two1Wallet(BaseWallet):
                 params = json.load(f)
                 locked = params.get('locked', False)
         else:
-            raise exceptions.WalletError("Wallet does not exist at %s!" %
-                                         wallet_path)
+            error = "Wallet does not exist at %s!" % wallet_path
+            Two1Wallet.logger.error(error)
+            raise exceptions.WalletError(error)
 
         return locked
 
@@ -166,8 +168,9 @@ class Two1Wallet(BaseWallet):
             os.makedirs(wallet_dirname)
         else:
             if os.path.exists(wallet_path):
-                print("File %s already present. Not creating wallet." %
-                      wallet_path)
+                Two1Wallet.logger.error(
+                    "File %s already present. Not creating wallet." %
+                    wallet_path)
                 return False
 
         dp = config_options.get('data_provider', None)
@@ -448,13 +451,18 @@ class Two1Wallet(BaseWallet):
         """
         rv = False
         last_index = len(self._accounts) - 1
-        if self._accounts[last_index].has_txns() and \
-           name not in self._accounts:
-            self._init_account(index=last_index + 1,
-                               name=name)
-            rv = name in self._account_map
+
+        if name in self._accounts:
+            if self._accounts[last_index].has_txns():
+                self._init_account(index=last_index + 1,
+                                   name=name)
+                rv = name in self._account_map
+            else:
+                self.logger.error("The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
+                                  self._accounts.name,
+                                  last_index)
         else:
-            rv = False
+            self.logger.error("An account named '%s' already exists." % name)
 
         return rv
 
@@ -824,7 +832,8 @@ class Two1Wallet(BaseWallet):
             txid = self.data_provider.broadcast_transaction(tx)
             res = txid
         except exceptions.WalletError as e:
-            print("Problem sending transaction to network: %s" % e)
+            self.logger.critical(
+                "Problem sending transaction to network: %s" % e)
 
         return res
 
@@ -895,7 +904,8 @@ class Two1Wallet(BaseWallet):
                 "There are not enough confirmed UTXOs to complete this transaction.")
 
         if use_unconfirmed and total_with_fees > c_balance:
-            print("Warning: using unconfirmed inputs to complete transaction.")
+            self.logger.warning(
+                "Using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
         private_keys = self.get_private_keys(list(selected_utxos.keys()))
@@ -1037,7 +1047,7 @@ class Two1Wallet(BaseWallet):
         for t in txn_dict:
             txid = self.broadcast_transaction(t["txn"])
             if not txid:
-                print("Unable to send txn %s" % t["txid"])
+                self.logger.critical("Unable to send txn %s" % t["txid"])
             elif txid != t["txid"]:
                 # Something weird happened ...
                 raise exceptions.TxidMismatchError("Transaction IDs do not match")
@@ -1184,8 +1194,8 @@ class Two1Wallet(BaseWallet):
             total_value, num_utxos = self._sum_utxos(utxos_by_addr)
 
             if num_utxos == 0:
-                print("No matching UTXOs for account %s (%d confirmed UTXOs). Not spreading." %
-                      (acct.name, num_conf))
+                self.logger.error("No matching UTXOs for account %s (%d confirmed UTXOs). Not spreading." %
+                                  (acct.name, num_conf))
                 break
 
             # Get the next num_addresses change addresses
@@ -1203,7 +1213,7 @@ class Two1Wallet(BaseWallet):
             spread_amount = total_value - fees
             per_addr_amount = int(spread_amount / num_addresses)
             if per_addr_amount <= self.DUST_LIMIT:
-                print(
+                self.logger.error(
                     "Amount to each address (%d satoshis) would be less than the dust limit. Choose a smaller number of addresses." %
                     per_addr_amount)
                 break

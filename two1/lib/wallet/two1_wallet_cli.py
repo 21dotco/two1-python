@@ -1,4 +1,6 @@
 import getpass
+import logging
+import traceback
 
 import click
 from two1.lib.blockchain.chain_provider import ChainProvider
@@ -15,6 +17,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
                                  'twentyone': []}
 TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
+
+logger = logging.getLogger('wallet')
 
 
 def get_passphrase():
@@ -99,12 +103,25 @@ def validate_data_provider(ctx, param, value):
               envvar='CHAIN_API_KEY_SECRET',
               is_eager=True,
               help='Chain API Secret (only if -b chain)')
+@click.option('--debug', '-d',
+              is_flag=True,
+              help='Turns on debugging messages.')
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
-         blockchain_data_provider, chain_api_key_id, chain_api_key_secret):
+         blockchain_data_provider, chain_api_key_id, chain_api_key_secret,
+         debug):
     """ Command-line Interface for the Two1 Wallet
     """
+    # Initialize some logging handlers
+    ch = logging.StreamHandler()
+    ch_formatter = logging.Formatter(
+        '%(levelname)s: %(message)s')
+    ch.setFormatter(ch_formatter)
+    logger.addHandler(ch)
+
+    logger.setLevel('DEBUG' if debug else 'INFO')
+
     if ctx.obj is None:
         ctx.obj = {}
 
@@ -145,7 +162,9 @@ def startdaemon(ctx):
         d.install(dpo)
 
     if d.start():
-        click.echo("walletd successfully started.")
+        msg = "walletd successfully started."
+        logger.debug(msg)
+        click.echo(msg)
 
 
 @click.command()
@@ -158,7 +177,9 @@ def stopdaemon(ctx):
         return
 
     if d.stop():
-        click.echo("walletd successfully stopped.")
+        msg = "walletd successfully stopped."
+        logger.debug(msg)
+        click.echo(msg)
 
 
 @click.command()
@@ -291,8 +312,8 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 
     # Do we want to confirm if it's larger than some amount?
     satoshis = int(amount * satoshi_to_btc)
-    print("Sending %d satoshis to %s from accounts = %r" %
-          (satoshis, address, list(account)))
+    logger.info("Sending %d satoshis to %s from accounts = %r" %
+                (satoshis, address, list(account)))
 
     try:
         txids = w.send_to(address=address,
@@ -301,10 +322,16 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                           fees=fees,
                           accounts=list(account))
         if txids:
-            click.echo("Successfully sent %f BTC to %s. txid = %r" %
-                       (amount, address, [t['txid'] for t in txids]))
+            click.echo("Successfully sent %f BTC to %s. txids:" %
+                       (amount, address))
+            for t in txids:
+                click.echo(t['txid'])
     except Exception as e:
-        click.echo("Problem sending coins: %s" % e)
+        tb = e.__traceback__
+        logger.error("Problem sending coins: %s" % e)
+        logger.debug("".join(traceback.format_tb(tb)))
+        if not logger.hasHandlers():
+            click.echo("Problem sending coins: %s" % e)
 
 
 @click.command(name="spreadutxos")
@@ -334,7 +361,9 @@ def spread_utxos(ctx, num_addresses, threshold, account):
                 click.echo(t['txid'])
 
     except Exception as e:
-        click.echo("Problem spreading utxos: %s" % e)
+        logger.exception("Problem spreading utxos:", exc_info=e)
+        if not logger.hasHandlers():
+            click.echo("Problem spreading utxos: %s" % e)
 
 
 @click.command(name="createaccount")
