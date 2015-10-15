@@ -7,6 +7,7 @@ from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.base_wallet import satoshi_to_btc
+from two1.lib.wallet import exceptions
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet.daemonizer import get_daemonizer
@@ -131,9 +132,15 @@ def main(ctx, wallet_path, passphrase,
     if ctx.invoked_subcommand not in ['create', 'startdaemon']:
         p = get_passphrase() if passphrase else ''
 
-        ctx.obj['wallet'] = Two1WalletProxy(wallet_path=wallet_path,
-                                            data_provider=ctx.obj['data_provider'],
-                                            passphrase=p)
+        try:
+            ctx.obj['wallet'] = Two1WalletProxy(wallet_path=wallet_path,
+                                                data_provider=ctx.obj['data_provider'],
+                                                passphrase=p)
+        except exceptions.PassphraseError as e:
+            click.echo(str(e))
+        except (TypeError, ValueError) as e:
+            logger.error("Internal wallet error. Please report this as a bug.")
+            logger.debug("".join(traceback.format_tb(e.__traceback__)))
         ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
 
@@ -219,7 +226,20 @@ def create(ctx, account_type, testnet):
     created = Two1Wallet.configure(options)
 
     if created:
-        click.echo("Wallet successfully created!")
+        # Make sure it opens
+        try:
+            wallet = Two1Wallet(params_or_file=ctx.obj['wallet_path'],
+                                data_provider=ctx.obj['data_provider'],
+                                passphrase=passphrase)
+
+            click.echo("Wallet successfully created!")
+
+            adder = " (and your passphrase) " if passphrase else " "
+            click.echo("Your wallet can be recovered using the following set of words (in that order).")
+            click.echo("Please store them%ssafely." % adder)
+            click.echo("\n%s\n" % wallet._orig_params['master_seed'])
+        except Exception:
+            click.echo("Wallet was not created properly.")
     else:
         ctx.fail("Wallet was not created.")
 
@@ -234,7 +254,10 @@ def payout_address(ctx, account):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    click.echo(w.get_payout_address(account))
+    try:
+        click.echo(w.get_payout_address(account))
+    except (ValueError, TypeError) as e:
+        click.echo(str(e))
 
 
 @click.command(name="confirmedbalance")
@@ -247,9 +270,12 @@ def confirmed_balance(ctx, account):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
-    cb = w.confirmed_balance(account)
-    click.echo("Confirmed balance: %f BTC" %
-               (cb / satoshi_to_btc))
+    try:
+        cb = w.confirmed_balance(account)
+        click.echo("Confirmed balance: %f BTC" %
+                   (cb / satoshi_to_btc))
+    except (ValueError, TypeError) as e:
+        click.echo(str(e))
 
 
 @click.command()
@@ -262,9 +288,12 @@ def balance(ctx, account):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
-    ucb = w.unconfirmed_balance(account)
-    click.echo("Total balance (including unconfirmed txns): %f BTC" %
-               (ucb / satoshi_to_btc))
+    try:
+        ucb = w.unconfirmed_balance(account)
+        click.echo("Total balance (including unconfirmed txns): %f BTC" %
+                   (ucb / satoshi_to_btc))
+    except (ValueError, TypeError) as e:
+        click.echo(str(e))
 
 
 @click.command(name='listbalances')
