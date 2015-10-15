@@ -155,6 +155,22 @@ BITSERV_DEFAULT_PRICE = int(
 
 # Global lookup table for calculating API resource prices
 BITSERV_API_PRICES = {}
+# Set up two1 config object
+_wallet_config = {}
+
+# Get testnet flag, use the bitcoin testnet if TESTNET == 1
+TWO1_TESTNET = os.environ.get('TESTNET', None)
+if TWO1_TESTNET:
+    _wallet_config['testnet'] = TWO1_TESTNET
+
+# Get wallet location, otherwise Config() will use the default location
+TWO1_WALLET_PATH = os.environ.get('WALLET_PATH', None)
+if TWO1_WALLET_PATH:
+    _wallet_config['wallet_path'] = TWO1_WALLET_PATH
+
+# Instantiate and save two1 config and wallet
+TWO1_CONFIG = Config(config=_wallet_config)
+TWO1_WALLET = TWO1_CONFIG.wallet
 
 # for inclusion in 402 payments, username of the seller.
 TWO1_USERNAME = os.environ.get(

@@ -338,15 +338,16 @@ class PaymentChannelAuthentication(BaseBitcoinAuthentication):
                 channel for any reason or if the payment amount is not enough
                 to pay for the requested resource.
         """
+        validation = None
+
         try:
             # Attempt to redeem the transaction in its payment channel
-            amount = PaymentChannel.redeem(txid)
+            paid_amount = int(PaymentChannel.redeem(txid))
             # Verify the amount of the payment against the resource price
-            if amount == get_price_for_request(request):
-                return amount
-
+            if paid_amount == int(get_price_for_request(request)):
+                validation = (self.pc_user, paid_amount)
         finally:
-            return None
+            return validation
 
     def authenticate(self, request):
         """Handle bitcoin authentication.
@@ -360,7 +361,6 @@ class PaymentChannelAuthentication(BaseBitcoinAuthentication):
         print("started: PaymentChannelAuthentication")
         txid = self.get_payment_from_header(request)
         if txid:
-            amount = self.validate_payment(txid, request)
-            return (self.pc_user, amount)
+            return self.validate_payment(txid, request)
         else:
             return None
