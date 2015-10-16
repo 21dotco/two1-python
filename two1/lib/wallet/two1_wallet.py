@@ -1420,6 +1420,12 @@ class Two1WalletProxy(object):
 
         return rv
 
+    def exception_info(self):
+        if not isinstance(self.w, Two1Wallet):
+            return self.w.exception_info()
+        else:
+            return dict(message="Fix me")
+
     def __getattr__(self, method_name):
         rv = None
         if hasattr(self.w, method_name):

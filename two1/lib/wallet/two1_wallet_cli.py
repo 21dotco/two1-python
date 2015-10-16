@@ -3,6 +3,7 @@ import logging
 import traceback
 
 import click
+from jsonrpcclient.exceptions import ReceivedErrorResponse
 from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
@@ -276,6 +277,9 @@ def confirmed_balance(ctx, account):
                    (cb / satoshi_to_btc))
     except (ValueError, TypeError) as e:
         click.echo(str(e))
+    except ReceivedErrorResponse as e:
+        exc_info = w.exception_info()
+        click.echo(exc_info['message'])
 
 
 @click.command()
@@ -294,6 +298,9 @@ def balance(ctx, account):
                    (ucb / satoshi_to_btc))
     except (ValueError, TypeError) as e:
         click.echo(str(e))
+    except ReceivedErrorResponse as e:
+        exc_info = w.exception_info()
+        click.echo(exc_info['message'])
 
 
 @click.command(name='listbalances')
