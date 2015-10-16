@@ -281,6 +281,22 @@ class PrivateKey(PrivateKeyBase):
     MAINNET_VERSION = 0x80
 
     @staticmethod
+    def from_bytes(b):
+        """ Generates PrivateKey from the underlying bytes.
+
+        Args:
+            b (bytes): A byte stream containing a 256-bit (32-byte) integer.
+
+        Returns:
+            tuple(PrivateKey, bytes): A PrivateKey object and the remainder
+                of the bytes.
+        """
+        if len(b) < 32:
+            raise ValueError('b must contain at least 32 bytes')
+
+        return (PrivateKey(int.from_bytes(b[:32], 'big')), b[32:])
+
+    @staticmethod
     def from_int(i):
         """ Initializes a private key from an integer.
 
