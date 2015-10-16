@@ -41,6 +41,9 @@ def str2bool(v):
 if str2bool(os.environ.get("TWO1_DEV", default="0")):
     click.echo(click.style("Setting up developer environment.", fg="red"))
     TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default=TWO1_DEV_HOST)
+    # Handle hostname if there is a trailing slash
+    if TWO1_HOST[-1] == "/":
+        TWO1_HOST = TWO1_HOST[0:-1]
     click.echo("Host: {}".format(TWO1_HOST))
 else:
     TWO1_HOST = TWO1_PROD_HOST
