@@ -33,3 +33,11 @@ class PaymentRequiredException(APIException):
 
     status_code = status.HTTP_402_PAYMENT_REQUIRED
     default_detail = "Payment Required"
+
+
+class ServiceUnavailable(APIException):
+
+    """503 Service Unavailable exception."""
+
+    status_code = 503
+    default_detail = 'Service temporarily unavailable, try again later.'
