@@ -13,8 +13,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
-from two1.commands.config import Config
-
+import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "misc/lib"))
@@ -92,12 +91,20 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'default': {}
+}
+
+if os.environ.get('DATABASE_URL'):
+    # deployed development
+    DATABASES['default'] = dj_database_url.parse(
+        os.environ.get('DATABASE_URL')
+    )
+else:
+    # local development
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-}
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -141,7 +148,7 @@ BITSERV_DEFAULT_PRICE = int(
 
 # for inclusion in 402 payments, username of the seller.
 TWO1_USERNAME = os.environ.get(
-    'TWO1_USERNAME', Config().username
+    'TWO1_USERNAME', "seller"
 )
 
 # endpoint of the bitcheque verifier
