@@ -1,9 +1,11 @@
 import getpass
 import logging
+import logging.handlers
 import traceback
 
 import click
 from jsonrpcclient.exceptions import ReceivedErrorResponse
+from path import Path
 from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
@@ -21,6 +23,25 @@ REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_se
 TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
 logger = logging.getLogger('wallet')
+
+
+def _handle_daemon_exception(w):
+    msg = w.exception_info()['message']
+    logger.error(msg)
+    if not logger.hasHandlers():
+        click.echo(msg)
+
+
+def _handle_generic_exception(e, custom_msg=""):
+    tb = e.__traceback__
+    if custom_msg:
+        msg = "%s: %s" % (custom_msg, e)
+    else:
+        msg = str(e)
+    logger.error(msg)
+    logger.debug("".join(traceback.format_tb(tb)))
+    if not logger.hasHandlers():
+        click.echo(msg)
 
 
 def get_passphrase():
@@ -115,14 +136,29 @@ def main(ctx, wallet_path, passphrase,
          debug):
     """ Command-line Interface for the Two1 Wallet
     """
+    wp = Path(wallet_path)
+
     # Initialize some logging handlers
     ch = logging.StreamHandler()
     ch_formatter = logging.Formatter(
         '%(levelname)s: %(message)s')
     ch.setFormatter(ch_formatter)
-    logger.addHandler(ch)
 
-    logger.setLevel('DEBUG' if debug else 'INFO')
+    fh = logging.handlers.TimedRotatingFileHandler(wp.dirname().joinpath("wallet_cli.log"),
+                                                   when='midnight',
+                                                   backupCount=5)
+    fh_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s')
+    fh.setFormatter(fh_formatter)
+
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+
+    fh.setLevel(logging.DEBUG if debug else logging.INFO)
+    ch.setLevel(logging.DEBUG if debug else logging.WARNING)
+    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+
+    logger.info("Wallet client started.")
 
     if ctx.obj is None:
         ctx.obj = {}
@@ -134,14 +170,17 @@ def main(ctx, wallet_path, passphrase,
         p = get_passphrase() if passphrase else ''
 
         try:
+            logger.info("Loading wallet %s ..." % (wp))
             ctx.obj['wallet'] = Two1WalletProxy(wallet_path=wallet_path,
                                                 data_provider=ctx.obj['data_provider'],
                                                 passphrase=p)
+            logger.info("... loading complete.")
         except exceptions.PassphraseError as e:
             click.echo(str(e))
         except (TypeError, ValueError) as e:
             logger.error("Internal wallet error. Please report this as a bug.")
             logger.debug("".join(traceback.format_tb(e.__traceback__)))
+
         ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
 
@@ -224,10 +263,12 @@ def create(ctx, account_type, testnet):
                "testnet": testnet,
                "wallet_path": ctx.obj['wallet_path']}
 
+    logger.info("Creating wallet with options: %r" % options)
     created = Two1Wallet.configure(options)
 
     if created:
         # Make sure it opens
+        logger.info("Wallet created.")
         try:
             wallet = Two1Wallet(params_or_file=ctx.obj['wallet_path'],
                                 data_provider=ctx.obj['data_provider'],
@@ -239,7 +280,8 @@ def create(ctx, account_type, testnet):
             click.echo("Your wallet can be recovered using the following set of words (in that order).")
             click.echo("Please store them%ssafely." % adder)
             click.echo("\n%s\n" % wallet._orig_params['master_seed'])
-        except Exception:
+        except Exception as e:
+            logger.debug("Error opening created wallet: %s" % e)
             click.echo("Wallet was not created properly.")
     else:
         ctx.fail("Wallet was not created.")
@@ -255,12 +297,13 @@ def payout_address(ctx, account):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
+    logger.info('payout_address(%r)' % account)
     try:
         click.echo(w.get_payout_address(account))
     except (ValueError, TypeError) as e:
-        click.echo(str(e))
+        _handle_generic_exception(e)
     except ReceivedErrorResponse as e:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
 
 
 @click.command(name="confirmedbalance")
@@ -273,14 +316,15 @@ def confirmed_balance(ctx, account):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
+    logger.info('confirmed_balance(%r)' % account)
     try:
         cb = w.confirmed_balance(account)
         click.echo("Confirmed balance: %f BTC" %
                    (cb / satoshi_to_btc))
     except (ValueError, TypeError) as e:
-        click.echo(str(e))
+        _handle_generic_exception(e)
     except ReceivedErrorResponse as e:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
 
 
 @click.command()
@@ -293,14 +337,15 @@ def balance(ctx, account):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
+    logger.info('balance(%r)' % account)
     try:
         ucb = w.unconfirmed_balance(account)
         click.echo("Total balance (including unconfirmed txns): %f BTC" %
                    (ucb / satoshi_to_btc))
     except (ValueError, TypeError) as e:
-        click.echo(str(e))
+        _handle_generic_exception(e)
     except ReceivedErrorResponse as e:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
 
 
 @click.command(name='listbalances')
@@ -363,13 +408,9 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
             for t in txids:
                 click.echo(t['txid'])
     except ReceivedErrorResponse as e:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
     except Exception as e:
-        tb = e.__traceback__
-        logger.error("Problem sending coins: %s" % e)
-        logger.debug("".join(traceback.format_tb(tb)))
-        if not logger.hasHandlers():
-            click.echo("Problem sending coins: %s" % e)
+        _handle_generic_exception(e, "Problem sending coins")
 
 
 @click.command(name="spreadutxos")
@@ -399,11 +440,9 @@ def spread_utxos(ctx, num_addresses, threshold, account):
                 click.echo(t['txid'])
 
     except ReceivedErrorResponse as e:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
     except Exception as e:
-        logger.exception("Problem spreading utxos:", exc_info=e)
-        if not logger.hasHandlers():
-            click.echo("Problem spreading utxos: %s" % e)
+        _handle_generic_exception(e, "Problem spreading utxos")
 
 
 @click.command(name="createaccount")
@@ -415,12 +454,13 @@ def create_account(ctx, name):
     """
     w = ctx.obj['wallet']
     rv = False
+    logger.info('create_account(%s)' % name)
     try:
         rv = w.create_account(name)
     except exceptions.AccountCreationError as e:
-        click.echo(str(e))
+        _handle_generic_exception(e)
     except ReceivedErrorResponse:
-        click.echo(w.exception_info()['message'])
+        _handle_daemon_exception(w)
 
     if rv:
         click.echo("Successfully created account '%s'." % name)
@@ -450,6 +490,7 @@ def sweep(ctx, address, account):
     """ Lists all accounts in the wallet
     """
     w = ctx.obj['wallet']
+    logger.info('sweep(%s, %r)' % (address, account))
     try:
         txids = w.sweep(address=address,
                         accounts=list(account))
@@ -460,10 +501,9 @@ def sweep(ctx, address, account):
         for txid in txids:
             click.echo(txid)
     except exceptions.WalletBalanceError as e:
-        click.echo(str(e))
+        _handle_generic_exception(e)
     except ReceivedErrorResponse:
-        click.echo(w.exception_info()['message'])
-
+        _handle_daemon_exception(w)
 
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
