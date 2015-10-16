@@ -13,6 +13,7 @@ from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
 from two1.lib.wallet.exceptions import AccountCreationError
+from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet_cli import validate_data_provider
 from two1.lib.wallet.two1_wallet_cli import WALLET_VERSION
@@ -419,7 +420,11 @@ def account_names():
 def sweep(address, accounts=[]):
     """ RPC method to sweep balance to a single address
     """
-    return wallet['obj'].sweep(address, accounts)
+    logger.debug("sweep(%s, %r)" % (address, accounts))
+    try:
+        return wallet['obj'].sweep(address, accounts)
+    except WalletBalanceError as e:
+        _handle_exception(e)
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)

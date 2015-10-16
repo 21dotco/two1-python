@@ -1140,8 +1140,9 @@ class Two1Wallet(BaseWallet):
         total_value, num_utxos = self._sum_utxos(utxos_by_addr)
 
         if total_value < self.DUST_LIMIT:
-            print("Total balance is less than the dust limit. Not sweeping.")
-            return []
+            raise exceptions.WalletBalanceError(
+                "Total balance (%d satoshis) is less than the dust limit. Not sweeping." %
+                (total_value))
 
         # Compute an approximate fee
         fees = num_utxos * DEFAULT_INPUT_FEE + DEFAULT_OUTPUT_FEE
