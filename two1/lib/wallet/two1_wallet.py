@@ -19,6 +19,7 @@ from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount
 from two1.lib.wallet.base_wallet import BaseWallet
+from two1.lib.wallet.exceptions import AccountCreationError
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
@@ -453,11 +454,11 @@ class Two1Wallet(BaseWallet):
                                    name=name)
                 rv = name in self._account_map
             else:
-                self.logger.error("The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
-                                  self._accounts.name,
-                                  last_index)
+                raise AccountCreationError("The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
+                                           self._accounts.name,
+                                           last_index)
         else:
-            self.logger.error("An account named '%s' already exists." % name)
+            raise AccountCreationError("An account named '%s' already exists." % name)
 
         return rv
 

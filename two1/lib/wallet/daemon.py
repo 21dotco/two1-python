@@ -12,6 +12,7 @@ from path import Path
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
+from two1.lib.wallet.exceptions import AccountCreationError
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet_cli import validate_data_provider
 from two1.lib.wallet.two1_wallet_cli import WALLET_VERSION
@@ -27,7 +28,7 @@ wallet = dict(obj=None,
               path=None,
               data_provider=None,
               update_interval=DEF_WALLET_UPDATE_INTERVAL)
-last_exception_message = ""
+last_exception = None
 
 
 def sig_handler(sig_num, stack_frame):
@@ -45,11 +46,11 @@ def sig_handler(sig_num, stack_frame):
 
 
 def _handle_exception(e):
-    global last_exception_message
+    global last_exception
 
-    last_exception_message = str(e)
-    logger.debug("error: %s" % last_exception_message)
-    raise ServerError(last_exception_message)
+    last_exception = e
+    logger.debug("exception: %s" % str(last_exception))
+    raise ServerError(str(last_exception))
 
 
 def data_updater():
@@ -93,7 +94,7 @@ def check_unlocked():
     """ Raises an error if the wallet is locked.
     """
     if wallet['obj'] is None or wallet['locked']:
-        last_exception_message = "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."
+        last_exception = "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."
         raise ServerError()
 
 
@@ -101,7 +102,8 @@ def check_unlocked():
 def exception_info():
     """ RPC method to get info about the last exception.
     """
-    return dict(message=last_exception_message)
+    return {'message': str(last_exception),
+            'type': last_exception.__class__.__name__}
 
 
 @dispatcher.method('confirmed_balance')
@@ -402,7 +404,7 @@ def create_account(name):
     logger.debug("create_account(%r)" % (name))
     try:
         return wallet['obj'].create_account(name)
-    except (ValueError, TypeError) as e:
+    except AccountCreationError as e:
         _handle_exception(e)
 
 
