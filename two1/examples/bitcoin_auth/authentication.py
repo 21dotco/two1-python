@@ -237,6 +237,15 @@ class BitChequeAuthentication(BaseAuthentication):
                     bitcheque, signature
                 )
             )
+            # before verifiying with a 3rd party server,
+            # verify that the amount sent in the cheque
+            # is correct.
+            try:
+                if not json.loads(bitcheque)["amount"] == \
+                        get_price_for_request(request):
+                    raise PaymentRequiredException("Insufficient Payment")
+            except ValueError:
+                raise PaymentRequiredException
             # now verify with server that cheque is valid
             # else raise another PaymentRequiredException.
             if self.verify_cheque(bitcheque, signature):
@@ -270,6 +279,12 @@ class BitChequeAuthentication(BaseAuthentication):
                 }),
                 headers={'content-type': 'application/json'}
             )
-            return verification_response.ok
+            if verification_response.ok:
+                return True
+            else:
+                if "message" in verification_response.text:
+                    raise PaymentRequiredException(
+                        verification_response.json()["message"]
+                    )
         except requests.ConnectionError:
             return False
