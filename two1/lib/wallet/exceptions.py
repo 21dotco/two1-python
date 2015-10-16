@@ -32,3 +32,7 @@ class DaemonNotRunningError(WalletError):
 
 class UndefinedMethodError(WalletError):
     pass
+
+
+class AccountCreationError(WalletError):
+    pass
