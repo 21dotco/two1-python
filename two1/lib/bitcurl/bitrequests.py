@@ -73,12 +73,12 @@ class BitRequests(object):
         """
         print(response, response.text)
         if requests.status_codes._codes[response.status_code][0] == \
-                'payment_required':
+                'payment_required' and "Payment Required" in response.text:
             return self._pay_endpoint(response)
         elif response.ok:
             return response
         else:
-            raise ValueError(response)
+            raise ValueError(response.text)
 
     def _get_payment_info_from_headers(self, headers):
         """Get payment information from headers.
