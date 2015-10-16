@@ -402,6 +402,17 @@ class Two1Wallet(BaseWallet):
             self._account_map = params.get("account_map", {})
             self._load_accounts(account_params, cache_file)
 
+        if self.logger.level == logging.DEBUG:
+            for a in self._accounts:
+                kser = ""
+                if isinstance(a.key, HDPrivateKey):
+                    kser = a.key.public_key.to_b58check(self._testnet)
+                else:
+                    kser = a.key.to_b58check(self._testnet)
+
+                self.logger.debug("Account %d (%s) public key: %s" %
+                                  (a.index & 0x7fffffff, a.name, kser))
+
     def discover_accounts(self):
         """ Discovers all accounts associated with the wallet.
 
@@ -719,6 +730,7 @@ class Two1Wallet(BaseWallet):
         # is necessary and only write out if necessary.
         if self._filename:
             self.to_file(self._filename)
+            self.logger.debug("Sync'ed file %s" % self._filename)
 
     @property
     def addresses(self):
