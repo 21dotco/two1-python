@@ -123,18 +123,20 @@ class Two1Wallet(BaseWallet):
         return locked
 
     @staticmethod
-    def is_configured():
-        """ Returns the configuration/initialization status of the
-            wallet.
+    def check_wallet_file(wallet_path=DEFAULT_WALLET_PATH):
+        """ Returns whether the specified wallet file exists and
+            contains the minimum set of parameters required to load
+            the wallet.
 
         Returns:
-            bool: True if the default wallet has been configured and
-                ready to use otherwise False
+            bool: True if the wallet file exists and is ready to use,
+                False otherwise.
+
         """
-        if os.path.exists(Two1Wallet.DEFAULT_WALLET_PATH):
+        if os.path.exists(wallet_path):
             # Check if the config is actually good
             params = {}
-            with open(Two1Wallet.DEFAULT_WALLET_PATH, 'r') as f:
+            with open(wallet_path, 'r') as f:
                 params = json.load(f)
 
             for rp in Two1Wallet.required_params:
@@ -144,6 +146,17 @@ class Two1Wallet(BaseWallet):
             return True
         else:
             return False
+
+    @staticmethod
+    def is_configured():
+        """ Returns the configuration/initialization status of the
+            wallet.
+
+        Returns:
+            bool: True if the default wallet has been configured and
+                ready to use otherwise False
+        """
+        return Two1Wallet.check_wallet_file()
 
     @staticmethod
     def configure(config_options):

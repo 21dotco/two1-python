@@ -34,7 +34,7 @@ install_requires = [
                     'pyaes',
                     'tabulate',
                     'jsonrpcclient',
-                    'jsonrpcserver'
+                    'jsonrpcserver>=3.0.0'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/
