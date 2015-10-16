@@ -1,3 +1,5 @@
+import logging
+import logging.handlers
 import signal
 import sys
 import threading
@@ -6,6 +8,7 @@ import time
 import click
 from jsonrpcserver import Dispatcher
 from jsonrpcserver.exceptions import ServerError
+from path import Path
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
@@ -16,6 +19,7 @@ from two1.lib.wallet.two1_wallet_cli import WALLET_VERSION
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEF_WALLET_UPDATE_INTERVAL = 25  # seconds
 
+logger = logging.getLogger('walletd')
 dispatcher = Dispatcher()
 rpc_server = UnixSocketJSONRPCServer(dispatcher)
 wallet = dict(obj=None,
@@ -35,7 +39,7 @@ def sig_handler(sig_num, stack_frame):
         signum (int): The signal number that was sent.
         stack_frame (str): Current stack frame.
     """
-    print("Shutting down...")
+    logger.info("Shutting down...")
     rpc_server.shutdown()
 
 
@@ -49,7 +53,10 @@ def data_updater():
     # poll for any shutdown events.
     while True:
         if wallet['obj']:
-            wallet['obj']._update_account_balances()
+            try:
+                wallet['obj']._update_account_balances()
+            except Exception as e:
+                logger.error("Couldn't update balances: %s" % e)
         time.sleep(wallet['update_interval'])
 
 
@@ -85,6 +92,7 @@ def confirmed_balance(account=None):
         int: Current confirmed balance in satoshis.
     """
     check_unlocked()
+    logger.debug("confirmed_balance(%r)" % (account))
     return wallet['obj'].confirmed_balance(account)
 
 
@@ -96,6 +104,7 @@ def unconfirmed_balance(account=None):
         int: Current unconfirmed balance in satoshis.
     """
     check_unlocked()
+    logger.debug("unconfirmed_balance(%r)" % (account))
     return wallet['obj'].unconfirmed_balance(account)
 
 
@@ -113,6 +122,7 @@ def get_private_for_public(public_key):
     """
     check_unlocked()
     w = wallet['obj']
+    logger.debug("get_private_for_public(xx)")
     try:
         pub_key = HDPublicKey.from_b58check(public_key)
     except ValueError:
@@ -130,6 +140,7 @@ def current_address():
         str: Base58Check encoded bitcoin address.
     """
     check_unlocked()
+    logger.debug("current_address()")
     return wallet['obj'].current_address
 
 
@@ -141,6 +152,7 @@ def get_change_address(account=None):
         str: Base58Check encoded bitcoin address.
     """
     check_unlocked()
+    logger.debug("get_change_address(%r)" % (account))
     return wallet['obj'].get_change_address(account)
 
 
@@ -154,6 +166,7 @@ def get_payout_address(account=None):
         str: Base58Check encoded bitcoin address.
     """
     check_unlocked()
+    logger.debug("get_payout_address(%r)" % (account))
     return wallet['obj'].get_payout_address(account)
 
 
@@ -165,6 +178,7 @@ def get_change_public_key(account=None):
         str: A Base58Check encoded serialization of the public key
     """
     check_unlocked()
+    logger.debug("get_change_public_key(%r)" % (account))
     return wallet['obj'].get_change_public_key(account).to_b58check()
 
 
@@ -176,6 +190,7 @@ def get_payout_public_key(account=None):
         str: A Base58Check encoded serialization of the public key
     """
     check_unlocked()
+    logger.debug("get_payout_public_key(%r)" % (account))
     return wallet['obj'].get_payout_public_key(account).to_b58check()
 
 
@@ -198,12 +213,19 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
         list(Transaction): A list of Transaction objects
     """
     check_unlocked()
+    logger.debug("build_signed_transaction(%r, %r, %r, %r)" %
+                 (addresses_and_amounts,
+                  use_unconfirmed,
+                  fees,
+                  accounts))
     txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
                                                   use_unconfirmed,
                                                   fees,
                                                   accounts)
+    txns_hex = [t.to_hex() for t in txns]
+    logger.debug("txns: %r" % (txns_hex))
 
-    return [t.to_hex() for t in txns]
+    return txns_hex
 
 
 @dispatcher.method('make_signed_transaction_for')
@@ -228,14 +250,25 @@ def make_signed_transaction_for(address, amount,
     """
     check_unlocked()
     w = wallet['obj']
-    return w.make_signed_transaction_for(address, amount,
+    logger.debug("make_signed_transaction_for(%s, %d, %r, %r, %r)" %
+                 (address,
+                  amount,
+                  use_unconfirmed,
+                  fees,
+                  accounts))
+    txns = w.make_signed_transaction_for(address, amount,
                                          use_unconfirmed,
                                          fees,
                                          accounts)
+    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+
+    return txns
 
 
 @dispatcher.method('send_to')
-def send_to(address, amount, use_unconfirmed, fees, accounts):
+def send_to(address, amount,
+            use_unconfirmed=False, fees=None,
+            accounts=[]):
     """ RPC method to send BTC to an address.
 
     Args:
@@ -249,11 +282,20 @@ def send_to(address, amount, use_unconfirmed, fees, accounts):
         list: List of txids used to send the coins.
     """
     check_unlocked()
-    return wallet['obj'].send_to(address=address,
+    logger.debug("send_to(%s, %d, %r, %r, %r)" %
+                 (address,
+                  amount,
+                  use_unconfirmed,
+                  fees,
+                  accounts))
+    txns = wallet['obj'].send_to(address=address,
                                  amount=amount,
                                  use_unconfirmed=use_unconfirmed,
                                  fees=fees,
                                  accounts=accounts)
+    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+
+    return txns
 
 
 @dispatcher.method('unlock')
@@ -265,11 +307,14 @@ def unlock_wallet(passphrase):
     """
     global wallet
     if not wallet['locked']:
-        raise ServerError("Wallet is already unlocked or does not use a passphrase.")
+        raise ServerError(
+            "Wallet is already unlocked or does not use a passphrase.")
 
+    logger.info("Wallet unlocked. Loading ...")
     load_wallet(wallet_path=wallet['path'],
                 data_provider=wallet['data_provider'],
                 passphrase=passphrase)
+    logger.info("... loading complete.")
 
 
 @dispatcher.method('is_locked')
@@ -285,7 +330,7 @@ def is_locked():
 @dispatcher.method('wallet_path')
 def wallet_path():
     """ RPC method to return the wallet path of the currently loaded wallet.
-    
+
     Returns:
         str: The path to the currently loaded wallet.
     """
@@ -303,6 +348,7 @@ def sync_wallet_file():
 def create_account(name):
     """ RPC method to create an account
     """
+    logger.debug("create_account(%r)" % (name))
     return wallet['obj'].create_account(name)
 
 
@@ -347,25 +393,49 @@ def sweep(address, accounts=[]):
               default=DEF_WALLET_UPDATE_INTERVAL,
               show_default=True,
               help='How often to update wallet data (seconds)')
+@click.option('--debug', '-d',
+              is_flag=True,
+              help='Sets the logging level to debug')
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, blockchain_data_provider,
-         chain_api_key_id, chain_api_key_secret, data_update_interval):
+         chain_api_key_id, chain_api_key_secret, data_update_interval,
+         debug):
     """ Two1 Wallet daemon
     """
+    wp = Path(wallet_path)
+    # Initialize some logging handlers
+    ch = logging.handlers.TimedRotatingFileHandler(wp.dirname().joinpath("walletd.log"),
+                                                   when='midnight',
+                                                   backupCount=5)
+    ch_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s')
+    ch.setFormatter(ch_formatter)
+    logger.addHandler(ch)
+
+    logger.setLevel('DEBUG' if debug else 'INFO')
+
     global wallet
 
     wallet['path'] = wallet_path
     if data_update_interval is not None:
         wallet['update_interval'] = data_update_interval
 
+    logger.info("Starting daemon for wallet %s" % wallet_path)
+    logger.info("Blockchain data provider: %s" %
+                ctx.obj['data_provider'].__class__.__name__)
+    logger.info("Update interval: %ds" % data_update_interval)
+
     # Check whether the wallet is locked
     if Two1Wallet.is_locked(wallet_path):
         wallet['locked'] = True
+        logger.info("Wallet is locked.")
     else:
+        logger.info("Wallet unlocked. Loading ...")
         load_wallet(wallet_path=wallet_path,
                     data_provider=ctx.obj['data_provider'],
                     passphrase="")
+        logger.info("... loading complete.")
 
     # Setup a signal handler
     signal.signal(signal.SIGINT, sig_handler)
@@ -376,6 +446,7 @@ def main(ctx, wallet_path, blockchain_data_provider,
                                      daemon=True)
     server_thread.start()
     update_thread.start()
+    logger.info("Daemon started.")
     server_thread.join()
 
     rpc_server.server_close()
