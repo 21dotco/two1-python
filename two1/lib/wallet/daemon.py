@@ -27,6 +27,7 @@ wallet = dict(obj=None,
               path=None,
               data_provider=None,
               update_interval=DEF_WALLET_UPDATE_INTERVAL)
+last_exception_message = ""
 
 
 def sig_handler(sig_num, stack_frame):
@@ -41,6 +42,14 @@ def sig_handler(sig_num, stack_frame):
     """
     logger.info("Shutting down...")
     rpc_server.shutdown()
+
+
+def _handle_exception(e):
+    global last_exception_message
+
+    last_exception_message = str(e)
+    logger.debug("error: %s" % last_exception_message)
+    raise ServerError(last_exception_message)
 
 
 def data_updater():
@@ -71,17 +80,28 @@ def load_wallet(wallet_path, data_provider, passphrase):
     """
     global wallet
 
-    wallet['obj'] = Two1Wallet(params_or_file=wallet_path,
-                               data_provider=data_provider,
-                               passphrase=passphrase)
-    wallet['locked'] = False
+    try:
+        wallet['obj'] = Two1Wallet(params_or_file=wallet_path,
+                                   data_provider=data_provider,
+                                   passphrase=passphrase)
+        wallet['locked'] = False
+    except Exception:
+        logger.exception("Wallet loading failed!")
 
 
 def check_unlocked():
     """ Raises an error if the wallet is locked.
     """
     if wallet['obj'] is None or wallet['locked']:
-        raise ServerError("Wallet is locked. Use the 'unlock' command with the passphrase as an arg.")
+        last_exception_message = "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."
+        raise ServerError()
+
+
+@dispatcher.method('exception_info')
+def exception_info():
+    """ RPC method to get info about the last exception.
+    """
+    return dict(message=last_exception_message)
 
 
 @dispatcher.method('confirmed_balance')
@@ -93,7 +113,10 @@ def confirmed_balance(account=None):
     """
     check_unlocked()
     logger.debug("confirmed_balance(%r)" % (account))
-    return wallet['obj'].confirmed_balance(account)
+    try:
+        return wallet['obj'].confirmed_balance(account)
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('unconfirmed_balance')
@@ -105,7 +128,10 @@ def unconfirmed_balance(account=None):
     """
     check_unlocked()
     logger.debug("unconfirmed_balance(%r)" % (account))
-    return wallet['obj'].unconfirmed_balance(account)
+    try:
+        return wallet['obj'].unconfirmed_balance(account)
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('get_private_for_public')
@@ -141,7 +167,10 @@ def current_address():
     """
     check_unlocked()
     logger.debug("current_address()")
-    return wallet['obj'].current_address
+    try:
+        return wallet['obj'].current_address
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('get_change_address')
@@ -153,7 +182,10 @@ def get_change_address(account=None):
     """
     check_unlocked()
     logger.debug("get_change_address(%r)" % (account))
-    return wallet['obj'].get_change_address(account)
+    try:
+        return wallet['obj'].get_change_address(account)
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('get_payout_address')
@@ -167,7 +199,10 @@ def get_payout_address(account=None):
     """
     check_unlocked()
     logger.debug("get_payout_address(%r)" % (account))
-    return wallet['obj'].get_payout_address(account)
+    try:
+        return wallet['obj'].get_payout_address(account)
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('get_change_public_key')
@@ -179,7 +214,10 @@ def get_change_public_key(account=None):
     """
     check_unlocked()
     logger.debug("get_change_public_key(%r)" % (account))
-    return wallet['obj'].get_change_public_key(account).to_b58check()
+    try:
+        return wallet['obj'].get_change_public_key(account).to_b58check()
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('get_payout_public_key')
@@ -191,7 +229,10 @@ def get_payout_public_key(account=None):
     """
     check_unlocked()
     logger.debug("get_payout_public_key(%r)" % (account))
-    return wallet['obj'].get_payout_public_key(account).to_b58check()
+    try:
+        return wallet['obj'].get_payout_public_key(account).to_b58check()
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('build_signed_transaction')
@@ -218,14 +259,16 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
                   use_unconfirmed,
                   fees,
                   accounts))
-    txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
-                                                  use_unconfirmed,
-                                                  fees,
-                                                  accounts)
-    txns_hex = [t.to_hex() for t in txns]
-    logger.debug("txns: %r" % (txns_hex))
-
-    return txns_hex
+    try:
+        txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
+                                                      use_unconfirmed,
+                                                      fees,
+                                                      accounts)
+        txns_hex = [t.to_hex() for t in txns]
+        logger.debug("txns: %r" % (txns_hex))
+        return txns_hex
+    except Exception as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('make_signed_transaction_for')
@@ -256,13 +299,16 @@ def make_signed_transaction_for(address, amount,
                   use_unconfirmed,
                   fees,
                   accounts))
-    txns = w.make_signed_transaction_for(address, amount,
-                                         use_unconfirmed,
-                                         fees,
-                                         accounts)
-    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    try:
+        txns = w.make_signed_transaction_for(address, amount,
+                                             use_unconfirmed,
+                                             fees,
+                                             accounts)
+        logger.debug("txns: %r" % ([t['txid'] for t in txns]))
 
-    return txns
+        return txns
+    except Exception as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('send_to')
@@ -288,14 +334,17 @@ def send_to(address, amount,
                   use_unconfirmed,
                   fees,
                   accounts))
-    txns = wallet['obj'].send_to(address=address,
-                                 amount=amount,
-                                 use_unconfirmed=use_unconfirmed,
-                                 fees=fees,
-                                 accounts=accounts)
-    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    try:
+        txns = wallet['obj'].send_to(address=address,
+                                     amount=amount,
+                                     use_unconfirmed=use_unconfirmed,
+                                     fees=fees,
+                                     accounts=accounts)
+        logger.debug("txns: %r" % ([t['txid'] for t in txns]))
 
-    return txns
+        return txns
+    except Exception as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('unlock')
@@ -307,8 +356,7 @@ def unlock_wallet(passphrase):
     """
     global wallet
     if not wallet['locked']:
-        raise ServerError(
-            "Wallet is already unlocked or does not use a passphrase.")
+        _handle_exception("Wallet is already unlocked or does not use a passphrase.")
 
     logger.info("Wallet unlocked. Loading ...")
     load_wallet(wallet_path=wallet['path'],
@@ -341,7 +389,10 @@ def wallet_path():
 def sync_wallet_file():
     """ RPC method to trigger a write to the wallet file.
     """
-    return wallet['obj'].sync_wallet_file()
+    try:
+        return wallet['obj'].sync_wallet_file()
+    except Exception as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('create_account')
@@ -349,7 +400,10 @@ def create_account(name):
     """ RPC method to create an account
     """
     logger.debug("create_account(%r)" % (name))
-    return wallet['obj'].create_account(name)
+    try:
+        return wallet['obj'].create_account(name)
+    except (ValueError, TypeError) as e:
+        _handle_exception(e)
 
 
 @dispatcher.method('account_names')
