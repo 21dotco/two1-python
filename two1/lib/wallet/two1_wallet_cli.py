@@ -414,7 +414,13 @@ def create_account(ctx, name):
     """ Creates a named account within the wallet
     """
     w = ctx.obj['wallet']
-    rv = w.create_account(name)
+    rv = False
+    try:
+        rv = w.create_account(name)
+    except exceptions.AccountCreationError as e:
+        click.echo(str(e))
+    except ReceivedErrorResponse:
+        click.echo(w.exception_info()['message'])
 
     if rv:
         click.echo("Successfully created account '%s'." % name)
