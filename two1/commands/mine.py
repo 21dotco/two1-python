@@ -1,18 +1,18 @@
 import json
 import subprocess
 import time
-
 import base64
-from collections import namedtuple
 import click
 import os
 import random
+from collections import namedtuple
 from two1.commands.config import pass_config
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory, login
 from two1.lib.server.machine_auth import MachineAuth
 import two1.commands.config as cmd_config
+from two1.commands import status
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
@@ -109,24 +109,9 @@ def mine(config):
         config.log("Mining Complete")
         payment_details = json.loads(payment_result.text)
         satoshi = payment_details["amount"]
-        config.log("You mined {} ฿\n".format(satoshi), fg="yellow")
-        balance_u += satoshi
-        try:
-            bitcoin_address = config.wallet.current_address
-        except AttributeError:
-            bitcoin_address = "Not Set"
-
-        config.log("Setting your payout address to {}\n".format(payout_address))
-
-        pending_transactions = balance_u - balance_c
-        config.log('''Wallet''', fg='magenta')
-        config.log('''\
-    Balance (confirmed)   :   {} Satoshi
-    Pending Transactions  :   {} Satoshi
-    Payout Address        :   {}
-'''
-                   .format(balance_c, pending_transactions, bitcoin_address)
-                   )
+        config.log("You mined {} ฿".format(satoshi), fg="yellow")
+        # print earning status after mining
+        status.status_earnings(config, client)
 
 
 # Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
