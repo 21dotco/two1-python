@@ -259,6 +259,8 @@ def payout_address(ctx, account):
         click.echo(w.get_payout_address(account))
     except (ValueError, TypeError) as e:
         click.echo(str(e))
+    except ReceivedErrorResponse as e:
+        click.echo(w.exception_info()['message'])
 
 
 @click.command(name="confirmedbalance")
@@ -278,8 +280,7 @@ def confirmed_balance(ctx, account):
     except (ValueError, TypeError) as e:
         click.echo(str(e))
     except ReceivedErrorResponse as e:
-        exc_info = w.exception_info()
-        click.echo(exc_info['message'])
+        click.echo(w.exception_info()['message'])
 
 
 @click.command()
@@ -299,8 +300,7 @@ def balance(ctx, account):
     except (ValueError, TypeError) as e:
         click.echo(str(e))
     except ReceivedErrorResponse as e:
-        exc_info = w.exception_info()
-        click.echo(exc_info['message'])
+        click.echo(w.exception_info()['message'])
 
 
 @click.command(name='listbalances')
@@ -362,6 +362,8 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                        (amount, address))
             for t in txids:
                 click.echo(t['txid'])
+    except ReceivedErrorResponse as e:
+        click.echo(w.exception_info()['message'])
     except Exception as e:
         tb = e.__traceback__
         logger.error("Problem sending coins: %s" % e)
@@ -396,6 +398,8 @@ def spread_utxos(ctx, num_addresses, threshold, account):
             for t in txids:
                 click.echo(t['txid'])
 
+    except ReceivedErrorResponse as e:
+        click.echo(w.exception_info()['message'])
     except Exception as e:
         logger.exception("Problem spreading utxos:", exc_info=e)
         if not logger.hasHandlers():
