@@ -26,6 +26,7 @@ from two1.examples.bitcoin_auth.helpers.bitcoin_auth_provider_helper import (
 from .models import BitcoinToken
 from .pricing import get_price_for_request
 from .exceptions import PaymentRequiredException
+from .exceptions import ServiceUnavailable
 
 
 class BaseBitcoinAuthentication(BaseAuthentication):
@@ -286,5 +287,7 @@ class BitChequeAuthentication(BaseAuthentication):
                     raise PaymentRequiredException(
                         verification_response.json()["message"]
                     )
+                else:
+                    raise ServiceUnavailable
         except requests.ConnectionError:
             return False
