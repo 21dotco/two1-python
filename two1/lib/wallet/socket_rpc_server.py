@@ -3,6 +3,7 @@ import socket
 import socketserver
 
 import tempfile
+from jsonrpcserver import dispatcher
 from jsonrpcclient.server import Server
 from path import Path
 from two1.lib.wallet.exceptions import DaemonNotRunningError
@@ -23,23 +24,23 @@ class UnixSocketJSONRPCServer(socketserver.UnixStreamServer):
         def handle(self):
             self.data = self.request.recv(1024).strip().decode()
             try:
-                response = self.server.dispatcher.dispatch_str(self.data)[0]
+                response = dispatcher.dispatch(self.server._methods, self.data)
             except Exception as e:
                 print("Do something with this: %s" % e)
                 raise
 
             try:
-                self.request.sendall(json.dumps(response).encode())
+                self.request.sendall(json.dumps(response.json).encode())
             except BrokenPipeError:
                 pass
             except Exception as e:
                 print("Unable to send response. Error: %s" % e)
 
-    def __init__(self, dispatcher):
+    def __init__(self, dispatcher_methods):
         if self.SOCKET_FILE_NAME.exists():
             self.SOCKET_FILE_NAME.unlink()
 
-        self.dispatcher = dispatcher
+        self._methods = dispatcher_methods
 
         super().__init__(self.SOCKET_FILE_NAME,
                          UnixSocketJSONRPCServer.JSONRPCHandler)

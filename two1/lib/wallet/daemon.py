@@ -6,7 +6,7 @@ import threading
 import time
 
 import click
-from jsonrpcserver import Dispatcher
+from jsonrpcserver import Methods
 from jsonrpcserver.exceptions import ServerError
 from path import Path
 from two1.lib.bitcoin.crypto import PublicKey
@@ -22,8 +22,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEF_WALLET_UPDATE_INTERVAL = 25  # seconds
 
 logger = logging.getLogger('walletd')
-dispatcher = Dispatcher()
-rpc_server = UnixSocketJSONRPCServer(dispatcher)
+methods = Methods()
+rpc_server = UnixSocketJSONRPCServer(methods)
 wallet = dict(obj=None,
               locked=False,
               path=None,
@@ -99,7 +99,7 @@ def check_unlocked():
         raise ServerError()
 
 
-@dispatcher.method('exception_info')
+@methods.add
 def exception_info():
     """ RPC method to get info about the last exception.
     """
@@ -107,7 +107,7 @@ def exception_info():
             'type': last_exception.__class__.__name__}
 
 
-@dispatcher.method('confirmed_balance')
+@methods.add
 def confirmed_balance(account=None):
     """ RPC method to get the current confirmed balance.
 
@@ -122,7 +122,7 @@ def confirmed_balance(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('unconfirmed_balance')
+@methods.add
 def unconfirmed_balance(account=None):
     """ RPC method to get the current unconfirmed balance.
 
@@ -137,7 +137,7 @@ def unconfirmed_balance(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('get_private_for_public')
+@methods.add
 def get_private_for_public(public_key):
     """ RPC method to get the private key for the given public_key, if it is
         a part of this wallet.
@@ -161,7 +161,7 @@ def get_private_for_public(public_key):
     return priv_key.to_b58check() if priv_key is not None else None
 
 
-@dispatcher.method('current_address')
+@methods.add
 def current_address():
     """ RPC method to get the current payout address.
 
@@ -176,7 +176,7 @@ def current_address():
         _handle_exception(e)
 
 
-@dispatcher.method('get_change_address')
+@methods.add
 def get_change_address(account=None):
     """ RPC method to get the current change address.
 
@@ -191,7 +191,7 @@ def get_change_address(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('get_payout_address')
+@methods.add
 def get_payout_address(account=None):
     """ RPC method to get the current payout address.
 
@@ -208,7 +208,7 @@ def get_payout_address(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('get_change_public_key')
+@methods.add
 def get_change_public_key(account=None):
     """ RPC method to get the current change public key.
 
@@ -223,7 +223,7 @@ def get_change_public_key(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('get_payout_public_key')
+@methods.add
 def get_payout_public_key(account=None):
     """ RPC method to get the current payout public key.
 
@@ -238,7 +238,7 @@ def get_payout_public_key(account=None):
         _handle_exception(e)
 
 
-@dispatcher.method('build_signed_transaction')
+@methods.add
 def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
                              fees=None, accounts=[]):
     """ RPC method to build and sign a transaction.
@@ -274,7 +274,7 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
         _handle_exception(e)
 
 
-@dispatcher.method('make_signed_transaction_for')
+@methods.add
 def make_signed_transaction_for(address, amount,
                                 use_unconfirmed=False, fees=None,
                                 accounts=[]):
@@ -314,7 +314,7 @@ def make_signed_transaction_for(address, amount,
         _handle_exception(e)
 
 
-@dispatcher.method('send_to')
+@methods.add
 def send_to(address, amount,
             use_unconfirmed=False, fees=None,
             accounts=[]):
@@ -350,8 +350,8 @@ def send_to(address, amount,
         _handle_exception(e)
 
 
-@dispatcher.method('unlock')
-def unlock_wallet(passphrase):
+@methods.add
+def unlock(passphrase):
     """ RPC method to unlock wallet.
 
     Args:
@@ -368,7 +368,7 @@ def unlock_wallet(passphrase):
     logger.info("... loading complete.")
 
 
-@dispatcher.method('is_locked')
+@methods.add
 def is_locked():
     """ RPC method to determine whether the wallet is currently locked.
 
@@ -378,7 +378,7 @@ def is_locked():
     return wallet['locked']
 
 
-@dispatcher.method('wallet_path')
+@methods.add
 def wallet_path():
     """ RPC method to return the wallet path of the currently loaded wallet.
 
@@ -388,7 +388,7 @@ def wallet_path():
     return wallet['path']
 
 
-@dispatcher.method('sync_wallet_file')
+@methods.add
 def sync_wallet_file():
     """ RPC method to trigger a write to the wallet file.
     """
@@ -398,7 +398,7 @@ def sync_wallet_file():
         _handle_exception(e)
 
 
-@dispatcher.method('create_account')
+@methods.add
 def create_account(name):
     """ RPC method to create an account
     """
@@ -409,14 +409,14 @@ def create_account(name):
         _handle_exception(e)
 
 
-@dispatcher.method('account_names')
+@methods.add
 def account_names():
     """ RPC method to return all account names
     """
     return wallet['obj'].account_names
 
 
-@dispatcher.method('sweep')
+@methods.add
 def sweep(address, accounts=[]):
     """ RPC method to sweep balance to a single address
     """
