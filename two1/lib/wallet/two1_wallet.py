@@ -1249,9 +1249,11 @@ class Two1Wallet(BaseWallet):
             for c in change_addresses:
                 addresses_and_amounts[c] = per_addr_amount
 
-            txids += self.send_to_multiple(addresses_and_amounts,
-                                           False,
-                                           [acct])
+            txids += self.send_to_multiple(addresses_and_amounts=addresses_and_amounts,
+                                           use_unconfirmed=False,
+                                           fees=fees,
+                                           accounts=[acct])
+
 
             self.utxo_selector = curr_utxo_selector
 
