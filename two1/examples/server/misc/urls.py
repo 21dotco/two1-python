@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from two1.examples.server.misc import barcode, charts, language, speech, face_detect, phone, weather, image_processing, \
-    scraper, twitter, blackjack
+    scraper, twitter, blackjack, content
 
 urlpatterns = [
     url(r'^barcode/generate-qr$', barcode.generate_qr),
@@ -23,6 +23,7 @@ urlpatterns = [
     url(r'^weather/radar$', weather.radar),
     url(r'^image/resize$', image_processing.resize),
     url(r'^blackjack/$', blackjack.createGame),
+    url(r'^content/wsj$', content.wsj),
     url(r'^blackjack/(?P<game_token>[^/]+)/$', blackjack.getGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/hit$', blackjack.hitGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/stand$', blackjack.standGame),
