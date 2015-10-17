@@ -7,6 +7,7 @@ import pkg_resources
 from codecs import open
 from path import path
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.lib.wallet import daemonizer
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet import test_wallet
@@ -88,6 +89,20 @@ class Config(object):
                 click.pause(UxString.create_wallet_done)
 
             wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
+
+            # Start the daemon, if:
+            # 1. It's not already started
+            # 2. It's using the default wallet path
+            # 3. We're not in a virtualenv
+            d = daemonizer.get_daemonizer()
+            if Two1Wallet.is_configured() and \
+               wallet_path == Two1Wallet.DEFAULT_WALLET_PATH and \
+               not os.environ.get("VIRTUAL_ENV") and \
+               not d.started():
+                d.start()
+                if d.started():
+                    click.echo(UxString.wallet_daemon_started)
+
             self.wallet = Two1WalletProxy(wallet_path=wallet_path,
                                           data_provider=dp)
 

@@ -11,6 +11,7 @@ class UxString:
     create_wallet = "You do not have a Bitcoin wallet configured. "\
         "Let's create one. Press any key ...\n"
     create_wallet_done = "\nWallet successfully created. Press any key ..."
+    wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
 
     # updater
@@ -39,4 +40,3 @@ class UxString:
         file_load = "file %s does not exist"
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
-

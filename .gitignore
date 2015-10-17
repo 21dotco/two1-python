@@ -100,8 +100,6 @@ venv/
 docs/_build/
 README.html
 
-*__init__.py
-
 # Emacs backup and TAGS files
 *#
 *~
