@@ -19,17 +19,44 @@ from two1.lib.wallet.two1_wallet_cli import validate_data_provider
 from two1.lib.wallet.two1_wallet_cli import WALLET_VERSION
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-DEF_WALLET_UPDATE_INTERVAL = 25  # seconds
+DEF_WALLET_UPDATE_INTERVAL = 25   # seconds
+MAX_WALLET_UPDATE_INTERVAL = 300  # seconds
 
 logger = logging.getLogger('walletd')
 methods = Methods()
-rpc_server = UnixSocketJSONRPCServer(methods)
 wallet = dict(obj=None,
               locked=False,
               path=None,
               data_provider=None,
-              update_interval=DEF_WALLET_UPDATE_INTERVAL)
+              update_info=dict(interval=DEF_WALLET_UPDATE_INTERVAL,
+                               last_update=time.time(),
+                               last_connection=time.time(),
+                               in_need=False))
 last_exception = None
+wallet_dict_lock = threading.Lock()
+
+
+def track_connections_cb(data):
+    """ Keep track of connection times to dynamically
+        update the update interval. This gets called by
+        the RPC server thread as a callback.
+    """
+    now = time.time()
+    since_last = now - wallet['update_info']['last_update']
+    wallet['update_info']['last_connection'] = now
+
+    if since_last > DEF_WALLET_UPDATE_INTERVAL:
+        if wallet_dict_lock.acquire(True, 0.01):
+            wallet['update_info']['in_need'] = True
+            wallet_dict_lock.release()
+
+    curr_interval = wallet['update_info']['interval']
+    if curr_interval > DEF_WALLET_UPDATE_INTERVAL:
+        if wallet_dict_lock.acquire(True, 0.01):
+            logger.info("Resetting update interval to %ds" %
+                        DEF_WALLET_UPDATE_INTERVAL)
+            wallet['update_info']['interval'] = DEF_WALLET_UPDATE_INTERVAL
+        wallet_dict_lock.release()
 
 
 def sig_handler(sig_num, stack_frame):
@@ -54,6 +81,44 @@ def _handle_exception(e):
     raise ServerError(str(last_exception))
 
 
+def do_update(block_on_acquire=True):
+    """ Updates the wallet info.
+    """
+    if wallet['obj']:
+        lock_acquired = False
+        try:
+            if wallet_dict_lock.acquire(block_on_acquire):
+                lock_acquired = True
+                logger.debug("Starting wallet update ...")
+                wallet['obj']._update_account_balances()
+                wallet['update_info']['last_update'] = time.time()
+                logger.debug("Completed update.")
+
+                if wallet['update_info']['in_need']:
+                    wallet['update_info']['in_need'] = False
+
+        except Exception as e:
+            logger.error("Couldn't update balances: %s" % e)
+        finally:
+
+            # Check if we should update the interval
+            curr_interval = wallet['update_info']['interval']
+            since_last_conn = int(
+                time.time() - wallet['update_info']['last_connection'])
+            if since_last_conn > curr_interval and \
+               curr_interval < MAX_WALLET_UPDATE_INTERVAL:
+                new_interval = 2 * curr_interval
+                # Clamp to max
+                if new_interval > MAX_WALLET_UPDATE_INTERVAL:
+                    new_interval = MAX_WALLET_UPDATE_INTERVAL
+                wallet['update_info']['interval'] = new_interval
+                logger.info("No connections in %ds. Setting interval to %ds." %
+                            (since_last_conn,
+                             new_interval))
+            if lock_acquired:
+                wallet_dict_lock.release()
+
+
 def data_updater():
     """ Update thread target.
 
@@ -62,13 +127,14 @@ def data_updater():
     """
     # This is a daemon thread so no need to explicitly
     # poll for any shutdown events.
+    sleep_time = 0
     while True:
-        if wallet['obj']:
-            try:
-                wallet['obj']._update_account_balances()
-            except Exception as e:
-                logger.error("Couldn't update balances: %s" % e)
-        time.sleep(wallet['update_interval'])
+        interval = wallet['update_info']['interval']
+        if time.time() > sleep_time + interval or \
+           wallet['update_info']['in_need']:
+            do_update()
+            sleep_time = time.time()
+        time.sleep(1)
 
 
 def load_wallet(wallet_path, data_provider, passphrase):
@@ -464,6 +530,8 @@ def main(ctx, wallet_path, blockchain_data_provider,
          debug):
     """ Two1 Wallet daemon
     """
+    global DEF_WALLET_UPDATE_INTERVAL
+
     wp = Path(wallet_path)
     # Initialize some logging handlers
     ch = logging.handlers.TimedRotatingFileHandler(wp.dirname().joinpath("walletd.log"),
@@ -480,7 +548,8 @@ def main(ctx, wallet_path, blockchain_data_provider,
 
     wallet['path'] = wallet_path
     if data_update_interval is not None:
-        wallet['update_interval'] = data_update_interval
+        DEF_WALLET_UPDATE_INTERVAL = data_update_interval
+        wallet['update_info']['interval'] = data_update_interval
 
     logger.info("Starting daemon for wallet %s" % wallet_path)
     logger.info("Blockchain data provider: %s" %
@@ -515,4 +584,6 @@ def main(ctx, wallet_path, blockchain_data_provider,
 
 
 if __name__ == "__main__":
+    rpc_server = UnixSocketJSONRPCServer(methods,
+                                         track_connections_cb)
     main()
