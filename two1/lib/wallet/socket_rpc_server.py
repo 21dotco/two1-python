@@ -24,6 +24,8 @@ class UnixSocketJSONRPCServer(socketserver.UnixStreamServer):
         def handle(self):
             self.data = self.request.recv(1024).strip().decode()
             try:
+                if self.server._request_cb is not None:
+                    self.server._request_cb(self.data)
                 response = dispatcher.dispatch(self.server._methods, self.data)
             except Exception as e:
                 print("Do something with this: %s" % e)
@@ -36,11 +38,12 @@ class UnixSocketJSONRPCServer(socketserver.UnixStreamServer):
             except Exception as e:
                 print("Unable to send response. Error: %s" % e)
 
-    def __init__(self, dispatcher_methods):
+    def __init__(self, dispatcher_methods, request_cb=None):
         if self.SOCKET_FILE_NAME.exists():
             self.SOCKET_FILE_NAME.unlink()
 
         self._methods = dispatcher_methods
+        self._request_cb = request_cb
 
         super().__init__(self.SOCKET_FILE_NAME,
                          UnixSocketJSONRPCServer.JSONRPCHandler)
