@@ -71,7 +71,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=['two1', 'two1.lib', 'two1.commands', 'two1.lib.bitcoin',
               'two1.lib.mining', 'two1.lib.server', 'two1.lib.wallet', 'two1.lib.crypto',
-              'two1.lib.blockchain', 'two1.lib.bitcurl',
+              'two1.lib.blockchain', 'two1.lib.bitcurl', 'two1.lib.util',
               'two1.examples.server',
               'two1.examples.bitcoin_auth', 'two1.examples.server.misc',
               'two1.examples.server.scipy_aas'],
