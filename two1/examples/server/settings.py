@@ -160,6 +160,15 @@ BITCHEQUE_VERIFICIATION_URL = os.environ.get(
 # allows posting "paid" as tx
 BITSERV_DEBUG = True
 
+# WSJ creds for /content/wsj url
+WSJ_USERNAME = os.environ.get(
+    "WSJ_USERNAME",
+)
+
+WSJ_PASSWORD = os.environ.get(
+    "WSJ_PASSWORD",
+)
+
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
