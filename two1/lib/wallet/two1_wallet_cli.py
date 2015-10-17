@@ -166,7 +166,7 @@ def main(ctx, wallet_path, passphrase,
     ctx.obj['wallet_path'] = wallet_path
     ctx.obj['passphrase'] = passphrase
 
-    if ctx.invoked_subcommand not in ['create', 'startdaemon']:
+    if ctx.invoked_subcommand not in ['create', 'startdaemon', 'stopdaemon']:
         p = get_passphrase() if passphrase else ''
 
         try:
