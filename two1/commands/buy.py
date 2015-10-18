@@ -1,12 +1,11 @@
-import datetime
-
 import click
+import datetime
 import re
+
 from two1.commands.config import pass_config
 from two1.lib.bitcurl.bitrequests import BitRequests
 
 
-DEFAULT_SELLER_NAME = "---"
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
     # domain...
@@ -19,69 +18,48 @@ URL_REGEXP = re.compile(
 
 @click.command()
 @click.argument('resource', nargs=1)
-@click.option('--onchain', default=False, is_flag=True, help="Perform an on-chain transaction")
-@click.option('--data', default=None, help="The data/body to send to the seller")
-@click.option('--max_price',  default=5000, help="The max amount to pay for the resource")
-@click.option('--output', type=click.File('wb'), help="A file to store the seller's response")
-@click.option('--input', type=click.File('rb'), help="A file to send to the seller")
+@click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
+@click.option('-d', '--data', default=None, help="Data to send in HTTP body")
+@click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
+@click.option('-o', '--output', 'output_file', type=click.File('wb'), help="Output file")
+@click.option('-p', '--payment-method', default='bitcheque', type=click.Choice(['bitcheque', 'onchain', 'channel']))
+@click.option('--max-price', default=5000, help="Maximum amount to pay")
 @pass_config
-def buy(config, resource, onchain, data, max_price, output=None, input=None):
-    """Buy internet services with Bitcoin
-        resource - The digital resource to buy from.
+def buy(config, resource, data, method, data_file, output_file, payment_method, max_price):
+    """Buy an API call with Bitcoin.
 
-        example: two1 buy en2cn --data {'text':'This is SPARTA'}
+    \b
+    Example:
+    $ two1 buy en2cn --data '{"text": "This is SPARTA"}'
+    Esto es SPARTA.
+    $
     """
-    # TODO: Kill logger on non verbose?
-    method = "GET"
 
-    # If resource is a URL string then bypass bulk search
-    if bool(URL_REGEXP.match(resource)):
-        # Direct From ClI
+    # If resource is a URL string, then bypass seller search
+    if URL_REGEXP.match(resource):
         target_url = resource
-
-        # TODO: Perform search for exact meta data.
-        seller = DEFAULT_SELLER_NAME
+        seller = target_url
     else:
-        raise ValueError('Endpoint lookup is not implemented!')
-        # Run a search
-        config.log("Looking for best price for {}...".format(resource))
+        raise NotImplementedError('Endpoint search is not implemented!')
 
-        # Extract Data from the search results
-        target_url = ""
-        seller = ""
+    # Change default HTTP method from "GET" to "POST", if we have data
+    if method == "GET" and (data or data_file):
+        method = "POST"
 
-    # Select HTTP method
-    if data or input:
-        method = 'POST'
-
-    # Detect Detect Data is raw or file ref
-    target_data = None
-    if isinstance(data, str):
-        try:
-            # NOTE: I/O bound?
-            target_data = open(data, 'r')
-        except OSError:
-            target_data = data
-
-    # Catch Error?
-    if input:
-        files = {'file': (input.name, input)}
-    else:
-        files = None
+    # Make the request
     try:
-        br = BitRequests(config, "onchain" if onchain else "bitcheque")
+        br = BitRequests(config, payment_method)
         res = getattr(br, method.lower())(
             target_url,
-            data=target_data,
-            files=files
+            data=data or data_file
         )
     except Exception as e:
         config.log( str(e), fg="red")
         return
 
-    # Output the response text to the console
-    if output:
-        output.write(res.content)
+    # Write response text to output file or the console
+    if output_file:
+        output_file.write(res.content)
     else:
         config.log(res.text)
 
