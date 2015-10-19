@@ -35,6 +35,7 @@ from two1.commands.sell import sell_with_subcommand
 from two1.commands.sell_file import sell_file
 from two1.commands.status import status
 from two1.commands.update import update
+from two1.commands.setup import setup
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -109,6 +110,7 @@ sell_with_subcommand.add_command(sell_file, name='file')
 main.add_command(sell_with_subcommand, name='sell')
 main.add_command(status)
 main.add_command(update)
+main.add_command(setup)
 
 if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL,
