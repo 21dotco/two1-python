@@ -317,13 +317,16 @@ def key_hash_to_address(hash160, version=0x0):
     Returns:
         (bitcoin address): base58 encoded bitcoin address
     """
-    # if 0x in string, strip it
-    if "0x" in hash160:
-        hash160 = hash160[2:]
-    # if it's hex, convert it to a string
     if isinstance(hash160, str):
-        hash160 = hex_str_to_bytes(hash160)
-    address = base58.b58encode_check(bytes([version]) + hash160)
+        # if 0x in string, strip it
+        if "0x" in hash160:
+            h160 = hex_str_to_bytes(hash160[2:])
+        else:
+            h160 = hex_str_to_bytes(hash160)
+    elif isinstance(hash160, bytes):
+        h160 = hash160
+
+    address = base58.b58encode_check(bytes([version]) + h160)
     return address
 
 
