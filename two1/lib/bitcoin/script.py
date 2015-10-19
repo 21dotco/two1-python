@@ -3,8 +3,12 @@ import hashlib
 import re
 import struct
 
+from two1.lib.bitcoin.crypto import PublicKey
+from two1.lib.bitcoin.crypto import Signature
 from two1.lib.bitcoin.exceptions import ParsingError
 from two1.lib.bitcoin.utils import bytes_to_str
+from two1.lib.bitcoin.utils import hash160
+from two1.lib.bitcoin.utils import key_hash_to_address
 from two1.lib.bitcoin.utils import pack_var_str
 from two1.lib.bitcoin.utils import unpack_var_str
 from two1.lib.bitcoin.utils import render_int
@@ -56,6 +60,11 @@ class Script(object):
 
     BTC_OPCODE_REV_TABLE = {v: k for k, v in BTC_OPCODE_TABLE.items()}
     _ser_dispatch_table = None
+
+    P2SH_TESTNET_VERSION = 0xC4
+    P2SH_MAINNET_VERSION = 0x05
+    P2PKH_TESTNET_VERSION = 0x6F
+    P2PKH_MAINNET_VERSION = 0x00
 
     @classmethod
     def _walk_ast(cls, ast, dispatch_table, default_handler=None, data=None):
@@ -343,9 +352,7 @@ class Script(object):
         """
         rv = b""
         if self.is_multisig_redeem():
-            r = hashlib.new('ripemd160')
-            r.update(hashlib.sha256(bytes(self)).digest())
-            rv = r.digest()
+            rv = hash160(bytes(self))
 
         return rv
 
@@ -362,10 +369,45 @@ class Script(object):
         hash160 = self.hash160()
         rv = ""
         if hash160:
-            prefix = bytes([0xC4 if testnet else 0x05])
+            prefix = bytes([self.P2SH_TESTNET_VERSION if testnet else self.P2SH_MAINNET_VERSION])
             rv = base58.b58encode_check(prefix + hash160)
 
         return rv
+
+    def extract_sig_info(self):
+        """ Returns the signature and corresponding public key.
+
+        Returns:
+            dict: Contains three keys:
+                'hash_type': Integer
+                'signature': The DER-encoded signature
+                'public_key': The bytes corresponding the public key.
+        """
+        if len(self.ast) != 2:
+            raise TypeError("Script is not a P2PKH signature script")
+
+        try:
+            sig_hex = self.ast[0]
+            if sig_hex.startswith("0x"):
+                sig_hex = sig_hex[2:]
+            sig_bytes = bytes.fromhex(sig_hex)
+            hash_type = sig_bytes[-1]
+            sig = Signature.from_der(sig_bytes[:-1])
+        except ValueError as e:
+            raise TypeError("Signature does not appear to be valid")
+
+        try:
+            pub_key_hex = self.ast[1]
+            if pub_key_hex.startswith("0x"):
+                pub_key_hex = pub_key_hex[2:]
+            pub_key_bytes = bytes.fromhex(pub_key_hex)
+            pub_key = PublicKey.from_bytes(pub_key_bytes)
+        except ValueError:
+            raise TypeError("Public key does not appear to be valid")
+
+        return dict(hash_type=hash_type,
+                    signature=sig_bytes,
+                    public_key=pub_key_bytes)
 
     def extract_multisig_redeem_info(self):
         """ Returns information about the multisig redeem script
@@ -482,6 +524,19 @@ class Script(object):
 
         return bool(m)
 
+    def is_p2pkh_sig(self):
+        """ Returns whether this script a Pay-to-Public-Key-Hash
+            signature script.
+
+        Returns:
+            bool: True if it is a P2PKH signature script, False otherwise.
+        """
+        try:
+            self.extract_sig_info()
+            return True
+        except TypeError:
+            return False
+
     def is_multisig_redeem(self):
         """ Returns whether this script is a multi-sig redeem script.
 
@@ -522,6 +577,54 @@ class Script(object):
                 return self._ast[i+1]
 
         return None
+
+    def get_addresses(self, testnet=False):
+        """ Returns all addresses found in this script
+
+            For output scripts, P2PKH scripts will return a single
+            address the funds are being sent to. P2SH scripts will
+            return a single address of the script the funds are being
+            sent to.
+
+            For input scripts, only standard signature and
+            multi-signature scripts will return results: the
+            address(es) used to sign. For standard signature scripts,
+            a single address is returned while for multi-sig scripts,
+            all n addresses in the redeem script are returned.
+
+        Args:
+            testnet (bool): True if the addresses are being used on testnet,
+                False if used on mainnet.
+
+        Returns:
+            list: A list of Base58Check encoded bitcoin addresses.
+        """
+        rv = []
+        # Determine script type
+        if self.is_p2pkh():
+            version = self.P2PKH_TESTNET_VERSION if testnet else self.P2PKH_MAINNET_VERSION
+            rv.append(key_hash_to_address(self.get_hash160(), version))
+        elif self.is_p2sh():
+            version = self.P2SH_TESTNET_VERSION if testnet else self.P2SH_MAINNET_VERSION
+            rv.append(key_hash_to_address(self.get_hash160(), version))
+        elif self.is_multisig_sig():
+            # Extract out the info
+            version = self.P2PKH_TESTNET_VERSION if testnet else self.P2PKH_MAINNET_VERSION
+            sig_info = self.extract_multisig_sig_info()
+            redeem_info = sig_info['redeem_script'].extract_multisig_redeem_info()
+            for p in redeem_info['public_keys']:
+                rv.append(key_hash_to_address(hash160(p), version))
+            # Also include the address of the redeem script itself.
+            redeem_version = self.P2SH_TESTNET_VERSION if testnet else self.P2SH_MAINNET_VERSION
+            rv.append(key_hash_to_address(sig_info['redeem_script'].hash160(), redeem_version))
+        elif self.is_p2pkh_sig():
+            version = self.P2PKH_TESTNET_VERSION if testnet else self.P2PKH_MAINNET_VERSION
+            # Normal signature script...
+            sig_info = self.extract_sig_info()
+            rv.append(key_hash_to_address(hash160(sig_info['public_key']),
+                                          version))
+
+        return rv
 
     def remove_op(self, op):
         """ Returns a new script without any OP_<op>'s in it.
