@@ -1,6 +1,7 @@
 import base58
 
 from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str, pack_var_str
 
 
@@ -75,9 +76,14 @@ def test_is_p2pkh():
     s = Script("OP_DUP OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUALVERIFY OP_CHECKSIG")
     assert s.is_p2pkh()
     assert not s.is_multisig_redeem()
+    assert not s.is_p2pkh_sig()
 
     assert not s.address()
 
+    addresses = s.get_addresses()
+    assert len(addresses) == 1
+    assert addresses[0] == '1AYrhH1SAQqhT8w5NguBSogN63ajS6PxNL'
+    
     s = Script.build_p2pkh(bytes.fromhex("68bf827a2fa3b31e53215e5dd19260d21fdf053e"))
     assert s.is_p2pkh()
     
@@ -86,10 +92,24 @@ def test_is_p2pkh():
     assert not s.is_multisig_redeem()
 
 
+def test_is_p2pkh_sig():
+    t = Transaction.from_hex("0100000001205607fb482a03600b736fb0c257dfd4faa49e45db3990e2c4994796031eae6e000000008b483045022100ed84be709227397fb1bc13b749f235e1f98f07ef8216f15da79e926b99d2bdeb02206ff39819d91bc81fecd74e59a721a38b00725389abb9cbecb42ad1c939fd8262014104e674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbefffffffff0128230000000000001976a914f1fd1dc65af03c30fe743ac63cef3a120ffab57d88ac00000000")
+
+    assert t.inputs[0].script.is_p2pkh_sig()
+
+    sig_info = t.inputs[0].script.extract_sig_info()
+    assert bytes_to_str(sig_info['public_key']) == '04e674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbef'
+
+    input_addresses = t.inputs[0].script.get_addresses()
+    assert len(input_addresses) == 1
+    assert input_addresses[0] == '1NKxQnbtKDdL6BY1UaKdrzCxQHfn3TQnqZ'
+
+
 def test_is_p2sh():
     s = Script("OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUAL")
     assert s.is_p2sh()
     assert not s.is_multisig_redeem()
+    assert not s.is_p2pkh_sig()
 
     s = Script.build_p2sh(bytes.fromhex("68bf827a2fa3b31e53215e5dd19260d21fdf053e"))
     assert s.is_p2sh()
@@ -105,6 +125,7 @@ def test_multisig_sig():
     assert sig_script.is_multisig_sig()
 
     r = sig_script.extract_multisig_sig_info()
+    redeem_info = r['redeem_script'].extract_multisig_redeem_info()
     assert len(r['signatures']) == 2
     assert r['redeem_script']
     assert isinstance(r['redeem_script'], Script)
@@ -122,3 +143,10 @@ def test_multisig_sig():
     assert len(r['signatures']) == 1
     assert r['redeem_script']
     assert isinstance(r['redeem_script'], Script)
+
+    sig_addresses = sig_script.get_addresses()
+    assert len(sig_addresses) == redeem_info['n'] + 1
+    assert sig_addresses == ['1JzVFZSN1kxGLTHG41EVvY5gHxLAX7q1Rh',
+                             '14JfSvgEq8A8S7qcvxeaSCxhn1u1L71vo4',
+                             '1Kyy7pxzSKG75L9HhahRZgYoer9FePZL4R',
+                             '347N1Thc213QqfYCz3PZkjoJpNv5b14kBd']
