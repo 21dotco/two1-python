@@ -169,6 +169,12 @@ WSJ_PASSWORD = os.environ.get(
     "WSJ_PASSWORD",
 )
 
+# Azure marketplace creds for MS
+# related API calls
+AZURE_MARKETPLACE_KEY = os.environ.get(
+    "AZURE_MARKETPLACE_KEY"
+)
+
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

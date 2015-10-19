@@ -38,3 +38,4 @@ jsonrpcserver>=3.0.0
 pytest-xdist==1.13.1
 dj-database-url
 psycopg2
+bing-search-api==0.1
