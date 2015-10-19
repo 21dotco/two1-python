@@ -47,3 +47,4 @@ class UxString:
         file_load = "file %s does not exist"
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
+        version_not_found = "Did not find version '%s'. Defaulting to latest."
