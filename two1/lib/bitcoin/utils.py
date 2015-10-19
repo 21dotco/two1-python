@@ -7,21 +7,22 @@ import random
 import struct
 import os
 
-""" This module provides a number of utility/helper functions that are commonly used with
-    Bitcoin related objects. Primarily, the module provides functionality for serializing
-    and deserializing various data types according to Bitcoin serialization rules.
-"""
+""" This module provides a number of utility/helper functions that are
+    commonly used with Bitcoin related objects. Primarily, the module
+    provides functionality for serializing and deserializing various
+    data types according to Bitcoin serialization rules.  """
 
 MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000
+
 
 def rand_bytes(n, secure=True):
     """ Returns n random bytes.
 
     Args:
         n (int): number of bytes to return.
-        secure (bool): If True, uses os.urandom to generate cryptographically secure
-                       random bytes. Otherwise, uses random.randint() which generates
-                       pseudo-random numbers.
+        secure (bool): If True, uses os.urandom to generate
+            cryptographically secure random bytes. Otherwise, uses
+            random.randint() which generates pseudo-random numbers.
 
     Returns:
         b (bytes): n random bytes.
@@ -30,6 +31,7 @@ def rand_bytes(n, secure=True):
         return os.urandom(n)
     else:
         return bytes([random.randint(0, 255) for i in range(n)])
+
 
 def bytes_to_str(b):
     """ Converts bytes into a hex-encoded string.
@@ -42,17 +44,19 @@ def bytes_to_str(b):
     """
     return codecs.encode(b, 'hex_codec').decode('ascii')
 
+
 def hex_str_to_bytes(h):
     """ Converts a hex-encoded string to bytes.
 
     Args:
         h (str): hex-encoded string to convert.
-    
+
     Returns:
         b (bytes): bytes corresponding to h.
     """
     return bytes.fromhex(h)
-    
+
+
 # Is there a better way of doing this?
 def render_int(n):
     """ Renders an int in the shortest possible form.
@@ -86,6 +90,7 @@ def render_int(n):
         r.append(0)
     return bytes(r)
 
+
 def pack_compact_int(i):
     """ See
         https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
@@ -105,12 +110,14 @@ def pack_compact_int(i):
     else:
         return struct.pack('<BQ', 0xff, i)
 
+
 def unpack_compact_int(bytestr):
     """ See
         https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
 
     Args:
-        bytestr (bytes): bytes containing an unsigned integer to be deserialized.
+        bytestr (bytes): bytes containing an unsigned integer to be
+            deserialized.
 
     Returns:
         n (int): deserialized integer.
@@ -128,6 +135,7 @@ def unpack_compact_int(bytestr):
     else:
         return None
 
+
 def pack_u32(i):
     """ Serializes a 32-bit integer into little-endian form.
 
@@ -138,6 +146,7 @@ def pack_u32(i):
         b (bytes): 4 bytes containing the little-endian serialization of i.
     """
     return struct.pack('<I', i)
+
 
 def unpack_u32(b):
     """ Deserializes a 32-bit integer from bytes.
@@ -152,6 +161,7 @@ def unpack_u32(b):
     u32 = struct.unpack('<I', b[0:4])
     return (u32[0], b[4:])
 
+
 def pack_u64(i):
     """ Serializes a 64-bit integer into little-endian form.
 
@@ -162,6 +172,7 @@ def pack_u64(i):
         b (bytes): 8 bytes containing the little-endian serialization of i.
     """
     return struct.pack('<Q', i)
+
 
 def unpack_u64(b):
     """ Deserializes a 64-bit integer from bytes.
@@ -176,6 +187,7 @@ def unpack_u64(b):
     u64 = struct.unpack('<Q', b[0:8])
     return (u64[0], b[8:])
 
+
 def pack_var_str(s):
     """ Serializes a variable length byte stream.
 
@@ -183,13 +195,15 @@ def pack_var_str(s):
         s (bytes): byte stream to serialize
 
     Return:
-        b (bytes): Serialized bytes, prepended with the length of the byte stream.
+        b (bytes): Serialized bytes, prepended with the length of the
+            byte stream.
     """
     return pack_compact_int(len(s)) + s
 
+
 def unpack_var_str(b):
     """ Deserializes a variable length byte stream.
-    
+
     Args:
         b (bytes): variable length byte stream to deserialize
 
@@ -199,6 +213,7 @@ def unpack_var_str(b):
     """
     strlen, b0 = unpack_compact_int(b)
     return (b0[:strlen], b0[strlen:])
+
 
 def bits_to_target(bits):
     """ Decodes the full target from a compact representation.
@@ -214,10 +229,11 @@ def bits_to_target(bits):
     target = (bits & 0xffffff) * (1 << (8 * (shift - 3)))
     return target
 
+
 def bits_to_difficulty(bits):
     """ Determines the difficulty corresponding to bits.
         See: https://en.bitcoin.it/wiki/Difficulty
-    
+
     Args:
         bits (int): Compact target (32 bits)
 
@@ -228,9 +244,10 @@ def bits_to_difficulty(bits):
     target = bits_to_target(bits)
     return MAX_TARGET / target
 
+
 def difficulty_to_target(difficulty):
     """ Converts a difficulty to a long-form target.
-    
+
     Args:
         difficulty (float): The difficulty to return the appropriate target for
 
@@ -239,9 +256,10 @@ def difficulty_to_target(difficulty):
     """
     return int(MAX_TARGET / difficulty)
 
+
 def target_to_bits(target):
     """ Creates a compact target representation for a given target.
-    
+
     Args:
         target (Bignum): The long-form target to make compact.
 
@@ -259,6 +277,7 @@ def target_to_bits(target):
         exponent += 1
     return (exponent << 24) | coefficient
 
+
 def difficulty_to_bits(difficulty):
     """ Converts a difficulty to a compact target.
 
@@ -270,16 +289,17 @@ def difficulty_to_bits(difficulty):
     """
     return target_to_bits(difficulty_to_target(difficulty))
 
+
 def address_to_key_hash(s):
-    """ Given a Bitcoin address decodes the version and 
+    """ Given a Bitcoin address decodes the version and
         RIPEMD-160 hash of the public key.
 
     Args:
         s (bytes): The Bitcoin address to decode
 
     Returns:
-        (version, h160) (tuple): A tuple containing the version and RIPEMD-160
-                                 hash of the public key.
+        (version, h160) (tuple): A tuple containing the version and
+            RIPEMD-160 hash of the public key.
     """
     n = base58.b58decode_check(s)
     version = n[0]
@@ -287,11 +307,12 @@ def address_to_key_hash(s):
     return version, h160
 
 
-def key_hash_to_address(hash160):
+def key_hash_to_address(hash160, version=0x0):
     """Convert RIPEMD-160 hash to bitcoin address.
 
     Args:
         hash160 (bytes/str): bitcoin hash160 to decode
+        version (int): The version prefix
 
     Returns:
         (bitcoin address): base58 encoded bitcoin address
@@ -302,8 +323,23 @@ def key_hash_to_address(hash160):
     # if it's hex, convert it to a string
     if isinstance(hash160, str):
         hash160 = hex_str_to_bytes(hash160)
-    address = base58.b58encode_check(bytes([0]) + hash160)
+    address = base58.b58encode_check(bytes([version]) + hash160)
     return address
+
+
+def hash160(b):
+    """ Computes the HASH160 of b.
+
+    Args:
+        b (bytes): A byte string to compute the HASH160 of.
+
+    Returns:
+        The RIPEMD-160 digest of the SHA256 hash of b.
+    """
+    r = hashlib.new('ripemd160')
+    r.update(hashlib.sha256(b).digest())
+
+    return r.digest()
 
 
 def compute_reward(height):
