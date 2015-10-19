@@ -53,7 +53,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               multiple=True,
               metavar='KEY VALUE',
               help='Overrides a config key/value pair.')
-@click.version_option(TWO1_VERSION)
+@click.version_option(TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
 @docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config):

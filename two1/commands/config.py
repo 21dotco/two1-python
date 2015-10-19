@@ -2,8 +2,8 @@ import sys
 import json
 
 import os
+import two1
 import click
-import pkg_resources
 from codecs import open
 from path import path
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
@@ -22,11 +22,7 @@ TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
 TWO1_POOL_URL = "grid.21-stage.co"
-
-try:
-    TWO1_VERSION = pkg_resources.require("two1")[0].version
-except:
-    TWO1_VERSION = "undefined"
+TWO1_VERSION = two1.__version__
 
 try:
     TWO1_PATH = os.path.dirname(sys.argv[0])
@@ -210,8 +206,8 @@ class Config(object):
 # for the purpose of testing, eg:
 #
 # >>> from two1.commands.search import search
-# >>> search(silent=True)    
-# 
+# >>> search(silent=True)
+#
 # Then you *may* need to pass ensure=True and make sure that Config can
 # self-initialize to a reasonable state purely with default arguments.
 #

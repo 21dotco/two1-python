@@ -38,19 +38,11 @@ install_requires = [
                     'pyserial'
                     ]
 
-# https://www.python.org/dev/peps/pep-0440/
-VERSION=[0,2,1]
-# This build number is set by the build environment(Jenkins)
-# This is only intended to be used for internal builds or
-# development builds.
-# Release builds are created manually and the version is
-# updated manually in those cases
-if os.environ.get("BUILD_NUMBER"):
-    VERSION.append("dev"+os.environ.get("BUILD_NUMBER"))
+version = __import__('two1').__version__
 
 setup(
     name='two1',
-    version=".".join([str(n) for n in VERSION]),
+    version=version,
     description='Buy and sell anything on the internet with Bitcoin.',
     long_description=long_description,
     url='https://github.com/21dotco/two1',
@@ -60,7 +52,7 @@ setup(
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Internet',
         'License :: OSI Approved :: MIT License',

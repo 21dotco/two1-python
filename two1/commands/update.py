@@ -18,8 +18,9 @@ from two1.commands.config import pass_config
 
 
 @click.command()
+@click.argument('version', nargs=1, required=False, default='latest')
 @pass_config
-def update(config):
+def update(config, version):
     """ Keep 21 App up to date"""
     _update(config)
 
@@ -27,12 +28,12 @@ def update(config):
 @capture_usage
 def _update(config):
     click.echo(UxString.update_check)
-    update_two1_package(config, force_update_check=True)
+    update_two1_package(config, version, force_update_check=True)
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + TWO1_PACKAGE_NAME
 
 
-def update_two1_package(config, force_update_check=False):
+def update_two1_package(config, version, force_update_check=False):
     """ Handles the updating of the CLI software including any dependencies.
 
         How does the update work?
@@ -49,6 +50,8 @@ def update_two1_package(config, force_update_check=False):
 
         Args:
             config (Config): Config context object
+            version (string): The requested version of 21 to install (defaults
+                to 'latest')
             force_update_check (bool): Forces an update check with the pypi
             service
 
@@ -58,7 +61,6 @@ def update_two1_package(config, force_update_check=False):
                   update_successful (bool): Whether the update was successfully
                   downloaded and installed.
     """
-
     ret = dict(
         update_available=False,
         update_successful=None
@@ -74,9 +76,10 @@ def update_two1_package(config, force_update_check=False):
         set_update_check_date(config, date.today())
 
         installed_version = TWO1_VERSION
-        latest_version = get_latest_version()
+        latest_version = lookup_pypi_version(version)
         # Check if available version is more recent than the installed version.
-        if LooseVersion(latest_version) > LooseVersion(installed_version):
+        if (LooseVersion(latest_version) > LooseVersion(installed_version) or
+                version != 'latest'):
             ret["update_available"] = True
             # An updated version of the package is available.
             # The update is performed either using pip or apt-get depending
@@ -88,31 +91,51 @@ def update_two1_package(config, force_update_check=False):
             if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
                 ret["update_successful"] = perform_apt_based_update()
             else:
-                ret["update_successful"] = perform_pip_based_update()
+                ret["update_successful"] = perform_pip_based_update(
+                    latest_version)
 
     return ret
 
 
-def get_latest_version():
-    """ Get the latest version of the software from the PyPi service.
+def lookup_pypi_version(version='latest'):
+    """Get the latest version of the software from the PyPi service.
 
-        Returns:
-            version (string): A version string with period delimited major, minor
-            and patch numbers.
-            Example: 0.2.1
+    Args:
+        version (string): The requested version number, sha hash, or relative
+        timing of the released package to install.
+        Example: '0.2.1', '8e15eb1', 'latest'
+
+    Returns:
+        version (string): A version string with period delimited major,
+        minor, and patch numbers.
+        Example: '0.2.1'
     """
-    url = urljoin(TWO1_PYPI_HOST, "api/package/{}/".format(TWO1_PACKAGE_NAME))
-    r = requests.get(url)
-    data = r.json()
-    version = None
     try:
-        two1data = data["packages"][0]
+        url = urljoin(TWO1_PYPI_HOST,
+                      "api/package/{}/".format(TWO1_PACKAGE_NAME))
+        r = requests.get(url)
+        data = r.json()
+    except:
+        raise ServerRequestError(UxString.Error.connection % 'PyPI host.')
+
+    pypi_version = None
+
+    try:
+        packages = data["packages"]
+        two1data = packages[0]
+        if version != 'latest':
+            data = next((p for p in packages if version in p["version"]), None)
+            if not data:
+                click.echo(UxString.Error.version_not_found % version)
+            else:
+                two1data = data
+
         if two1data["name"] == TWO1_PACKAGE_NAME:
-            version = two1data["version"]
+            pypi_version = two1data["version"]
     except (AttributeError, KeyError, TypeError):
         raise ServerRequestError(UxString.Error.server_err)
 
-    return version
+    return pypi_version
 
 
 def checked_for_an_update_today(config):
@@ -156,7 +179,7 @@ def set_update_check_date(config, update_date):
     config.save()
 
 
-def perform_pip_based_update():
+def perform_pip_based_update(version):
     """ This will use pip3 to update the package (without dependency update)
     """
 
@@ -166,7 +189,8 @@ def perform_pip_based_update():
                        "{}/pypi".format(TWO1_PYPI_HOST),
                        "-U",
                        "--no-deps",
-                       TWO1_PACKAGE_NAME]
+                       "-I",
+                       "{}=={}".format(TWO1_PACKAGE_NAME, version)]
 
     try:
         # Inside a virtualenv, sys.prefix points to the virtualenv directory,

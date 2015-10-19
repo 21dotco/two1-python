@@ -51,11 +51,12 @@ def test_check_for_an_update_today():
 @responses.activate
 def test_update_two1_package():
     c = MockConfig()
+    v = 'latest'
 
     today = datetime.today()
     yesterday = today - timedelta(days=1)
     c.last_update_check = today.date().strftime("%Y-%m-%d")
-    rv = update_two1_package(c)
+    rv = update_two1_package(c, v)
 
     assert not rv['update_available']
     assert rv['update_successful'] is None
@@ -66,7 +67,7 @@ def test_update_two1_package():
                   body='{"error": "not found"}', status=404,
                   content_type='application/json')
     with pytest.raises(ServerRequestError):
-        rv = update_two1_package(c)
+        rv = update_two1_package(c, v)
 
     json = """{"write": false, "packages": [{"url": "https://dotco-pypi.s3.amazonaws.com/0905/two1/two1-0.2.2.tar.gz?Signature=TGAuN2hzXPSqiIqKeoI7I8ZcCEk%3D&Expires=1443810441&AWSAccessKeyId=AKIAJ2NYFHIGZ7M62AEA", "last_modified": 1443412967.216141, "name": "two1", "version": "0.2.2", "filename": "two1-0.2.2.tar.gz"}, {"url": "https://dotco-pypi.s3.amazonaws.com/5a77/two1/two1-0.2.1.tar.gz?Signature=A5IPrSUBbabbKXrN5V65BfQHpXM%3D&Expires=1443810441&AWSAccessKeyId=AKIAJ2NYFHIGZ7M62AEA", "last_modified": 1443136403.0, "name": "two1", "version": "0.2.1", "filename": "two1-0.2.1.tar.gz"}]}"""
 
@@ -76,7 +77,7 @@ def test_update_two1_package():
     responses.reset()
     responses.add(responses.GET, url, body=json, status=200)
 
-    rv = update_two1_package(c)
+    rv = update_two1_package(c, v)
     assert c.last_update_check == today.date().strftime("%Y-%m-%d")
     assert not rv['update_available']
     assert rv['update_successful'] is None
@@ -86,7 +87,7 @@ def test_update_two1_package():
     c.last_update_check = yesterday.date().strftime("%Y-%m-%d")
     subprocess.check_call = MagicMock(return_value=True)
 
-    rv = update_two1_package(c)
+    rv = update_two1_package(c, v)
     assert c.last_update_check == today.date().strftime("%Y-%m-%d")
     assert rv['update_available']
     assert rv['update_successful']
@@ -95,7 +96,7 @@ def test_update_two1_package():
     c.last_update_check = yesterday.date().strftime("%Y-%m-%d")
     subprocess.check_call = MagicMock(side_effect=subprocess.CalledProcessError("foo", "bar"))
 
-    rv = update_two1_package(c)
+    rv = update_two1_package(c, v)
     assert c.last_update_check == today.date().strftime("%Y-%m-%d")
     assert rv['update_available']
     assert not rv['update_successful']
