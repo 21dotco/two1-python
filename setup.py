@@ -35,6 +35,7 @@ install_requires = [
                     'tabulate',
                     'jsonrpcclient',
                     'jsonrpcserver>=3.0.0'
+                    'pyserial'
                     ]
 
 # https://www.python.org/dev/peps/pep-0440/
