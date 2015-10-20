@@ -76,17 +76,18 @@ class LanguageTests(TestCase):
 
 
 class PhoneTests(TestCase):
+    @skip("Temporarily commented out due to service problems")
     def test_reverse_lookup(self):
         response = Client().get("/phone/phone-lookup?phone=14153545628&tx=paid")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("name" in response2json(response))
 
-    # Temporarily commented out due to service problems
-    # def test_send_sms(self):
-    #     response = Client().post("/phone/send-sms?phone=14153545628&tx=paid",
-    #                              {"phone": "0000000000", "text": "hello"})
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTrue("success" in response2json(response))
+    @skip("Temporarily commented out due to service problems")
+    def test_send_sms(self):
+        response = Client().post("/phone/send-sms?phone=14153545628&tx=paid",
+                                 {"phone": "0000000000", "text": "hello"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("success" in response2json(response))
 
 
 class BarcodeTests(TestCase):
