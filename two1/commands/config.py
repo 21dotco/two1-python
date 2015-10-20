@@ -64,17 +64,17 @@ class Config(object):
             os.makedirs(TWO1_USER_FOLDER)
         self.file = path(config_file).expand().abspath()
         self.dir = self.file.parent
-        self.defaults = {}
+        self.defaults = {} # TODO: Rename this var. Those are not the defaults but the actual config.
         self.load()
         # override config variables
         if config:
+            if self.verbose:
+                self.vlog("Applied manual config.")
+
             for k, v in config:
                 self.defaults[k] = v
-
-        if self.verbose:
-            self.vlog("Applied manual config.")
-            for k, v in config:
-                self.vlog("  {}={}".format(k, v))
+                if self.verbose:
+                    self.vlog("\t{}={}".format(k, v))
 
         # add wallet object
         if self.defaults.get('testwallet', None) == 'y':
@@ -82,15 +82,20 @@ class Config(object):
         else:
             dp = TwentyOneProvider(TWO1_HOST)
 
-            if not Two1Wallet.is_configured():
+            wallet_path = self.defaults.get('wallet_path')
+
+            if not Two1Wallet.check_wallet_file(wallet_path):
                 # configure wallet with default options
                 click.pause(UxString.create_wallet)
 
-                if not Two1Wallet.configure({'data_provider': dp}):
+                wallet_options = {
+                    'data_provider': dp,
+                    'wallet_path': wallet_path
+                }
+
+                if not Two1Wallet.configure(wallet_options):
                     raise click.ClickException(UxString.Error.create_wallet_failed)
                 click.pause(UxString.create_wallet_done)
-
-            wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
 
             # Start the daemon, if:
             # 1. It's not already started
@@ -151,7 +156,9 @@ class Config(object):
                         maxspend=20000,
                         verbose=False,
                         mining_auth_pubkey=None,
-                        auto_update=False)
+                        auto_update=False,
+                        wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
+                        )
 
         save_config = False
         for key, default_value in defaults.items():
