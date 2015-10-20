@@ -21,6 +21,7 @@ TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
+DEBUG_MODE = True
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version

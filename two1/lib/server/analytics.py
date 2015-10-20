@@ -15,15 +15,14 @@ def capture_usage(func):
             config = args[0]
             username = config.username
             user_platform = platform.system() + platform.release()
+            # TODO we should add a version field to two1.json and log it here, that way
             # we can separate between updates
-            version = app_config.TWO1_VERSION
             data = {
                 "channel": "cli",
                 "level": "info",
                 "username": username,
                 "command": func_name,
-                "platform": user_platform,
-                "version" : version
+                "platform": user_platform
             }
             log_message(data)
 
@@ -39,12 +38,12 @@ def capture_usage(func):
                 "username": username,
                 "command": func_name,
                 "platform": user_platform,
-                "version": version,
                 "exception": tb}
             log_message(data)
             click.echo(UxString.Error.server_err)
-            if app_config.TWO1_DEV:
-                raise e
+            if app_config.DEBUG_MODE:
+                click.echo(e)
+                traceback.print_exc()
 
     return _capture_usage
 
@@ -53,3 +52,4 @@ def log_message(message):
     url = app_config.TWO1_LOGGER_SERVER + "/logs"
     message_str = json.dumps(message)
     requests.request("post", url, data=message_str)
+    # TODO log a better error message in case of an uncaught exception

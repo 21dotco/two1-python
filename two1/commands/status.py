@@ -99,23 +99,10 @@ def status_earnings(config, client):
     if "flush_amount" in data and data["flush_amount"] > 0:
         flush_amount = data["flush_amount"]
         config.log('''\
-    Total Earnings           : {}
-    Total Payouts            : {}'''
-                   .format(none2zero(total_earnings),
-                           none2zero(total_payouts))
-                   )
-
-        if "flush_amount" in data and data["flush_amount"] > 0:
-
-            flush_amount = data["flush_amount"]
-            config.log('''\
     Flushed Earnings         : {}'''
-                       .format(none2zero(flush_amount)),
-                       )
-            config.log("\n" + UxString.flush_status % flush_amount, fg='green')
-
-    except:
-        pass
+                   .format(none2zero(flush_amount)),
+                   )
+        config.log("\n" + UxString.flush_status % flush_amount, fg='green')
 
 
 def status_shares(config, client):
