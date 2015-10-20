@@ -106,5 +106,8 @@ README.html
 *.#*
 TAGS
 
+# Vim swap files
+*.swp
+
 # wheel related
 wheelhouse
