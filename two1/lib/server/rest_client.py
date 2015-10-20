@@ -55,8 +55,6 @@ class TwentyOneRestClient(object):
         }
         data = json.dumps(body)
         ret = self._request(sign_username=username, method="POST", path=path, data=data)
-        print("Setting payout address")
-        self.account_payout_address_post(username, payout_address)
         return ret
 
     # GET /pool/work/{username}
