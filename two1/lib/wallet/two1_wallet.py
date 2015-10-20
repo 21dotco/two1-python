@@ -163,7 +163,7 @@ class Two1Wallet(BaseWallet):
 
     @staticmethod
     def configure(config_options):
-        """ Creates a default wallet.
+        """ Creates a wallet.
 
             If 'wallet_path' is found in config_options, the wallet is
             stored at that location. Otherwise, it is created in
@@ -180,6 +180,7 @@ class Two1Wallet(BaseWallet):
         """
         wallet_path = config_options.get('wallet_path',
                                          Two1Wallet.DEFAULT_WALLET_PATH)
+        wallet_path = os.path.abspath(os.path.expanduser(wallet_path))
         wallet_dirname = os.path.dirname(wallet_path)
         if not os.path.exists(wallet_dirname):
             os.makedirs(wallet_dirname)
