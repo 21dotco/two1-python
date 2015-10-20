@@ -76,6 +76,176 @@ class TwentyOneRestClient(object):
         path = "/pool/statistics/shares/%s/" % username
         return self._request(path=path).json()
 
+    # POST /pool/{username}/earnings/?action=True
+    def flush_earnings(self, username):
+        path = "/pool/account/%s/earnings/?action=flush" % username
+        return self._request(signed=False, method="POST", path=path)
+
+    # GET /mmm/v1/search
+    def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
+        method = "GET"
+        path = "/mmm/v1/search/"
+        params = {
+            "q": query,
+            "page": page_num,
+            'sort': sort,
+        }
+
+        if minprice is not None:
+            params['minprice'] = minprice
+        if maxprice is not None:
+            params['maxprice'] = maxprice
+        if not ascending:
+            params['ascending'] = 'true'
+
+        r = self._request(False, method, path, params=params)
+        if r.status_code == 200:
+            return r.json()
+        else:
+            raise ServerRequestError(r.json()['error'])
+
+    # POST /mmm/v1/listings/
+    def mmm_create_listing(self, path, name, description, price, device_id):
+        method = "POST"
+        url = '/mmm/v1/listings/'
+        body = {
+            "name": name,
+            "description": description,
+            "price": price,
+            "path": path,
+            "server": device_id
+        }
+
+        data = json.dumps(body)
+
+        return self._request(True, method,
+                             url,
+                             data=data
+                             )
+
+    # todo implement update, maybe use separate command that takes in uuid
+    def mmm_update_listing(uuid):
+        # method = 'PUT'
+        # url = '{}/mmm/v1/listings/{}'.format(TWO1_DEV_HOST, uuid)
+        pass
+
+    def mmm_check_listing_exists(self):
+        pass
+        # import datetime
+        # method = "GET"
+        # url = "{}/mmm/v1/listings/".format(TWO1_DEV_HOST)
+        # params = {
+        #     "path": path,
+        #     "server": device_id
+        # }
+        # kwargs = {'params': params}
+        # headers = {}
+        # headers["Content-Type"] = "application/json"
+        # response = requests.request(method, url, headers=headers, **kwargs)
+        # if response.status_code == 200:
+        #     try:
+        #         existing_id = response.json()[0].get('id', None)
+        #     except IndexError:
+        #         existing_id = None
+        #     # if existing_id is not None:
+        #     #     method = 'PUT'
+        #     #     url = '{}/mmm/v1/listings/{}'.format(TWO1_DEV_HOST, existing_id)
+        #     # else:
+        # return existing_id
+
+    # PUT /mmm/listings/<id>
+    def mmm_delete_listing(self, path, name, description, price, device_uuid):
+        pass
+        # """Soft deletes listing by setting delete=True
+        # """
+        # method = "GET"
+        # url = "/mmm/v1/listings/"
+        # params = {
+        #     "server": device_uuid
+        # }
+        # response = self._request(True, method, url, params=params)
+        # if response.status_code == 201:
+        #     method = "PUT"
+        #     body = {
+        #         "name": name,
+        #         "description": description,
+        #         "price": price,
+        #         "path": path,
+        #         "server": device_uuid,
+        #         "deleted": True,
+        #         "active": False,
+        #         "last_active": datetime.datetime.now()
+        #     }
+        #     data = json.dumps(body)
+        #     return self._request(True, method, url, data=data)
+
+    # GET /mmm/listings/ -- list of listings that belong to this device
+    def mmm_device_listings(self, active=None, page_num=1):
+        pass
+        # method = "GET"
+        # path = "/mmm/v1/listings/"
+        # params = {
+        #     # should this take in device rather than username?
+        #     "username": self.username, "page": page_num,
+        #     "deleted": False
+        # }
+        # if active is True or active is False:
+        #     params['active'] = active
+        # r = self._request(
+        #     False, method, path, params=params)
+        # if r.status_code == 200:
+        #     return json.loads(r.content.decode())
+        # else:
+        #     raise
+
+    # POST /mmm/v1/ratings/
+    def mmm_rating_post(self, purchase, rating):
+        method = "POST"
+        path = "/mmm/v1/ratings/"
+        body = {
+            "purchase": purchase,  # uuid of purchase
+            "rating": rating
+        }
+        data = json.dumps(body)
+        r = self._request(False, method, path, data=data)
+
+        if (r.status_code == 201):  # 201 == Created, Success
+            #click.echo("Success!")
+            pass
+        elif r.status_code == 200:  # 200 == Success
+            click.echo("You made a review of this already")  # Nothing updated
+            # TODO: Prompt user to ask if they want to update score
+        else:
+            click.echo("Error: Bad request, check if purchase uuid is valid.")
+            #click.echo("%s (%s): %s" % (r.status_code, r.reason, r.text))
+        return r
+
+    # PUT /mmm/v1/ratings/c833e922-4cc1-4f6a-9d1f-181c839c0a08/
+    def mmm_rating_put(self, purchase, rating, num_updates):
+        method = "PUT"
+        path = "/mmm/v1/ratings/{}/".format(purchase)
+        num_updates += 1
+        body = {
+            "purchase": purchase,  # uuid of purchase
+            "rating": rating,
+            "num_updates": num_updates
+        }
+        data = json.dumps(body)
+        return self._request(False, method, path, data=data)
+
+    # GET /mmm/v1/ratings/c833e922-4cc1-4f6a-9d1f-181c839c0a08/
+    def mmm_rating_get(self, purchase, rating):
+        method = "GET"
+        path = "/mmm/v1/ratings/{}/".format(purchase)
+        num_updates = 1
+        body = {
+            "purchase": purchase,  # uuid of purchase
+            "rating": rating,
+            "num_updates": num_updates
+        }
+        data = json.dumps(body)
+        return self._request(False, method, path, data=data)
+
     # GET /pool/statistics/earnings/{username}
     def get_earnings(self, username):
         path = "/pool/statistics/earnings/%s/" % username

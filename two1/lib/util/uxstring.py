@@ -13,6 +13,8 @@ class UxString:
     create_wallet_done = "\nWallet successfully created. Press any key ..."
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
+    flush_success = "Your bitcoin earnings will be sent to your wallet in our next " \
+                    "payout cycle.\nEstimated time of payout: 10 minutes"
 
     # updater
     update_check = "Checking for application update..."
