@@ -505,6 +505,66 @@ def sweep(ctx, address, account):
     except ReceivedErrorResponse:
         _handle_daemon_exception(w)
 
+
+@click.command(name="signmessage")
+@click.argument('message',
+                metavar="STRING")
+@click.option('--account',
+              metavar="STRING",
+              help="Account to use")
+@click.option('--key-index',
+              type=click.INT,
+              default=0,
+              show_default=True,
+              help="Index of key to use")
+@click.pass_context
+def sign_bitcoin_message(ctx, message, account, key_index):
+    """ Signs an arbitrary message
+    """
+    w = ctx.obj['wallet']
+    logger.info('sign_bitcoin_message(%s, %r, %d)' %
+                (message, account, key_index))
+    try:
+        sig = w.sign_bitcoin_message(message=message,
+                                     account_name_or_index=account,
+                                     key_index=key_index)
+        pub_key = w.get_message_signing_public_key(
+            account_name_or_index=account,
+            key_index=key_index)
+        click.echo("Address: %s" % pub_key.address(compressed=False,
+                                                   testnet=w.testnet))
+        click.echo("Signature: %s" % sig)
+    except ReceivedErrorResponse:
+        _handle_daemon_exception(w)
+
+
+@click.command(name='verifymessage')
+@click.argument('message',
+                metavar="STRING")
+@click.argument('signature',
+                metavar="STRING")
+@click.argument('address',
+                metavar="STRING")
+@click.pass_context
+def verify_bitcoin_message(ctx, message, signature, address):
+    """ Verifies that an arbitrary message was signed by
+        the private key corresponding to address
+    """
+    w = ctx.obj['wallet']
+    logger.info('verify_bitcoin_message(%s, %s, %s)' %
+                (message, signature, address))
+    try:
+        verified = w.verify_bitcoin_message(message=message,
+                                            signature=signature,
+                                            address=address)
+        if verified:
+            click.echo("Verified")
+        else:
+            click.echo("Not verified")
+    except ReceivedErrorResponse as e:
+        _handle_daemon_exception(w)
+
+
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
 main.add_command(create)
@@ -517,6 +577,8 @@ main.add_command(create_account)
 main.add_command(list_accounts)
 main.add_command(list_balances)
 main.add_command(sweep)
+main.add_command(sign_bitcoin_message)
+main.add_command(verify_bitcoin_message)
 
 if __name__ == "__main__":
     main()

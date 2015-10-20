@@ -627,8 +627,6 @@ class PublicKey(PublicKeyBase):
         ver, h160 = address_to_key_hash(address)
         hash160 = derived_public_key.hash160(False)
         if hash160 != h160:
-            print("Returning false, %s != %s" % (
-                bytes_to_str(hash160), bytes_to_str(h160)))
             return False
 
         return derived_public_key.verify(msg_hash, sig)
