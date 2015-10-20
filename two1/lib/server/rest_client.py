@@ -31,16 +31,16 @@ class TwentyOneRestClient(object):
         headers = {}
         if "data" in kwargs:
             headers["Content-Type"] = "application/json"
-            headers["x-21-timestamp"] = datetime.datetime.now().isoformat()
             data = kwargs["data"]
         else:
             data = ""
         if sign_username is not None:
-            message = url + headers["x-21-timestamp"] + data
-
+            timestamp = datetime.datetime.now().isoformat()
+            message = url + timestamp + data
             sig = self.auth.sign_message(message)
-            print("message:{}\nsig:{}\n".format(message, sig))
-            headers["Authorization"] = "21:{}:{}".format(sign_username, sig.decode())
+            headers["Authorization"] = "21 {} {} {}".format(timestamp,
+                                                            sign_username,
+                                                            sig.decode())
 
         result = requests.request(method, url, headers=headers, **kwargs)
         return result
@@ -81,7 +81,8 @@ class TwentyOneRestClient(object):
     # GET /pool/statistics/{username}/shares/
     def get_shares(self, username):
         path = "/pool/statistics/%s/shares/" % username
-        return self._request(path=path).json()
+        return self._request(sign_username=username,
+                             path=path).json()
 
     # POST /pool/{username}/earnings/?action=True
     def flush_earnings(self, username):
@@ -256,7 +257,8 @@ class TwentyOneRestClient(object):
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self, username):
         path = "/pool/statistics/%s/earnings/" % username
-        return self._request(path=path).json()
+        return self._request(sign_username=username,
+                             path=path).json()
 
     @staticmethod
     def params2example(parameters, url):
