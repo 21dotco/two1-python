@@ -1,6 +1,5 @@
 import click
 
-import requests
 
 from two1.commands.config import pass_config
 from two1.lib.server.analytics import capture_usage
@@ -22,6 +21,7 @@ def sell_file(config, file, price, store):
 
 @capture_usage
 def _sell_file(config, file, price, store):
+    import requests
     try:
         file_name = extract_file_name(file.name)
         config.log(

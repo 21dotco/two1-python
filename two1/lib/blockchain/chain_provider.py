@@ -1,6 +1,5 @@
 import json
 
-import requests
 from collections import defaultdict
 from two1.lib.blockchain import exceptions
 from two1.lib.blockchain.base_provider import BaseProvider
@@ -28,6 +27,7 @@ class ChainProvider(BaseProvider):
         self.testnet = testnet
         self.auth = (api_key_id, api_key_secret)
         self._set_url()
+        self._session = None
 
     @property
     def testnet(self):
@@ -41,6 +41,11 @@ class ChainProvider(BaseProvider):
 
     def _set_url(self):
         self.server_url = 'https://api.chain.com/v2/' + self.chain + "/"
+
+    def _create_session(self):
+        import requests
+        self._session = requests.Session()
+        self._session.auth = self.auth
 
     @staticmethod
     def txn_from_json(txn_json):
@@ -120,13 +125,17 @@ class ChainProvider(BaseProvider):
             yield lst[i:i + chunk_size]
 
     def _request(self, method, path, **kwargs):
+        import requests
+        if self._session is None:
+            self._create_session()
+
         url = self.server_url + path + "/"
         result = None
         try:
-            result = requests.request(method,
-                                      url,
-                                      auth=self.auth,
-                                      **kwargs)
+            result = self._session.request(method,
+                                           url,
+                                           auth=self.auth,
+                                           **kwargs)
 
             # A non 200 status_code from Chain API is an exception
             if result.status_code != 200:
