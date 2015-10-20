@@ -107,7 +107,7 @@ class PrivateKeyBase(object):
         """
         raise NotImplementedError
 
-    def sign_bitcoin(self, message):
+    def sign_bitcoin(self, message, compressed=False):
         """ Signs a message using this private key such that it
             is compatible with bitcoind, bx, and other Bitcoin
             clients/nodes/utilities.
@@ -118,6 +118,9 @@ class PrivateKeyBase(object):
 
         Args:
             message (bytes or str): Message to be signed.
+            compressed (bool): True if the corresponding public key will be
+                used in compressed format. False if the uncompressed version
+                is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
@@ -404,7 +407,7 @@ class PrivateKey(PrivateKeyBase):
 
         return Signature(sig_pt.x, sig_pt.y, rec_id)
 
-    def sign_bitcoin(self, message):
+    def sign_bitcoin(self, message, compressed=False):
         """ Signs a message using this private key such that it
             is compatible with bitcoind, bx, and other Bitcoin
             clients/nodes/utilities.
@@ -415,15 +418,16 @@ class PrivateKey(PrivateKeyBase):
 
         Args:
             message (bytes or str): Message to be signed.
+            compressed (bool): True if the corresponding public key will be
+                used in compressed format. False if the uncompressed version
+                is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
                 The first byte of the encoded message contains information
                 about how to recover the public key. In bitcoind parlance,
                 this is the magic number containing the recovery ID and
-                whether or not the key was compressed or not. (This function
-                always processes full, uncompressed public-keys, so the magic
-                number will always be either 27 or 28).
+                whether or not the key was compressed or not.
         """
         if isinstance(message, str):
             msg_in = bytes(message, 'ascii')
@@ -436,7 +440,8 @@ class PrivateKey(PrivateKeyBase):
         msg_hash = hashlib.sha256(msg).digest()
 
         sig = self.sign(msg_hash)
-        magic = 27 + sig.recovery_id
+        comp_adder = 4 if compressed else 0
+        magic = 27 + sig.recovery_id + comp_adder
 
         return base64.b64encode(bytes([magic]) + bytes(sig))
 
@@ -604,8 +609,7 @@ class PublicKey(PublicKeyBase):
         Args:
             message(bytes): The message that the signature corresponds to.
             signature (bytes or str): A Base64 encoded signature
-            address (str): Base58Check encoded address corresponding to the
-               uncompressed key.
+            address (str): Base58Check encoded address.
 
         Returns:
             bool: True if the signature verified properly, False otherwise.
@@ -614,7 +618,8 @@ class PublicKey(PublicKeyBase):
 
         magic = magic_sig[0]
         sig = Signature.from_bytes(magic_sig[1:])
-        sig.recovery_id = magic - 27
+        sig.recovery_id = (magic - 27) & 0x3
+        compressed = ((magic - 27) & 0x4) != 0
 
         # Build the message that was signed
         msg = b"\x18Bitcoin Signed Message:\n" + bytes([len(message)]) + message
@@ -625,7 +630,7 @@ class PublicKey(PublicKeyBase):
             raise ValueError("Could not recover public key from the provided signature.")
 
         ver, h160 = address_to_key_hash(address)
-        hash160 = derived_public_key.hash160(False)
+        hash160 = derived_public_key.hash160(compressed)
         if hash160 != h160:
             return False
 
@@ -1326,7 +1331,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         """
         return self._key.sign(message, do_hash)
 
-    def sign_bitcoin(self, message):
+    def sign_bitcoin(self, message, compressed=False):
         """ Signs a message using the underlying non-extended private
             key such that it is compatible with bitcoind, bx, and
             other Bitcoin clients/nodes/utilities.
@@ -1337,6 +1342,9 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
 
         Args:
             message (bytes or str): Message to be signed.
+            compressed (bool): True if the corresponding public key will be
+                used in compressed format. False if the uncompressed version
+                is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
@@ -1347,7 +1355,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
                always processes full, uncompressed public-keys, so the magic
                number will always be either 27 or 28).
         """
-        return self._key.sign_bitcoin(message)
+        return self._key.sign_bitcoin(message, compressed)
 
     @property
     def identifier(self):
