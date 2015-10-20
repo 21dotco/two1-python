@@ -320,9 +320,9 @@ def get_payout_public_key(account=None):
 
 
 @methods.add
-def sign_bitcoin_message(message,
-                         account_name_or_index=None,
-                         key_index=0):
+def sign_message(message,
+                 account_name_or_index=None,
+                 key_index=0):
     """ RPC method to sign an arbitrary message
 
     Args:
@@ -334,6 +334,34 @@ def sign_bitcoin_message(message,
 
     Returns:
         str: A Base64-encoded string containing the signature.
+    """
+    check_unlocked()
+    logger.debug("sign_message(%r, %r, %d)" %
+                 (message, account_name_or_index, key_index))
+    try:
+        return wallet['obj'].sign_message(message,
+                                          account_name_or_index,
+                                          key_index)
+    except Exception as e:
+        _handle_exception(e)
+
+
+@methods.add
+def sign_bitcoin_message(message,
+                         account_name_or_index=None,
+                         key_index=0):
+    """ RPC method to bitcoin sign an arbitrary message
+
+    Args:
+        message (bytes or str): Message to be signed.
+        account_name_or_index (str or int): The account to retrieve the
+            change address from. If not provided, the default account (0')
+            is used.
+        key_index (int): The index of the key in the external chain to use.
+
+    Returns:
+        str: A Base64-encoded string containing the signature with recovery id
+            embedded.
     """
     check_unlocked()
     logger.debug("sign_bitcoin_message(%r, %r, %d)" %
