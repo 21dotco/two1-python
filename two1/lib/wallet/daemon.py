@@ -347,29 +347,22 @@ def sign_message(message,
 
 
 @methods.add
-def sign_bitcoin_message(message,
-                         account_name_or_index=None,
-                         key_index=0):
+def sign_bitcoin_message(message, address):
     """ RPC method to bitcoin sign an arbitrary message
 
     Args:
         message (bytes or str): Message to be signed.
-        account_name_or_index (str or int): The account to retrieve the
-            change address from. If not provided, the default account (0')
-            is used.
-        key_index (int): The index of the key in the external chain to use.
+        address (str): Bitcoin address from which the private key will be
+            retrieved and used to sign the message.
 
     Returns:
         str: A Base64-encoded string containing the signature with recovery id
             embedded.
     """
     check_unlocked()
-    logger.debug("sign_bitcoin_message(%r, %r, %d)" %
-                 (message, account_name_or_index, key_index))
+    logger.debug("sign_bitcoin_message(%r, %s)" % (message, address))
     try:
-        return wallet['obj'].sign_bitcoin_message(message,
-                                                  account_name_or_index,
-                                                  key_index)
+        return wallet['obj'].sign_bitcoin_message(message, address)
     except Exception as e:
         _handle_exception(e)
 
@@ -405,7 +398,7 @@ def get_message_signing_public_key(account_name_or_index=None,
 
     Args:
         account_name_or_index (str or int): The account to retrieve the
-            change address from. If not provided, the default account (0')
+            public key from. If not provided, the default account (0')
             is used.
         key_index (int): The index of the key in the external chain to use.
 
@@ -419,7 +412,6 @@ def get_message_signing_public_key(account_name_or_index=None,
     try:
         pub_key = wallet['obj'].get_message_signing_public_key(account_name_or_index,
                                                                key_index)
-        print("Returing %s" % pub_key.to_base64().decode())
         return pub_key.to_base64().decode()
     except Exception as e:
         _handle_exception(e)
@@ -601,6 +593,17 @@ def account_names():
     """ RPC method to return all account names
     """
     return wallet['obj'].account_names
+
+
+@methods.add
+def addresses(accounts):
+    """ RPC method to return all addresses
+    """
+    logger.debug("addresses(%r)" % (accounts))
+    try:
+        return wallet['obj'].addresses(accounts)
+    except ValueError as e:
+        _handle_exception(e)
 
 
 @methods.add

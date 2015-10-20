@@ -478,6 +478,33 @@ def list_accounts(ctx):
         click.echo("Account %d: %s" % (i, n))
 
 
+@click.command(name='listaddresses')
+@click.option('--account',
+              metavar="STRING",
+              multiple=True,
+              help="List of accounts to use")
+@click.pass_context
+def list_addresses(ctx, account):
+    """ List all addresses in the specified accounts
+    """
+    w = ctx.obj['wallet']
+    logger.info('list_addresses(%r)' % (list(account)))
+
+    try:
+        addresses = w.addresses(accounts=list(account))
+        for acct, addr_list in addresses.items():
+            len_acct_name = len(acct)
+            click.echo("Account: %s" % (acct))
+            click.echo("---------%s" % ("-" * len_acct_name))
+
+            for addr in addr_list:
+                click.echo(addr)
+
+            click.echo("")
+    except ReceivedErrorResponse:
+        _handle_daemon_exception(w)
+
+
 @click.command(name="sweep")
 @click.argument('address',
                 metavar="STRING")
@@ -509,31 +536,20 @@ def sweep(ctx, address, account):
 @click.command(name="signmessage")
 @click.argument('message',
                 metavar="STRING")
-@click.option('--account',
-              metavar="STRING",
-              help="Account to use")
-@click.option('--key-index',
-              type=click.INT,
-              default=0,
-              show_default=True,
-              help="Index of key to use")
+@click.argument('address',
+                metavar="STRING")
 @click.pass_context
-def sign_bitcoin_message(ctx, message, account, key_index):
+def sign_bitcoin_message(ctx, message, address):
     """ Signs an arbitrary message
     """
     w = ctx.obj['wallet']
-    logger.info('sign_bitcoin_message(%s, %r, %d)' %
-                (message, account, key_index))
+    logger.info('sign_bitcoin_message(%s, %s)' %
+                (message, address))
     try:
-        sig = w.sign_bitcoin_message(message=message,
-                                     account_name_or_index=account,
-                                     key_index=key_index)
-        pub_key = w.get_message_signing_public_key(
-            account_name_or_index=account,
-            key_index=key_index)
-        click.echo("Address: %s" % pub_key.address(compressed=False,
-                                                   testnet=w.testnet))
+        sig = w.sign_bitcoin_message(message=message, address=address)
         click.echo("Signature: %s" % sig)
+    except ValueError as e:
+        _handle_generic_exception(e)
     except ReceivedErrorResponse:
         _handle_daemon_exception(w)
 
@@ -561,7 +577,7 @@ def verify_bitcoin_message(ctx, message, signature, address):
             click.echo("Verified")
         else:
             click.echo("Not verified")
-    except ReceivedErrorResponse as e:
+    except ReceivedErrorResponse:
         _handle_daemon_exception(w)
 
 
@@ -575,6 +591,7 @@ main.add_command(send_to)
 main.add_command(spread_utxos)
 main.add_command(create_account)
 main.add_command(list_accounts)
+main.add_command(list_addresses)
 main.add_command(list_balances)
 main.add_command(sweep)
 main.add_command(sign_bitcoin_message)

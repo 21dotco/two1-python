@@ -752,16 +752,19 @@ class Two1Wallet(BaseWallet):
             self.to_file(self._filename)
             self.logger.debug("Sync'ed file %s" % self._filename)
 
-    @property
-    def addresses(self):
+    def addresses(self, accounts=[]):
         """ Gets the address list for the current wallet.
 
+        Args:
+            accounts (list): A list of either account indices or names.
+
         Returns:
-            list(str): The current list of addresses in this wallet.
+            dict: A dict keyed by account name containing a list of bitcoin
+                addresses for that account.
         """
-        addresses = []
-        for a in self._accounts:
-            addresses += a.all_used_addresses
+        addresses = {}
+        for acct in self._check_and_get_accounts(accounts):
+            addresses[acct.name] = acct.all_used_addresses
 
         return addresses
 
@@ -881,9 +884,7 @@ class Two1Wallet(BaseWallet):
 
         return base64.b64encode(bytes(priv_key.sign(message))).decode()
 
-    def sign_bitcoin_message(self, message,
-                             account_name_or_index=None,
-                             key_index=0):
+    def sign_bitcoin_message(self, message, address):
         """ Bitcoin signs an arbitrary message.
 
             This function signs the message using a specific key in a specific
@@ -897,10 +898,8 @@ class Two1Wallet(BaseWallet):
 
         Args:
             message (bytes or str): Message to be signed.
-            account_name_or_index (str or int): The account to retrieve the
-               change address from. If not provided, the default account (0')
-               is used.
-            key_index (int): The index of the key in the external chain to use.
+            address (str): Bitcoin address from which the private key will be
+                retrieved and used to sign the message.
 
         Returns:
             str: A Base64-encoded string of the signature.
@@ -911,23 +910,22 @@ class Two1Wallet(BaseWallet):
                 always processes full, uncompressed public-keys, so the magic
                 number will always be either 27 or 28).
         """
-        if account_name_or_index is None:
-            acct = self._accounts[0]
-        else:
-            acct = self._check_and_get_accounts([account_name_or_index])[0]
+        priv_key = self.get_private_key(address)
 
-        priv_key = acct.get_private_key(change=False, n=key_index)
+        if priv_key is None:
+            raise ValueError("Address is not a part of this wallet.")
 
-        return priv_key.sign_bitcoin(message).decode()
+        return priv_key.sign_bitcoin(message, True).decode()
 
     def verify_bitcoin_message(self, message, signature, address):
         """ Verifies a bitcoin signed message
 
         Args:
-            message(bytes or str): The message that the signature corresponds to.
+            message(bytes or str): The message that the signature
+                corresponds to.
             signature (bytes or str): A Base64 encoded signature
             address (str): Base58Check encoded address corresponding to the
-               uncompressed key.
+                uncompressed key.
 
         Returns:
             bool: True if the signature verified properly, False otherwise.
@@ -936,6 +934,7 @@ class Two1Wallet(BaseWallet):
             msg = message.encode()
         else:
             msg = message
+
         return PublicKey.verify_bitcoin(message=msg,
                                         signature=signature,
                                         address=address)
@@ -949,7 +948,7 @@ class Two1Wallet(BaseWallet):
 
         Args:
             account_name_or_index (str or int): The account to retrieve the
-               change address from. If not provided, the default account (0')
+               public key from. If not provided, the default account (0')
                is used.
             key_index (int): The index of the key in the external chain to use.
 
