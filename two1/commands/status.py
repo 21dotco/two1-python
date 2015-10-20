@@ -26,14 +26,11 @@ def status(config):
 
 
 def status_account(config):
-    config.log('''
-21.co Account''', fg='magenta')
+    config.log('''\n21.co Account''', fg='magenta')
     config.log('''\
     Username              : {}'''
                .format(config.username))
 
-    config.log('''
-Wallet''', fg='magenta')
 
 
 def status_wallet(config):
@@ -47,6 +44,7 @@ def status_wallet(config):
     except AttributeError:
         bitcoin_address = "Not Set"
 
+    config.log('''\nWallet''', fg='magenta')
     config.log('''\
     Balance (confirmed)   :   {} Satoshi
     Pending Transactions  :   {} Satoshi
@@ -93,10 +91,8 @@ def status_earnings(config, client):
                    .format(none2zero(total_earnings),
                            none2zero(total_payouts))
                    )
-
         if "is_flushing" in data and data["is_flushing"]:
             config.log("\n" + UxString.flush_status, fg='green')
-
     except:
         pass
 
