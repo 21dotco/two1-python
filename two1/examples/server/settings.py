@@ -152,8 +152,8 @@ TWO1_USERNAME = os.environ.get(
 )
 
 # endpoint of the bittransfer verifier
-BITCHEQUE_VERIFICIATION_URL = os.environ.get(
-    "BITCHEQUE_VERIFICIATION_URL",
+BITTRANSFER_VERIFICATION_URL = os.environ.get(
+    "BITTRANSFER_VERIFICATION_URL",
     "http://localhost:8000/pool/account/{}/21satoshi/"
 )
 
