@@ -152,7 +152,7 @@ EnvironmentFile=%s
 [Install]
 WantedBy=default.target
 """ % (shutil.which('walletd'),
-       ENV_FILE_PATH.joinpath('two1'))
+       ENV_FILE_PATH)
 
     @staticmethod
     def check_systemd():
@@ -216,15 +216,22 @@ WantedBy=default.target
         """
         rv = False
         with tempfile.NamedTemporaryFile() as tf:
-            tf.write(text)
+            tf.write(text.encode())
+            tf.flush()
             try:
                 subprocess.check_output(["sudo",
-                                         "mkdir -p",
+                                         "mkdir",
+                                         "-p",
                                          cls.ENV_FILE_PATH.dirname()])
                 subprocess.check_output(["sudo",
                                          "cp",
                                          tf.name,
                                          cls.ENV_FILE_PATH])
+                subprocess.check_output(["sudo",
+                                         "chmod",
+                                         "644",
+                                         cls.ENV_FILE_PATH])
+
                 rv = cls.ENV_FILE_PATH.exists()
             except subprocess.CalledProcessError as e:
                 print("Error creating environment file: %s" % (e))
@@ -247,12 +254,18 @@ WantedBy=default.target
         """
         rv = False
         with tempfile.NamedTemporaryFile() as tf:
-            tf.write(text)
+            tf.write(text.encode())
+            tf.flush()
             try:
                 subprocess.check_output(["sudo",
                                          "cp",
                                          tf.name,
                                          cls.SERVICE_FILE_PATH])
+                subprocess.check_output(["sudo",
+                                         "chmod",
+                                         "644",
+                                         cls.SERVICE_FILE_PATH])
+
                 rv = cls.SERVICE_FILE_PATH.exists()
             except subprocess.CalledProcessError as e:
                 print("Error creating service file: %s" % (e))
@@ -271,7 +284,7 @@ WantedBy=default.target
         return cls.SERVICE_FILE_PATH.exists() and cls.ENV_FILE_PATH.exists()
 
     @classmethod
-    def install(cls, data_provider_options):
+    def install(cls, data_provider_options={}):
         """ Installs the daemon into the user config area of /etc/systemd.
 
         Args:
@@ -292,12 +305,14 @@ WantedBy=default.target
             # Make sure systemd is installed
             if cls.check_systemd():
                 try:
-                    if data_provider_options['provider'] == 'chain':
+                    text = "\n"
+                    if data_provider_options.get('provider', None) == 'chain':
                         # Create an environment file
                         text = "CHAIN_API_KEY_ID='%s'\n" % data_provider_options['api_key_id']
                         text += "CHAIN_API_KEY_SECRET='%s'\n" % data_provider_options['api_key_secret']
 
-                        cls._write_env_file(text)
+                    # Create ENV file (even if empty)
+                    cls._write_env_file(text)
 
                     # Create service file
                     cls._write_service_file(cls.SERVICE_FILE)
@@ -553,7 +568,7 @@ class Launchd(Daemonizer):
         return cls.PLIST_FILE_PATH.exists()
 
     @classmethod
-    def install(cls, data_provider_options):
+    def install(cls, data_provider_options={}):
         """ Installs the launchd agent into ~/Library/LaunchAgents
 
         Args:
@@ -575,7 +590,7 @@ class Launchd(Daemonizer):
         else:
             # Figure out data provider stuff
             env_vars = {}
-            if dpo['provider'] == 'chain':
+            if dpo.get('provider', None) == 'chain':
                 env_vars["CHAIN_API_KEY_ID"] = dpo['api_key_id']
                 env_vars["CHAIN_API_KEY_SECRET"] = dpo['api_key_secret']
 
