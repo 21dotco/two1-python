@@ -208,7 +208,7 @@ class BitTransferAuthentication(BaseAuthentication):
     def get_bittransfer_from_header(request):
         """Get bitcoin-transfer from HTTP headers."""
         return (
-            request.META.get("HTTP_BITCOIN_CHEQUE"),
+            request.META.get("HTTP_BITCOIN_TRANSFER"),
             request.META.get("HTTP_AUTHORIZATION")
             )
 
@@ -271,7 +271,7 @@ class BitTransferAuthentication(BaseAuthentication):
 
         try:
             verification_response = requests.post(
-                settings.BITCHEQUE_VERIFICIATION_URL.format(
+                settings.BITTRANSFER_VERIFICATION_URL.format(
                     settings.TWO1_USERNAME
                 ),
                 data=json.dumps({
