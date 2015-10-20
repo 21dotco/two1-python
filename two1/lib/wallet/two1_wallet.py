@@ -9,6 +9,7 @@ from pbkdf2 import PBKDF2
 from two1.lib.bitcoin.crypto import HDKey
 from two1.lib.bitcoin.crypto import HDPrivateKey
 from two1.lib.bitcoin.crypto import HDPublicKey
+from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.txn import TransactionInput
@@ -426,6 +427,12 @@ class Two1Wallet(BaseWallet):
                 self.logger.debug("Account %d (%s) public key: %s" %
                                   (a.index & 0x7fffffff, a.name, kser))
 
+    @property
+    def testnet(self):
+        """ Getter testnet property
+        """
+        return self._testnet
+
     def discover_accounts(self):
         """ Discovers all accounts associated with the wallet.
 
@@ -838,6 +845,89 @@ class Two1Wallet(BaseWallet):
             acct = self._check_and_get_accounts([account_name_or_index])[0]
 
         return acct.get_next_public_key(True)
+
+    def sign_bitcoin_message(self, message,
+                             account_name_or_index=None,
+                             key_index=0):
+        """ Signs an arbitrary message.
+
+            This function signs the message using a specific key in a specific
+            account. By default, if account or key are not given, it will
+            use the first (default) account and the 0-th public key. In all
+            circumstances it uses keys from the payout (external) chain.
+
+        Note:
+            b"\x18Bitcoin Signed Message:\n" + len(message) is prepended
+            to the message before signing.
+
+        Args:
+            message (bytes or str): Message to be signed.
+            account_name_or_index (str or int): The account to retrieve the
+               change address from. If not provided, the default account (0')
+               is used.
+            key_index (int): The index of the key in the external chain to use.
+
+        Returns:
+            str: A Base64-encoded string of the signature.
+                The first byte of the encoded message contains information
+                about how to recover the public key. In bitcoind parlance,
+                this is the magic number containing the recovery ID and
+                whether or not the key was compressed or not. (This function
+                always processes full, uncompressed public-keys, so the magic
+                number will always be either 27 or 28).
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        priv_key = acct.get_private_key(change=False, n=key_index)
+
+        return priv_key.sign_bitcoin(message).decode()
+
+    def verify_bitcoin_message(self, message, signature, address):
+        """ Verifies a bitcoin signed message
+
+        Args:
+            message(bytes or str): The message that the signature corresponds to.
+            signature (bytes or str): A Base64 encoded signature
+            address (str): Base58Check encoded address corresponding to the
+               uncompressed key.
+
+        Returns:
+            bool: True if the signature verified properly, False otherwise.
+        """
+        if isinstance(message, str):
+            msg = message.encode()
+        else:
+            msg = message
+        return PublicKey.verify_bitcoin(message=msg,
+                                        signature=signature,
+                                        address=address)
+
+    def get_message_signing_public_key(self,
+                                       account_name_or_index=None,
+                                       key_index=0):
+        """ Retrieves the public key typically used for message
+            signing. The default is to use the first account and
+            the 0-th public key from the payout (external) chain.
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               change address from. If not provided, the default account (0')
+               is used.
+            key_index (int): The index of the key in the external chain to use.
+
+        Returns:
+            PublicKey: The public key object
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        # Return the PrivateKey object, not the HDPrivateKey object
+        return acct.get_public_key(change=False, n=key_index)._key
 
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.
@@ -1433,6 +1523,16 @@ class Two1WalletProxy(object):
         rv = self.w.get_payout_public_key(account)
         if not isinstance(self.w, Two1Wallet):
             rv = HDPublicKey.from_b58check(rv)
+
+        return rv
+
+    def get_message_signing_public_key(self,
+                                       account_name_or_index=None,
+                                       key_index=0):
+        rv = self.w.get_message_signing_public_key(account_name_or_index,
+                                                   key_index)
+        if not isinstance(self.w, Two1Wallet):
+            rv = PublicKey.from_base64(rv)
 
         return rv
 

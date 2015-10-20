@@ -174,6 +174,21 @@ def exception_info():
 
 
 @methods.add
+def testnet():
+    """ RPC method to determine whether the wallet is a testnet wallet.
+
+    Returns:
+        bool: True if the wallet is a testnet wallet, False otherwise.
+    """
+    check_unlocked()
+    logger.debug("testnet()")
+    try:
+        return wallet['obj'].testnet
+    except Exception as e:
+        _handle_exception(e)
+
+
+@methods.add
 def confirmed_balance(account=None):
     """ RPC method to get the current confirmed balance.
 
@@ -301,6 +316,84 @@ def get_payout_public_key(account=None):
     try:
         return wallet['obj'].get_payout_public_key(account).to_b58check()
     except (ValueError, TypeError) as e:
+        _handle_exception(e)
+
+
+@methods.add
+def sign_bitcoin_message(message,
+                         account_name_or_index=None,
+                         key_index=0):
+    """ RPC method to sign an arbitrary message
+
+    Args:
+        message (bytes or str): Message to be signed.
+        account_name_or_index (str or int): The account to retrieve the
+           change address from. If not provided, the default account (0')
+           is used.
+        key_index (int): The index of the key in the external chain to use.
+
+    Returns:
+        str: A Base64-encoded string containing the signature.
+    """
+    check_unlocked()
+    logger.debug("sign_bitcoin_message(%r, %r, %d)" %
+                 (message, account_name_or_index, key_index))
+    try:
+        return wallet['obj'].sign_bitcoin_message(message,
+                                                  account_name_or_index,
+                                                  key_index)
+    except Exception as e:
+        _handle_exception(e)
+
+
+@methods.add
+def verify_bitcoin_message(message, signature, address):
+    """ RPC method to verify a bitcoin signed message
+
+    Args:
+        message(bytes or str): The message that the signature corresponds to.
+        signature (bytes or str): A Base64 encoded signature
+        address (str): Base58Check encoded address corresponding to the
+           uncompressed key.
+
+    Returns:
+        bool: True if the signature verified properly, False otherwise.
+    """
+    check_unlocked()
+    logger.debug("verify_bitcoin_message(%s, %s, %s)" %
+                 (message, signature, address))
+    try:
+        return wallet['obj'].verify_bitcoin_message(message,
+                                                    signature,
+                                                    address)
+    except Exception as e:
+        _handle_exception(e)
+
+
+@methods.add
+def get_message_signing_public_key(account_name_or_index=None,
+                                   key_index=0):
+    """ RPC method to get the public key used for message signing.
+
+    Args:
+        account_name_or_index (str or int): The account to retrieve the
+            change address from. If not provided, the default account (0')
+            is used.
+        key_index (int): The index of the key in the external chain to use.
+
+    Returns:
+        str: Base64 representation of the public key
+    """
+    check_unlocked()
+    logger.debug("get_message_signing_public_key(%r, %d)" %
+                 (account_name_or_index,
+                  key_index))
+    try:
+        pub_key = wallet['obj'].get_message_signing_public_key(account_name_or_index,
+                                                               key_index)
+        print("Returing %s" % pub_key.to_base64().decode())
+        return pub_key.to_base64().decode()
+    except Exception as e:
         _handle_exception(e)
 
 
