@@ -707,7 +707,7 @@ def main(ctx, wallet_path, blockchain_data_provider,
     sys.exit(0)
 
 
+rpc_server = UnixSocketJSONRPCServer(methods, track_connections_cb)
+
 if __name__ == "__main__":
-    rpc_server = UnixSocketJSONRPCServer(methods,
-                                         track_connections_cb)
     main()
