@@ -85,7 +85,7 @@ class TwentyOneRestClient(object):
     # POST /pool/{username}/earnings/?action=True
     def flush_earnings(self, username):
         path = "/pool/account/%s/earnings/?action=flush" % username
-        return self._request(signed=False, method="POST", path=path)
+        return self._request(sign_username=username, method="POST", path=path)
 
     # GET /mmm/v1/search
     def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):

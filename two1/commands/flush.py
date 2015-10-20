@@ -16,7 +16,8 @@ def flush(config):
 
 @capture_usage
 def _flush(config):
-    client = rest_client.TwentyOneRestClient(TWO1_HOST)
+    client = rest_client.TwentyOneRestClient.from_keyring(TWO1_HOST,
+                                                          config.username)
 
     flush_earnings(config, client)
 
