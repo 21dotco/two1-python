@@ -846,10 +846,45 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_public_key(True)
 
+    def sign_message(self, message,
+                     account_name_or_index=None,
+                     key_index=0):
+        """ Signs an arbitrary message.
+
+            This function signs the message using a specific key in a specific
+            account. By default, if account or key are not given, it will
+            use the first (default) account and the 0-th public key. In all
+            circumstances it uses keys from the payout (external) chain.
+
+        Note:
+            This is different from `sign_bitcoin_message` as there is
+            nothing prepended to the message and the signature
+            recovery id is not provided, making public key recovery
+            impossible.
+
+        Args:
+            message (bytes or str): Message to be signed.
+            account_name_or_index (str or int): The account to retrieve the
+               change address from. If not provided, the default account (0')
+               is used.
+            key_index (int): The index of the key in the external chain to use.
+
+        Returns:
+            str: A Base64-encoded string of the signature.
+        """
+        if account_name_or_index is None:
+            acct = self._accounts[0]
+        else:
+            acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        priv_key = acct.get_private_key(change=False, n=key_index)
+
+        return base64.b64encode(bytes(priv_key.sign(message))).decode()
+
     def sign_bitcoin_message(self, message,
                              account_name_or_index=None,
                              key_index=0):
-        """ Signs an arbitrary message.
+        """ Bitcoin signs an arbitrary message.
 
             This function signs the message using a specific key in a specific
             account. By default, if account or key are not given, it will
