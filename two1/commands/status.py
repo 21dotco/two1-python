@@ -93,6 +93,10 @@ def status_earnings(config, client):
                    .format(none2zero(total_earnings),
                            none2zero(total_payouts))
                    )
+
+        if "is_flushing" in data and data["is_flushing"]:
+            config.log("\n" + UxString.flush_status, fg='green')
+
     except:
         pass
 
