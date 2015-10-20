@@ -13,6 +13,7 @@ from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
 
+#TODO do not go to prod with these defaults
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_API_HOST = "https://djangobitcoin-devel-e0ble.herokuapp.com"
@@ -20,6 +21,9 @@ TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_DEV_HOST = "http://127.0.0.1:8000"
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
+TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
+DEBUG_MODE = True
+
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
 except:

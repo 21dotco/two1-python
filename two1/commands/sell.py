@@ -11,6 +11,7 @@ from two1.commands.config import pass_config
 from two1.examples.server.settings import ENDPOINTS_FILE
 from two1.examples.server import views as dj_bt
 from tabulate import tabulate
+from two1.lib.server.analytics import capture_usage
 
 ENDPOINTS_PATH = os.path.join(
     os.path.dirname(os.path.abspath(dj_bt.__file__)), ENDPOINTS_FILE
@@ -34,6 +35,14 @@ def sell_with_subcommand(config):
 @click.argument('args', nargs=-1)
 @pass_config
 def sell(config, args, port=8000, builtin=False):
+    """
+    Set up a new machine-payable endpoint
+    """
+    _sell(config, args, port, builtin)
+
+
+@capture_usage
+def _sell(config, args, port=8000, builtin=False):
     try:
         if builtin:
             show_builtins(config)
@@ -47,8 +56,6 @@ def sell(config, args, port=8000, builtin=False):
         sell_item(path, package, config, port)
     except Exception as e:
         raise ClickException(e)
-
-
 def pop_option(args):
     i_opt = next(((i, x) for i, x in enumerate(args) if x.startswith('--')), None)
     if not i_opt:

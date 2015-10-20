@@ -10,6 +10,7 @@ from two1.commands.config import pass_config
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory, login
+from two1.lib.server.analytics import capture_usage
 from two1.lib.server.machine_auth import MachineAuth
 import two1.commands.config as cmd_config
 from two1.commands import status
@@ -21,7 +22,13 @@ import two1.lib.bitcoin.utils as utils
 @click.command()
 @pass_config
 def mine(config):
-    """Fastest way to get Bitcoin!"""
+    """ Fastest way to get Bitcoin!
+    """
+    _mine(config)
+
+
+@capture_usage
+def _mine(config):
     # detect if hat is present
     try:
         with open("/proc/device-tree/hat/product", "r") as f:
@@ -66,8 +73,6 @@ def mine(config):
         client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
                                                  machine_auth)
 
-        payout_address = config.wallet.current_address()
-        config.log("Setting payout_address to {}".format(payout_address))
         # set a new address from the HD wallet for payouts
         payout_address = config.wallet.current_address
         auth_resp = client.account_payout_address_post(config.username, payout_address)
@@ -83,12 +88,8 @@ def mine(config):
         # get work from server
         work = get_work(config, client)
 
-        message_id = random.randint(1, 1e5)
-        req_msg = msg_factory.create_submit_request(message_id=message_id,
-                                                    work_id=work.work_id,
-                                                    enonce2=share.enonce2,
-                                                    otime=share.otime,
-                                                    nonce=share.nonce)
+        if work is None:
+            return
 
         # start mining
         found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)

@@ -4,7 +4,7 @@ import re
 
 from two1.commands.config import pass_config
 from two1.lib.bitcurl.bitrequests import BitRequests
-
+from two1.lib.server.analytics import capture_usage
 
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -34,7 +34,12 @@ def buy(config, resource, data, method, data_file, output_file, payment_method, 
     Esto es SPARTA.
     $
     """
+    _buy(config, resource, data, method, data_file, output_file, payment_method, max_price)
 
+
+@capture_usage
+def _buy(config, resource, data, method, data_file, output_file, payment_method,
+         max_price):
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
         target_url = resource

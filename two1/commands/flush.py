@@ -2,6 +2,7 @@ import click
 from two1.commands.config import pass_config
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
+from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
 
@@ -10,6 +11,11 @@ from two1.lib.util.uxstring import UxString
 def flush(config):
     """Sends all earned bitcoins to your wallet"""
 
+    _flush(config)
+
+
+@capture_usage
+def _flush(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST)
 
     flush_earnings(config, client)
