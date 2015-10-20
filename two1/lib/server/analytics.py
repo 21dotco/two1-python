@@ -42,8 +42,7 @@ def capture_usage(func):
             log_message(data)
             click.echo(UxString.Error.server_err)
             if app_config.DEBUG_MODE:
-                click.echo(e)
-                traceback.print_exc()
+                raise e
 
     return _capture_usage
 
