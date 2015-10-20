@@ -4,7 +4,7 @@ import json
 import click
 from collections import namedtuple
 import urllib.parse
-
+import datetime
 import requests
 
 from two1.lib.bitcoin.crypto import PrivateKey
@@ -26,17 +26,21 @@ class TwentyOneRestClient(object):
         auth = MachineAuth.from_keyring()
         return TwentyOneRestClient(server_url, auth, username, version)
 
-    def _request(self, signed=False, method="GET", path="", **kwargs):
+    def _request(self, sign_username=None, method="GET", path="", **kwargs):
         url = self.server_url + path
         headers = {}
         if "data" in kwargs:
             headers["Content-Type"] = "application/json"
+            headers["x-21-timestamp"] = datetime.datetime.now().isoformat()
             data = kwargs["data"]
         else:
             data = ""
-        if signed:
-            sig = self.auth.sign_message(data)
-            headers["Authorization"] = sig.decode()
+        if sign_username is not None:
+            message = url + headers["x-21-timestamp"] + data
+
+            sig = self.auth.sign_message(message)
+            print("message:{}\nsig:{}\n".format(message, sig))
+            headers["Authorization"] = "21:{}:{}".format(sign_username, sig.decode())
 
         result = requests.request(method, url, headers=headers, **kwargs)
         return result
@@ -50,17 +54,20 @@ class TwentyOneRestClient(object):
             "public_key": base64.b64encode(cb).decode(),
         }
         data = json.dumps(body)
-        return self._request(signed=True, method="POST", path=path, data=data)
+        ret = self._request(sign_username=username, method="POST", path=path, data=data)
+        print("Setting payout address")
+        self.account_payout_address_post(username, payout_address)
+        return ret
 
     # GET /pool/work/{username}
     def get_work(self, username):
         path = "/pool/work/%s/" % username
-        return self._request(signed=True, method="GET", path=path)
+        return self._request(sign_username=username, method="GET", path=path)
 
     # POST /pool/work/{username}
     def send_work(self, username, data):
         path = "/pool/work/%s/" % username
-        return self._request(signed=False, method="POST", path=path, data=data)
+        return self._request(sign_username=None, method="POST", path=path, data=data)
 
     # POST /pool/account/{username}/payoutaddress
     def account_payout_address_post(self, username, payout_address):
@@ -69,7 +76,7 @@ class TwentyOneRestClient(object):
             "payout_address": payout_address,
         }
         data = json.dumps(body)
-        return self._request(signed=True, method="POST", path=path, data=data)
+        return self._request(sign_username=username, method="POST", path=path, data=data)
 
     # GET /pool/statistics/{username}/shares/
     def get_shares(self, username):
@@ -118,7 +125,7 @@ class TwentyOneRestClient(object):
 
         data = json.dumps(body)
 
-        return self._request(True, method,
+        return self._request(self.username, method,
                              url,
                              data=data
                              )
