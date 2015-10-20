@@ -116,6 +116,7 @@ main.add_command(setup)
 
 
 if __name__ == "__main__":
-    locale.setlocale(locale.LC_ALL,
-                     'us' if platform.system() == 'Windows' else 'en_US.UTF-8')
+    if platform.system() == 'Windows':
+        locale.setlocale(locale.LC_ALL, 'us')
+
     main()
