@@ -1,8 +1,9 @@
 import base64
-import requests
 import click
 import re
 from two1.commands.config import TWO1_HOST
+from two1.commands.exceptions import ServerConnectionError
+from two1.commands.exceptions import ServerTimeout
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.util.uxstring import UxString
@@ -49,9 +50,9 @@ def create_twentyone_account(config):
     try:
         create_username(config)
         return config.username
-    except requests.exceptions.ConnectionError:
+    except ServerConnectionError:
         click.echo(UxString.Error.connection % TWO1_HOST)
-    except requests.exceptions.Timeout:
+    except ServerTimeout:
         click.echo(UxString.Error.timeout % TWO1_HOST)
 
     return None

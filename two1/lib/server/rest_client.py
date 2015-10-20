@@ -5,7 +5,6 @@ import click
 from collections import namedtuple
 import urllib.parse
 import datetime
-import requests
 
 from two1.lib.bitcoin.crypto import PrivateKey
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
@@ -20,8 +19,16 @@ class TwentyOneRestClient(object):
         self.server_url = server_url
         self.version = version
         self.username = username
+        self._session = None
+
+    def _create_session(self):
+        import requests
+        self._session = requests.Session()
 
     def _request(self, sign_username=None, method="GET", path="", **kwargs):
+        if self._session is None:
+            self._create_session()
+
         url = self.server_url + path
         headers = {}
         if "data" in kwargs:
@@ -37,7 +44,7 @@ class TwentyOneRestClient(object):
                                                             sign_username,
                                                             sig)
 
-        result = requests.request(method, url, headers=headers, **kwargs)
+        result = self._session.request(method, url, headers=headers, **kwargs)
         return result
 
     # POST /pool/account

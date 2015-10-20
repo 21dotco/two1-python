@@ -6,7 +6,6 @@ from datetime import datetime
 from distutils.version import LooseVersion
 
 import os
-import requests
 import click
 from two1.commands.config import TWO1_VERSION
 from two1.commands.config import TWO1_PYPI_HOST
@@ -110,6 +109,7 @@ def lookup_pypi_version(version='latest'):
         minor, and patch numbers.
         Example: '0.2.1'
     """
+    import requests
     try:
         url = urljoin(TWO1_PYPI_HOST,
                       "api/package/{}/".format(TWO1_PACKAGE_NAME))
