@@ -22,8 +22,8 @@ class UxString:
     update_superuser = "You might need to enter superuser password."
 
     #flush
-    flush_status = "You have requested that all of your earned bitcoins be paid to " \
-                   "your wallet.\nThe payment will be sent to your wallet in our next " \
+    flush_status = "You have requested that %s of your earned satoshis be paid to " \
+                   "your wallet.\nYou will be paid in our next " \
                    "payout cycle.\nEstimated time: 10 minutes"
 
     class Error:
