@@ -3,6 +3,7 @@ import click
 import requests
 
 from two1.commands.config import pass_config
+from two1.lib.server.analytics import capture_usage
 
 
 @click.command(context_settings=dict(
@@ -16,6 +17,11 @@ def sell_file(config, file, price, store):
     """
     Upload file to sell to selected file store.
     """
+    _sell_file(config, file, price, store)
+
+
+@capture_usage
+def _sell_file(config, file, price, store):
     try:
         file_name = extract_file_name(file.name)
         config.log(
@@ -41,8 +47,6 @@ def sell_file(config, file, price, store):
 
     except Exception as e:
         raise click.ClickException(e)
-
-
 def extract_file_name(f_name):
     try:
         return f_name.split('/')[-1]

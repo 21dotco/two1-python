@@ -5,6 +5,7 @@ from two1.commands.config import pass_config
 from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
+from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
 
@@ -12,7 +13,11 @@ from two1.lib.util.uxstring import UxString
 @pass_config
 def status(config):
     """View earned Bitcoin and configuration"""
+    _status(config)
 
+
+@capture_usage
+def _status(config):
     client = rest_client.TwentyOneRestClient.from_keyring(TWO1_HOST,
                                                           config.username)
 
@@ -31,7 +36,6 @@ def status_account(config):
     config.log('''\
     Username              : {}'''
                .format(config.username))
-
 
 
 def status_wallet(config):
@@ -81,29 +85,24 @@ def status_bought_endpoints(config):
 
 
 def status_earnings(config, client):
-    try:
-        data = client.get_earnings(config.username)[config.username]
-        total_earnings = data["total_earnings"]
-        total_payouts = data["total_payouts"]
-        config.log('\nMining Proceeds', fg='magenta')
-        config.log('''\
+    data = client.get_earnings(config.username)[config.username]
+    total_earnings = data["total_earnings"]
+    total_payouts = data["total_payouts"]
+    config.log('\nMining Proceeds', fg='magenta')
+    config.log('''\
     Total Earnings           : {}
     Total Payouts            : {}'''
-                   .format(none2zero(total_earnings),
-                           none2zero(total_payouts))
-                   )
+               .format(none2zero(total_earnings),
+                       none2zero(total_payouts))
+               )
 
-        if "flush_amount" in data and data["flush_amount"] > 0:
-
-            flush_amount = data["flush_amount"]
-            config.log('''\
+    if "flush_amount" in data and data["flush_amount"] > 0:
+        flush_amount = data["flush_amount"]
+        config.log('''\
     Flushed Earnings         : {}'''
-                       .format(none2zero(flush_amount)),
-                       )
-            config.log("\n" + UxString.flush_status % flush_amount, fg='green')
-
-    except:
-        pass
+                   .format(none2zero(flush_amount)),
+                   )
+        config.log("\n" + UxString.flush_status % flush_amount, fg='green')
 
 
 def status_shares(config, client):

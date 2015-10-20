@@ -12,6 +12,7 @@ from two1.commands.config import TWO1_VERSION
 from two1.commands.config import TWO1_PYPI_HOST
 from two1.commands.config import TWO1_PACKAGE_NAME
 from two1.commands.exceptions import ServerRequestError
+from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 from two1.commands.config import pass_config
 
@@ -20,9 +21,13 @@ from two1.commands.config import pass_config
 @pass_config
 def update(config):
     """ Keep 21 App up to date"""
+    _update(config)
+
+
+@capture_usage
+def _update(config):
     click.echo(UxString.update_check)
     update_two1_package(config, force_update_check=True)
-
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + TWO1_PACKAGE_NAME
 
