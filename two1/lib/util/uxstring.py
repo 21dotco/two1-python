@@ -21,6 +21,11 @@ class UxString:
     update_package = "Updating to version %s..."
     update_superuser = "You might need to enter superuser password."
 
+    #flush
+    flush_status = "You have requested that all of your earned bitcoins be paid to " \
+                   "your wallet.\nThe payment will be sent to your wallet in our next " \
+                   "payout cycle.\nEstimated time: 10 minutes"
+
     class Error:
         # network errors
         connection = "Error: Cannot connect to %s."

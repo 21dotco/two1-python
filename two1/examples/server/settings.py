@@ -160,13 +160,10 @@ BITCHEQUE_VERIFICIATION_URL = os.environ.get(
 # allows posting "paid" as tx
 BITSERV_DEBUG = True
 
-# WSJ creds for /content/wsj url
-WSJ_USERNAME = os.environ.get(
-    "WSJ_USERNAME",
-)
-
-WSJ_PASSWORD = os.environ.get(
-    "WSJ_PASSWORD",
+# Server URL with paid WSJ Subscription
+WSJ_PAID_SERVER_URL = os.environ.get(
+    "WSJ_PAID_SERVER_URL",
+    "http://45.55.0.192:5000/url_to_png"
 )
 
 # Azure marketplace creds for MS

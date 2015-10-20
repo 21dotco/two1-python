@@ -25,31 +25,19 @@ def wsj(request):
           type: string
           paramType: query
     """
-    headers = {
-        'Origin': 'https://id.wsj.com',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'en-US,en;q=0.8',
-        'User-Agent': 'Mozilla/5.0 (Macitosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.71 Safari/537.36',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Connection': 'keep-alive',
-        'X-HTTP-Method-Override': 'POST',
-    }
-    payload = {
-        "username": settings.WSJ_USERNAME,
-        "password": settings.WSJ_PASSWORD,
-        "url": request.data['url'],
-        "template": "default",
-        "realm": "default",
-        "savelogin": "false"
-    }
-    response = requests.post(
-        'https://id.wsj.com/auth/submitlogin.json',
-        headers=headers,
-        data=json.dumps(payload)
+    article_url = request.data['url']
+    # use our 3rd party paid WSJ scraper -> s3 uploader
+    png_request = requests.post(
+        settings.WSJ_PAID_SERVER_URL,
+        data=json.dumps({
+            "url": article_url,
+            "auth_url": article_url
+        }),
+        headers={"Content-Type": "application/json"}
     )
-    if response.ok:
-        return Response({"paidurl": response.json()['url']})
+    if png_request.ok:
+        return Response({
+            "article": png_request.json()["url"]
+        })
     else:
-        return Response({"error": response.json()})
+        return Response({"error": png_request.text})
