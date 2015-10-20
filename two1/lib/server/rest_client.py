@@ -62,18 +62,18 @@ class TwentyOneRestClient(object):
         path = "/pool/work/%s/" % username
         return self._request(signed=False, method="POST", path=path, data=data)
 
-    # POST /pool/account/payout_address/{username}
+    # POST /pool/account/{username}/payoutaddress
     def account_payout_address_post(self, username, payout_address):
-        path = "/pool/account/payout_address/%s/" % username
+        path = "/pool/account/%s/payout_address/" % username
         body = {
             "payout_address": payout_address,
         }
         data = json.dumps(body)
         return self._request(signed=True, method="POST", path=path, data=data)
 
-    # GET /pool/statistics/shares/{username}
+    # GET /pool/statistics/{username}/shares/
     def get_shares(self, username):
-        path = "/pool/statistics/shares/%s/" % username
+        path = "/pool/statistics/%s/shares/" % username
         return self._request(path=path).json()
 
     # POST /pool/{username}/earnings/?action=True
@@ -246,9 +246,9 @@ class TwentyOneRestClient(object):
         data = json.dumps(body)
         return self._request(False, method, path, data=data)
 
-    # GET /pool/statistics/earnings/{username}
+    # GET /pool/statistics/{username}/earnings/
     def get_earnings(self, username):
-        path = "/pool/statistics/earnings/%s/" % username
+        path = "/pool/statistics/%s/earnings/" % username
         return self._request(path=path).json()
 
     @staticmethod
