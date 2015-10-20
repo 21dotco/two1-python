@@ -200,23 +200,23 @@ class SessionPaymentRequiredAuthentication(BaseBitcoinAuthentication):
                 raise PaymentRequiredException("Invalid BitcoinToken")
 
 
-class BitChequeAuthentication(BaseAuthentication):
+class BitTransferAuthentication(BaseAuthentication):
 
-    """Authentication using Bitcoin-Cheque (off-chain)."""
+    """Authentication using Bitcoin-Transfer (off-chain)."""
 
     @staticmethod
-    def get_bitcheque_from_header(request):
-        """Get bitcoin-cheque from HTTP headers."""
+    def get_bittransfer_from_header(request):
+        """Get bitcoin-transfer from HTTP headers."""
         return (
             request.META.get("HTTP_BITCOIN_CHEQUE"),
             request.META.get("HTTP_AUTHORIZATION")
             )
 
     def authenticate(self, request):
-        """Authenticate using Bitcoin-Cheque.
+        """Authenticate using Bitcoin-Transfer.
 
-        Strip headers for Bitcoin-Cheque and signature
-        of the check, send the data to a Bitcoin-Cheque
+        Strip headers for Bitcoin-Transfer and signature
+        of the check, send the data to a Bitcoin-Transfer
         verifier (ie: 21.co server), and if that response
         is ok, serve the client.
 
@@ -225,46 +225,46 @@ class BitChequeAuthentication(BaseAuthentication):
 
         Raises:
             PaymentRequiredException: if malformed / insufficient
-                / non existant bitcheque.
+                / non existant bittransfer.
         """
-        print("started: BitChequeAuthentication")
-        bitcheque, signature = self.get_bitcheque_from_header(request)
-        if not bitcheque:
+        print("started: BitTransferAuthentication")
+        bittransfer, signature = self.get_bittransfer_from_header(request)
+        if not bittransfer:
             return None
-        if not bitcheque:
+        if not bittransfer:
             raise PaymentRequiredException
         else:
-            print("cheque: {} \nsignature: {}".format(
-                    bitcheque, signature
+            print("transfer: {} \nsignature: {}".format(
+                    bittransfer, signature
                 )
             )
             # before verifiying with a 3rd party server,
-            # verify that the amount sent in the cheque
+            # verify that the amount sent in the transfer
             # is correct.
             try:
-                if not json.loads(bitcheque)["amount"] == \
+                if not json.loads(bittransfer)["amount"] == \
                         get_price_for_request(request):
                     raise PaymentRequiredException("Insufficient Payment")
             except ValueError:
                 raise PaymentRequiredException
-            # now verify with server that cheque is valid
+            # now verify with server that transfer is valid
             # else raise another PaymentRequiredException.
-            if self.verify_cheque(bitcheque, signature):
+            if self.verify_transfer(bittransfer, signature):
                 user, created = get_user_model().objects.get_or_create(
-                    username=json.loads(bitcheque)["payer"]
+                    username=json.loads(bittransfer)["payer"]
                 )
-                return (user, bitcheque)
+                return (user, bittransfer)
             else:
                 raise PaymentRequiredException
 
-    def verify_cheque(self, bitcheque, signature):
-        """Verify that cheque is valid.
+    def verify_transfer(self, bittransfer, signature):
+        """Verify that transfer is valid.
 
         Done via 3rd party server.
 
         Args:
-            bitcheque (str): bitcoin cheque
-            signature (TYPE): signature on cheque
+            bittransfer (str): bitcoin transfer
+            signature (TYPE): signature on transfer
         """
         if settings.BITSERV_DEBUG and signature == "paidsig":
             return True
@@ -275,7 +275,7 @@ class BitChequeAuthentication(BaseAuthentication):
                     settings.TWO1_USERNAME
                 ),
                 data=json.dumps({
-                    "bitcheque": bitcheque,
+                    "bittransfer": bittransfer,
                     "signature": signature
                 }),
                 headers={'content-type': 'application/json'}

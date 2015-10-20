@@ -9,7 +9,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.decorators import authentication_classes
 
 from bitcoin_auth.permissions import IsBitcoinAuthenticated
-from bitcoin_auth.authentication import BitChequeAuthentication
+from bitcoin_auth.authentication import BitTransferAuthentication
 from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
 from bitcoin_auth.authentication import SessionPaymentRequiredAuthentication
 

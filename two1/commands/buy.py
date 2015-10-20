@@ -22,7 +22,7 @@ URL_REGEXP = re.compile(
 @click.option('-d', '--data', default=None, help="Data to send in HTTP body")
 @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
 @click.option('-o', '--output', 'output_file', type=click.File('wb'), help="Output file")
-@click.option('-p', '--payment-method', default='bitcheque', type=click.Choice(['bitcheque', 'onchain', 'channel']))
+@click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
 @pass_config
 def buy(config, resource, data, method, data_file, output_file, payment_method, max_price):

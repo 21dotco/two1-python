@@ -151,7 +151,7 @@ TWO1_USERNAME = os.environ.get(
     'TWO1_USERNAME', "seller"
 )
 
-# endpoint of the bitcheque verifier
+# endpoint of the bittransfer verifier
 BITCHEQUE_VERIFICIATION_URL = os.environ.get(
     "BITCHEQUE_VERIFICIATION_URL",
     "http://localhost:8000/pool/account/{}/21satoshi/"
@@ -181,7 +181,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'bitcoin_auth.authentication.BasicPaymentRequiredAuthentication',
         'bitcoin_auth.authentication.SessionPaymentRequiredAuthentication',
-        'bitcoin_auth.authentication.BitChequeAuthentication',
+        'bitcoin_auth.authentication.BitTransferAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'bitcoin_auth.permissions.IsBitcoinAuthenticated',

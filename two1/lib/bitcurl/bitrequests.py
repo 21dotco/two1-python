@@ -1,6 +1,6 @@
 """"BitRequests, or requests with 402 ability.
 
-BitCheque Protocol:
+BitTransfer Protocol:
 
 An instant off chain approach to transfering Bitcoin.
 
@@ -14,7 +14,7 @@ Flow from clients perspective (user 1):
     - Here user 1 does a call to user 2's server
         - user 2 responds with a 402 of their price / and their 21 username
     if user 1 decides to pay for that endpoint:
-        - user 1 sends to user 2 the message (u1, pay, u2, price) (the cheque)
+        - user 1 sends to user 2 the message (u1, pay, u2, price) (the transfer)
           signed with their private key (aka: machine auth)
             - user 2 sends this to the server
             - server checks if u1 has enough money to pay u2 (balance table).
@@ -45,7 +45,7 @@ class BitRequests(object):
     be seen in two1.git, under two1/examples.
     """
 
-    def __init__(self, config, payment_method="bitcheque"):
+    def __init__(self, config, payment_method="bittransfer"):
         """Initialize BitRequests.
 
         Args:
@@ -86,7 +86,7 @@ class BitRequests(object):
         This can include:
             Bitcoin-Address
             Price
-            Username (bitcheque)
+            Username (bittransfer)
 
         Args:
             headers (TYPE): Description
@@ -101,9 +101,9 @@ class BitRequests(object):
             headers.get("username")
         )
 
-    def _create_and_sign_bitcheque(self, payer, payee_address, payee_username,
+    def _create_and_sign_bittransfer(self, payer, payee_address, payee_username,
                                    amount, description):
-        """Create and sign a bitcoin cheque
+        """Create and sign a bitcoin transfer
 
         Args:
             payer (TYPE): Description
@@ -115,7 +115,7 @@ class BitRequests(object):
         Returns:
             TYPE: Description
         """
-        bitcheque = json.dumps(
+        bittransfer = json.dumps(
             {
                 "payer": payer,
                 "payee_address": payee_address,
@@ -125,9 +125,9 @@ class BitRequests(object):
             }
         )
         signature = self.machine_auth.sign_message(
-            bitcheque
+            bittransfer
         ).decode()
-        return bitcheque, signature
+        return bittransfer, signature
 
     def _create_and_sign_transaction(self, payee_address, amount,
                                      use_unconfirmed=True):
@@ -159,7 +159,7 @@ class BitRequests(object):
 
     def _pay_endpoint(self, response):
         """From a response (request object),
-        pay the path inside of it via a BitCheque.
+        pay the path inside of it via a BitTransfer.
 
         Args:
             response (request): request object
@@ -171,15 +171,15 @@ class BitRequests(object):
             self._get_payment_info_from_headers(response.headers)
         # construct payment args for the response.
         request_args = {'headers': {}}
-        if self.payment_method == "bitcheque":
-            bitcheque, signature = self._create_and_sign_bitcheque(
+        if self.payment_method == "bittransfer":
+            bittransfer, signature = self._create_and_sign_bittransfer(
                     self.config.username,
                     payee_address,
                     payee_username,
                     price,
                     response.url
                 )
-            request_args['headers']['Bitcoin-Cheque'] = bitcheque
+            request_args['headers']['Bitcoin-Transfer'] = bittransfer
             request_args['headers']['Authorization'] = signature
         if self.payment_method == "onchain":
             request_args["headers"]["Bitcoin-Transaction"] = \

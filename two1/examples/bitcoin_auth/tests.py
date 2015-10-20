@@ -20,7 +20,7 @@ class BitcoinAuthTestCase(TestCase):
         self.assertIsNotNone(response._headers.get('price'))
         self.assertIsNotNone(response._headers.get('username'))
 
-    def test_bitcheque_handshake(self):
+    def test_bittransfer_handshake(self):
         """Test that we're returend a 402, followed by a 200 after payment."""
         response = Client().get('/weather/current-temperature?place=94115')
         self.assertEqual(response.status_code, 402)
@@ -37,13 +37,13 @@ class BitcoinAuthTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_bad_bitcheque_handshake(self):
-        """Test that we're not able to pass in a malformed bitcheque."""
+    def test_bad_bittransfer_handshake(self):
+        """Test that we're not able to pass in a malformed bittransfer."""
         response = Client().get('/weather/current-temperature?place=94115')
         self.assertEqual(response.status_code, 402)
         response = Client().get(
             '/weather/current-temperature?place=94115',
-            HTTP_BITCOIN_CHEQUE="banoodlecheque",
+            HTTP_BITCOIN_CHEQUE="banoodletransfer",
             HTTP_AUTHORIZATION="banoodlesig"
         )
         self.assertEqual(response.status_code, 402)
