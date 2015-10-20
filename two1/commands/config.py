@@ -18,11 +18,9 @@ TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_API_HOST = "https://djangobitcoin-devel-e0ble.herokuapp.com"
 TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
-TWO1_DEV_HOST = "http://127.0.0.1:8000"
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
-DEBUG_MODE = True
 
 try:
     TWO1_VERSION = pkg_resources.require("two1")[0].version
@@ -43,9 +41,10 @@ def str2bool(v):
 # 1) set the TWO1_HOST to TWO1_DEV_HOST (127.0.0.1:8000) or TWO1_DEV_HOST
 #    from the environment
 # if TWO1_DEV is not set, use TWO1_PROD_HOST
-if str2bool(os.environ.get("TWO1_DEV", default="0")):
+TWO1_DEV = str2bool(os.environ.get("TWO1_DEV", default="0"))
+if TWO1_DEV:
     click.echo(click.style("Setting up developer environment.", fg="red"))
-    TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default=TWO1_DEV_HOST)
+    TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default="http://127.0.0.1:8000")
     # Handle hostname if there is a trailing slash
     if TWO1_HOST[-1] == "/":
         TWO1_HOST = TWO1_HOST[0:-1]
