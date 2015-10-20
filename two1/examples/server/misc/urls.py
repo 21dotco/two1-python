@@ -2,7 +2,7 @@ from django.conf.urls import url
 from two1.examples.server.misc import (
     barcode, charts, language, speech, face_detect,
     phone, weather, image_processing, scraper, twitter,
-    blackjack, content, search
+    blackjack, content, search,  social
 )
 
 
@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^blackjack/$', blackjack.createGame),
     url(r'^content/wsj$', content.wsj),
     url(r'^search/bing$', search.bing),
+    url(r'^social/twitter$', social.twitter),
     url(r'^blackjack/(?P<game_token>[^/]+)/$', blackjack.getGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/hit$', blackjack.hitGame),
     url(r'^blackjack/(?P<game_token>[^/]+)/stand$', blackjack.standGame),

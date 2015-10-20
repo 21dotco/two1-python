@@ -172,6 +172,28 @@ AZURE_MARKETPLACE_KEY = os.environ.get(
     "AZURE_MARKETPLACE_KEY"
 )
 
+# Twitter related credentials for
+# making a social call to yourself
+# Docs on creating a new app:
+# https://apps.twitter.com/app/new
+
+# HANDLE without the @
+TWITTER_HANDLE = os.environ.get(
+    "TWITTER_HANDLE"
+)
+TWITTER_CONSUMER_KEY = os.environ.get(
+    "TWITTER_CONSUMER_KEY"
+)
+TWITTER_CONSUMER_SECRET = os.environ.get(
+    "TWITTER_CONSUMER_SECRET"
+)
+TWITTER_OAUTH_TOKEN = os.environ.get(
+    "TWITTER_OAUTH_TOKEN"
+)
+TWITTER_OAUTH_TOKEN_SECRET = os.environ.get(
+    "TWITTER_OAUTH_TOKEN_SECRET"
+)
+
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
