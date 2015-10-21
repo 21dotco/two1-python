@@ -17,7 +17,7 @@ from two1.commands import status
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
-
+import two1.commands.config as app_config
 
 @click.command()
 @pass_config
@@ -55,11 +55,12 @@ def _mine(config):
                     # Stale PID file, so delete it.
                     subprocess.call(["sudo", "minerd", "--stop"])
 
+
         # Not running, let's start it
         # TODO: make sure config exists in /etc
         # TODO: replace with sys-ctrl command
         minerd_cmd = ["sudo", "minerd", "-u", config.username,
-                      "swirl+tcp://pool.pool2.21.co:21006/"]
+                      app_config.TWO1_POOL_URL]
         try:
             o = subprocess.check_output(minerd_cmd, universal_newlines=True)
         except subprocess.CalledProcessError as e:
