@@ -18,9 +18,7 @@ def create_version_file(version):
 
 def create_sdist():
     """Run setup.py to create a gzip'ed tar file of the current version."""
-    subprocess.call(
-        'python3 setup.py sdist --formats=gztar',
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    subprocess.check_call('python3 setup.py sdist --formats=gztar', shell=True)
     print('Two1 sdist created.')
 
 
