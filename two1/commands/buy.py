@@ -26,7 +26,8 @@ URL_REGEXP = re.compile(
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
 @pass_config
-def buy(config, resource, data, method, data_file, output_file, payment_method, max_price):
+def buy(config, resource, data, method, data_file, output_file, payment_method,
+        max_price):
     """Buy an API call with Bitcoin.
 
     \b
@@ -35,12 +36,13 @@ def buy(config, resource, data, method, data_file, output_file, payment_method, 
     Esto es SPARTA.
     $
     """
-    _buy(config, resource, data, method, data_file, output_file, payment_method, max_price)
+    _buy(config, resource, data, method, data_file, output_file,
+         payment_method, max_price)
 
 
 @capture_usage
-def _buy(config, resource, data, method, data_file, output_file, payment_method,
-         max_price):
+def _buy(config, resource, data, method, data_file, output_file,
+         payment_method, max_price):
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
         target_url = resource
@@ -52,6 +54,9 @@ def _buy(config, resource, data, method, data_file, output_file, payment_method,
     if method == "GET" and (data or data_file):
         method = "POST"
 
+    # Set default headers for making bitrequests with JSON-like data
+    headers = {'Content-Type': 'application/json'}
+
     # Make the request
     try:
         if payment_method == 'bittransfer':
@@ -61,8 +66,8 @@ def _buy(config, resource, data, method, data_file, output_file, payment_method,
         else:
             raise Exception('Payment method does not exist.')
 
-        res = bit_req.request(method.lower(), target_url,
-                              data=data or data_file, max_price=max_price)
+        res = bit_req.request(method.lower(), target_url, max_price=max_price,
+                              data=data or data_file, headers=headers)
 
     except Exception as e:
         config.log(str(e), fg="red")

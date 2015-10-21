@@ -51,7 +51,7 @@ class BitRequests(object):
         """
         self.config = config
 
-    def make_402_payment(self, headers, max_price):
+    def make_402_payment(self, response, max_price):
         """Payment handling method implemented by a BitRequests subclass.
 
         Args:
@@ -64,7 +64,7 @@ class BitRequests(object):
         """
         raise NotImplementedError()
 
-    def request(self, method, url, data=None, max_price=None):
+    def request(self, method, url, data=None, headers=None, max_price=None):
         """Make a 402 request for a resource.
 
         This is the BitRequests public method that should be used to complete a
@@ -92,9 +92,12 @@ class BitRequests(object):
         # Pass the response to the main method for handling payment
         payment_headers = self.make_402_payment(response, max_price)
 
+        # Add the payment data headers to the current headers dict
+        headers.update(payment_headers)
+
         # Complete the response and return with a requests.response object
         paid_response = requests.request(
-            method, url, data=data, headers=payment_headers)
+            method, url, data=data, headers=headers)
 
         return paid_response
 
