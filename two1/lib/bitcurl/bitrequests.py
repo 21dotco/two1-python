@@ -27,222 +27,154 @@ import json
 import requests
 
 
+class BitRequestsError(Exception):
+    pass
+
+
+class UnsupportedPaymentMethodError(BitRequestsError):
+    pass
+
+
 class BitRequests(object):
 
-    """Bitcoin enabled requests.
+    """Implements the HTTP 402 bitcoin payment protocol on the client side.
 
-    Implements the 402 bitcoin payment
-    protocol on the client side.
-
-    If a payment is to come back as a 402,
-    requests are handled, and paid in the
-    proper fasion until success or failure
-    sent back from a bitcoin enabled server.
-
-    An example of a bitcoin enabled api server can
-    be seen in two1.git, under two1/examples.
+    If an initial request returns '402: Payment Required', the class defers to
+    its `make_402_payment()` to create the necessary payment.
     """
 
-    def __init__(self, config, payment_method="bittransfer"):
+    HTTP_BITCOIN_PRICE = 'price'
+    HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
+
+    def __init__(self, config):
         """Initialize BitRequests.
 
         Args:
             config (two1.commands.config): a two1 config object
-            payment_method (str, optional): payment method for 402
-                fufillment.
         """
         self.config = config
-        self.machine_auth = self.config.machine_auth
-        self.payment_method = payment_method
-        self.data = None
-        self.files = None
 
-    def _handle_response(self, response):
-        """Handle a response from a 402 enabled server.
+    def make_402_payment(self, headers, max_price):
+        """Payment handling method implemented by a BitRequests subclass.
 
         Args:
-            response (request): request object
+            response (requests.response): 402 response from the API server.
+            max_price (int): maximum allowed price for a request (in satoshi).
 
         Returns:
-            response (request): request object
-
-        Raises:
-            ValueError: if conditions are not met.
+            headers (dict): dict of headers with payment data to send to the
+                API server to inform payment status for the resource.
         """
-        print(response, response.text)
-        if requests.status_codes._codes[response.status_code][0] == \
-                'payment_required' and "Payment Required" in response.text:
-            return self._pay_endpoint(response)
-        elif response.ok:
+        raise NotImplementedError()
+
+    def request(self, method, url, data=None, max_price=None):
+        """Make a 402 request for a resource.
+
+        This is the BitRequests public method that should be used to complete a
+        402 request using the desired payment method (as constructed by a class
+        implementing BitRequests)
+
+        Args:
+            method (string): HTTP method for completing the request in lower-
+                case letters. Examples: 'get', 'post', 'put'
+            url (string): URL of the requested resource.
+            data (dict): python dict of parameters to send with the request.
+            max_price (int): maximum allowed price for a request (in satoshi).
+
+        Returns:
+            response (requests.response): successful response from paying for
+                the requested resource.
+        """
+        # Make the initial request for the resource
+        response = requests.request(method, url, data=data)
+
+        # Return if we receive a status code other than 402: payment required
+        if response.status_code != requests.codes.payment_required:
             return response
-        else:
-            raise ValueError(response.text)
 
-    def _get_payment_info_from_headers(self, headers):
-        """Get payment information from headers.
+        # Pass the response to the main method for handling payment
+        payment_headers = self.make_402_payment(response, max_price)
 
-        This can include:
-            Bitcoin-Address
-            Price
-            Username (bittransfer)
+        # Complete the response and return with a requests.response object
+        paid_response = requests.request(
+            method, url, data=data, headers=payment_headers)
 
-        Args:
-            headers (TYPE): Description
+        return paid_response
 
-        Returns:
-            (payment info tuple): Payment information
-                in a tuple format
-        """
-        return (
-            headers.get("bitcoin-address"),
-            int(headers.get("price")),
-            headers.get("username")
-        )
 
-    def _create_and_sign_bittransfer(self, payer, payee_address, payee_username,
-                                   amount, description):
-        """Create and sign a bitcoin transfer
+class BitTransferRequests(BitRequests):
 
-        Args:
-            payer (TYPE): Description
-            payee_address (TYPE): Description
-            payee_username (TYPE): Description
-            amount (TYPE): Description
-            description (TYPE): Description
+    """BitRequests for making bit-transfer payments."""
 
-        Returns:
-            TYPE: Description
-        """
-        bittransfer = json.dumps(
-            {
-                "payer": payer,
-                "payee_address": payee_address,
-                "payee_username": payee_username,
-                "amount": amount,
-                "description": description
-            }
-        )
-        signature = self.machine_auth.sign_message(
-            bittransfer
-        )
-        return bittransfer, signature
+    HTTP_BITCOIN_USERNAME = 'username'
 
-    def _create_and_sign_transaction(self, payee_address, amount,
-                                     use_unconfirmed=True):
-        """Create and sign a raw bitcoin transaction
+    def __init__(self, config):
+        """Initialize the bit-transfer with keyring machine auth."""
+        super().__init__(config)
+        self.machine_auth = MachineAuth.from_keyring()
 
-        Args:
-            payee_address (str): Address to pay.
-            amount (int): Satoshis to pay.
-            use_unconfirmed (bool, optional): use zero conf funds.
+    def make_402_payment(self, response, max_price):
+        """Make a bit-transfer payment to the payment-handling service."""
+        # Retrieve payment headers
+        headers = response.headers
+        price = headers.get(BitRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(BitRequests.HTTP_BITCOIN_ADDRESS)
+        payee_username = headers.get(BitTransferRequests.HTTP_BITCOIN_USERNAME)
 
-        Returns:
-            txn: Raw bitcoin trasnaction
+        # Verify that the payment method is supported
+        if price is None or payee_address is None or payee_username is None:
+            raise UnsupportedPaymentMethodError(
+                'Resource does not support that payment method.')
 
-        Raises:
-            ValueError: If wallet is not solvent.
-        """
-        # ensure that we have sufficient funds for this
-        # payment.
-        if amount > self.config.wallet.balance():
-            raise ValueError("Insufficient funds to create transaction")
-        # use wallet to make a tranasction for the recipient
-        signed_tx = self.config.wallet.make_signed_transaction_for(
-            payee_address, amount, use_unconfirmed=use_unconfirmed
-        )
-        txid = signed_tx[0].get("txid")
-        txn = signed_tx[0].get("txn")
-        print("txid: {}\ntxn: {}".format(txid, txn))
-        return txn
+        # Convert string headers into correct data types
+        price = int(price)
 
-    def _pay_endpoint(self, response):
-        """From a response (request object),
-        pay the path inside of it via a BitTransfer.
+        # Create and sign BitTranfer
+        bittransfer = json.dumps({
+            'payer': self.config.username,
+            'payee_address': payee_address,
+            'payee_username': payee_username,
+            'amount': price,
+            'description': response.url
+        })
+        signature = self.machine_auth.sign_message(bittransfer).decode()
 
-        Args:
-            response (request): request object
+        return {
+            'Bitcoin-Transfer': bittransfer,
+            'Authorization': signature
+        }
 
-        Returns:
-            response (request): request object
-        """
-        payee_address, price, payee_username = \
-            self._get_payment_info_from_headers(response.headers)
-        # construct payment args for the response.
-        request_args = {'headers': {}}
-        if self.payment_method == "bittransfer":
-            bittransfer, signature = self._create_and_sign_bittransfer(
-                    self.config.username,
-                    payee_address,
-                    payee_username,
-                    price,
-                    response.url
-                )
-            request_args['headers']['Bitcoin-Transfer'] = bittransfer
-            request_args['headers']['Authorization'] = signature
-        if self.payment_method == "onchain":
-            request_args["headers"]["Bitcoin-Transaction"] = \
-                self._create_and_sign_transaction(
-                    payee_address, price, True
-                )
-            request_args["headers"]["Return-Wallet-Address"] = \
-                self.config.wallet.current_address
-        # determine request to make
-        request_method = self.get
-        # attach POST data if it exists
-        if self.data:
-            request_method = self.post
-            request_args['data'] = self.data
-        # attach file data if it exists
-        if self.files:
-            # We may have read the whole file if this is the second time
-            # we send it (first time we were asked to pay). So we must
-            # seek back to the beginning.
-            for file_tuple in self.files.values():
-                if len(file_tuple) == 2:  # tuple: (file_name, file_obj)
-                    file_tuple[1].seek(0)
-            request_args['files'] = self.files
-        return request_method(
-            response.url,
-            **request_args
-        )
 
-    def get(self, url, **kwargs):
-        """Send a get request to a 402 enabled server.
+class OnChainRequests(BitRequests):
 
-        Args:
-            url (str): endpoint to send request
-            **kwargs: additional payload for requests
+    """BitRequests for making on-chain payments."""
 
-        Returns:
-            response (request): a requests resposne
-        """
-        response = requests.get(url, **kwargs)
-        return self._handle_response(response)
+    def __init__(self, config):
+        """Initialize the on-chain request with keyring machine auth."""
+        super().__init__(config)
+        self.machine_auth = MachineAuth.from_keyring()
 
-    def post(self, url, **kwargs):
-        """Send a post request to a 402 enabled server.
+    def make_402_payment(self, response, max_price):
+        """Make an on-chain payment."""
+        # Retrieve payment headers
+        headers = response.headers
+        price = headers.get(BitRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(BitRequests.HTTP_BITCOIN_ADDRESS)
 
-        Args:
-            url (str): endpoint to send request
-            **kwargs: additional payload for requests
+        # Verify that the payment method is supported
+        if price is None or payee_address is None:
+            raise UnsupportedPaymentMethodError(
+                'Resource does not support that payment method.')
 
-        Returns:
-            response (request): a requests resposne
-        """
-        if 'data' in kwargs:
-            self.data = kwargs['data']
-        if 'files' in kwargs:
-            self.files = kwargs['files']
-        if 'headers' not in kwargs:
-            kwargs['headers'] = {}
-        kwargs["headers"].update(
-            {'content-type': 'application/json'}
-        )
-        response = requests.post(url, **kwargs)
-        return self._handle_response(response)
+        # Convert string headers into correct data types
+        price = int(price)
 
-if __name__ == "__main__":
-    from two1.commands.config import Config
-    c = Config()
-    bc = BitRequests(c, "onchain")
-    bc.get("http://localhost:8000/weather/current-temperature?place=94103")
+        # Create the signed transaction
+        onchain_payment = self.config.wallet.make_signed_transaction_for(
+            payee_address, price, use_unconfirmed=True)[0].get('txn')
+        return_address = self.config.wallet.current_address
+
+        return {
+            'Bitcoin-Transaction': onchain_payment,
+            'Return-Wallet-Address': return_address
+        }

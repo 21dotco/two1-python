@@ -3,7 +3,8 @@ import datetime
 import re
 
 from two1.commands.config import pass_config
-from two1.lib.bitcurl.bitrequests import BitRequests
+from two1.lib.bitcurl.bitrequests import BitTransferRequests
+from two1.lib.bitcurl.bitrequests import OnChainRequests
 from two1.lib.server.analytics import capture_usage
 
 URL_REGEXP = re.compile(
@@ -53,13 +54,18 @@ def _buy(config, resource, data, method, data_file, output_file, payment_method,
 
     # Make the request
     try:
-        br = BitRequests(config, payment_method)
-        res = getattr(br, method.lower())(
-            target_url,
-            data=data or data_file
-        )
+        if payment_method == 'bittransfer':
+            bit_req = BitTransferRequests(config)
+        elif payment_method == 'onchain':
+            bit_req = OnChainRequests(config)
+        else:
+            raise Exception('Payment method does not exist.')
+
+        res = bit_req.request(method.lower(), target_url,
+                              data=data or data_file, max_price=max_price)
+
     except Exception as e:
-        config.log( str(e), fg="red")
+        config.log(str(e), fg="red")
         return
 
     # Write response text to output file or the console
