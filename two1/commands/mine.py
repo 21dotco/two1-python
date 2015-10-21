@@ -103,11 +103,10 @@ def start_cpu_mining(config):
         UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="yellow")
 
-    # print earning status after mining
-    status.status_earnings(config, client)
+    status.status_postmine_balance(config, client)
 
     click.echo(UxString.mining_finish.format(
-        click.style("21 status", bold=True), click.style("21 buy\n", bold=True)))
+        click.style("21 status", bold=True), click.style("21 buy", bold=True)))
 
 
 def set_payout_address(config, client):
