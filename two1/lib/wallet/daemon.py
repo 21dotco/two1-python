@@ -34,6 +34,7 @@ wallet = dict(obj=None,
                                in_need=False))
 last_exception = None
 wallet_dict_lock = threading.Lock()
+client_lock = threading.Lock()
 
 
 def track_connections_cb(data):
@@ -707,7 +708,9 @@ def main(ctx, wallet_path, blockchain_data_provider,
     sys.exit(0)
 
 
-rpc_server = UnixSocketJSONRPCServer(methods, track_connections_cb)
+rpc_server = UnixSocketJSONRPCServer(dispatcher_methods=methods,
+                                     client_lock=client_lock,
+                                     request_cb=track_connections_cb)
 
 if __name__ == "__main__":
     main()
