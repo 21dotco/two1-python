@@ -3,7 +3,7 @@ import requests
 import click
 import re
 from two1.commands.config import TWO1_HOST
-from two1.lib.server.machine_auth import MachineAuth
+from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.util.uxstring import UxString
 
@@ -76,9 +76,9 @@ def create_username(config, username=None):
     # can hit a few random keystrokes to generate a private
     # key
     # check if a key already exists and use it
-    machine_auth = MachineAuth.from_keyring()
+    machine_auth = config.machine_auth
     if not machine_auth:
-        machine_auth = MachineAuth.from_random()
+        raise ValueError("Error: Auth is not initialized.")
     # get public key and convert to base64 for storage
     machine_auth_pubkey_b64 = base64.b64encode(
         machine_auth.public_key.compressed_bytes
@@ -99,9 +99,8 @@ def create_username(config, username=None):
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
             # save the auth keys
-            keyring.set_password("twentyone", "mining_auth_key", mining_auth_key_b58)
-            config.update_key("mining_auth_pubkey", mining_auth_pubkey)
-
+            # machine_auth.saveto_keyring()
+            config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
             config.save()
             break
         elif r.status_code == 400:
