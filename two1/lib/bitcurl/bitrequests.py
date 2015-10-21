@@ -43,11 +43,8 @@ class BitRequests(object):
     its `make_402_payment()` to create the necessary payment.
     """
 
-    HTTP_BITCOIN_PRICE = 'price'
-    HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
-
     def __init__(self, config):
-        """Initialize BitRequests.
+        """Initialize BitRequests with a two1 command line config object.
 
         Args:
             config (two1.commands.config): a two1 config object
@@ -106,6 +103,8 @@ class BitTransferRequests(BitRequests):
 
     """BitRequests for making bit-transfer payments."""
 
+    HTTP_BITCOIN_PRICE = 'price'
+    HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
     HTTP_BITCOIN_USERNAME = 'username'
 
     def __init__(self, config):
@@ -117,8 +116,8 @@ class BitTransferRequests(BitRequests):
         """Make a bit-transfer payment to the payment-handling service."""
         # Retrieve payment headers
         headers = response.headers
-        price = headers.get(BitRequests.HTTP_BITCOIN_PRICE)
-        payee_address = headers.get(BitRequests.HTTP_BITCOIN_ADDRESS)
+        price = headers.get(BitTransferRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(BitTransferRequests.HTTP_BITCOIN_ADDRESS)
         payee_username = headers.get(BitTransferRequests.HTTP_BITCOIN_USERNAME)
 
         # Verify that the payment method is supported
@@ -149,6 +148,9 @@ class OnChainRequests(BitRequests):
 
     """BitRequests for making on-chain payments."""
 
+    HTTP_BITCOIN_PRICE = 'price'
+    HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
+
     def __init__(self, config):
         """Initialize the on-chain request with keyring machine auth."""
         super().__init__(config)
@@ -157,8 +159,8 @@ class OnChainRequests(BitRequests):
         """Make an on-chain payment."""
         # Retrieve payment headers
         headers = response.headers
-        price = headers.get(BitRequests.HTTP_BITCOIN_PRICE)
-        payee_address = headers.get(BitRequests.HTTP_BITCOIN_ADDRESS)
+        price = headers.get(OnChainRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(OnChainRequests.HTTP_BITCOIN_ADDRESS)
 
         # Verify that the payment method is supported
         if price is None or payee_address is None:
