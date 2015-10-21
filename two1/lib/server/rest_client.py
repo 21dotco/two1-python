@@ -8,23 +8,18 @@ import datetime
 import requests
 
 from two1.lib.bitcoin.crypto import PrivateKey
-from two1.lib.server.machine_auth import MachineAuth
+from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.commands.exceptions import ServerRequestError
 
 
 class TwentyOneRestClient(object):
 
-    def __init__(self, server_url, machine_auth=None, username=None,
+    def __init__(self, server_url, machine_auth, username=None,
                  version="0"):
         self.auth = machine_auth
         self.server_url = server_url
         self.version = version
         self.username = username
-
-    @staticmethod
-    def from_keyring(server_url, username=None, version="0"):
-        auth = MachineAuth.from_keyring()
-        return TwentyOneRestClient(server_url, auth, username, version)
 
     def _request(self, sign_username=None, method="GET", path="", **kwargs):
         url = self.server_url + path
@@ -40,7 +35,7 @@ class TwentyOneRestClient(object):
             sig = self.auth.sign_message(message)
             headers["Authorization"] = "21 {} {} {}".format(timestamp,
                                                             sign_username,
-                                                            sig.decode())
+                                                            sig)
 
         result = requests.request(method, url, headers=headers, **kwargs)
         return result
