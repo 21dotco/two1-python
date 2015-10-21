@@ -111,7 +111,7 @@ class BitTransferRequests(BitRequests):
     def __init__(self, config):
         """Initialize the bit-transfer with keyring machine auth."""
         super().__init__(config)
-        self.machine_auth = MachineAuth.from_keyring()
+        self.machine_auth = self.config.machine_auth
 
     def make_402_payment(self, response, max_price):
         """Make a bit-transfer payment to the payment-handling service."""
@@ -137,7 +137,7 @@ class BitTransferRequests(BitRequests):
             'amount': price,
             'description': response.url
         })
-        signature = self.machine_auth.sign_message(bittransfer).decode()
+        signature = self.machine_auth.sign_message(bittransfer)
 
         return {
             'Bitcoin-Transfer': bittransfer,
@@ -152,7 +152,6 @@ class OnChainRequests(BitRequests):
     def __init__(self, config):
         """Initialize the on-chain request with keyring machine auth."""
         super().__init__(config)
-        self.machine_auth = MachineAuth.from_keyring()
 
     def make_402_payment(self, response, max_price):
         """Make an on-chain payment."""
