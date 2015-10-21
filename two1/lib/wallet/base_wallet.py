@@ -1,4 +1,52 @@
-satoshi_to_btc = 1e8
+import decimal
+
+
+satoshi_to_btc = decimal.Decimal(1e8)
+btc_to_satoshi = 1 / satoshi_to_btc
+
+
+def convert_to_satoshis(btc):
+    """ Converts an amount in BTC to satoshis.
+
+        This function takes care of rounding and quantization issues
+        (i.e. IEEE-754 precision/representation) and guarantees the
+        correct BTC value. Specifically, any floating point digits
+        beyond 1e-8 will be rounded to the nearest satoshi.
+
+    Args:
+        btc (float): Amount in BTC.
+
+    Returns:
+        int: Amount in satoshis.
+    """
+    # First truncate trailing digits
+    q = decimal.Decimal(btc).quantize(btc_to_satoshi)
+    satoshis = int((q * satoshi_to_btc).to_integral_value())
+
+    c = decimal.Decimal(satoshis / satoshi_to_btc).quantize(btc_to_satoshi)
+    if c != q:
+        raise ValueError("Improper rounding or quantization.")
+
+    return satoshis
+
+
+def convert_to_btc(satoshis):
+    """ Converts an amount in satoshis to BTC.
+
+        The return value of this function should only
+        be used for display purposes. All internal calculations
+        should be done using satoshis (integers)
+
+    Args:
+        satoshis (int): Amount in satoshis
+
+    Returns:
+        decimal: Amount in BTC
+    """
+    if not isinstance(satoshis, int):
+        raise TypeError("satoshis must be an integer.")
+
+    return decimal.Decimal(satoshis) / satoshi_to_btc
 
 
 class BaseWallet(object):
