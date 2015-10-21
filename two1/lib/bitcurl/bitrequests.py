@@ -64,6 +64,19 @@ class BitRequests(object):
         """
         raise NotImplementedError()
 
+    def get_402_info(self, url):
+        """Method for retrieving 402 metadata associated with the resource.
+
+        Args:
+            url (string): URL of the requested resource.
+
+        Returns:
+            headers (tuple): tuple of length-2 tuples with the header data
+                from the resource.
+                Example: (('price', '5000'), ('username', 'some_merchant'))
+        """
+        raise NotImplementedError()
+
     def request(self, method, url, data=None, headers=None, max_price=None):
         """Make a 402 request for a resource.
 
@@ -86,7 +99,7 @@ class BitRequests(object):
         response = requests.request(method, url, data=data)
 
         # Return if we receive a status code other than 402: payment required
-        if response.status_code != requests.codes.payment_required:
+        if (response.status_code != requests.codes.payment_required):
             return response
 
         # Pass the response to the main method for handling payment
@@ -151,6 +164,16 @@ class BitTransferRequests(BitRequests):
             'Authorization': signature
         }
 
+    def get_402_info(self, url):
+        """Get bit-transfer payment information about the resource."""
+        headers = requests.get(url).headers
+        price = headers.get(BitTransferRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(BitTransferRequests.HTTP_BITCOIN_ADDRESS)
+        payee_username = headers.get(BitTransferRequests.HTTP_BITCOIN_USERNAME)
+        return ((BitTransferRequests.HTTP_BITCOIN_PRICE, price),
+                (BitTransferRequests.HTTP_BITCOIN_ADDRESS, payee_address),
+                (BitTransferRequests.HTTP_BITCOIN_USERNAME, payee_username))
+
 
 class OnChainRequests(BitRequests):
 
@@ -192,3 +215,11 @@ class OnChainRequests(BitRequests):
             'Bitcoin-Transaction': onchain_payment,
             'Return-Wallet-Address': return_address
         }
+
+    def get_402_info(self, url):
+        """Get on-chain payment information about the resource."""
+        headers = requests.get(url).headers
+        price = headers.get(OnChainRequests.HTTP_BITCOIN_PRICE)
+        payee_address = headers.get(OnChainRequests.HTTP_BITCOIN_ADDRESS)
+        return ((OnChainRequests.HTTP_BITCOIN_PRICE, price),
+                (OnChainRequests.HTTP_BITCOIN_ADDRESS, payee_address))

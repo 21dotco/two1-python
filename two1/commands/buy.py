@@ -25,9 +25,10 @@ URL_REGEXP = re.compile(
 @click.option('-o', '--output', 'output_file', type=click.File('wb'), help="Output file")
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
+@click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @pass_config
 def buy(config, resource, data, method, data_file, output_file, payment_method,
-        max_price):
+        max_price, info_only):
     """Buy an API call with Bitcoin.
 
     \b
@@ -37,12 +38,12 @@ def buy(config, resource, data, method, data_file, output_file, payment_method,
     $
     """
     _buy(config, resource, data, method, data_file, output_file,
-         payment_method, max_price)
+         payment_method, max_price, info_only)
 
 
 @capture_usage
 def _buy(config, resource, data, method, data_file, output_file,
-         payment_method, max_price):
+         payment_method, max_price, info_only):
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
         target_url = resource
@@ -57,8 +58,8 @@ def _buy(config, resource, data, method, data_file, output_file,
     # Set default headers for making bitrequests with JSON-like data
     headers = {'Content-Type': 'application/json'}
 
-    # Make the request
     try:
+        # Find the corrent payment method
         if payment_method == 'bittransfer':
             bit_req = BitTransferRequests(config)
         elif payment_method == 'onchain':
@@ -66,17 +67,27 @@ def _buy(config, resource, data, method, data_file, output_file,
         else:
             raise Exception('Payment method does not exist.')
 
-        res = bit_req.request(method.lower(), target_url, max_price=max_price,
-                              data=data or data_file, headers=headers)
-
+        # Make the request
+        if info_only:
+            res = bit_req.get_402_info(target_url)
+        else:
+            res = bit_req.request(
+                method.lower(), target_url, max_price=max_price,
+                data=data or data_file, headers=headers)
     except Exception as e:
         config.log(str(e), fg="red")
         return
 
-    # Write response text to output file or the console
+    # Output results to user
     if output_file:
+        # Write response output file
         output_file.write(res.content)
+    elif info_only:
+        # Print headers that are related to 402 payment required
+        for r in res:
+            config.log('{}: {}'.format(r[0], r[1]))
     else:
+        # Write response to console
         config.log(res.text)
 
     # Record the transaction if it was a payable request
