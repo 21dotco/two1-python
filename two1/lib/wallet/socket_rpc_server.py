@@ -1,4 +1,5 @@
 import json
+import logging
 import socket
 import socketserver
 
@@ -26,6 +27,7 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
         """
 
         def handle(self):
+            logger = self.server.logger
             while True:
                 self.data = self.request.recv(1024).strip().decode()
                 if not self.data:
@@ -35,35 +37,42 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                     if self.server._request_cb is not None:
                         self.server._request_cb(self.data)
                     if self.server._client_lock.acquire(True, 10):
+                        logger.debug("Dispatching %s" % (self.data))
                         response = dispatcher.dispatch(self.server._methods,
                                                        self.data)
+                        logger.debug("Responding with: %s" % response.json)
                         self.server._client_lock.release()
                     else:
                         # Send a time out response
                         r = Request(self.data)
+                        logger.debug("Timed out waiting for lock with request = %s" %
+                                     (self.data))
                         request_id = r.request_id if hasattr(r, 'request_id') else None
                         response = ErrorResponse(http_status=HTTP_STATUS_CODES[408],
                                                  request_id=request_id,
                                                  code=-32000,  # Server error
                                                  message="Timed out waiting for lock")
                 except Exception as e:
-                    print("Do something with this: %s" % e)
-                    raise
+                    if logger is not None:
+                        logger.exception(e)
 
                 try:
                     self.request.sendall(json.dumps(response.json).encode())
                 except BrokenPipeError:
                     break
                 except Exception as e:
-                    print("Unable to send response. Error: %s" % e)
+                    if logger is not None:
+                        logger.exception(e)
 
-    def __init__(self, dispatcher_methods, client_lock, request_cb=None):
+    def __init__(self, dispatcher_methods, client_lock,
+                 request_cb=None, logger=None):
         if self.SOCKET_FILE_NAME.exists():
             self.SOCKET_FILE_NAME.unlink()
 
         self._methods = dispatcher_methods
         self._client_lock = client_lock
         self._request_cb = request_cb
+        self.logger = logger
 
         super().__init__(self.SOCKET_FILE_NAME,
                          UnixSocketJSONRPCServer.JSONRPCHandler)

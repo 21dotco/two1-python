@@ -26,7 +26,10 @@ logger = logging.getLogger('wallet')
 
 
 def _handle_daemon_exception(e, w):
-    msg = w.exception_info()['message']
+    if e.message == "Timed out waiting for lock":
+        msg = e.message + ". Please try again."
+    else:
+        msg = w.exception_info()['message']
     logger.error(msg)
     if not logger.hasHandlers():
         click.echo(msg)
