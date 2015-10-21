@@ -201,13 +201,13 @@ def startdaemon(ctx):
         return
 
     if not d.installed():
-        if isinstance(ctx.obj['data_provider'], ChainProvider):
+        if isinstance(ctx.obj['data_provider'], TwentyOneProvider):
+            dpo = dict(provider='twentyone')
+        elif isinstance(ctx.obj['data_provider'], ChainProvider):
             dp_params = ctx.obj['data_provider_params']
             dpo = dict(provider='chain',
                        api_key_id=dp_params['chain_api_key_id'],
                        api_key_secret=dp_params['chain_api_key_secret'])
-        elif isinstance(ctx.obj['data_provider'], TwentyOneProvider):
-            dpo = dict(provider='twentyone')
 
         d.install(dpo)
 
