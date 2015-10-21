@@ -23,9 +23,7 @@ def _status(config):
                                              config.username)
 
     status_account(config)
-    status_wallet(config)
-    status_shares(config, client)
-    status_earnings(config, client)
+    status_wallet(config, client)
 
     config.log("")
     # status_endpoints(config)
@@ -39,12 +37,14 @@ def status_account(config):
                .format(config.username))
 
 
-def status_wallet(config):
-    balance_c = config.wallet.confirmed_balance()
-    balance_u = config.wallet.unconfirmed_balance()
-    pending_transactions = balance_u - balance_c
+SEARCH_UNIT_PRICE = 800
+ARTICLE_UNIT_PRICE = 4000
+MESSAGE_UNIT_PRICE = 8000
 
-    #    balance_c = config.wallet.confirmed_balance()
+
+def status_wallet(config, client):
+    total_balance, pending_transactions = _get_balances(config, client)
+
     try:
         bitcoin_address = config.wallet.current_address
     except AttributeError:
@@ -52,37 +52,52 @@ def status_wallet(config):
 
     config.log('''\nWallet''', fg='magenta')
     config.log('''\
-    Balance (confirmed)   :   {} Satoshi
-    Pending Transactions  :   {} Satoshi
-    Payout Address        :   {}'''
-               .format(balance_c, pending_transactions, bitcoin_address)
+    Your Spendable Balance   :   {} Satoshi
+    Pending Debit or Credit  :   {} Satoshi
+    Your Bitcoin Address     :   {}'''
+               .format(total_balance, pending_transactions, bitcoin_address)
+               )
+
+    buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
+    buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
+    buyable_message = int(total_balance / MESSAGE_UNIT_PRICE)
+
+    if total_balance == 0:
+        config.log(UxString.status_empty_wallet.format(click.style("21 buy",
+                                                                   bold=True)))
+    else:
+        config.log(UxString.status_exit_message.format(buyable_searches, buyable_articles,
+                                                       buyable_message,
+                                                       click.style("21 buy", bold=True),
+                                                       click.style("21 buy --help",
+                                                                   bold=True)))
+
+
+def status_postmine_balance(config, client):
+    total_balance, pending_transactions = _get_balances(config, client)
+    try:
+        bitcoin_address = config.wallet.current_address
+    except AttributeError:
+        bitcoin_address = "Not Set"
+
+    config.log('''\nWallet''', fg='magenta')
+    config.log('''\
+    Your New Balance         :   {} Satoshi
+    Your Bitcoin Address     :   {}'''
+               .format(total_balance, bitcoin_address)
                )
 
 
-def status_endpoints(config):
-    headers = \
-        ("URL", "Price", "MMM?", "Description", "# Requests", "Earnings")
+def _get_balances(config, client):
+    balance_c = config.wallet.confirmed_balance()
+    balance_u = config.wallet.unconfirmed_balance()
+    pending_transactions = balance_u - balance_c
 
-    endpoint_data = [
-        ("misc/en2cn", 1000, "No", "English to Chinese", 27, 27000),
-        ("dice/bet", 1000, "Yes", "Satoshi Dice", 127, -127000),
-        ("numpy/eigen", 10000, "Yes", "Eigen Values", 7, 70000),
-        ("blackjack/", 1000, "No", "Blackjack", 17, 17000),
-        ("misc/cn2en", 2000, "No", "Chinese to English", 2, 4000),
-    ]
-    config.log('\n')
-    config.log(tabulate(endpoint_data, headers=headers, tablefmt='psql'))
+    data = client.get_earnings(config.username)[config.username]
+    total_earnings = data["total_earnings"]
 
-
-def status_bought_endpoints(config):
-    headers = \
-        ("Seller", "Resource", "Price", "Date")
-
-    purchases = [
-        ("peaceful_beast", "en2cn", 4000, "2015-08-21 12:25:35")
-    ]
-    config.log('\n')
-    config.log(tabulate(purchases, headers=headers, tablefmt='psql'))
+    total_balance = balance_c + total_earnings
+    return total_balance, pending_transactions
 
 
 def status_earnings(config, client):
@@ -104,7 +119,6 @@ def status_earnings(config, client):
                    .format(none2zero(flush_amount)),
                    )
         config.log("\n" + UxString.flush_status % flush_amount, fg='green')
-
 
 def status_shares(config, client):
     try:
