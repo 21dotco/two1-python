@@ -124,7 +124,7 @@ class BitRequests(object):
         )
         signature = self.machine_auth.sign_message(
             bittransfer
-        ).decode()
+        )
         return bittransfer, signature
 
     def _create_and_sign_transaction(self, payee_address, amount,
