@@ -43,7 +43,7 @@ MESSAGE_UNIT_PRICE = 8000
 
 
 def status_wallet(config, client):
-    total_balance, pending_transactions = _get_balances(config, client)
+    total_balance, pending_transactions, flushed_earnings = _get_balances(config, client)
 
     try:
         bitcoin_address = config.wallet.current_address
@@ -53,17 +53,26 @@ def status_wallet(config, client):
     config.log('''\nWallet''', fg='magenta')
     config.log('''\
     Your Spendable Balance   :   {} Satoshi
-    Pending Debit or Credit  :   {} Satoshi
-    Your Bitcoin Address     :   {}'''
-               .format(total_balance, pending_transactions, bitcoin_address)
+    Pending Debit or Credit  :   {} Satoshi'''
+               .format(total_balance, pending_transactions)
                )
 
+    if flushed_earnings > 0 :
+        config.log('''\
+    Your Flushed Amount      :   {} Satoshi *'''
+                   .format(flushed_earnings))
+    config.log('''\
+    Your Bitcoin Address     :   {}'''
+               .format(bitcoin_address))
+
+    if flushed_earnings > 0:
+        config.log(UxString.flush_status % flushed_earnings)
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
     buyable_message = int(total_balance / MESSAGE_UNIT_PRICE)
 
     if total_balance == 0:
-        config.log(UxString.status_empty_wallet.format(click.style("21 buy",
+        config.log(UxString.status_empty_wallet.format(click.style("21 mine",
                                                                    bold=True)))
     else:
         config.log(UxString.status_exit_message.format(buyable_searches, buyable_articles,
@@ -74,7 +83,7 @@ def status_wallet(config, client):
 
 
 def status_postmine_balance(config, client):
-    total_balance, pending_transactions = _get_balances(config, client)
+    total_balance, pending_transactions, flushed_earnings = _get_balances(config, client)
     try:
         bitcoin_address = config.wallet.current_address
     except AttributeError:
@@ -95,9 +104,10 @@ def _get_balances(config, client):
 
     data = client.get_earnings(config.username)[config.username]
     total_earnings = data["total_earnings"]
+    flushed_earnings = data["flush_amount"]
 
     total_balance = balance_c + total_earnings
-    return total_balance, pending_transactions
+    return total_balance, pending_transactions, flushed_earnings
 
 
 def status_earnings(config, client):

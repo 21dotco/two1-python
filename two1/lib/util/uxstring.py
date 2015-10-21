@@ -13,7 +13,7 @@ class UxString:
     create_wallet_done = "\nWallet successfully created. Press any key ..."
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
-    flush_success = "\nYour mined Bitcoin will be sent to you on the Blockchain in" \
+    flush_success = "\nYour mined Satoshis will be sent to you on the Blockchain in" \
                     " our next payout cycle.\nEstimated time of payout: 20 minutes"
 
     # status
@@ -24,7 +24,7 @@ class UxString:
 
     # mining
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
-                   "This may tak a little while...\n"
+                   "This may take a little while...\n"
     mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
     mining_finish = "\nView your balance with {}, or spend with {}.\n"
 
@@ -34,9 +34,8 @@ class UxString:
     update_superuser = "You might need to enter superuser password."
 
     # flush
-    flush_status = "You have requested that %s of your earned Satoshis be paid to " \
-                   "your wallet.\nYou will be paid in our next " \
-                   "payout cycle.\nEstimated time: 10 minutes"
+    flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
+                   "in your wallet balance as soon as they appear on the Blockchain."
 
     # ad
     buy_ad = "\nGet a 21 Bitcoin Computer at 21.co/buy"
