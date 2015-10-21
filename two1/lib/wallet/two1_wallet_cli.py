@@ -1,3 +1,4 @@
+import decimal
 import getpass
 import logging
 import logging.handlers
@@ -9,6 +10,8 @@ from path import Path
 from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.account_types import account_types
+from two1.lib.wallet.base_wallet import convert_to_btc
+from two1.lib.wallet.base_wallet import convert_to_satoshis
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.two1_wallet import Two1Wallet
@@ -322,8 +325,8 @@ def confirmed_balance(ctx, account):
     logger.info('confirmed_balance(%r)' % account)
     try:
         cb = w.confirmed_balance(account)
-        click.echo("Confirmed balance: %f BTC" %
-                   (cb / satoshi_to_btc))
+        click.echo("Confirmed balance: %0.8f BTC" %
+                   convert_to_btc(cb))
     except (ValueError, TypeError) as e:
         _handle_generic_exception(e)
     except ReceivedErrorResponse as e:
@@ -343,8 +346,8 @@ def balance(ctx, account):
     logger.info('balance(%r)' % account)
     try:
         ucb = w.unconfirmed_balance(account)
-        click.echo("Total balance (including unconfirmed txns): %f BTC" %
-                   (ucb / satoshi_to_btc))
+        click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
+                   convert_to_btc(ucb))
     except (ValueError, TypeError) as e:
         _handle_generic_exception(e)
     except ReceivedErrorResponse as e:
@@ -360,20 +363,21 @@ def list_balances(ctx):
     for a in w.account_names:
         ucb = w.unconfirmed_balance(a)
         cb = w.confirmed_balance(a)
-        click.echo("%s confirmed: %f BTC, total: %f BTC" %
+        click.echo("%s confirmed: %0.8f BTC, total: %0.8f BTC" %
                    (a,
-                    (cb / satoshi_to_btc),
-                    (ucb / satoshi_to_btc)))
+                    convert_to_btc(cb),
+                    convert_to_btc(ucb)))
 
-    click.echo("\nTotal confirmed %f BTC, total: %f BTC" %
-               ((w.confirmed_balance() / satoshi_to_btc),
-                (w.unconfirmed_balance() / satoshi_to_btc)))
+    click.echo("\nTotal confirmed %0.8f BTC, total: %0.8f BTC" %
+               (convert_to_btc(w.confirmed_balance()),
+                convert_to_btc(w.unconfirmed_balance())))
+
 
 @click.command(name="sendto")
 @click.argument('address',
-                metavar="STRING")
+                type=click.STRING)
 @click.argument('amount',
-                type=click.FLOAT)
+                type=click.STRING)
 @click.option('--use-unconfirmed', '-uu',
               is_flag=True,
               default=False,
@@ -395,7 +399,12 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     w = ctx.obj['wallet']
 
     # Do we want to confirm if it's larger than some amount?
-    satoshis = int(amount * satoshi_to_btc)
+    try:
+        satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
+    except decimal.InvalidOperation as e:
+        ctx.fail("'%s' is not a valid amount. Amounts must be in BTC." %
+                 (amount))
+
     logger.info("Sending %d satoshis to %s from accounts = %r" %
                 (satoshis, address, list(account)))
 
@@ -406,7 +415,7 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                           fees=fees,
                           accounts=list(account))
         if txids:
-            click.echo("Successfully sent %f BTC to %s. txids:" %
+            click.echo("Successfully sent %0.8f BTC to %s. txids:" %
                        (amount, address))
             for t in txids:
                 click.echo(t['txid'])
@@ -420,9 +429,9 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 @click.argument('num_addresses',
                 type=click.IntRange(min=2, max=100))
 @click.argument('threshold',
-                type=click.FLOAT)
+                type=click.STRING)
 @click.option('--account',
-              metavar="STRING",
+              type=click.STRING,
               multiple=True,
               help="List of accounts to use")
 @click.pass_context
@@ -431,7 +440,11 @@ def spread_utxos(ctx, num_addresses, threshold, account):
         multiple change addresses.
     """
     w = ctx.obj['wallet']
-    satoshis = int(threshold * satoshi_to_btc)
+    try:
+        satoshis = int(decimal.Decimal(threshold) * satoshi_to_btc)
+    except decimal.InvalidOperation:
+        ctx.fail("'%s' is an invalid value for threshold. It must be in BTC." %
+                 (threshold))
 
     try:
         txids = w.spread_utxos(threshold=satoshis,
