@@ -5,6 +5,7 @@ import logging
 import base64
 import os
 import pyaes
+from jsonrpcclient.exceptions import ReceivedErrorResponse
 from pbkdf2 import PBKDF2
 from two1.lib.bitcoin.crypto import HDKey
 from two1.lib.bitcoin.crypto import HDPrivateKey
@@ -1497,7 +1498,7 @@ class Two1WalletProxy(object):
             wp = w.wallet_path()
             rv = w if wp == wallet_path else None
 
-        except exceptions.DaemonNotRunningError:
+        except (exceptions.DaemonNotRunningError, ReceivedErrorResponse) as e:
             rv = None
 
         return rv
