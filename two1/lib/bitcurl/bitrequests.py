@@ -131,6 +131,11 @@ class BitTransferRequests(BitRequests):
         # Convert string headers into correct data types
         price = int(price)
 
+        # Verify resource cost against our budget
+        if max_price and price > max_price:
+            max_price_err = 'Resource price ({}) exceeds max price ({}).'
+            raise ValueError(max_price_err.format(price, max_price))
+
         # Create and sign BitTranfer
         bittransfer = json.dumps({
             'payer': self.config.username,
@@ -172,6 +177,11 @@ class OnChainRequests(BitRequests):
 
         # Convert string headers into correct data types
         price = int(price)
+
+        # Verify resource cost against our budget
+        if max_price and price > max_price:
+            max_price_err = 'Resource price ({}) exceeds max price ({}).'
+            raise ValueError(max_price_err.format(price, max_price))
 
         # Create the signed transaction
         onchain_payment = self.config.wallet.make_signed_transaction_for(
