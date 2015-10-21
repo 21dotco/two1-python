@@ -16,16 +16,25 @@ class UxString:
     flush_success = "Your bitcoin earnings will be sent to your wallet in our next " \
                     "payout cycle.\nEstimated time of payout: 10 minutes"
 
+    # mining
+    mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
+                   "This may tak a little while...\n"
+    mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
+    mining_finish = "\nView your balance with {}, or spend with {}."
+
     # updater
     update_check = "Checking for application update..."
     update_package = "Updating to version %s..."
     update_superuser = "You might need to enter superuser password."
 
-    #flush
+    # flush
     flush_status = "You have requested that %s of your earned satoshis be paid to " \
                    "your wallet.\nYou will be paid in our next " \
                    "payout cycle.\nEstimated time: 10 minutes"
 
+    # ad
+    buy_ad = "\nGet a 21 Bitcoin Computer at 21.co/buy"
+    
     class Error:
         # network errors
         connection = "Error: Cannot connect to %s."

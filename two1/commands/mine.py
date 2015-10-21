@@ -7,17 +7,18 @@ import os
 import random
 from collections import namedtuple
 from two1.commands.config import pass_config
+from two1.commands.exceptions import ServerRequestError
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory, login
 from two1.lib.server.analytics import capture_usage
-from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 import two1.commands.config as cmd_config
 from two1.commands import status
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
 import two1.commands.config as app_config
+
 
 @click.command()
 @pass_config
@@ -29,90 +30,100 @@ def mine(config):
 
 @capture_usage
 def _mine(config):
-    # detect if hat is present
+    if has_bitcoinkit():
+        start_minerd(config)
+    else:
+        start_cpu_mining(config)
+
+
+def has_bitcoinkit():
     try:
         with open("/proc/device-tree/hat/product", "r") as f:
             bitcoinkit_present = f.read().startswith('21 Bitcoin')
     except FileNotFoundError:
         bitcoinkit_present = False
+    return bitcoinkit_present
 
+
+def start_minerd(config):
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
-    if bitcoinkit_present:
-        config.log("\nBitcoinkit is present, starting miner...")
-        # Read the PID and check if the process is running
-        if os.path.isfile(minerd_pid_file):
-            pid = None
-            with open(minerd_pid_file, "r") as f:
-                pid = int(f.read().rstrip())
+    config.log("\nBitcoinkit is present, starting miner...")
+    # Read the PID and check if the process is running
+    if os.path.isfile(minerd_pid_file):
+        pid = None
+        with open(minerd_pid_file, "r") as f:
+            pid = int(f.read().rstrip())
 
-            if pid is not None:
-                if check_pid(pid):
-                    # Running, so fire up minertop...
-                    subprocess.call("minertop")
-                    return
-                else:
-                    # Stale PID file, so delete it.
-                    subprocess.call(["sudo", "minerd", "--stop"])
+        if pid is not None:
+            if check_pid(pid):
+                # Running, so fire up minertop...
+                subprocess.call("minertop")
+                return
+            else:
+                # Stale PID file, so delete it.
+                subprocess.call(["sudo", "minerd", "--stop"])
 
 
-        # Not running, let's start it
-        # TODO: make sure config exists in /etc
-        # TODO: replace with sys-ctrl command
-        minerd_cmd = ["sudo", "minerd", "-u", config.username,
-                      app_config.TWO1_POOL_URL]
-        try:
-            o = subprocess.check_output(minerd_cmd, universal_newlines=True)
-        except subprocess.CalledProcessError as e:
-            config.log("\nError starting minerd: %r" % e)
+    # Not running, let's start it
+    # TODO: make sure config exists in /etc
+    # TODO: replace with sys-ctrl command
+    minerd_cmd = ["sudo", "minerd", "-u", config.username,
+                  app_config.TWO1_POOL_URL]
+    try:
+        o = subprocess.check_output(minerd_cmd, universal_newlines=True)
+    except subprocess.CalledProcessError as e:
+        config.log("\nError starting minerd: %r" % e)
 
-        # Now call minertop after it's started
-        subprocess.call("minertop")
-    else:
-        config.log("\nMining...")
-        client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
-                                                 config.machine_auth)
+    # Now call minertop after it's started
+    subprocess.call("minertop")
 
-        # set a new address from the HD wallet for payouts
-        payout_address = config.wallet.current_address
-        auth_resp = client.account_payout_address_post(config.username, payout_address)
-        if auth_resp.status_code != 200:
-            click.echo(UxString.Error.server_err)
-            return
 
-        user_info = json.loads(auth_resp.text)
-        enonce1_base64 = user_info["enonce1"]
-        enonce1 = base64.decodebytes(enonce1_base64.encode())
-        enonce2_size = user_info["enonce2_size"]
+def start_cpu_mining(config):
+    click.secho(UxString.buy_ad, fg="blue")
 
-        # get work from server
-        work = get_work(config, client)
+    client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
+                                             config.machine_auth)
 
-        if work is None:
-            return
+    enonce1, enonce2_size, reward = set_payout_address(config, client)
 
-        # start mining
-        found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
+    start_time = time.time()
+    config.log(UxString.mining_start.format(config.username, reward))
 
-        # get the confirmed and unconfirmed balance before submitting the share.
-        # after the share gets validated we will then add the validated
-        # satoshis to the balance_u instead of directly asking the wallet for
-        # unconfirmed. This removes our dependency on eventual consistency of the wallet
-        balance_c = config.wallet.confirmed_balance()
-        balance_u = config.wallet.unconfirmed_balance()
-        # show results
-        payment_result = save_work(client, found_share, config.username)
+    work = get_work(config, client)
 
-        if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
-            click.echo(UxString.Error.server_err)
-            return
+    found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
-        config.log("Mining Complete")
-        payment_details = json.loads(payment_result.text)
-        satoshi = payment_details["amount"]
-        config.log("You mined {} ฿".format(satoshi), fg="yellow")
-        # print earning status after mining
-        status.status_earnings(config, client)
+    paid_satoshis = save_work(client, found_share, config.username)
+
+    end_time = time.time()
+    duration = end_time - start_time
+
+    config.log(
+        UxString.mining_success.format(config.username, paid_satoshis, duration),
+        fg="yellow")
+
+    # print earning status after mining
+    status.status_earnings(config, client)
+
+    click.echo(UxString.mining_finish.format(
+        click.style("21 status", bold=True), click.style("21 buy\n", bold=True)))
+
+
+def set_payout_address(config, client):
+    # set a new address from the HD wallet for payouts
+    payout_address = config.wallet.current_address
+    auth_resp = client.account_payout_address_post(config.username, payout_address)
+    if auth_resp.status_code != 200:
+        raise ServerRequestError("status=%s" % auth_resp.status_code)
+
+    user_info = json.loads(auth_resp.text)
+    enonce1_base64 = user_info["enonce1"]
+    enonce1 = base64.decodebytes(enonce1_base64.encode())
+    enonce2_size = user_info["enonce2_size"]
+    reward = user_info["reward"]
+
+    return enonce1, enonce2_size, reward
 
 
 # Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
@@ -150,7 +161,7 @@ def get_work(config, client):
         click.echo(UxString.enter_username_retry)
         login.create_username(config=config, username=None)
     else:
-        click.echo(UxString.Error.server_err)
+        ServerRequestError("status=%s" % work_msg.status_code)
 
 
 Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'work_id'])
@@ -206,4 +217,11 @@ def save_work(client, share, username):
                                                       otime=share.otime,
                                                       nonce=share.nonce)
 
-    return client.send_work(username=username, data=req_msg)
+    payment_result = client.send_work(username=username, data=req_msg)
+
+    if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
+        raise ServerRequestError("status=%s" % payment_result.status_code)
+
+    payment_details = json.loads(payment_result.text)
+    amount = payment_details["amount"]
+    return amount
