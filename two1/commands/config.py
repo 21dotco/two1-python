@@ -10,6 +10,7 @@ from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import daemonizer
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
+from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
 
@@ -105,6 +106,7 @@ class Config(object):
 
             self.wallet = Two1WalletProxy(wallet_path=wallet_path,
                                           data_provider=dp)
+            self.machine_auth = MachineAuthWallet(self.wallet)
 
     # pulls attributes from the self.defaults dict
     def __getattr__(self, name):
