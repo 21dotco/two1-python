@@ -6,6 +6,9 @@ import time
 import logging
 import base64
 import subprocess
+import urllib.request
+import zipfile
+import tempfile
 
 import serial
 import serial.tools.list_ports
@@ -147,6 +150,49 @@ def serial_close(ser):
 
 
 # Setup tasks
+
+def task_install_serial_driver():
+    """Install the PL2303 driver on Mac OS X, if it isn't installed."""
+
+    PL2303_KEXT = "/System/Library/Extensions/ProlificUsbSerial.kext"
+    PL2303_DRIVER_ZIP_URL = "http://prolificusa.com/files/md_PL2303_MacOSX_10.6-10.10_v1.5.1.zip"
+    PL2303_DRIVER_PKG = "PL2303_MacOSX_v1.5.1.pkg"
+
+    # Install the PL2303 on Mac OS X, if it isn't installed
+    if sys.platform.startswith("darwin") and not os.path.exists(PL2303_KEXT):
+        print_step("Installing PL2303 USB serial port driver...")
+
+        # Fetch the driver
+        print_step("\nFetching driver from {} ...".format(PL2303_DRIVER_ZIP_URL))
+        try:
+            zippath, _ = urllib.request.urlretrieve(PL2303_DRIVER_ZIP_URL)
+        except Exception as e:
+            raise Exception("Fetching PL2303 driver: {}".format(str(e)))
+
+        # Unzip the driver to a temporary directory
+        print_step("\nExtracting driver...")
+        tmpdir = tempfile.mkdtemp()
+        with zipfile.ZipFile(zippath) as f:
+            f.extract(PL2303_DRIVER_PKG, tmpdir)
+
+        # Install the driver
+        print_step("\nInstalling driver... Please enter system password if prompted.")
+        pkgpath = tmpdir + "/" + PL2303_DRIVER_PKG
+        print("sudo installer -pkg {} -target /".format(pkgpath))
+        try:
+            subprocess.check_output("sudo installer -pkg {} -target /".format(pkgpath), shell=True)
+        except subprocess.CalledProcessError as e:
+            raise Exception("Installing PL2303 driver: {}".format(str(e)))
+
+        # Load the kernel extension
+        print_step("\nLoading driver... Please enter system password if prompted.")
+        print("sudo kextload {}".format(PL2303_KEXT))
+        try:
+            subprocess.check_output("sudo kextload {}".format(PL2303_KEXT), shell=True)
+        except subprocess.CalledProcessError as e:
+            raise Exception("Loading PL2303 driver: {}".format(str(e)))
+
+        print_step("\nDriver successfully installed and loaded!\n")
 
 def task_prompt(ser):
     """This task restores the target to the login prompt.
@@ -394,6 +440,8 @@ def task_cleanup(ser):
 @pass_config
 def setup(config):
     """Setup a Bitcoin Computer over the serial port."""
+
+    task_install_serial_driver()
 
     ser = serial_open()
 
