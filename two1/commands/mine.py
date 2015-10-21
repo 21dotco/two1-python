@@ -11,7 +11,7 @@ from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory, login
 from two1.lib.server.analytics import capture_usage
-from two1.lib.server.machine_auth import MachineAuth
+from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 import two1.commands.config as cmd_config
 from two1.commands import status
 from two1.lib.bitcoin.hash import Hash
@@ -70,9 +70,8 @@ def _mine(config):
         subprocess.call("minertop")
     else:
         config.log("\nMining...")
-        machine_auth = MachineAuth.from_keyring()
         client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
-                                                 machine_auth)
+                                                 config.machine_auth)
 
         # set a new address from the HD wallet for payouts
         payout_address = config.wallet.current_address

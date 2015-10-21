@@ -18,8 +18,9 @@ def status(config):
 
 @capture_usage
 def _status(config):
-    client = rest_client.TwentyOneRestClient.from_keyring(TWO1_HOST,
-                                                          config.username)
+    client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                             config.machine_auth,
+                                             config.username)
 
     status_account(config)
     status_wallet(config)
