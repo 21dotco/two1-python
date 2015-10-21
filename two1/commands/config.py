@@ -22,7 +22,7 @@ TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
-TWO1_POOL_URL = "grid.21-stage.co"
+TWO1_POOL_URL = "swirl+tcp://grid.21-stage.co:21006"
 TWO1_VERSION = two1.__version__
 
 try:
