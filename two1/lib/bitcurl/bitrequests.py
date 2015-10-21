@@ -26,8 +26,6 @@ Flow from clients perspective (user 1):
 import json
 import requests
 
-from two1.lib.server.machine_auth import MachineAuth
-
 
 class BitRequests(object):
 
@@ -54,7 +52,7 @@ class BitRequests(object):
                 fufillment.
         """
         self.config = config
-        self.machine_auth = MachineAuth.from_keyring()
+        self.machine_auth = self.config.machine_auth
         self.payment_method = payment_method
         self.data = None
         self.files = None
