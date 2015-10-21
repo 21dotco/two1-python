@@ -27,12 +27,6 @@ from two1.lib.util.decorators import docstring_parameter
 from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.mine import mine
-from two1.commands.publish import publish
-from two1.commands.rate import rate
-from two1.commands.search import search
-# from two1.commands.sell import sell
-# from two1.commands.sell import sell_with_subcommand
-# from two1.commands.sell_file import sell_file
 from two1.commands.status import status
 from two1.commands.update import update
 from two1.commands.flush import flush
@@ -103,12 +97,6 @@ $ {0}
 
 main.add_command(buy)
 main.add_command(mine)
-main.add_command(publish)
-main.add_command(rate)
-main.add_command(search)
-# main.add_command(sell)
-# sell_with_subcommand.add_command(sell_file, name='file')
-# main.add_command(sell_with_subcommand, name='sell')
 main.add_command(status)
 main.add_command(update)
 main.add_command(flush)

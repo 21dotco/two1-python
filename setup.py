@@ -12,6 +12,7 @@ from codecs import open
 from os import path
 import os
 
+
 here = path.abspath(path.dirname(__file__))
 
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
