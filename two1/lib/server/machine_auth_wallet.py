@@ -42,8 +42,6 @@ class MachineAuthWallet(object):
             str: Signature for the message as a base64 encoded string.
                  Returns None if the private_key is None.
         """
-        if isinstance(message, str):
-            utf8 = message.encode('utf-8')
-        else:
+        if not isinstance(message, str):
             raise TypeError("Message must be a string")
-        return self.wallet.sign_message(utf8)
+        return self.wallet.sign_message(message)
