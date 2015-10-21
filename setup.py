@@ -27,8 +27,6 @@ install_requires = [
                     'sha256',
                     'path.py',
                     'click==4.1',
-                    'keyring',
-                    'tabulate',
                     'mnemonic',
                     'protobuf==3.0.0a3',
                     'pyaes',

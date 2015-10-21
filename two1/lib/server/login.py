@@ -98,8 +98,6 @@ def create_username(config, username=None):
         elif r.status_code == 201:
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
-            # save the auth keys
-            # machine_auth.saveto_keyring()
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
             config.save()
             break
