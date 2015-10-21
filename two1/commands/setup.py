@@ -294,6 +294,9 @@ def task_lookup_connection_info(ser):
     Args:
         ser (pyserial.Serial): Serial object
 
+    Returns:
+        tuple: Tuple of hostname and a list of IP addresses
+
     """
 
     print_step("\nLooking up connection information...")
@@ -351,20 +354,24 @@ def task_lookup_connection_info(ser):
     print_step("")
     print_step("and with password \"one\".")
 
-def task_21_update(ser):
+    return (hostname, addresses)
+
+def task_21_update(ip_address):
     """This task runs 21 update on the target.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ip_address (str): IP address
 
     """
 
-    print_step("\nRunning 21 update...\n")
+    print_step("\nRunning 21 update...")
+    print_step("Please enter password \"one\" when prompted.\n")
 
     # Run 21 update
-    result = cmdmule_command(ser, "21 update 2>&1")
-    if result['returncode']:
-        raise Exception("Running 21 update: " + result['stdout'])
+    try:
+        subprocess.check_call(["ssh", "twenty@" + ip_address, "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", "21", "update"])
+    except subprocess.CalledProcessError as e:
+        raise Exception("Running 21 update.")
 
 def task_cleanup(ser):
     """This task exits cmdmule and the shell session on the target,
@@ -395,8 +402,8 @@ def setup(config):
         task_login(ser)
         task_cmdmule(ser)
         task_connect_wifi(ser)
-        task_lookup_connection_info(ser)
-        task_21_update(ser)
+        (_, ip_addresses) = task_lookup_connection_info(ser)
+        task_21_update(ip_addresses[0])
     except Exception as e:
         print_error("Error: " + str(e))
         print_error("Please contact support@21.co")
