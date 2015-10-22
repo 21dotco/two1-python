@@ -27,6 +27,7 @@ DEMOS = {
     "content": {"path": "/content/wsj", "formatter": content_formatter}
 }
 
+
 @click.group()
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
@@ -39,19 +40,31 @@ def buy(ctx, payment_method, max_price, info_only):
 Usage
 -----
 Search the internet, paying with bitcoin.
-$ 21 buy search --query "Satoshi Nakamoto"
+$ 21 buy search "Satoshi Nakamoto"
 
 \b
 See the price in Satoshis of one search, and the user hosting it.
-$ 21 buy --info search
+$ 21 buy --info search "bitcoin computer"
+
+\b
+See the help for search:
+$ 21 buy search -h
 
 \b
 See the price in Satoshis of one item of content.
-$ 21 buy --info content
+$ 21 buy --info content https://paywallurl.com/great-article
+
+\b
+See the help for content:
+$ 21 buy content -h
 
 \b
 See the price in Satoshis of a paid direct message via social network.
-$ 21 buy --info social
+$ 21 buy --info social https://paywallurl.com/great-article
+
+\b
+See the help for social:
+$ 21 buy social -h
 """
     ctx.obj["payment_method"] = payment_method
     ctx.obj["max_price"] = max_price
@@ -62,8 +75,10 @@ $ 21 buy --info social
 @buy.command()
 @click.pass_context
 def search(ctx, query):
-    """Buy internet search results for provided query"""
-    click.echo("Search called")
+    """Buy internet search results for provided query.
+
+    $ 21 buy search "bitcoin computer"
+    """
     _buy(ctx.obj["config"],
          "search",
          dict(query=query),
@@ -74,6 +89,48 @@ def search(ctx, query):
          ctx.obj["max_price"],
          ctx.obj["info_only"]
          )
+
+
+@click.argument('message')
+@click.argument('twitter_user')
+@buy.command()
+@click.pass_context
+def social(ctx, message, twitter_user):
+    """Buy a direct message to @balajis.
+
+    $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
+    """
+    _buy(ctx.obj["config"],
+         "social",
+         dict(message=message),
+         "POST",
+         None,
+         None,
+         ctx.obj["payment_method"],
+         ctx.obj["max_price"],
+         ctx.obj["info_only"]
+         )
+
+
+@click.argument('url')
+@buy.command()
+@click.pass_context
+def content(ctx, url):
+    """Purchase paid online content.
+
+    $ 21 buy content https://paywallurl.com/great-article
+    """
+    _buy(ctx.obj["config"],
+         "content",
+         dict(url=url),
+         "GET",
+         None,
+         None,
+         ctx.obj["payment_method"],
+         ctx.obj["max_price"],
+         ctx.obj["info_only"]
+         )
+
 
 
 @capture_usage
