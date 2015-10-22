@@ -9,6 +9,7 @@ import random
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.bitcoin.utils import rand_bytes
+from two1.lib.crypto.ecdsa_base import Point
 from two1.lib.crypto.ecdsa import ECPointAffine
 from two1.lib.crypto.ecdsa import secp256k1
 
@@ -379,7 +380,17 @@ class PrivateKey(PrivateKeyBase):
         else:
             raise TypeError("message must be either str or bytes!")
 
-        return bitcoin_curve.sign(msg, self.key, do_hash)
+        sig_pt, rec_id = bitcoin_curve.sign(msg, self.key, do_hash)
+
+        # Take care of large s:
+        # Bitcoin deals with large s, by subtracting
+        # s from the curve order. See:
+        # https://bitcointalk.org/index.php?topic=285142.30;wap2
+        if sig_pt.y >= (bitcoin_curve.n // 2):
+            sig_pt = Point(sig_pt.x, bitcoin_curve.n - sig_pt.y)
+            rec_id ^= 0x1
+
+        return (sig_pt, rec_id)
 
     def sign(self, message, do_hash=True):
         """ Signs message using this private key.
