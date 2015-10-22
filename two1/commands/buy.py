@@ -60,7 +60,7 @@ $ 21 buy content -h
 
 \b
 See the price in Satoshis of a paid direct message via social network.
-$ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
+$ 21 buy --info social @balajis "Hey nice to meet you, i'm @syassami"
 
 \b
 See the help for social:
