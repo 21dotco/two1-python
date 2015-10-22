@@ -3,7 +3,6 @@ import click
 import datetime
 import re
 
-from two1.commands.config import pass_config
 from two1.commands.config import TWO1_MERCHANT_HOST
 from two1.commands.formatters import search_formatter
 from two1.commands.formatters import social_formatter
@@ -28,20 +27,12 @@ DEMOS = {
     "content": {"path": "/content/wsj", "formatter": content_formatter}
 }
 
-
-@click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
-@click.argument('resource', nargs=1)
-@click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
-@click.option('-d', '--data', default=None, help="Data to send in HTTP body")
-@click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
-@click.option('-o', '--output', 'output_file', type=click.File('wb'), help="Output file")
+@click.group()
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
-@pass_config
 @click.pass_context
-def buy(ctx, config, resource, data, method, data_file, output_file, payment_method,
-        max_price, info_only):
+def buy(ctx, payment_method, max_price, info_only):
     """Buy API calls with mined bitcoin.
 
 \b
@@ -62,12 +53,31 @@ $ 21 buy --info content
 See the price in Satoshis of a paid direct message via social network.
 $ 21 buy --info social
 """
-    _buy(config, ctx, resource, data, method, data_file, output_file,
-         payment_method, max_price, info_only)
+    ctx.obj["payment_method"] = payment_method
+    ctx.obj["max_price"] = max_price
+    ctx.obj["info_only"] = info_only
+
+
+@click.argument('query', nargs=1)
+@buy.command()
+@click.pass_context
+def search(ctx, query):
+    """Buy internet search results for provided query"""
+    click.echo("Search called")
+    _buy(ctx.obj["config"],
+         "search",
+         dict(query=query),
+         "GET",
+         None,
+         None,
+         ctx.obj["payment_method"],
+         ctx.obj["max_price"],
+         ctx.obj["info_only"]
+         )
 
 
 @capture_usage
-def _buy(config, ctx, resource, data, method, data_file, output_file,
+def _buy(config, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only):
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
@@ -75,9 +85,7 @@ def _buy(config, ctx, resource, data, method, data_file, output_file,
         seller = target_url
     elif resource in DEMOS:
         target_url = TWO1_MERCHANT_HOST + DEMOS[resource]["path"]
-        data = json.dumps(
-            {ctx.args[i][2:]: ctx.args[i+1] for i in range(0, len(ctx.args), 2)}
-        )
+        data = json.dumps(data)
     else:
         raise NotImplementedError('Endpoint search is not implemented!')
 
