@@ -1,4 +1,3 @@
-import click
 import sys
 import os.path
 import json
@@ -6,15 +5,24 @@ import time
 import logging
 import base64
 import subprocess
-import urllib.request
 import zipfile
 import tempfile
+import termios
+import glob
+import errno
 
-import serial
-import serial.tools.list_ports
+if sys.version_info.major > 2:
+    # Python 3
+    from urllib.request import urlretrieve
+    raw_input = input
+else:
+    # Python 2
+    from urllib import urlretrieve
 
-from two1.commands.config import pass_config
+__version__ = "10-21-2015-23:00:00"
 
+
+# Logger (for debug)
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +32,151 @@ logger = logging.getLogger(__name__)
 def print_step(s):
     print("\x1b[1;35m" + s + "\x1b[0m")
 
+
 def print_warning(s):
     print("\x1b[1;33m" + s + "\x1b[0m")
 
+
 def print_error(s):
     print("\x1b[1;31m" + s + "\x1b[0m")
+
+
+# Serial class
+
+class Serial:
+
+    def __init__(self, path):
+        """Open serial port at specified device path with baudrate 115200, and
+        8N1."""
+
+        self.fd = None
+        self.open(path)
+
+    def open(self, path):
+        """Open serial port at specified device path with baudrate 115200, and
+        8N1."""
+
+        # Open the serial port
+        try:
+            self.fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        except OSError as e:
+            raise Exception("Opening serial port: {}".format(str(e)))
+
+        # Configure serial port to raw, 115200 8N1
+        tty_attr = termios.tcgetattr(self.fd)
+        tty_attr[0] = termios.IGNBRK    # iflag
+        tty_attr[1] = 0                 # oflag
+        tty_attr[2] = termios.CREAD | termios.CLOCAL | termios.B115200 | termios.CS8 # cflag
+        tty_attr[3] = 0                 # lflag
+        tty_attr[4] = termios.B115200   # ispeed
+        tty_attr[5] = termios.B115200   # ospeed
+
+        try:
+            termios.tcsetattr(self.fd, termios.TCSANOW, tty_attr)
+        except OSError as e:
+            raise Exception("Configuring serial port: {}".format(str(e)))
+
+    def read(self, n, timeout=None):
+        """Read up to n bytes from the serial port, or until specified timeout
+        in seconds.
+
+        Args:
+            n (int): number of bytes to read
+            timeout (None or int): read timeout
+
+        Returns:
+            bytes: data read
+
+        """
+
+        buf = b""
+
+        tic = time.time()
+        while len(buf) < n:
+            try:
+                buf += os.read(self.fd, n - len(buf))
+            except OSError as e:
+                if e.errno != errno.EAGAIN:
+                    raise e
+                time.sleep(0.01)
+
+            if timeout and (time.time() - tic) > timeout:
+                break
+
+        return buf
+
+    def readline(self):
+        """Read a line from the serial port up to \r or \n.
+
+        Returns:
+            bytes: line read, without the newline delimiter
+
+        """
+
+        buf = b""
+
+        while True:
+            try:
+                c = os.read(self.fd, 1)
+            except OSError as e:
+                if e.errno != errno.EAGAIN:
+                    raise e
+                time.sleep(0.01)
+                continue
+
+            if c in [b"\r", b"\n"]:
+                if len(buf):
+                    break
+                else:
+                    continue
+
+            buf += c
+
+        return buf
+
+    def write(self, data):
+        """Write data to serial port.
+
+        Args:
+            data (bytes): data to write
+
+        """
+
+        os.write(self.fd, data)
+
+    def flush_input(self):
+        """Flush input buffer on serial port."""
+
+        termios.tcflush(self.fd, termios.TCIFLUSH)
+
+    def flush_output(self):
+        """Flush output buffer on serial port."""
+
+        termios.tcdrain(self.fd)
+
+    def writeline(self, line, wait_time=0.5):
+        """Write a line to the serial port. This mimics a user typing in a line and
+        pressing enter.
+
+        Args:
+            line (str): Line to write
+            wait_time (float): Time to wait in seconds after writing the line
+
+        """
+
+        if isinstance(line, str):
+            self.write(line.encode() + b"\r\n")
+        else:
+            self.write(line + b"\r\n")
+
+        self.flush_output()
+        time.sleep(wait_time)
+
+    def close(self):
+        """Close the serial port."""
+
+        os.close(self.fd)
+        self.fd = None
 
 
 # Cmdmule script and command wrapper
@@ -67,7 +215,7 @@ def cmdmule_command(ser, cmd):
     """Execute a command over the serial port in a running cmdmule.
 
     Args:
-        ser (pyserial.Serial): Serial port object
+        ser (Serial): Serial port object
         cmd (str): Command to execute
 
     Returns:
@@ -76,11 +224,11 @@ def cmdmule_command(ser, cmd):
     """
 
     # Write command
-    ser.flushInput()
+    ser.flush_input()
     ser.write(json.dumps(cmd).encode() + b"\n")
 
     # Read command sent
-    _ = ser.readline()
+    ser.readline()
     # Read result
     result = ser.readline()
 
@@ -88,71 +236,11 @@ def cmdmule_command(ser, cmd):
     return json.loads(result.strip().decode())
 
 
-# Serial helper functions
-
-def serial_open():
-    """Find and open the USB serial port.
-
-    Returns:
-        pyserial.Serial: Serial object
-
-    """
-
-    while True:
-        # serial.tools.list_ports does not behave properly on Mac OS X, so we
-        # check explicitly for /dev/tty.usbserial when on Mac OS X.
-        if sys.platform.startswith("darwin"):
-            if os.path.exists("/dev/tty.usbserial"):
-                port = "/dev/tty.usbserial"
-                break
-        else:
-            ports = list(serial.tools.list_ports.grep('PL2303'))
-            if len(ports) > 0:
-                port = ports[0][0]
-                break
-
-        print_warning("Please connect the USB serial port cable to the Bitcoin Computer.")
-        print_warning("Press enter to continue.")
-        input()
-
-    # Open the serial port
-    ser = serial.Serial(port, 115200, timeout=0.5)
-    ser.flushInput()
-    return ser
-
-def serial_writeline(ser, line, wait_time=0.5):
-    """Write a line to the serial port. This mimics a user typing in a line and
-    pressing enter.
-
-    Args:
-        ser (pyserial.Serial): Serial object
-        line (str): Line to write
-        wait_time (float): Time to wait in seconds after writing the line
-
-    """
-
-    if isinstance(line, str):
-        ser.write(line.encode() + b"\r\n")
-    else:
-        ser.write(line + b"\r\n")
-    ser.flush()
-    time.sleep(wait_time)
-
-def serial_close(ser):
-    """Close the serial port.
-
-    Args:
-        ser (pyserial.Serial): Serial object
-
-    """
-
-    ser.close()
-
-
 # Setup tasks
 
 def task_install_serial_driver():
-    """Install the PL2303 driver on Mac OS X, if it isn't installed."""
+    """This task install the PL2303 driver on Mac OS X, if it isn't
+    installed."""
 
     PL2303_KEXT = "/System/Library/Extensions/ProlificUsbSerial.kext"
     PL2303_DRIVER_ZIP_URL = "http://prolificusa.com/files/md_PL2303_MacOSX_10.6-10.10_v1.5.1.zip"
@@ -165,7 +253,7 @@ def task_install_serial_driver():
         # Fetch the driver
         print_step("\nFetching driver from {} ...".format(PL2303_DRIVER_ZIP_URL))
         try:
-            zippath, _ = urllib.request.urlretrieve(PL2303_DRIVER_ZIP_URL)
+            zippath, _ = urlretrieve(PL2303_DRIVER_ZIP_URL)
         except Exception as e:
             raise Exception("Fetching PL2303 driver: {}".format(str(e)))
 
@@ -194,18 +282,68 @@ def task_install_serial_driver():
 
         print_step("\nDriver successfully installed and loaded!\n")
 
+
+def task_find_serial_port():
+    """This task finds and open the USB serial port.
+
+    Returns:
+        Serial: Serial port object
+
+    """
+
+    while True:
+        if sys.platform.startswith("darwin"):
+            if os.path.exists("/dev/tty.usbserial"):
+                port = "/dev/tty.usbserial"
+                break
+        else:
+            # Get a list of /dev/ttyUSB* candidates
+            tty_ports = glob.glob("/dev/ttyUSB*")
+
+            def map_vid_pid(tty_port):
+                tty_name = os.path.basename(tty_port)
+
+                try:
+                    # Read VID
+                    with open("/sys/bus/usb-serial/devices/{}/../../idVendor".format(tty_name)) as f:
+                        vid = int(f.read().strip(), 16)
+                    # Read PID
+                    with open("/sys/bus/usb-serial/devices/{}/../../idProduct".format(tty_name)) as f:
+                        pid = int(f.read().strip(), 16)
+                except Exception:
+                    return (None, None)
+
+                return (vid, pid)
+
+            # Map (vid, pid) to each /dev/ttyUSBX
+            tty_ports = {tty_port: map_vid_pid(tty_port) for tty_port in tty_ports}
+            # Filter by Prolific (vid, pid)
+            tty_ports = [tty_port for tty_port in tty_ports if tty_ports[tty_port] in [(0x067b, 0x2303)]]
+
+            if len(tty_ports) > 0:
+                # Pick first port
+                port = tty_ports[0]
+                break
+
+        print_warning("Please connect the USB serial port cable to the Bitcoin Computer.")
+        print_warning("Press enter to continue.")
+        raw_input()
+
+    return Serial(port)
+
+
 def task_prompt(ser):
     """This task restores the target to the login prompt.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     """
 
     while True:
         # Get an idea of where we're at
-        serial_writeline(ser, "\x03\x03\x03\n\n")
-        buf = ser.read(2048).decode()
+        ser.writeline("\x03\x03\x03\n\n")
+        buf = ser.read(2048, timeout=0.25).decode()
 
         if "Raspbian GNU/Linux 8" in buf:
             # At the login prompt
@@ -214,37 +352,39 @@ def task_prompt(ser):
         elif "twenty@" in buf and "$" in buf:
             # At the command line
             logger.debug("[login_prompt] at command line")
-            serial_writeline(ser, "exit")
+            ser.writeline("exit")
 
-    ser.flushInput()
+    ser.flush_input()
+
 
 def task_login(ser):
     """This task logins in under user twenty from the login prompt.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     """
 
     # Login
     print_step("\nLogging into the Bitcoin Computer...")
-    serial_writeline(ser, "twenty")
-    serial_writeline(ser, "one")
+    ser.writeline("twenty")
+    ser.writeline("one")
 
     # Look for command line
-    buf = ser.read(2048).decode()
+    buf = ser.read(2048, timeout=0.25).decode()
     if not ("twenty@" in buf and "$" in buf):
         raise Exception("Failed to login.")
 
     logger.debug("[login] logged in")
 
-    ser.flushInput()
+    ser.flush_input()
+
 
 def task_cmdmule(ser):
     """This task ships over and starts the cmdmule script on the target.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     """
 
@@ -253,32 +393,29 @@ def task_cmdmule(ser):
 
     # Write it to /tmp/cmdule.py
     logger.debug("[cmdmule] sending cmdmule script")
-    serial_writeline(ser, "base64 -d > /tmp/cmdmule.py")
-    serial_writeline(ser, cmdmule_script)
+    ser.writeline("base64 -d > /tmp/cmdmule.py")
+    ser.writeline(cmdmule_script)
 
     # Start running it
     logger.debug("[cmdmule] starting cmdmule script")
-    serial_writeline(ser, "python3 /tmp/cmdmule.py")
+    ser.writeline("python3 /tmp/cmdmule.py")
 
     # Check that it started
-    buf = ser.read(2048).decode()
+    buf = ser.read(2048, timeout=0.25).decode()
     if "cmdmule started" not in buf:
         raise Exception("Failed to start cmdmule script.")
 
     logger.debug("[cmdmule] cmdmule started")
 
-    # Disable timeout on serial port now, as we'll be reading until newline
-    # with cmdmule
-    ser.timeout = None
+    ser.flush_input()
 
-    ser.flushInput()
 
 def task_connect_wifi(ser):
     """This task configures WiFi with WPA2-PSK and brings up the wlan0
     interface, or skips the process entirely if the user decides to skip it.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     """
 
@@ -290,7 +427,7 @@ def task_connect_wifi(ser):
         if result['returncode'] != 0:
             print_warning("WiFi dongle not found. Please connect the WiFi dongle.")
             print_warning("Press enter or \"skip\" to use Ethernet.")
-            if input() == "skip":
+            if raw_input() == "skip":
                 break
             continue
         wlan_interface = result['stdout'].strip()
@@ -300,8 +437,8 @@ def task_connect_wifi(ser):
         # Get WiFI access point information from user
         print_step("Please enter WiFi access point information.")
         print_step("")
-        ssid = input("    WiFi SSID: ")
-        password = input("    WiFi WPA2 Passphrase: ")
+        ssid = raw_input("    WiFi SSID: ")
+        password = raw_input("    WiFi WPA2 Passphrase: ")
 
         # Create /etc/wpa_supplicant/wpa_supplicant.conf
         wpa_supplicant_conf = "network={{\n    ssid=\"{}\"\n    psk=\"{}\"\n}}\n".format(ssid, password)
@@ -333,12 +470,13 @@ def task_connect_wifi(ser):
 
         break
 
+
 def task_lookup_connection_info(ser):
     """This task looks up the hostname and IP addresses of the target, and
     tests connectivity to the target by SSHing to the target.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     Returns:
         tuple: Tuple of hostname and a list of IP addresses
@@ -378,10 +516,6 @@ def task_lookup_connection_info(ser):
     if len(addresses) == 0:
         raise Exception("No IP addresses found.")
 
-    print_step("\nConnection Information\n")
-    print_step("    Hostname      {}".format(hostname))
-    print_step("    IP Addresses  {}".format(", ".join(addresses)))
-
     print_step("\nChecking connectivity to the Bitcoin Computer...")
     print_step("Please enter password \"one\" when prompted.\n")
 
@@ -390,17 +524,8 @@ def task_lookup_connection_info(ser):
     if result.strip().decode() != "test":
         raise Exception("SSH connection failed.")
 
-    print_step("\nBitcoin Computer configured and online!")
-    print_step("")
-    print_step("You may connect to the Bitcoin Computer with one of these commands:")
-    print_step("")
-    print_step("    ssh twenty@{}.local".format(hostname))
-    for address in ipv4_addresses:
-        print_step("    ssh twenty@{}".format(address))
-    print_step("")
-    print_step("and with password \"one\".")
+    return (hostname, ipv4_addresses, ipv6_addresses)
 
-    return (hostname, addresses)
 
 def task_21_update(ip_address):
     """This task runs 21 update on the target.
@@ -416,49 +541,68 @@ def task_21_update(ip_address):
     # Run 21 update
     try:
         subprocess.check_call(["ssh", "twenty@" + ip_address, "-q", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", "21", "update"])
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         raise Exception("Running 21 update.")
+
 
 def task_cleanup(ser):
     """This task exits cmdmule and the shell session on the target,
     restoring it to the login prompt.
 
     Args:
-        ser (pyserial.Serial): Serial object
+        ser (Serial): Serial port object
 
     """
 
     # Exit cmdmule program
-    serial_writeline(ser, "\x03\x03\x03")
+    ser.writeline("\x03\x03\x03")
 
     # Exit command line
-    serial_writeline(ser, "exit")
+    ser.writeline("exit")
+
 
 # Top-level setup routine
 
-@click.command()
-@pass_config
-def setup(config):
+def main():
     """Setup a Bitcoin Computer over the serial port."""
 
     task_install_serial_driver()
 
-    ser = serial_open()
+    ser = task_find_serial_port()
 
     try:
         task_prompt(ser)
         task_login(ser)
         task_cmdmule(ser)
         task_connect_wifi(ser)
-        (_, ip_addresses) = task_lookup_connection_info(ser)
-        task_21_update(ip_addresses[0])
+        (hostname, ipv4_addresses, ipv6_addresses) = task_lookup_connection_info(ser)
+        task_21_update(ipv4_addresses[0])
     except Exception as e:
         print_error("Error: " + str(e))
         print_error("Please contact support@21.co")
         sys.exit(1)
+    except KeyboardInterrupt:
+        print_error("\nSetup interrupted!")
+        sys.exit(1)
     finally:
         task_cleanup(ser)
-        serial_close(ser)
+        ser.close()
 
     print_step("\nSetup complete!")
 
+    print_step("\nBitcoin Computer configured and online!")
+    print_step("")
+    print_step("Connection Information\n")
+    print_step("    Hostname      {}".format(hostname))
+    print_step("    IP Addresses  {}".format(", ".join(ipv4_addresses + ipv6_addresses)))
+    print_step("")
+    print_step("You may connect to the Bitcoin Computer with one of these commands:")
+    print_step("")
+    print_step("    ssh twenty@{}.local".format(hostname))
+    for address in ipv4_addresses:
+        print_step("    ssh twenty@{}".format(address))
+    print_step("")
+    print_step("and with password \"one\".")
+
+if __name__ == "__main__":
+    main()
