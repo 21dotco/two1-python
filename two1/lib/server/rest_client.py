@@ -84,6 +84,12 @@ class TwentyOneRestClient(object):
         return self._request(sign_username=username,
                              path=path).json()
 
+    # GET /pool/statistics/{username}/earninglogs/
+    def get_earning_logs(self, username):
+        path = "/pool/statistics/%s/earninglogs/" % username
+        return self._request(sign_username=username,
+                             path=path).json()
+
     # POST /pool/{username}/earnings/?action=True
     def flush_earnings(self, username):
         path = "/pool/account/%s/earnings/?action=flush" % username
