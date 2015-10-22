@@ -38,8 +38,15 @@ class UxString:
                    "in your wallet balance as soon as they appear on the Blockchain."
 
     # ad
-    buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
-    
+    buy_ad = "\nGet a 21 Bitcoin Computer at 21.co/buy"
+
+    # log
+
+    reasons = {"CLI": "Performed 21 mine in a command line interface",
+               "Shares": "Submitted Shares through The 21 Bitcoin Computer",
+               "flush_payout": "Performed 21 flush to move unpaid earnings to the Blockchain",
+               "earning_payout": "Periodic 21 payout of portion of the earnings to the Blockchain"
+               }
     class Error:
         # network errors
         connection = "Error: Cannot connect to %s."

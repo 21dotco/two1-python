@@ -27,6 +27,7 @@ from two1.lib.util.decorators import docstring_parameter
 # from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.mine import mine
+from two1.commands.log import log
 from two1.commands.status import status
 from two1.commands.update import update
 from two1.commands.flush import flush
@@ -87,6 +88,7 @@ main.add_command(mine)
 main.add_command(status)
 main.add_command(update)
 main.add_command(flush)
+main.add_command(log)
 
 
 if __name__ == "__main__":
