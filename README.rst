@@ -1,38 +1,13 @@
 ``two1``: buy/sell anything on the internet with Bitcoin.
 =========================================================
+
 ``two1`` is a command line tool and library that allows users to mine
 Bitcoin, use it to buy and sell API calls, set up world-readable
 machine-payable endpoints, and publish them to the Many Machine Market
 from any Unix command line.
 
-Running Tests
-=============
-We use `nose <https://nose.readthedocs.org/en/latest/>`_ as our
-primary tool for discovering and running tests. Run the following
-command to execute the test suite:
-
-.. code-block:: bash
-   $ nosetests -v --with-doctest
-
-Most tests will fail at this point. You can also run just a subset of
-tests as follows by specifying a file or directory as input:
-
-.. code-block:: bash
-   $ nosetests -v two1/bitcoin/tests
-
-Read the `nose documentation
-<http://nose.readthedocs.org/en/latest/testing.html>`_ and `TDD in
-Python <http://bit.ly/tdd-python-book>`_ for more.
-
 Developer Installation
 ======================
-The ``two1`` app is built on the `click <http://click.pocoo.org>`_
-command line framework and uses `setuptools
-<https://github.com/pypa/sampleproject>`_ and `virtualenv
-<http://click.pocoo.org/4/quickstart/#virtualenv>`_ to build a
-reproducible ``two1`` app environment suitable for `pip-based
-distribution
-<https://packaging.python.org/en/latest/distributing.html>`_.
 
 Here's how to install the command line app for development purposes:
 
@@ -57,23 +32,35 @@ Here's how to install the command line app for development purposes:
    $ pip3 install --editable .
    $ two1 --help
 
-If you follow these steps, you will have the ``two1`` command line app
-in your path in an uninstallable way, and will also be able to edit
-the files in the ``two1`` directory and see those changes reflected in
-the command line app in realtime.
+If you follow these steps, you will have the ``two1`` command line app in your
+path, and will also be able to edit the files in the ``two1`` directory and see
+those changes reflected in the command line app in realtime.
+
+
+Running Tests
+=============
+
+Unit tests can be run with `pytest <http://pytest.org/latest/>`_:
+
+.. code-block:: bash
+
+    $ py.test
 
 Developer Environment Variables
 ===============================
+
 The following set of environment variables are useful for development purposes:
 
-- TWO1_DEV 
+- TWO1_DEV
+
 This sets the debug mode on. This will automatically use `http://127.0.0.1:8000` as the hostname for the 21-API server.
 
 .. code-block:: bash
 
    $ export TWO1_DEV=1
 
-- TWO1_DEV_HOST 
+- TWO1_DEV_HOST
+
 This sets a custom 21-API host to which the CLI will make requests.
 
 .. code-block:: bash
@@ -98,8 +85,6 @@ The top level contains the following files:
 And the following subdirectories:
 
  - `<docs>`_: Documentation directory, including semi-automatically generated sphinx documentation from .rst docstrings
- - `<setup>`_: Setup files for running on jenkins and rpi. TODO: move ``jenkins``/ ``rpi`` into ``tests``/ ``bin`` respectively.
- - `<tests>`_: Tests for the overall ``two1`` codebase
  - `<two1>`_: The primary codebase directory
 
 The ``two1`` directory
@@ -115,7 +100,6 @@ following files:
 And the following subdirectories:
 
  - `bitcoin <two1/bitcoin>`_: Core bitcoin utilities for handling blocks, script, et al.
- - `bitcurl <two1/bitcurl>`_: Standalone bitcurl utility. TODO: fold this into buy.py and then deprecate.
  - `commands <two1/commands>`_: The client commands exposed by ``two1``
  - `crypto <two1/crypto>`_: Pure Python implementation of Bitcoin's ECDSA (Elliptic Curve Digital Signature Algorithm)
  - `djangobitcoin <two1/djangobitcoin>`_: Django implementation of 402 endpoints
