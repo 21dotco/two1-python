@@ -15,6 +15,12 @@ import os
 import sys
 import dj_database_url
 
+
+def str2bool(v):
+    """Convert env strings to boolean by matching to known 'True' pattern."""
+    return str(v).lower() in ("yes", "true", "t", "1", "on")
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "misc/lib"))
 
@@ -36,10 +42,9 @@ SECRET_KEY = '6+y)pxr9jy$7f4kjk1@zk*6lem0$4=^4xekew@7r32=sukb&a!'
 BLOCKSPRING_API_KEY = os.environ.get('BLOCKSPRING_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = str2bool(os.environ.get('DEBUG', True))
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
