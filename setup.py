@@ -34,7 +34,6 @@ install_requires = [
                     'tabulate',
                     'jsonrpcclient',
                     'jsonrpcserver>=3.0.0',
-                    'pyserial'
                     ]
 
 version = __import__('two1').__version__
