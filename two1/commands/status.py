@@ -57,7 +57,7 @@ def status_wallet(config, client):
                .format(total_balance, pending_transactions)
                )
 
-    if flushed_earnings > 0 :
+    if flushed_earnings > 0:
         config.log('''\
     Your Flushed Amount      :   {} Satoshi *'''
                    .format(flushed_earnings))
@@ -129,6 +129,7 @@ def status_earnings(config, client):
                    .format(none2zero(flush_amount)),
                    )
         config.log("\n" + UxString.flush_status % flush_amount, fg='green')
+
 
 def status_shares(config, client):
     try:
