@@ -18,8 +18,8 @@ from two1.commands.config import pass_config
 
 @click.command()
 @click.argument('version', nargs=1, required=False, default='latest')
-@pass_config
-def update(config, version):
+@click.pass_context
+def update(ctx, version):
     """Update the 21 Command Line Interface.
 
 \b
@@ -28,6 +28,7 @@ Usage
 Invoke this with no arguments to update the CLI.
 $ 21 update
 """
+    config = ctx.obj['config']
     _update(config, version)
 
 

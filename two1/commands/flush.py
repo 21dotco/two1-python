@@ -7,11 +7,12 @@ from two1.lib.util.uxstring import UxString
 
 
 @click.command()
-@pass_config
-def flush(config):
+@click.pass_context
+def flush(ctx):
     """Flush your 21.co balance to the blockchain.
 
 """
+    config = ctx.obj['config']
     _flush(config)
 
 

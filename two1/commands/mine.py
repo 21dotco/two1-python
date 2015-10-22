@@ -23,7 +23,6 @@ import two1.commands.config as app_config
 @click.command()
 @click.pass_context
 def mine(ctx):
-    config = ctx.obj['config']
     """Mine bitcoin at the command line.
 
 \b
@@ -40,6 +39,7 @@ $ 21 status
 Invoke again and again, limited only by speed of your CPU/mining chip.
 $ 21 mine
 """
+    config = ctx.obj['config']
     _mine(config)
 
 
