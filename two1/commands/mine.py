@@ -21,8 +21,9 @@ import two1.commands.config as app_config
 
 
 @click.command()
-@pass_config
-def mine(config):
+@click.pass_context
+def mine(ctx):
+    config = ctx.obj['config']
     """Mine bitcoin at the command line.
 
 \b
