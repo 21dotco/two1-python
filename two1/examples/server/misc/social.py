@@ -15,7 +15,7 @@ def twitter(request):
       translated:
         type: string
     parameters:
-        - name: text
+        - name: message
           description: message to send, include your @handle
           required: true
           type: string
@@ -35,7 +35,7 @@ def twitter(request):
         'https://api.twitter.com/1.1/direct_messages/new.json',
         data={
             "screen_name": settings.TWITTER_HANDLE,
-            "text": request.data["text"]
+            "text": request.data["message"]
         },
         auth=oauth
     )

@@ -14,8 +14,8 @@ def bing(request):
       translated:
         type: string
     parameters:
-        - name: terms
-          description: search terms
+        - name: query
+          description: search query
           required: true
           type: string
           paramType: form
@@ -26,7 +26,7 @@ def bing(request):
     """
     api = BingSearchAPI(settings.AZURE_MARKETPLACE_KEY)
     result = api.search_web(
-        request.data['terms'],
+        request.data['query'],
         payload={'$format': 'json'}
     )
     if result.ok:

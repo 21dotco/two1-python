@@ -23,6 +23,7 @@ TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
 TWO1_POOL_URL = "swirl+tcp://grid.21-dev.co:21006"
+TWO1_MERCHANT_HOST = "https://api-2348.21.co"
 TWO1_VERSION = two1.__version__
 
 try:

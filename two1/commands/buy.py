@@ -1,11 +1,17 @@
+import json
 import click
 import datetime
 import re
 
 from two1.commands.config import pass_config
-from two1.lib.bitcurl.bitrequests import BitTransferRequests
-from two1.lib.bitcurl.bitrequests import OnChainRequests
+from two1.commands.config import TWO1_MERCHANT_HOST
+from two1.commands.formatters import search_formatter
+from two1.commands.formatters import social_formatter
+from two1.commands.formatters import content_formatter
 from two1.lib.server.analytics import capture_usage
+from two1.lib.bitcurl.bitrequests import OnChainRequests
+from two1.lib.bitcurl.bitrequests import BitTransferRequests
+
 
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -16,8 +22,14 @@ URL_REGEXP = re.compile(
     r'(?::\d+)?'  # optional port
     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
+DEMOS = {
+    "search": {"path": "/search/bing", "formatter": search_formatter},
+    "social": {"path": "/social/twitter", "formatter": social_formatter},
+    "content": {"path": "/content/wsj", "formatter": content_formatter}
+}
 
-@click.command()
+
+@click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.argument('resource', nargs=1)
 @click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
 @click.option('-d', '--data', default=None, help="Data to send in HTTP body")
@@ -27,7 +39,8 @@ URL_REGEXP = re.compile(
 @click.option('--max-price', default=5000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @pass_config
-def buy(config, resource, data, method, data_file, output_file, payment_method,
+@click.pass_context
+def buy(ctx, config, resource, data, method, data_file, output_file, payment_method,
         max_price, info_only):
     """Buy an API call with Bitcoin.
 
@@ -37,17 +50,22 @@ def buy(config, resource, data, method, data_file, output_file, payment_method,
     Esto es SPARTA.
     $
     """
-    _buy(config, resource, data, method, data_file, output_file,
+    _buy(config, ctx, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only)
 
 
 @capture_usage
-def _buy(config, resource, data, method, data_file, output_file,
+def _buy(config, ctx, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only):
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
         target_url = resource
         seller = target_url
+    elif resource in DEMOS:
+        target_url = TWO1_MERCHANT_HOST + DEMOS[resource]["path"]
+        data = json.dumps(
+            {ctx.args[i][2:]: ctx.args[i+1] for i in range(0, len(ctx.args), 2)}
+        )
     else:
         raise NotImplementedError('Endpoint search is not implemented!')
 
@@ -86,6 +104,8 @@ def _buy(config, resource, data, method, data_file, output_file,
         # Print headers that are related to 402 payment required
         for r in res:
             config.log('{}: {}'.format(r[0], r[1]))
+    elif resource in DEMOS:
+        config.log(DEMOS[resource]["formatter"](res))
     else:
         # Write response to console
         config.log(res.text)
