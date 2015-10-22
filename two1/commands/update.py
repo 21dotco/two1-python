@@ -21,11 +21,11 @@ from two1.commands.config import pass_config
 @pass_config
 def update(config, version):
     """ Keep 21 App up to date"""
-    _update(config)
+    _update(config, version)
 
 
 @capture_usage
-def _update(config):
+def _update(config, version):
     click.echo(UxString.update_check)
     update_two1_package(config, version, force_update_check=True)
 
