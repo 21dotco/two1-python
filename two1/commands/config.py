@@ -171,7 +171,7 @@ class Config(object):
         # self.save()
 
     # kwargs is styling parameters
-    def log(self, msg, *args, **kwargs):
+    def log(self, msg, *args, nl=True, **kwargs):
         """Logs a message to stderr."""
         if args:
             msg %= args
@@ -179,7 +179,7 @@ class Config(object):
             out = click.style(msg, **kwargs)
         else:
             out = msg
-        click.echo(out, file=sys.stderr)
+        click.echo(out, file=sys.stderr, nl=nl)
 
     def vlog(self, msg, *args):
         """Logs a message to stderr only if verbose is enabled."""

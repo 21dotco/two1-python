@@ -23,7 +23,7 @@ import two1.commands.config as app_config
 @click.command()
 @pass_config
 def mine(config):
-    """ Fastest way to get Bitcoin!
+    """ Mine bitcoin at the command line
     """
     _mine(config)
 
@@ -80,7 +80,7 @@ def start_minerd(config):
 
 
 def start_cpu_mining(config):
-    click.secho(UxString.buy_ad, fg="blue")
+    click.secho(UxString.buy_ad, fg="green")
 
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
                                              config.machine_auth)

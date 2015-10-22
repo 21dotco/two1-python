@@ -17,16 +17,16 @@ class UxString:
                     " our next payout cycle.\nEstimated time of payout: 20 minutes"
 
     # status
-    status_exit_message = "\nYou can use your spendable balance to buy {} searches, " \
-                          "{} full text articles, or send up to {} " \
-                          "paid direct messages with {}.\nTry {} for more."
+    status_exit_message = "\nYou can use your spendable balance to buy {} searches, {} full text" \
+                          "\narticles, or send up to {} paid direct messages with {}." \
+                          "\nDo {} for more info."
     status_empty_wallet = "\nUse {} to get some Bitcoin from 21.co."
 
     # mining
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
-    mining_finish = "\nView your balance with {}, or spend with {}.\n"
+    mining_finish = "\nView your balance with {}, or spend with {}."
 
     # updater
     update_check = "Checking for application update..."
@@ -38,7 +38,7 @@ class UxString:
                    "in your wallet balance as soon as they appear on the Blockchain."
 
     # ad
-    buy_ad = "\nGet a 21 Bitcoin Computer at 21.co/buy"
+    buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
     
     class Error:
         # network errors

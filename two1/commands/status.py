@@ -12,7 +12,7 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @pass_config
 def status(config):
-    """View earned Bitcoin and configuration"""
+    """View your bitcoin balance and address"""
     _status(config)
 
 
@@ -69,17 +69,19 @@ def status_wallet(config, client):
         config.log(UxString.flush_status % flushed_earnings)
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
-    buyable_message = int(total_balance / MESSAGE_UNIT_PRICE)
+    buyable_messages = int(total_balance / MESSAGE_UNIT_PRICE)
 
     if total_balance == 0:
         config.log(UxString.status_empty_wallet.format(click.style("21 mine",
                                                                    bold=True)))
     else:
-        config.log(UxString.status_exit_message.format(buyable_searches, buyable_articles,
-                                                       buyable_message,
-                                                       click.style("21 buy", bold=True),
-                                                       click.style("21 buy --help",
-                                                                   bold=True)))
+        buy21 = click.style("21 buy", bold=True)
+        buy21help = click.style("21 buy --help", bold=True)
+        config.log(UxString.status_exit_message.format(buyable_searches,
+                                                       buyable_articles,
+                                                       buyable_messages,
+                                                       buy21,
+                                                       buy21help), nl=False)
 
 
 def status_postmine_balance(config, client):
