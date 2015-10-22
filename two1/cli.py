@@ -24,12 +24,12 @@ from two1.commands.config import TWO1_CONFIG_FILE
 from two1.commands.config import TWO1_VERSION
 from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.util.decorators import docstring_parameter
-from two1.commands.update import update_two1_package
+# from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
-from two1.commands.mine import mine
-from two1.commands.status import status
-from two1.commands.update import update
-from two1.commands.flush import flush
+# from two1.commands.mine import mine
+# from two1.commands.status import status
+# from two1.commands.update import update
+# from two1.commands.flush import flush
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -80,13 +80,13 @@ $ {0}
             # TODO: This should exit the CLI and run the same command using the
             # newly installed software
             pass
-    ctx.obj = cfg
+    ctx.obj = dict(config=cfg)
 
 main.add_command(buy)
-main.add_command(mine)
-main.add_command(status)
-main.add_command(update)
-main.add_command(flush)
+# main.add_command(mine)
+# main.add_command(status)
+# main.add_command(update)
+# main.add_command(flush)
 
 
 if __name__ == "__main__":
