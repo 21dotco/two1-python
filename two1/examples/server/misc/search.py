@@ -25,7 +25,10 @@ def bing(request):
           paramType: query
     """
     api = BingSearchAPI(settings.AZURE_MARKETPLACE_KEY)
-    result = api.search_web(request.data['terms'])
+    result = api.search_web(
+        request.data['terms'],
+        payload={'$format': 'json'}
+    )
     if result.ok:
         return Response({"results": result.text})
     else:
