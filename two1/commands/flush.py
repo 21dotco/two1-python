@@ -9,8 +9,9 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @pass_config
 def flush(config):
-    """Sends all earned bitcoins to your wallet"""
+    """Flush your 21.co balance to the blockchain.
 
+"""
     _flush(config)
 
 

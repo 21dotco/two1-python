@@ -23,7 +23,7 @@ import two1.commands.config as app_config
 @click.command()
 @pass_config
 def mine(config):
-    """ Mine bitcoin at the command line with CPU or 21 bitcoin mining chip.
+    """Mine bitcoin at the command line.
 
 \b
 Usage

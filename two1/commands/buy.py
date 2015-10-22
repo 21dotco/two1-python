@@ -42,14 +42,26 @@ DEMOS = {
 @click.pass_context
 def buy(ctx, config, resource, data, method, data_file, output_file, payment_method,
         max_price, info_only):
-    """Buy an API call with Bitcoin.
+    """Buy API calls with mined bitcoin.
 
-    \b
-    Example:
-    $ two1 buy en2cn --data '{"text": "This is SPARTA"}'
-    Esto es SPARTA.
-    $
-    """
+\b
+Usage
+-----
+Search the internet, paying with bitcoin.
+$ 21 buy search --query "Satoshi Nakamoto"
+
+\b
+See the price in Satoshis of one search, and the user hosting it.
+$ 21 buy --info search
+
+\b
+See the price in Satoshis of one item of content.
+$ 21 buy --info content
+
+\b
+See the price in Satoshis of a paid direct message via social network.
+$ 21 buy --info social
+"""
     _buy(config, ctx, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only)
 
