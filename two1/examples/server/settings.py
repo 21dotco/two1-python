@@ -151,6 +151,9 @@ BITSERV_DEFAULT_PRICE = int(
     )
 )
 
+# Global lookup table for calculating API resource prices
+BITSERV_API_PRICES = {}
+
 # for inclusion in 402 payments, username of the seller.
 TWO1_USERNAME = os.environ.get(
     'TWO1_USERNAME', "seller"
