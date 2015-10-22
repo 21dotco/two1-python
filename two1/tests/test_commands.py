@@ -105,55 +105,55 @@ class TestSell(unittest.TestCase):
     #     self.assertNotEqual(result.exit_code, 0, result.output)
 
 
-class TestRate(unittest.TestCase):
-    def test_builtins(self):
-        """ $two1 rate --help """
-        runner = CliRunner()
-        result = runner.invoke(cli.main, get_args('rate', '--help'))
-        self.assertEqual(result.exit_code, 0)
-
-
-class TestPublish(unittest.TestCase):
-    def test_publish_valid_endpoint(self):
-        # publish endpoint
-        # import random
-        # runner = CliRunner()
-        # random_name = random.getrandbits(255)
-        # result = runner.invoke(cli.main, get_args('publish', str(random_name), 'name', 'desc', '1000', '679e3ab3-c3b5-4aea-a8ad-eeef037fc248'))
-        # assert not result.exception
-        # self.assertEqual(result.exit_code, 0)
-        pass
-
-    def test_publish_non_integer_price(self):
-        # test for price must be integer error message
-        runner = CliRunner()
-        result = runner.invoke(cli.main, get_args('publish', 'path', 'name', 'desc', '1000dddd', '679e3ab3-c3b5-4aea-a8ad-eeef037fc248'))
-        assert 'arg PRICE must be a valid integer' in result.output
-        self.assertEqual(result.exit_code, 0)
-
-    def test_publish_missing_all_args(self):
-        # test for missing arg error messages
-        runner = CliRunner()
-        result = runner.invoke(cli.main, get_args('publish'))
-        assert 'Missing required arg PATH' in result.output
-        assert 'Missing required arg NAME' in result.output
-        assert 'Missing required arg DESCRIPTION' in result.output
-        assert 'Missing required arg PRICE' in result.output
-        assert 'Missing required arg DEVICE_UUID' in result.output
-        self.assertEqual(result.exit_code, 0)
-
-    def test_publish_nonexistant_endpoint(self):
-        # todo: if endpoint doesn't exist on device, don't attempt publish
-        # assert not result.exception
-        pass
-
-    def test_publish_all(self):
-        # todo: test publishing all ulisted endpoints
-        # assert not result.exception
-        pass
-
-    def test_publish_help(self):
-        runner = CliRunner()
-        result = runner.invoke(cli.main, get_args('publish', '--help'))
-        self.assertEqual(result.exit_code, 0)
-        assert not result.exception
+# class TestRate(unittest.TestCase):
+#     def test_builtins(self):
+#         """ $two1 rate --help """
+#         runner = CliRunner()
+#         result = runner.invoke(cli.main, get_args('rate', '--help'))
+#         self.assertEqual(result.exit_code, 0)
+#
+#
+# class TestPublish(unittest.TestCase):
+#     def test_publish_valid_endpoint(self):
+#         # publish endpoint
+#         # import random
+#         # runner = CliRunner()
+#         # random_name = random.getrandbits(255)
+#         # result = runner.invoke(cli.main, get_args('publish', str(random_name), 'name', 'desc', '1000', '679e3ab3-c3b5-4aea-a8ad-eeef037fc248'))
+#         # assert not result.exception
+#         # self.assertEqual(result.exit_code, 0)
+#         pass
+#
+#     def test_publish_non_integer_price(self):
+#         # test for price must be integer error message
+#         runner = CliRunner()
+#         result = runner.invoke(cli.main, get_args('publish', 'path', 'name', 'desc', '1000dddd', '679e3ab3-c3b5-4aea-a8ad-eeef037fc248'))
+#         assert 'arg PRICE must be a valid integer' in result.output
+#         self.assertEqual(result.exit_code, 0)
+#
+#     def test_publish_missing_all_args(self):
+#         # test for missing arg error messages
+#         runner = CliRunner()
+#         result = runner.invoke(cli.main, get_args('publish'))
+#         assert 'Missing required arg PATH' in result.output
+#         assert 'Missing required arg NAME' in result.output
+#         assert 'Missing required arg DESCRIPTION' in result.output
+#         assert 'Missing required arg PRICE' in result.output
+#         assert 'Missing required arg DEVICE_UUID' in result.output
+#         self.assertEqual(result.exit_code, 0)
+#
+#     def test_publish_nonexistant_endpoint(self):
+#         # todo: if endpoint doesn't exist on device, don't attempt publish
+#         # assert not result.exception
+#         pass
+#
+#     def test_publish_all(self):
+#         # todo: test publishing all ulisted endpoints
+#         # assert not result.exception
+#         pass
+#
+#     def test_publish_help(self):
+#         runner = CliRunner()
+#         result = runner.invoke(cli.main, get_args('publish', '--help'))
+#         self.assertEqual(result.exit_code, 0)
+#         assert not result.exception
