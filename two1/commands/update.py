@@ -20,7 +20,14 @@ from two1.commands.config import pass_config
 @click.argument('version', nargs=1, required=False, default='latest')
 @pass_config
 def update(config, version):
-    """ Keep 21 App up to date"""
+    """Update the 21 Command Line Interface.
+
+\b
+Usage
+-----
+Invoke this with no arguments to update the CLI.
+$ 21 update
+"""
     _update(config, version)
 
 

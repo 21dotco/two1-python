@@ -12,7 +12,10 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @pass_config
 def status(config):
-    """View your bitcoin balance and address"""
+    """View your bitcoin balance and address.
+
+
+"""
     _status(config)
 
 

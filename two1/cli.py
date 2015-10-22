@@ -50,33 +50,21 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.pass_context
 @docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config):
-    """Buy or sell anything on the internet for Bitcoin.
+    """Buy APIs on the internet for Bitcoin.
 
 \b
-Examples
---------
-Mine Bitcoin at the command line
+Usage
+-----
+Mine bitcoin at the command line
 $ {0} mine
 
 \b
-Search for Bitcoin-payable APIs to translate English to Spanish
-$ {0} search en2es
+List your new balance
+$ {0} status
 
 \b
-Buy the lowest priced English to Spanish translation for Bitcoin
-$ {0} buy en2es --sortby price --stdin "Hello World"
-
-\b
-Rate the seller after your purchase
-$ {0} rate example.com/en2es
-
-\b
-Sell translation at 1000 Satoshis-per-word with the 21 micropayments server
-$ {0} sell twentyone.es2en --price 1000
-
-\b
-Publish your new translation service so that others can buy
-$ {0} publish twentyone.en2es
+Buy a search query with Bitcoin
+$ {0} buy search --query "Satoshi Nakamoto"
 
 \b
 Show this help text
