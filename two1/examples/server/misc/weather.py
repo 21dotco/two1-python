@@ -2,6 +2,7 @@ import json
 import requests
 
 from django.http import HttpResponse
+from two1.examples.bitcoin_auth.pricing import api_price
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -25,6 +26,7 @@ def wunderground_radar_request(query, place):
             query, place))
 
 
+@api_price(25)
 @api_view(['GET'])
 def current_temperature(request):
     """

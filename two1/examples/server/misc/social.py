@@ -2,10 +2,12 @@ import requests
 from requests_oauthlib import OAuth1
 
 from django.conf import settings
+from two1.examples.bitcoin_auth.pricing import api_price
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 
+@api_price(8000)
 @api_view(["POST"])
 def twitter(request):
     """

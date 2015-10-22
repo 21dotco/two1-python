@@ -1,10 +1,12 @@
 from django.conf import settings
+from two1.examples.bitcoin_auth.pricing import api_price
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from bing_search_api import BingSearchAPI
 
 
+@api_price(800)
 @api_view(["POST"])
 def bing(request):
     """
