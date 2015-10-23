@@ -156,9 +156,9 @@ def _buy(config, resource, data, method, data_file, output_file,
     try:
         # Find the corrent payment method
         if payment_method == 'bittransfer':
-            bit_req = BitTransferRequests(config)
+            bit_req = BitTransferRequests(config.machine_auth, config.username)
         elif payment_method == 'onchain':
-            bit_req = OnChainRequests(config)
+            bit_req = OnChainRequests(config.wallet)
         else:
             raise Exception('Payment method does not exist.')
 

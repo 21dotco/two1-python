@@ -32,14 +32,14 @@ class MockWallet:
 ##############################################################################
 
 # Set up Two1 command line config
-test_config = Config()
+config = Config()
 # Inject the mock wallet into config as a test dependency
-test_config.wallet = MockWallet()
+wallet = MockWallet()
 
 
 def test_onchain_request():
     """Test that it handles on-chain requests."""
-    bit_req = OnChainRequests(test_config)
+    bit_req = OnChainRequests(wallet)
     test_max_price = 10000
     price = 1000
     address = 'test_bitserv_host_address'
@@ -62,7 +62,7 @@ def test_onchain_request():
 
 def test_bittransfer_request():
     """Test that it handles bit-transfer requests."""
-    bit_req = BitTransferRequests(test_config)
+    bit_req = BitTransferRequests(config.machine_auth, config.username)
     test_max_price = 10000
     price = 1000
     address = 'test_bitserv_host_address'

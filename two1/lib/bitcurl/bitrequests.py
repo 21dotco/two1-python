@@ -43,13 +43,9 @@ class BitRequests(object):
     its `make_402_payment()` to create the necessary payment.
     """
 
-    def __init__(self, config):
-        """Initialize BitRequests with a two1 command line config object.
-
-        Args:
-            config (two1.commands.config): a two1 config object
-        """
-        self.config = config
+    def __init__(self):
+        """Initialize BitRequests."""
+        pass
 
     def make_402_payment(self, response, max_price):
         """Payment handling method implemented by a BitRequests subclass.
@@ -126,10 +122,11 @@ class BitTransferRequests(BitRequests):
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
     HTTP_BITCOIN_USERNAME = 'username'
 
-    def __init__(self, config):
-        """Initialize the bit-transfer with keyring machine auth."""
-        super().__init__(config)
-        self.machine_auth = self.config.machine_auth
+    def __init__(self, machine_auth, username):
+        """Initialize the bit-transfer wit and keyring machine auth."""
+        super().__init__()
+        self.machine_auth = machine_auth
+        self.username = username
 
     def make_402_payment(self, response, max_price):
         """Make a bit-transfer payment to the payment-handling service."""
@@ -154,7 +151,7 @@ class BitTransferRequests(BitRequests):
 
         # Create and sign BitTranfer
         bittransfer = json.dumps({
-            'payer': self.config.username,
+            'payer': self.username,
             'payee_address': payee_address,
             'payee_username': payee_username,
             'amount': price,
@@ -185,9 +182,10 @@ class OnChainRequests(BitRequests):
     HTTP_BITCOIN_PRICE = 'price'
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
 
-    def __init__(self, config):
-        """Initialize the on-chain request with keyring machine auth."""
-        super().__init__(config)
+    def __init__(self, wallet):
+        """Initialize the on-chain request with a wallet."""
+        super().__init__()
+        self.wallet = wallet
 
     def make_402_payment(self, response, max_price):
         """Make an on-chain payment."""
@@ -210,9 +208,9 @@ class OnChainRequests(BitRequests):
             raise ValueError(max_price_err.format(price, max_price))
 
         # Create the signed transaction
-        onchain_payment = self.config.wallet.make_signed_transaction_for(
+        onchain_payment = self.wallet.make_signed_transaction_for(
             payee_address, price, use_unconfirmed=True)[0].get('txn')
-        return_address = self.config.wallet.current_address
+        return_address = self.wallet.current_address
 
         return {
             'Bitcoin-Transaction': onchain_payment,
