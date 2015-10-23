@@ -106,7 +106,10 @@ class BitRequests(object):
         payment_headers = self.make_402_payment(response, max_price)
 
         # Add the payment data headers to the current headers dict
-        headers.update(payment_headers)
+        if headers is None:
+            headers = payment_headers
+        else:
+            headers.update(payment_headers)
 
         # Complete the response and return with a requests.response object
         paid_response = requests.request(
