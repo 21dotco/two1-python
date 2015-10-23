@@ -64,7 +64,7 @@ $ {0} status
 
 \b
 Buy a search query with Bitcoin
-$ {0} buy search --query "Satoshi Nakamoto"
+$ {0} buy search "Satoshi Nakamoto"
 
 \b
 Show this help text
