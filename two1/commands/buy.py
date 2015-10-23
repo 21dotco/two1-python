@@ -30,7 +30,7 @@ DEMOS = {
 
 @click.group()
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
-@click.option('--max-price', default=5000, help="Maximum amount to pay")
+@click.option('--max-price', default=10000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.pass_context
 def buy(ctx, payment_method, max_price, info_only):
