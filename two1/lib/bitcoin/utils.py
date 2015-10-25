@@ -318,5 +318,8 @@ def compute_reward(height):
         reward (int): Number of satoshis rewarded for solving a block at the
                       given height.
     """
+    base_subsidy = 50 * 100000000
     era = height // 210000
-    return int(50 * 100000000 / (era + 1))
+    if era == 0:
+      return base_subsidy
+    return int(base_subsidy / 2 ** era)
