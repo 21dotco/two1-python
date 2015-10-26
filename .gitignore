@@ -88,7 +88,7 @@ target/
 .idea/
 
 # DB
-db.sqlite3
+*.sqlite3
 
 # OS X
 .DS_Store
