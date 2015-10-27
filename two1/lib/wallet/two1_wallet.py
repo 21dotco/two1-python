@@ -1462,12 +1462,18 @@ class Two1Wallet(BaseWallet):
         return list(self._account_map.keys())
 
 
-class Two1WalletProxy(object):
+class Wallet(object):
     """ Abstraction layer between wallet object and wallet daemon proxy.
 
-        This class implements abstracts away between usage of a wallet
-        object when a daemon is not found/running and a daemon proxy object
+        This class abstracts away between usage of a wallet object
+        when a daemon is not found/running and a daemon proxy object
         when a daemon is running.
+
+        Rather than using the Two1Wallet class, this class should be
+        used in the vast majority of cases. Examples of when the
+        Two1Wallet class should be used are: 1. creating/configuring a
+        wallet. 2. any application where running a daemon is not
+        possible or would cause problems.
 
     Args:
         wallet_path (str): Path to the wallet to be opened.
@@ -1524,10 +1530,10 @@ class Two1WalletProxy(object):
         return not w.is_locked()
 
     def __init__(self, wallet_path, data_provider=None, passphrase=''):
-        w = Two1WalletProxy.check_daemon_running(wallet_path)
+        w = self.check_daemon_running(wallet_path)
         if w is not None:
             self.w = w
-            Two1WalletProxy.check_wallet_proxy_unlocked(w, passphrase)
+            self.check_wallet_proxy_unlocked(w, passphrase)
         else:
             if data_provider is None:
                 dp = TwentyOneProvider()
