@@ -25,9 +25,9 @@ class OnChainDatabase:
 
 class OnChainSQLite3(OnChainDatabase):
 
-    def __init__(self):
+    def __init__(self, db='payment.sqlite3'):
         """Instantiate SQLite3 for storing on chain transaction data."""
-        self.connection = sqlite3.connect('payment.sqlite3', check_same_thread=False)
+        self.connection = sqlite3.connect(db, check_same_thread=False)
         self.c = self.connection.cursor()
         self.c.execute("CREATE TABLE IF NOT EXISTS 'payment_onchain' (txid text, amount integer)")
 
