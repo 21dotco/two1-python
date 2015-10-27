@@ -28,7 +28,7 @@ TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
 logger = logging.getLogger('wallet')
 
 
-def _handle_daemon_exception(e, w):
+def _handle_daemon_exception(ctx, e, w):
     if e.message == "Timed out waiting for lock":
         msg = e.message + ". Please try again."
     else:
@@ -37,8 +37,10 @@ def _handle_daemon_exception(e, w):
     if not logger.hasHandlers():
         click.echo(msg)
 
+    ctx.exit(code=1)
 
-def _handle_generic_exception(e, custom_msg=""):
+
+def _handle_generic_exception(ctx, e, custom_msg=""):
     tb = e.__traceback__
     if custom_msg:
         msg = "%s: %s" % (custom_msg, e)
@@ -48,6 +50,8 @@ def _handle_generic_exception(e, custom_msg=""):
     logger.debug("".join(traceback.format_tb(tb)))
     if not logger.hasHandlers():
         click.echo(msg)
+
+    ctx.exit(code=1)
 
 
 def get_passphrase():
@@ -183,9 +187,11 @@ def main(ctx, wallet_path, passphrase,
             logger.info("... loading complete.")
         except exceptions.PassphraseError as e:
             click.echo(str(e))
+            ctx.exit(code=1)
         except (TypeError, ValueError) as e:
             logger.error("Internal wallet error. Please report this as a bug.")
             logger.debug("".join(traceback.format_tb(e.__traceback__)))
+            ctx.exit(code=2)
 
         ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
 
@@ -289,6 +295,7 @@ def create(ctx, account_type, testnet):
         except Exception as e:
             logger.debug("Error opening created wallet: %s" % e)
             click.echo("Wallet was not created properly.")
+            ctx.exit(code=3)
     else:
         ctx.fail("Wallet was not created.")
 
@@ -307,9 +314,9 @@ def payout_address(ctx, account):
     try:
         click.echo(w.get_payout_address(account))
     except (ValueError, TypeError) as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command(name="confirmedbalance")
@@ -328,9 +335,9 @@ def confirmed_balance(ctx, account):
         click.echo("Confirmed balance: %0.8f BTC" %
                    convert_to_btc(cb))
     except (ValueError, TypeError) as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command()
@@ -349,9 +356,9 @@ def balance(ctx, account):
         click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
                    convert_to_btc(ucb))
     except (ValueError, TypeError) as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command(name='listbalances')
@@ -420,9 +427,9 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
             for t in txids:
                 click.echo(t['txid'])
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
     except Exception as e:
-        _handle_generic_exception(e, "Problem sending coins")
+        _handle_generic_exception(ctx, e, "Problem sending coins")
 
 
 @click.command(name="spreadutxos")
@@ -456,9 +463,9 @@ def spread_utxos(ctx, num_addresses, threshold, account):
                 click.echo(t['txid'])
 
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
     except Exception as e:
-        _handle_generic_exception(e, "Problem spreading utxos")
+        _handle_generic_exception(ctx, e, "Problem spreading utxos")
 
 
 @click.command(name="createaccount")
@@ -474,9 +481,9 @@ def create_account(ctx, name):
     try:
         rv = w.create_account(name)
     except exceptions.AccountCreationError as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
     if rv:
         click.echo("Successfully created account '%s'." % name)
@@ -518,7 +525,7 @@ def list_addresses(ctx, account):
 
             click.echo("")
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command(name="sweep")
@@ -544,9 +551,9 @@ def sweep(ctx, address, account):
         for txid in txids:
             click.echo(txid)
     except exceptions.WalletBalanceError as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command(name="signmessage")
@@ -565,9 +572,9 @@ def sign_bitcoin_message(ctx, message, address):
         sig = w.sign_bitcoin_message(message=message, address=address)
         click.echo("Signature: %s" % sig)
     except ValueError as e:
-        _handle_generic_exception(e)
+        _handle_generic_exception(ctx, e)
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 @click.command(name='verifymessage')
@@ -594,7 +601,7 @@ def verify_bitcoin_message(ctx, message, signature, address):
         else:
             click.echo("Not verified")
     except ReceivedErrorResponse as e:
-        _handle_daemon_exception(e, w)
+        _handle_daemon_exception(ctx, e, w)
 
 
 main.add_command(startdaemon)
