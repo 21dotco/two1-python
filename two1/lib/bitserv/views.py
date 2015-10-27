@@ -6,26 +6,35 @@ from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from .paymentserver import PaymentServer
 
-
-class ProcessorBase:
-    pass
+wallet = Two1WalletProxy(Two1Wallet.DEFAULT_WALLET_PATH)
 
 
-class FlaskProcessor(ProcessorBase):
+class FlaskProcessor:
 
     def __init__(self, app, db=None):
-        self.wallet = Two1WalletProxy(Two1Wallet.DEFAULT_WALLET_PATH)
-        self.server = PaymentServer(self.wallet, db)
-        uri = '/payment'
-        channel = '/<deposit_txid>'
-        app.add_url_rule(uri, view_func=Handshake.as_view('handshake'))
-        app.add_url_rule(uri + channel, view_func=Channel.as_view('channel'))
+        """Initialize the Flask views with RESTful access to the Channel."""
+        payment_server = PaymentServer(wallet, db)
+        pmt_view = Channel.as_view('channel', payment_server)
+        app.add_url_rule('/payment', defaults={'deposit_txid': None},
+                         view_func=pmt_view, methods=('GET',))
+        app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
+        app.add_url_rule('/payment/<deposit_txid>', view_func=pmt_view,
+                         methods=('GET', 'PUT', 'DELETE'))
 
 
-class Handshake(MethodView):
+class Channel(MethodView):
 
-    def get(self):
-        return jsonify({'public_key': self.server.discovery()})
+    def __init__(self, server):
+        self.server = server
+
+    def get(self, deposit_txid):
+        if deposit_txid is None:
+            return jsonify({'public_key': self.server.discovery()})
+        else:
+            try:
+                return jsonify(self.server.status(deposit_txid))
+            except Exception as e:
+                raise BadRequest(str(e))
 
     def post(self):
         params = request.get_json()
@@ -40,20 +49,9 @@ class Handshake(MethodView):
 
             # Respond with the fully-signed refund transaction
             success = {'refund_tx': PCUtil.serialize_tx(refund_tx)}
-            return Response(success)
+            return jsonify(success)
         except Exception as e:
             # Catch payment exceptions and send error response to client
-            raise BadRequest(str(e))
-
-
-class Channel(MethodView):
-
-    def get(self, deposit_txid):
-        try:
-            params = request.get_json()
-            info = params('deposit_txid')
-            return Response(info)
-        except Exception as e:
             raise BadRequest(str(e))
 
     def put(self, deposit_txid):
@@ -63,12 +61,12 @@ class Channel(MethodView):
                 # Complete the handshake using the received deposit
                 deposit_tx = Transaction.from_hex(params['deposit_tx'])
                 self.server.complete_handshake(deposit_txid, deposit_tx)
-                return Response()
+                return jsonify()
             elif 'payment_tx' in params:
                 # Receive a payment in the channel using the received payment
                 payment_tx = Transaction.from_hex(params['payment_tx'])
                 self.server.receive_payment(deposit_txid, payment_tx)
-                return Response({'payment_txid': str(payment_tx.hash)})
+                return jsonify({'payment_txid': str(payment_tx.hash)})
             else:
                 raise KeyError('No deposit or payment received.')
         except Exception as e:
@@ -77,6 +75,6 @@ class Channel(MethodView):
     def delete(self, deposit_txid):
         try:
             payment_txid = self.server.close(deposit_txid)
-            return Response({'payment_txid': payment_txid})
+            return jsonify({'payment_txid': payment_txid})
         except Exception as e:
             return BadRequest(str(e))
