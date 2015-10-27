@@ -35,10 +35,6 @@ class MockBlockchain:
 
     """Blockchain provider for tests."""
 
-    def __init__(self):
-        super().__init__()
-        self._base_url = base_url
-
     def broadcast(self, tx):
         """Mock broadcast."""
         return tx
