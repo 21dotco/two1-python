@@ -1,11 +1,10 @@
 """Wrapper around the two1 wallet for payment channels."""
 
 import codecs
-from .utils import PCUtil
 import two1.lib.bitcoin as bitcoin
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.crypto import PrivateKey
+from two1.lib.bitcoin.crypto import PrivateKey, PublicKey
 
 
 class WalletError(Exception):
@@ -33,6 +32,25 @@ class WalletWrapperBase:
 
     def sign_half_signed_tx(self):
         raise NotImplementedError()
+
+
+def get_redeem_script(transaction):
+    """Get the redeem script from a Transaction object."""
+    input_script = transaction.inputs[0].script
+    multisig_info = input_script.extract_multisig_sig_info()
+    return multisig_info['redeem_script']
+
+
+def get_tx_public_keys(transaction):
+    """Get the public keys from a multisignature Transaction object."""
+    redeem_script = get_redeem_script(transaction)
+    pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
+    # TODO lookup merchant public key in database
+    res = {
+        'customer': PublicKey.from_bytes(pubkeys[0]),
+        'merchant': PublicKey.from_bytes(pubkeys[1]),
+    }
+    return res['customer'], res['merchant']
 
 
 ###############################################################################
@@ -64,7 +82,7 @@ class Two1WalletWrapper(WalletWrapperBase):
 
     def verify_half_signed_tx(self, tx_from_user):
         """Verify a half-signed refund is a valid transaction."""
-        redeem_script = PCUtil.get_redeem_script(tx_from_user)
+        redeem_script = get_redeem_script(tx_from_user)
 
         # Verify partial signature in refund transaction
         script_pubkey = Script.build_p2sh(redeem_script.hash160())
@@ -93,8 +111,8 @@ class Two1WalletWrapper(WalletWrapperBase):
         """
         try:
             # Get the public keys associated with this transaction
-            redeem_script = PCUtil.get_redeem_script(tx_from_user)
-            cust_keys, merch_keys = PCUtil.get_tx_public_keys(tx_from_user)
+            redeem_script = get_redeem_script(tx_from_user)
+            cust_keys, merch_keys = get_tx_public_keys(tx_from_user)
 
             # Sign the first (and hopefully only) input in the transaction
 

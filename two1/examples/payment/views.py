@@ -9,7 +9,8 @@ from rest_framework.decorators import authentication_classes
 from rest_framework.authentication import BaseAuthentication
 
 from .utils import PCUtil
-from .models import Transaction
+from two1.lib.bitcoin.txn import Transaction
+from two1.lib.bitcoin.utils import bytes_to_str
 from .paymentserver import PaymentServer, PaymentServerError
 import two1.examples.server.settings as settings
 
@@ -96,11 +97,11 @@ class Handshake(APIView):
                 raise BadParametersError('No refund provided.')
 
             # Initialize the payment channel
-            refund_tx = PCUtil.parse_tx(params['refund_tx'])
+            refund_tx = Transaction.from_hex(params['refund_tx'])
             server.initialize_handshake(refund_tx)
 
             # Respond with the fully-signed refund transaction
-            success = {'refund_tx': PCUtil.serialize_tx(refund_tx)}
+            success = {'refund_tx': bytes_to_str(bytes(refund_tx))}
             return Response(success)
         except (PaymentAPIError, PaymentServerError) as e:
             # Catch payment exceptions and send error response to client
@@ -137,7 +138,7 @@ class Channel(APIView):
         try:
             info = server.status(deposit_tx_id)
             return Response(info)
-        except Transaction.DoesNotExist:
+        except:
             error = {'error': 'Payment channel not found.'}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
@@ -162,13 +163,13 @@ class Channel(APIView):
         try:
             if 'deposit_tx' in params:
                 # Complete the handshake using the received deposit
-                deposit_tx = PCUtil.parse_tx(params['deposit_tx'])
+                deposit_tx = Transaction.from_hex(params['deposit_tx'])
                 server.complete_handshake(deposit_tx_id, deposit_tx)
                 return Response(status=status.HTTP_200_OK)
 
             elif 'payment_tx' in params:
                 # Receive a payment in the channel using the received payment
-                payment_tx = PCUtil.parse_tx(params['payment_tx'])
+                payment_tx = Transaction.from_hex(params['payment_tx'])
                 server.receive_payment(deposit_tx_id, payment_tx)
                 return Response({'payment_txid': str(payment_tx.hash)})
 
@@ -194,7 +195,6 @@ class Channel(APIView):
         try:
             payment_tx_id = server.close(deposit_tx_id)
             return Response({'payment_txid': payment_tx_id})
-        except (Transaction.DoesNotExist, PaymentAPIError,
-                PaymentServerError) as e:
+        except (PaymentAPIError, PaymentServerError) as e:
             error = {'error': str(e)}
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
