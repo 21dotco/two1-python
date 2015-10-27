@@ -8,10 +8,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import authentication_classes
 from rest_framework.authentication import BaseAuthentication
 
-from .utils import PCUtil
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
-from .paymentserver import PaymentServer, PaymentServerError
+from two1.lib.bitserv.paymentserver import PaymentServer, PaymentServerError
 import two1.examples.server.settings as settings
 
 server = PaymentServer(

@@ -192,16 +192,11 @@ class PaymentServer:
         index = payment_tx.output_index_for_address(merch_pubkey.hash160())
 
         # Verify that the payment channel is still open
-        if (channel.status != Channel.CONFIRMING and
-                channel.status != Channel.READY):
+        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
             raise ChannelClosedError('Payment channel closed.')
 
         # Find the payment amount associated with the merchant address
-        transaction_output = PCUtil.get_tx_payment_output(
-            payment_tx, merchant_pubkey)
-
-        # Verify that the payment has adequate fees
-        if transaction_output is None:
+        if index is None:
             raise BadTransactionError('Payment must pay to merchant pubkey.')
 
         # Validate that the payment is more than the last one
