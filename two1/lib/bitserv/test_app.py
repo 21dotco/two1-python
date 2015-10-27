@@ -11,7 +11,9 @@ from .paymentserver import PaymentServer, PaymentServerError
 from .channel_data import DatabaseSQLite3
 
 
-TEST_DEPOSIT_AMOUNT = 100000
+TEST_DEP_AMOUNT = 100000
+TEST_PMT_AMOUNT = 5000
+TEST_FEE_AMOUNT = 10000
 cust_wallet = MockTwo1Wallet()
 merch_wallet = MockTwo1Wallet()
 server = PaymentServer(merch_wallet, testnet=True)
@@ -20,7 +22,7 @@ server = PaymentServer(merch_wallet, testnet=True)
 def _create_client_txs():
     """Mock client transactions for opening a channel."""
     # Collect public keys
-    deposit = TEST_DEPOSIT_AMOUNT
+    deposit = TEST_DEP_AMOUNT
     expiration_time = int(time.time() + 86400)
     customer_public_key = cust_wallet.get_payout_public_key()
     merchant_public_key = merch_wallet.get_payout_public_key()
@@ -37,12 +39,12 @@ def _create_client_txs():
     # Build refund tx
     refund_tx = cust_wallet.create_refund_tx(
         deposit_tx, redeem_script, customer_public_key, expiration_time,
-        10000)
+        TEST_FEE_AMOUNT)
 
     # Build payment tx
     payment_tx = cust_wallet.create_payment_tx(
         deposit_tx, redeem_script, merchant_public_key,
-        customer_public_key, 5000, 10000)
+        customer_public_key, TEST_PMT_AMOUNT, TEST_FEE_AMOUNT)
 
     return deposit_tx, refund_tx, payment_tx
 
@@ -113,11 +115,31 @@ def test_receive_payment():
     with pytest.raises(PaymentServerError):
         server.receive_payment(deposit_txid, payment_tx)
 
-# TODO
-# def test_redeem_payment():
-#     """Test ability to redeem a payment made within a channel."""
-#     assert(True)
-#
+
+def test_redeem_payment():
+    """Test ability to redeem a payment made within a channel."""
+    server._db = DatabaseSQLite3(':memory:')
+    deposit_tx, refund_tx, payment_tx = _create_client_txs()
+    deposit_txid = str(deposit_tx.hash)
+    payment_txid = str(payment_tx.hash)
+
+    # Test that payment receipt fails when no channel exists
+    with pytest.raises(PaymentServerError):
+        server.redeem(payment_txid)
+
+    # Test that payment receipt succeeds
+    server.initialize_handshake(refund_tx)
+    server.complete_handshake(deposit_txid, deposit_tx)
+    server.receive_payment(deposit_txid, payment_tx)
+    payment_txid = str(payment_tx.hash)
+
+    amount = server.redeem(payment_txid)
+    assert(amount == TEST_PMT_AMOUNT)
+
+    # Test that payment receipt fails with a duplicate payment
+    with pytest.raises(PaymentServerError):
+        server.redeem(payment_txid)
+
 # def test_status_close_channel():
 #     """Test ability to get a channel's status and close it."""
 #     assert(True)

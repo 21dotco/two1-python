@@ -168,7 +168,8 @@ class PaymentSQLite3(PaymentDatabase):
             raise ModelNotFound()
         return {'payment_txid': rv[0],
                 'payment_tx': Transaction.from_hex(rv[1]),
-                'amount': rv[2], 'is_redeemed': (rv[3] == 1)}
+                'amount': rv[2], 'is_redeemed': (rv[3] == 1),
+                'deposit_txid': rv[4]}
 
     def redeem(self, payment_txid):
         """Update payment entry to be redeemed."""

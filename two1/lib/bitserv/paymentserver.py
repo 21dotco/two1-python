@@ -276,8 +276,7 @@ class PaymentServer:
 
         return str(channel['payment_tx'].hash)
 
-    @staticmethod
-    def redeem(payment_txid):
+    def redeem(self, payment_txid):
         """Determine the validity and amount of a payment.
 
         Args:
@@ -307,7 +306,7 @@ class PaymentServer:
             raise ChannelClosedError('Payment channel closed.')
 
         # Verify that the most payment has not already been redeemed
-        if not payment['is_redeemed']:
+        if payment['is_redeemed']:
             raise RedeemPaymentError('Payment already redeemed.')
 
         # Calculate and redeem the current payment
