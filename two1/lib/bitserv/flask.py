@@ -3,6 +3,7 @@ from flask import request
 from functools import wraps
 from werkzeug.exceptions import HTTPException, BadRequest
 from .methods import OnChain
+from .views import FlaskProcessor
 
 
 class PaymentRequiredException(HTTPException):
@@ -25,7 +26,8 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, db=None, default_price=None, default_address=None):
+    def __init__(self, app, db=None, default_price=None, default_address=None,
+                 default_micro_server='/payment'):
         """Configure bitserv settings.
 
         Args:
@@ -33,9 +35,11 @@ class Payment:
         """
         self.default_price = default_price
         self.default_address = default_address
-        self.allowed_methods = [OnChain(db)]
+        self.default_micro_server = default_micro_server
+        self.allowed_methods = [OnChain(db), PaymentChannel(db)]
+        self._processor = FlaskProcessor(self)
 
-    def required(self, price=None, address=None):
+    def required(self, price=None, address=None, micro_server=None):
         """API route decorator to request payment for a resource.
 
         This function stores the resource price in a closure. It will verify
@@ -57,6 +61,7 @@ class Payment:
                 for method in self.allowed_methods:
                     payment_headers.update(method.get_402_headers(
                         price=price or self.default_price,
+                        micro_server=micro_server or self.default_micro_server,
                         address=address or self.default_address))
 
                 # Continue to the API view if payment is valid

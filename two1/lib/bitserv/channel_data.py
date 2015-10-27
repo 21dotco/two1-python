@@ -62,7 +62,8 @@ class PaymentDatabase:
 class DatabaseSQLite3:
 
     def __init__(self):
-        self.connection = sqlite3.connect(':memory:', check_same_thread=False)
+        self.connection = sqlite3.connect('payment.sqlite3',
+                                          check_same_thread=False)
         self.c = self.connection.cursor()
         self.pc = ChannelSQLite3(self)
         self.pmt = PaymentSQLite3(self)
