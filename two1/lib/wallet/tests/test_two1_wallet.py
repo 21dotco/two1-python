@@ -63,8 +63,8 @@ def test_create():
 
     mock_provider.set_txn_side_effect_for_hd_discovery()
 
-    wallet = Two1Wallet.create(data_provider=mock_provider,
-                               passphrase=passphrase)
+    wallet, _ = Two1Wallet.create(data_provider=mock_provider,
+                                  passphrase=passphrase)
 
     assert len(wallet._accounts) == 1
     assert wallet._accounts[0].name == "default"
