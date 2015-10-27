@@ -26,7 +26,7 @@ class Payment:
     """Class to store merchant settings."""
 
     def __init__(self, app, db=None, default_price=None, default_address=None,
-                 default_micro_server='/payment'):
+                 default_micro_server='payment'):
         """Configure bitserv settings.
 
         Args:
@@ -56,10 +56,11 @@ class Payment:
             def _fn(*args, **kwargs):
                 # Get headers for initial 402 response
                 payment_headers = {}
+                micro_server_path = (micro_server or self.default_micro_server)
                 for method in self.allowed_methods:
                     payment_headers.update(method.get_402_headers(
                         price=price or self.default_price,
-                        micro_server=micro_server or self.default_micro_server,
+                        micro_server=request.url_root + micro_server_path,
                         address=address or self.default_address))
 
                 # Continue to the API view if payment is valid
