@@ -105,7 +105,7 @@ setup(
     entry_points={
         'console_scripts': [
             'two1=two1.cli:main',
-            'wallet=two1.lib.wallet.two1_wallet_cli:main',
+            'wallet=two1.lib.wallet.cli:main',
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
             'walletd=two1.lib.wallet.daemon:main'
