@@ -132,7 +132,8 @@ class OnChain(PaymentBase):
 
         # Broadcast payment
         try:
-            TwentyOneProvider(TWO1_HOST).broadcast_transaction(raw_tx)
+            txid = TwentyOneProvider(TWO1_HOST).broadcast_transaction(raw_tx)
+            print('Broadcasted: ' + txid)
         except Exception as e:
             raise TransactionBroadcastError(str(e))
 
