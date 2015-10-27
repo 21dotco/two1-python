@@ -15,8 +15,8 @@ from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
 from two1.lib.wallet.exceptions import AccountCreationError
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.two1_wallet import Two1Wallet
-from two1.lib.wallet.two1_wallet_cli import validate_data_provider
-from two1.lib.wallet.two1_wallet_cli import WALLET_VERSION
+from two1.lib.wallet.cli import validate_data_provider
+from two1.lib.wallet.cli import WALLET_VERSION
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEF_WALLET_UPDATE_INTERVAL = 25   # seconds
