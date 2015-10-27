@@ -8,7 +8,8 @@ import two1.examples.server.settings as settings
 from .utils import PCUtil
 from .wallet import Two1WalletWrapper
 from .blockchain import InsightBlockchain
-from two1.examples.payment.models import Channel, PublicKey, Transaction
+from two1.lib.bitcoin.crypto import PublicKey
+from two1.lib.bitserv.channel_data import DatabaseSQLite3
 
 
 WALLET_ACCOUNT = os.environ.get('WALLET_ACCOUNT', 'default')
@@ -56,7 +57,7 @@ class PaymentServer:
     DUST_LIMIT = 546
 
     def __init__(self, wallet, account='default', testnet=False,
-                 blockchain=None):
+                 blockchain=None, db=None):
         """Initalize the payment server.
 
         Args:
@@ -69,6 +70,9 @@ class PaymentServer:
         """
         self._wallet = Two1WalletWrapper(wallet, account)
         self._blockchain = blockchain
+        self._db = db
+        if db is None:
+            self._db = DatabaseSQLite3()
         if blockchain is None:
             self._blockchain = InsightBlockchain(
                 'https://blockexplorer.com' if not testnet
@@ -104,53 +108,18 @@ class PaymentServer:
         # Sign the remaining half of the transaction
         self._wallet.sign_half_signed_tx(refund_tx)
 
-        # Get public keys for the transaction
-        cust_keys, merch_keys = PCUtil.get_tx_public_keys(refund_tx)
-
-        # Save the customer's public key
-        customer_address, _ = PublicKey.objects.get_or_create(
-            hex_string=codecs.encode(
-                cust_keys.compressed_bytes, 'hex_codec'))
-        merchant_address, _ = PublicKey.objects.get_or_create(
-            hex_string=codecs.encode(
-                merch_keys.compressed_bytes, 'hex_codec'))
-
-        # Use lock_time to set refund expiration date
-        lock_time = datetime.utcfromtimestamp(refund_tx.lock_time)
-        expiration_time = lock_time.replace(tzinfo=utc)
-
-        # Create a new payment channel that expires 24 hours from now
-        channel, created = Channel.objects.get_or_create(
-            deposit_tx_id=str(refund_tx.inputs[0].outpoint),
-            defaults={
-                'customer': customer_address,
-                'merchant': merchant_address,
-                'expires_at': expiration_time,
-            }
-        )
-        # Verify that this deposit transaction hasn't already been used
-        if not created:
+        # Try to create the channel and verify that the deposit txid is good
+        deposit_txid = str(refund_tx.inputs[0].outpoint)
+        cust_key, merch_key = PCUtil.get_tx_public_keys(refund_tx)
+        try:
+            self._db.pc.create(refund_tx, merch_key)
+        except:
             raise BadTransactionError(
                 'That deposit has already been used to create a channel.')
 
-        # Save the refund transaction
-        transaction, created = Transaction.objects.get_or_create(
-            transaction_id=str(refund_tx.hash),
-            category=Transaction.REFUND,
-            defaults={
-                'transaction_hex': PCUtil.serialize_tx(refund_tx),
-                'amount': sum([d.value for d in refund_tx.outputs]),
-                'channel': channel,
-            }
-        )
-        # Check to make sure the refund hasn't already been used
-        if not created:
-            raise BadTransactionError(
-                'That refund transaction has already been used.')
-
         return True
 
-    def complete_handshake(self, deposit_tx_id, deposit_tx):
+    def complete_handshake(self, deposit_txid, deposit_tx):
         """Complete the final step in the channel handshake.
 
         The customer completes the handshake by sending the merchant the
@@ -159,7 +128,7 @@ class PaymentServer:
         the handshake has completed successfully.
 
         Args:
-            deposit_tx_id (string): string representation of the deposit
+            deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
             deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
                 Transaction from a customer. This object is passed by reference
@@ -169,44 +138,35 @@ class PaymentServer:
             (boolean): whether the handshake was successfully completed.
         """
         try:
-            channel = Channel.objects.get(deposit_tx_id=deposit_tx_id)
+            channel = self._db.pc.lookup(deposit_txid)
         except:
             raise PaymentServerNotFoundError('Related channel not found.')
 
-        if not channel.refund:
-            raise PaymentServerNotFoundError('Channel refund not found.')
-
         # Get the refund spend address
-        refund_tx = PCUtil.parse_tx(channel.refund.transaction_hex)
+        refund_tx = channel['refund_tx']
 
-        # Find the payment amount associated with the merchant address
-        deposit_amount = PCUtil.get_tx_deposit_amount(deposit_tx, refund_tx)
+        # Find the payment amount associated with the refund
+        refund_hash160 = PCUtil.get_redeem_script(refund_tx).hash160()
+        deposit_index = deposit_tx.output_index_for_address(refund_hash160)
 
         # Verify that the deposit funds the refund in our records
-        if deposit_amount is None:
+        if deposit_index is not None:
+            deposit_amt = deposit_tx.outputs[deposit_index].value
+        else:
             raise BadTransactionError('Deposit must fund refund.')
 
         # Save the deposit transaction
-        deposit, created = Transaction.objects.get_or_create(
-            transaction_id=deposit_tx_id,
-            category=Transaction.DEPOSIT,
-            defaults={
-                'transaction_hex': PCUtil.serialize_tx(deposit_tx),
-                'amount': deposit_amount,
-                'channel': channel,
-            }
-        )
-
-        # Final check to make sure the deposit hasn't already been used
-        if not created:
-            raise BadTransactionError('Deposit already used in a channel.')
+        try:
+            self._db.pc.update_deposit(deposit_txid, deposit_tx, deposit_amt)
+        except:
+            raise BadTransactionError('Deposit already used.')
 
         # TODO: Broadcast the deposit transaction
-        deposit.broadcast()
+        self._db.pc.update_state(deposit_txid, 'confirming')
 
         return True
 
-    def receive_payment(self, deposit_tx_id, payment_tx):
+    def receive_payment(self, deposit_txid, payment_tx):
         """Receive and process a payment within the channel.
 
         The customer makes a payment in the channel by sending the merchant a
@@ -216,7 +176,7 @@ class PaymentServer:
         that the payment was handled successfully.
 
         Args:
-            deposit_tx_id (string): string representation of the deposit
+            deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
             deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
                 Transaction from a customer. This object is passed by reference
@@ -230,16 +190,15 @@ class PaymentServer:
 
         # Get channel and addresses related to the deposit
         try:
-            deposit = Transaction.objects.get(
-                transaction_id=deposit_tx_id,
-                category=Transaction.DEPOSIT
-            )
-            channel = deposit.channel
+            channel = self._db.pc.lookup(deposit_txid)
         except:
             raise PaymentServerNotFoundError('Related channel not found.')
 
-        merchant_pubkey = PCUtil.public_key_from_hex(
-            channel.merchant.hex_string)
+        # Get merchant public key information from payment channel
+        last_pmt_amt = channel['last_payment_amount']
+        merch = channel['merchant_pubkey']
+        merch_pubkey = PublicKey.from_bytes(codecs.decode(merch, 'hex_codec'))
+        index = payment_tx.output_index_for_address(merch_pubkey.hash160())
 
         # Verify that the payment channel is still open
         if (channel.status != Channel.CONFIRMING and
@@ -254,11 +213,19 @@ class PaymentServer:
         if transaction_output is None:
             raise BadTransactionError('Payment must pay to merchant pubkey.')
 
-        transaction_amount = transaction_output.value
+        # Validate that the payment is more than the last one
+        new_pmt_amt = payment_tx.outputs[index].value
+        if new_pmt_amt <= last_pmt_amt:
+            raise BadTransactionError('Micropayment must be greater than 0.')
+
+        # Verify that the payment channel is still open
+        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
+            raise ChannelClosedError('Payment channel closed.')
 
         # Verify that the transaction has adequate fees
-        net_tx_amount = sum([d.value for d in payment_tx.outputs])
-        if channel.deposit.amount < net_tx_amount + PaymentServer.MIN_TX_FEE:
+        net_pmt_amount = sum([d.value for d in payment_tx.outputs])
+        deposit_amount = channel['amount']
+        if deposit_amount < net_pmt_amount + PaymentServer.MIN_TX_FEE:
             raise BadTransactionError('Payment must have adequate fees.')
 
         # Verify that both payments are not below the dust limit
@@ -270,81 +237,63 @@ class PaymentServer:
 
         # TODO Verify that the redeem script is the same as the last payment
 
-        # Throw an error if this payment is not greater than the current
-        if channel.payment:
-            if transaction_amount <= channel.payment.amount:
-                raise BadTransactionError(
-                    'Micropayments must be greater than 0 satoshi.')
-
         # Sign the remaining half of the transaction
         self._wallet.sign_half_signed_tx(payment_tx)
 
-        # Save current payment into last payment model, if needed
-        channel.save_new_payment(
-            transaction_id=str(payment_tx.hash),
-            transaction_hex=PCUtil.serialize_tx(payment_tx),
-            amount=transaction_amount,
-        )
+        # Update the current payment transaction
+        self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
+        self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt)
 
         return True
 
-    def status(self, deposit_tx_id):
+    def status(self, deposit_txid):
         """Get a payment channel's current status.
 
         Args:
-            deposit_tx_id (string): string representation of the deposit
+            deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
         """
-        deposit = Transaction.objects.get(
-            transaction_id=deposit_tx_id,
-            category=Transaction.DEPOSIT
-        )
-        channel = deposit.channel
+        try:
+            channel = self._db.pc.lookup(deposit_txid)
+        except:
+            raise PaymentServerNotFoundError('Related channel not found.')
 
-        recent_payment = None
-        if channel.payment:
-            recent_payment = channel.payment.transaction_id
+        return {'status': channel['state'],
+                'balance': channel['last_payment_amount'],
+                'time_left': channel['expires_at']}
 
-        return {
-            'status': channel.get_status_display(),
-            'balance': channel.customer_balance,
-            'time_left': channel.time_left,
-            'recent_payment': recent_payment,
-        }
-
-    def close(self, deposit_tx_id):
+    def close(self, deposit_txid):
         """Close a payment channel.
 
         Args:
-            deposit_tx_id (string): string representation of the deposit
+            deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
             txid_signature (string): a signed message consisting solely of the
-                deposit_tx_id to verify the authenticity of the close request.
+                deposit_txid to verify the authenticity of the close request.
         """
-        deposit = Transaction.objects.get(
-            transaction_id=deposit_tx_id,
-            category=Transaction.DEPOSIT
-        )
-        channel = deposit.channel
+        try:
+            channel = self._db.pc.lookup(deposit_txid)
+        except:
+            raise PaymentServerNotFoundError('Related channel not found.')
 
         # Verify that there is a valid payment to close
-        if not channel.payment:
+        if not channel['payment_tx']:
             raise BadTransactionError('No payments made in channel.')
 
         # Broadcast payment transaction to the blockchain
-        self._blockchain.broadcast(channel.payment.transaction_hex)
+        self._blockchain.broadcast(channel['payment_tx'])
 
         # Record the broadcast in the database
-        channel.payment.broadcast()
+        self._db.pc.update_state(deposit_txid, 'closed')
 
-        return channel.payment.transaction_id
+        return str(channel['payment_tx'].hash)
 
     @staticmethod
-    def redeem(payment_tx_id):
+    def redeem(payment_txid):
         """Determine the validity and amount of a payment.
 
         Args:
-            payment_tx_id (string): the hash in hexadecimal of the payment
+            payment_txid (string): the hash in hexadecimal of the payment
                 transaction, often referred to as the transaction id.
 
         Returns:
@@ -353,25 +302,25 @@ class PaymentServer:
         Raises:
             PaymentError: reason why payment is not redeemable.
         """
-        # Verify that we have this payment within the channel.
+        # Verify that we have this payment transaction saved
         try:
-            requested_payment = Transaction.objects.get(
-                transaction_id=payment_tx_id
-            )
+            payment = self._db.pmt.lookup(payment_txid)
         except:
-            raise RedeemPaymentError('Not/no longer available in channel.')
+            raise PaymentServerNotFoundError('Payment not found.')
 
-        # Get the associated channel and its most recent payment
-        channel = requested_payment.channel
-        current_payment = channel.payment
+        # Verify that this payment exists within a channel (do we need this?)
+        try:
+            channel = self._db.pc.lookup(payment['deposit_txid'])
+        except:
+            raise PaymentServerNotFoundError('Channel not found.')
 
-        # Verify that we are redeeming the most recent payment
-        if payment_tx_id != current_payment.transaction_id:
-            raise RedeemPaymentError('Not the most recent payment.')
+        # Verify that the payment channel is still open
+        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
+            raise ChannelClosedError('Payment channel closed.')
 
-        # Verify that the most recent payment has not already been redeemed
-        if current_payment.is_redeemed:
-            raise RedeemPaymentError('Already redeemed.')
+        # Verify that the most payment has not already been redeemed
+        if not payment['is_redeemed']:
+            raise RedeemPaymentError('Payment already redeemed.')
 
         # Calculate and redeem the current payment
         pmt_amount = channel.last_payment_amount
