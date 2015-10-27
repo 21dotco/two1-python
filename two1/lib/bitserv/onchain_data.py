@@ -31,16 +31,12 @@ class OnChainSQLite3(OnChainDatabase):
         self.c = self.connection.cursor()
         self.c.execute("CREATE TABLE IF NOT EXISTS 'payment_onchain' (txid text, amount integer)")
 
-    def _return_dict(self, txid, amount):
-        """Format return data."""
-        return {'txid': txid, 'amount': amount}
-
     def create(self, txid, amount):
         """Create a transaction entry."""
         insert = 'INSERT INTO payment_onchain VALUES (?, ?)'
         self.c.execute(insert, (txid, amount))
         self.connection.commit()
-        return self._return_dict(txid, amount)
+        return {'txid': txid, 'amount': amount}
 
     def lookup(self, txid):
         """Look up a transaction entry."""
@@ -49,7 +45,7 @@ class OnChainSQLite3(OnChainDatabase):
         rv = self.c.fetchone()
         if rv is None:
             raise ModelNotFound()
-        return self._return_dict(rv[0], rv[1])
+        return {'txid': rv[0], 'amount': rv[1]}
 
     def get_or_create(self, txid, amount):
         """Attempt a lookup and create the record if it doesn't exist."""
