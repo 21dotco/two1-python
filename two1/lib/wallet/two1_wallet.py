@@ -28,8 +28,6 @@ from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 
-TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
-
 
 class Two1Wallet(BaseWallet):
     """ An HD wallet class capable of handling multiple types of wallets.
@@ -1532,7 +1530,7 @@ class Two1WalletProxy(object):
             Two1WalletProxy.check_wallet_proxy_unlocked(w, passphrase)
         else:
             if data_provider is None:
-                dp = TwentyOneProvider(TWENTYONE_PROVIDER_HOST)
+                dp = TwentyOneProvider()
             else:
                 dp = data_provider
             self.w = Two1Wallet(params_or_file=wallet_path,
