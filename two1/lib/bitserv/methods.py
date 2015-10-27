@@ -170,10 +170,13 @@ class PaymentChannel(PaymentBase):
         validated = False
         try:
             # Redeem the transaction in its payment channel
-            paid_amount = int(PaymentServer.redeem(txid))
+            paid_amount = int(self._processor.server.redeem(txid))
+            print(paid_amount)
             req_amount = int(payment_headers[PaymentChannel.http_402_price])
+            print(req_amount)
             # Verify the amount of the payment against the resource price
-            if paid_amount == request_amount:
-                validation = True
-        finally:
-            return validation
+            if paid_amount == req_amount:
+                validated = True
+        except Exception as e:
+            raise e
+        return validated

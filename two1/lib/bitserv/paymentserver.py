@@ -230,7 +230,7 @@ class PaymentServer:
 
         # Update the current payment transaction
         self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
-        self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt)
+        self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt-last_pmt_amt)
 
         return True
 

@@ -2,8 +2,12 @@
 from flask import jsonify, request
 from flask.views import MethodView
 from werkzeug.exceptions import BadRequest
+
+from two1.lib.bitcoin.txn import Transaction
+from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
+
 from .paymentserver import PaymentServer
 
 wallet = Two1WalletProxy(Two1Wallet.DEFAULT_WALLET_PATH)
@@ -13,8 +17,8 @@ class FlaskProcessor:
 
     def __init__(self, app, db=None):
         """Initialize the Flask views with RESTful access to the Channel."""
-        payment_server = PaymentServer(wallet, db)
-        pmt_view = Channel.as_view('channel', payment_server)
+        self.server = PaymentServer(wallet, db)
+        pmt_view = Channel.as_view('channel', self.server)
         app.add_url_rule('/payment', defaults={'deposit_txid': None},
                          view_func=pmt_view, methods=('GET',))
         app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
@@ -37,18 +41,18 @@ class Channel(MethodView):
                 raise BadRequest(str(e))
 
     def post(self):
-        params = request.get_json()
         try:
+            params = request.values.to_dict()
             # Validate parameters
             if 'refund_tx' not in params:
                 raise BadParametersError('No refund provided.')
 
             # Initialize the payment channel
-            refund_tx = PCUtil.parse_tx(params['refund_tx'])
+            refund_tx = Transaction.from_hex(params['refund_tx'])
             self.server.initialize_handshake(refund_tx)
 
             # Respond with the fully-signed refund transaction
-            success = {'refund_tx': PCUtil.serialize_tx(refund_tx)}
+            success = {'refund_tx': bytes_to_str(bytes(refund_tx))}
             return jsonify(success)
         except Exception as e:
             # Catch payment exceptions and send error response to client
@@ -56,7 +60,7 @@ class Channel(MethodView):
 
     def put(self, deposit_txid):
         try:
-            params = request.get_json()
+            params = request.values.to_dict()
             if 'deposit_tx' in params:
                 # Complete the handshake using the received deposit
                 deposit_tx = Transaction.from_hex(params['deposit_tx'])
