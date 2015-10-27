@@ -15,7 +15,7 @@ from two1.lib.wallet.base_wallet import convert_to_satoshis
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.two1_wallet import Two1Wallet
-from two1.lib.wallet.two1_wallet import Two1WalletProxy
+from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.wallet.daemonizer import get_daemonizer
 
 
@@ -180,9 +180,9 @@ def main(ctx, wallet_path, passphrase,
 
         try:
             logger.info("Loading wallet %s ..." % (wp))
-            ctx.obj['wallet'] = Two1WalletProxy(wallet_path=wallet_path,
-                                                data_provider=ctx.obj['data_provider'],
-                                                passphrase=p)
+            ctx.obj['wallet'] = Wallet(wallet_path=wallet_path,
+                                       data_provider=ctx.obj['data_provider'],
+                                       passphrase=p)
             logger.info("... loading complete.")
         except exceptions.PassphraseError as e:
             click.echo(str(e))
