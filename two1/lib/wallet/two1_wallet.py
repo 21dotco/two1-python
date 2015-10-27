@@ -1256,6 +1256,9 @@ class Two1Wallet(BaseWallet):
                                        conf))
             utxos_by_addr[addr] = above_thresh
 
+        # Filter out any addresses that have empty lists
+        utxos_by_addr = {k: v for k, v in utxos_by_addr.items() if len(v) > 0}
+
         return utxos_by_addr, num_conf
 
     def _sum_utxos(self, utxos_by_addr):
