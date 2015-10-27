@@ -1476,9 +1476,13 @@ class Wallet(object):
         possible or would cause problems.
 
     Args:
-        wallet_path (str): Path to the wallet to be opened.
-        data_provider (BaseProvider): A blockchain data provider object.
-        passphrase (str): Passphrase used to unlock the wallet, if necessary.
+        wallet_path (str): Path to the wallet to be opened. If no path
+            is provided, Two1Wallet.DEFAULT_WALLET_PATH is used.
+        data_provider (BaseProvider): A blockchain data provider
+            object. If no data provider is passed in, a
+            TwentyOneProvider with the default host is used.
+        passphrase (str): Passphrase used to unlock the wallet, if
+            necessary.
 
     Returns:
         Two1WalletProxy: A proxy object.
@@ -1529,7 +1533,8 @@ class Wallet(object):
 
         return not w.is_locked()
 
-    def __init__(self, wallet_path, data_provider=None, passphrase=''):
+    def __init__(self, wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
+                 data_provider=None, passphrase=''):
         w = self.check_daemon_running(wallet_path)
         if w is not None:
             self.w = w
