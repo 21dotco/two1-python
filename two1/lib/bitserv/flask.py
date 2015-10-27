@@ -2,8 +2,7 @@
 from flask import request
 from functools import wraps
 from werkzeug.exceptions import HTTPException, BadRequest
-from .methods import OnChain
-from .views import FlaskProcessor
+from .methods import OnChain, PaymentChannel
 
 
 class PaymentRequiredException(HTTPException):
@@ -36,8 +35,7 @@ class Payment:
         self.default_price = default_price
         self.default_address = default_address
         self.default_micro_server = default_micro_server
-        self.allowed_methods = [OnChain(db), PaymentChannel(db)]
-        self._processor = FlaskProcessor(self)
+        self.allowed_methods = [OnChain(db), PaymentChannel(app, db)]
 
     def required(self, price=None, address=None, micro_server=None):
         """API route decorator to request payment for a resource.
