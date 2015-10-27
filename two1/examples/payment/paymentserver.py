@@ -1,26 +1,17 @@
 """Tools for Payment Channels."""
 
 import codecs
-from pytz import utc
-from datetime import datetime
-import two1.examples.server.settings as settings
-
-from .utils import PCUtil
-from .wallet import Two1WalletWrapper
 from .blockchain import InsightBlockchain
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitserv.channel_data import DatabaseSQLite3
+from .wallet import Two1WalletWrapper, get_redeem_script, get_tx_public_keys
 
 
-WALLET_ACCOUNT = os.environ.get('WALLET_ACCOUNT', 'default')
-wallet = settings.TWO1_WALLET
-
-
-class PaymentChannelError(Exception):
+class PaymentServerError(Exception):
     pass
 
 
-class InvalidPaymentError(PaymentChannelError):
+class InvalidPaymentError(PaymentServerError):
     pass
 
 
@@ -110,7 +101,7 @@ class PaymentServer:
 
         # Try to create the channel and verify that the deposit txid is good
         deposit_txid = str(refund_tx.inputs[0].outpoint)
-        cust_key, merch_key = PCUtil.get_tx_public_keys(refund_tx)
+        cust_key, merch_key = get_tx_public_keys(refund_tx)
         try:
             self._db.pc.create(refund_tx, merch_key)
         except:
@@ -146,7 +137,7 @@ class PaymentServer:
         refund_tx = channel['refund_tx']
 
         # Find the payment amount associated with the refund
-        refund_hash160 = PCUtil.get_redeem_script(refund_tx).hash160()
+        refund_hash160 = get_redeem_script(refund_tx).hash160()
         deposit_index = deposit_tx.output_index_for_address(refund_hash160)
 
         # Verify that the deposit funds the refund in our records
@@ -323,145 +314,5 @@ class PaymentServer:
             raise RedeemPaymentError('Payment already redeemed.')
 
         # Calculate and redeem the current payment
-        pmt_amount = channel.last_payment_amount
-        current_payment.redeem()
-
-        return pmt_amount
-
-
-def get_pc_public_key():
-    """Get a public key for use in a payment channel.
-
-    Args:
-        None
-
-    Returns:
-        public_key (string): a string representation of a public key's hex.
-    """
-    # Get preferred address from our wallet
-    pubkey = wallet.get_payout_public_key(WALLET_ACCOUNT).compressed_bytes
-    public_key = binascii.hexlify(pubkey).decode('utf-8')
-
-    return public_key
-
-
-def _get_multisig_info(transaction):
-    """Get the redeem script from a Transaction object."""
-    input_script = transaction.inputs[0].script
-    redeem_script = input_script.extract_multisig_sig_info()
-    return redeem_script
-
-
-def get_deposit_amount_from_tx(deposit_tx, refund_tx):
-    """Get the multisignature address from a Transaction object."""
-    multisig_info = _get_multisig_info(refund_tx)
-    refund_hash160 = multisig_info['redeem_script'].hash160()
-    deposit_index = deposit_tx.output_index_for_address(refund_hash160)
-
-    # Catch lookup errors when trying to find the deposit
-    if deposit_index is None:
-        return None
-    else:
-        return deposit_tx.outputs[deposit_index].value
-
-
-def get_payment_output_from_tx(payment_tx, public_key):
-    """Get payment info from transaction."""
-    payment_index = payment_tx.output_index_for_address(public_key.hash160())
-
-    # Catch lookup errors when trying to find the payment
-    if payment_index is None:
-        return None
-    else:
-        return payment_tx.outputs[payment_index]
-
-
-def get_tx_public_keys(transaction):
-    """Get the public keys from a multisignature Transaction object."""
-    multisig_info = _get_multisig_info(transaction)
-    redeem_script = multisig_info['redeem_script']
-    pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
-    # TODO lookup merchant public key in database
-    res = {
-        'customer': PublicKey_t.from_bytes(pubkeys[0]),
-        'merchant': PublicKey_t.from_bytes(pubkeys[1]),
-    }
-    return res
-
-
-def verify_half_signed_tx(tx_from_user):
-    """Verify a half-signed refund is a valid transaction."""
-    redeem_script = _get_multisig_info(tx_from_user)['redeem_script']
-
-    # Verify partial signature in refund transaction
-    script_pubkey = Script.build_p2sh(redeem_script.hash160())
-    if not tx_from_user.verify_partial_multisig(0, script_pubkey):
-        raise BadTransactionError('Invalid refund transaction.')
-
-    # TODO
-    # Verify customer pubkey is in refund_tx
-    # Verify locktime is some amount of time in the future for refund
-    # Verify customer pubkey is not ours
-    return True
-
-
-def parse_tx(tx_hex):
-    """Parse a customer transaction.
-
-    Args:
-        tx_hex (string): the hexadecimal string representation of a bitcoin
-            transaction.
-
-    Returns:
-        tx (two1.lib.bitcoin.txn.Transaction): a Transaction object that
-        contains the inputs and outputs associated with a bitcoin transaction.
-        This operation can be reversed using `serialize_tx`.
-    """
-    transaction = Transaction_t.from_hex(tx_hex)
-    return transaction
-
-
-def serialize_tx(tx):
-    """Serialize a Transaction object into a hex string.
-
-    Args:
-        tx (two1.lib.bitcoin.txn.Transaction): a Transaction object that
-        contains the inputs and outputs associated with a bitcoin transaction.
-
-    Returns:
-        tx_hex (string): the hexadecimal string representation of a bitcoin
-            transaction. This can be reversed using `parse_tx`.
-    """
-    return bytes_to_str(bytes(tx))
-
-
-def sign_half_signed_tx(tx_from_user):
-    """Sign a half-signed transaction.
-
-    Args:
-        tx_from_user (two1.lib.bitcoin.txn.Transaction): a Transaction object
-            that contains a transaction from a customer, whether for a refund
-            or general payment, to be signed by the merchant.
-
-    Returns:
-        signed_tx (two1.lib.bitcoin.txn.Transaction): a Transaction object that
-            contains a transaction that has been signed by both the customer
-            and the merchant.
-    """
-    try:
-        # Get the public keys associated with this transaction
-        multisig_info = _get_multisig_info(tx_from_user)
-        redeem_script = multisig_info['redeem_script']
-        public_keys = get_tx_public_keys(tx_from_user)
-
-        # Sign the first (and hopefully only) input in the transaction
-        private_key = wallet.get_private_for_public(public_keys['merchant'])
-        tx_from_user.sign_input(
-            0, Transaction_t.SIG_HASH_ALL, private_key, redeem_script
-        )
-    except:
-        # Catch the case where we can't sign the transaction
-        raise NoMerchantPublicKeyError('No merchant public key to sign.')
-
-    # Return a Transaction containing the fully-signed transaction.
-    return tx_from_user
+        self._db.pmt.redeem(payment_txid)
+        return payment['amount']

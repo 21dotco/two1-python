@@ -2,7 +2,6 @@ import time
 import codecs
 import sqlite3
 from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.crypto import PublicKey
 
 
 class ChannelError(Exception):
