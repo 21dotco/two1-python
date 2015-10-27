@@ -14,7 +14,6 @@ from two1.lib.wallet.base_wallet import convert_to_btc
 from two1.lib.wallet.base_wallet import convert_to_satoshis
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet import exceptions
-from two1.lib.wallet.two1_wallet import TWENTYONE_PROVIDER_HOST
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet.daemonizer import get_daemonizer
@@ -105,7 +104,7 @@ def validate_data_provider(ctx, param, value):
 
         dp = ChainProvider(api_key_id=key, api_key_secret=secret)
     elif value == 'twentyone':
-        dp = TwentyOneProvider(TWENTYONE_PROVIDER_HOST)
+        dp = TwentyOneProvider()
 
     ctx.obj['data_provider'] = dp
     ctx.obj['data_provider_params'] = data_provider_params

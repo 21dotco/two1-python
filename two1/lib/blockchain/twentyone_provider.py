@@ -8,8 +8,9 @@ class TwentyOneProvider(ChainProvider):
         Args:
             // TODO: Use the MachineAuth here to avoid spam
     """
+    DEFAULT_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
-    def __init__(self, twentyone_host_name, testnet=False):
+    def __init__(self, twentyone_host_name=DEFAULT_HOST, testnet=False):
         self.host_name = twentyone_host_name
 
         super().__init__(None, None, testnet)
