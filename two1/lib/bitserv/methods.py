@@ -3,6 +3,7 @@ from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.commands.config import TWO1_HOST
 from .onchain_data import OnChainSQLite3
+from .paymentserver import PaymentServer
 
 
 class PaymentError(Exception):
@@ -138,3 +139,36 @@ class OnChain(PaymentBase):
             raise TransactionBroadcastError(str(e))
 
         return True
+
+
+class PaymentChannel(PaymentBase):
+
+    """Making a payment within a payment channel."""
+
+    http_payment_token = 'Bitcoin-Micropayment-Token'
+    http_402_price = 'Price'
+    http_402_micro_server = 'Bitcoin-Micropayment-Server'
+
+    @property
+    def payment_headers(self):
+        """List of headers to use for payment processing."""
+        return [PaymentChannel.http_payment_token]
+
+    def get_402_headers(self, **kwargs):
+        """Dict of headers to return in the initial 402 response."""
+        return {PaymentChannel.http_402_price: kwargs['price'],
+                PaymentChannel.http_402_micro_server: kwargs['micro_server']}
+
+    def redeem_payment(self, request_headers, payment_headers):
+        """Validate the transaction and broadcast it to the blockchain."""
+        txid = request_headers[PaymentChannel.http_payment_token]
+        validated = False
+        try:
+            # Redeem the transaction in its payment channel
+            paid_amount = int(PaymentServer.redeem(txid))
+            req_amount = int(payment_headers[PaymentChannel.http_402_price])
+            # Verify the amount of the payment against the resource price
+            if paid_amount == request_amount:
+                validation = True
+        finally:
+            return validation
