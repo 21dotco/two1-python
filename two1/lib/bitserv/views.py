@@ -4,7 +4,7 @@ from flask.views import MethodView
 from werkzeug.exceptions import BadRequest
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
-from two1.examples.payment.paymentserver import PaymentServer
+from .paymentserver import PaymentServer
 
 
 class ProcessorBase:
@@ -13,9 +13,9 @@ class ProcessorBase:
 
 class FlaskProcessor(ProcessorBase):
 
-    def __init__(self, app):
+    def __init__(self, app, db=None):
         self.wallet = Two1WalletProxy(Two1Wallet.DEFAULT_WALLET_PATH)
-        self.server = PaymentServer(wallet)
+        self.server = PaymentServer(self.wallet, db)
         uri = '/payment'
         channel = '/<deposit_txid>'
         app.add_url_rule(uri, view_func=Handshake.as_view('handshake'))
