@@ -17,6 +17,7 @@ from two1.lib.bitcoin.txn import TransactionInput
 from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin import utils
 from two1.lib.blockchain.base_provider import BaseProvider
+from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount
@@ -26,6 +27,8 @@ from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
+
+TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
 
 class Two1Wallet(BaseWallet):
@@ -1522,14 +1525,18 @@ class Two1WalletProxy(object):
 
         return not w.is_locked()
 
-    def __init__(self, wallet_path, data_provider, passphrase=''):
+    def __init__(self, wallet_path, data_provider=None, passphrase=''):
         w = Two1WalletProxy.check_daemon_running(wallet_path)
         if w is not None:
             self.w = w
             Two1WalletProxy.check_wallet_proxy_unlocked(w, passphrase)
         else:
+            if data_provider is None:
+                dp = TwentyOneProvider(TWENTYONE_PROVIDER_HOST)
+            else:
+                dp = data_provider
             self.w = Two1Wallet(params_or_file=wallet_path,
-                                data_provider=data_provider,
+                                data_provider=dp,
                                 passphrase=passphrase)
 
     def get_private_for_public(self, public_key):

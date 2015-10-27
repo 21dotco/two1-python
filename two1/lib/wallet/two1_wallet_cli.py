@@ -14,6 +14,7 @@ from two1.lib.wallet.base_wallet import convert_to_btc
 from two1.lib.wallet.base_wallet import convert_to_satoshis
 from two1.lib.wallet.base_wallet import satoshi_to_btc
 from two1.lib.wallet import exceptions
+from two1.lib.wallet.two1_wallet import TWENTYONE_PROVIDER_HOST
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Two1WalletProxy
 from two1.lib.wallet.daemonizer import get_daemonizer
@@ -23,7 +24,6 @@ WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
                                  'twentyone': []}
-TWENTYONE_PROVIDER_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
 logger = logging.getLogger('wallet')
 
