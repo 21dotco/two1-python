@@ -22,7 +22,10 @@ class PaymentServerUnitTests(TestCase):
     TEST_DEPOSIT_AMOUNT = 100000
     cust_wallet = MockTwo1Wallet()
     merch_wallet = MockTwo1Wallet()
-    server = PaymentServer(merch_wallet, testnet=True)
+
+    def setUp(self):
+        """Set up test properties."""
+        self.server = PaymentServer(self.merch_wallet, testnet=True)
 
     def _create_client_txs(self):
         """Mock client transactions for opening a channel."""
