@@ -199,10 +199,10 @@ class Two1Wallet(BaseWallet):
         if dp is None or not isinstance(dp, BaseProvider):
             rv = False
         else:
-            wallet = Two1Wallet.create(data_provider=dp,
-                                       passphrase=passphrase,
-                                       account_type=account_type,
-                                       testnet=testnet)
+            wallet, _ = Two1Wallet.create(data_provider=dp,
+                                          passphrase=passphrase,
+                                          account_type=account_type,
+                                          testnet=testnet)
 
             wallet.discover_accounts()
             wallet.to_file(wallet_path)
@@ -297,7 +297,7 @@ class Two1Wallet(BaseWallet):
                   "account_type": account_type}
         wallet = Two1Wallet(config, data_provider, passphrase, utxo_selector)
 
-        return wallet
+        return (wallet, mnemonic)
 
     @staticmethod
     def import_from_mnemonic(data_provider, mnemonic,
