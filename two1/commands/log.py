@@ -1,19 +1,21 @@
 from datetime import date, datetime
 import click
-from two1.commands.config import pass_config
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
+from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
 
 @click.command()
-@pass_config
-def log(config):
+@click.pass_context
+def log(ctx):
     """Shows the log of all the 21 earnings"""
 
+    config = ctx.obj['config']
     _log(config)
 
 
+@capture_usage
 def _log(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
