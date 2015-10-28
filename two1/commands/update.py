@@ -138,7 +138,11 @@ def lookup_pypi_version(version='latest'):
 
         if version != "latest":
             # Find the requested version or commit
-            data = next((p for p in packages if version in p["version"]), None)
+            data = next((p for p in packages if version == p["version"]), None)
+            # Prefer stable versions over unstable (e.g. exact matches first)
+            if not data:
+                data = next((p for p in packages if
+                             version in p["version"]), None)
         else:
             # Find the latest stable version matching '1.2' or '1.2.3'
             data = next((p for p in packages if
