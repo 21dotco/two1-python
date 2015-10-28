@@ -43,6 +43,7 @@ SEARCH_UNIT_PRICE = 800
 ARTICLE_UNIT_PRICE = 4000
 MESSAGE_UNIT_PRICE = 8000
 
+
 def status_wallet(config, client):
     """Print wallet status to the command line.
 
@@ -90,6 +91,7 @@ def status_wallet(config, client):
         config.log(UxString.status_exit_message.format(buy21, buy21help),
                    nl=False)
 
+
 def status_postmine_balance(config, client):
     total_balance, pending_transactions, flushed_earnings = \
         _get_balances(config, client)
@@ -111,7 +113,7 @@ def _get_balances(config, client):
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
 
-    data = client.get_earnings(config.username)[config.username]
+    data = client.get_earnings(config.username)
     total_earnings = data["total_earnings"]
     flushed_earnings = data["flush_amount"]
 
@@ -120,7 +122,7 @@ def _get_balances(config, client):
 
 
 def status_earnings(config, client):
-    data = client.get_earnings(config.username)[config.username]
+    data = client.get_earnings(config.username)
     total_earnings = data["total_earnings"]
     total_payouts = data["total_payouts"]
     config.log('\nMining Proceeds', fg='magenta')
@@ -142,7 +144,7 @@ def status_earnings(config, client):
 
 def status_shares(config, client):
     try:
-        share_data = client.get_shares(config.username)[config.username]
+        share_data = client.get_shares(config.username)
     except:
         share_data = None
     headers = ("", "Total", "Today", "Past Hour")
