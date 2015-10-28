@@ -101,8 +101,15 @@ class EllipticCurve(EllipticCurveBase):
         self.nlen = self.n.bit_length()
         self.plen = self.p.bit_length()
 
+        # We keep a pointer to the libcrypto CDLL object so that
+        # it is guaranteed to be around when __del__ is called. If
+        # we don't, a race condition exists whereby if the garbage
+        # collector disposes of ossl.lc before this object, we won't
+        # be able to free self.os_group (in __del__).
+        self._lc = ossl.lc
+
     def __del__(self):
-        ossl.lc.EC_GROUP_free(self.os_group)
+        self._lc.EC_GROUP_free(self.os_group)
 
     def is_on_curve(self, p):
         """ Checks whether a point is on the curve.
