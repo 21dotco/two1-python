@@ -4,6 +4,7 @@ from two1.commands.config import Config
 from two1.lib.bitcurl.bitrequests import BitTransferRequests
 from two1.lib.bitcurl.bitrequests import OnChainRequests
 from two1.lib.bitcurl.bitrequests import BitRequestsError
+from two1.lib.bitcurl.bitrequests import BitRequests
 
 
 class MockRequest:
@@ -27,6 +28,11 @@ class MockWallet:
         """Mock ability to sign a transaction to an address."""
         signed_tx = {'txid': MockWallet.TXID, 'txn': MockWallet.TXN}
         return [signed_tx]
+
+
+class MockBitRequests(BitRequests):
+    def make_402_payment(self, response, max_price):
+        return {'Bitcoin-Transaction': 'paid'}
 
 
 ##############################################################################
@@ -87,3 +93,20 @@ def test_bittransfer_request():
         headers = {'price': price}
         setattr(mock_request, 'headers', headers)
         bit_req.make_402_payment(mock_request, test_max_price)
+
+
+def test_bitrequest_kwargs():
+    """Test that it correctly forwards keyword arguments."""
+    url_streamable_data = 'http://httpbin.org/stream-bytes/1000'
+    bit_req = MockBitRequests()
+
+    # Test we fail when trying to stream bytes by default
+    res = bit_req.request('get', url_streamable_data)
+    assert res.status_code == 200
+    assert res.raw.read() == b''
+
+    # Test that we can successfully use a keyword argument to stream bytes
+    res = bit_req.request('get', url_streamable_data, stream=True)
+    assert res.status_code == 200
+    assert res.raw.read() != b''
+    assert res.headers['transfer-encoding'] == 'chunked'
