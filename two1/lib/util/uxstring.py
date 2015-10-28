@@ -13,27 +13,32 @@ class UxString:
     create_wallet_done = "\nWallet successfully created. Press any key ..."
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
-    flush_success = "\nYour mined Satoshis will be sent to you on the Blockchain in" \
-                    " our next payout cycle.\nEstimated time of payout: 20 minutes"
+
+    flush_success = "{}\n"\
+        "Your mined Satoshis will be sent to you on the"\
+        "blockchain in the next payout cycle.\n"\
+        "Estimated time of payout: ~20 minutes.\n"\
+        "To check progress:  https://blockexplorer.com/address/{}\n"\
+        "To get more liquid bitcoin, use {} to buy more API calls."
 
     # status
-    status_exit_message = "\nUse {} to buy API calls for Bitcoin from 21.co.\nFor help, do {}."
-    status_empty_wallet = "\nUse {} to get some Bitcoin from 21.co."
+    status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
+    status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
 
     status_account = "{account}\n"\
         "    Username        : {username}\n"\
-        "    Bitcoin Address : {address}\n"
 
     status_wallet =  """{balance}
-    Spendable : {spendable} Satoshi
-    Pending   : {pending} Satoshi
-    On Chain  : {flushed} Satoshi
+    Spendable       : {spendable} Satoshi
+    Pending         : {pending} Satoshi
+    On Chain        : {flushed} Satoshi
+    Current Address : {address}
     """
 
-    status_buyable =     """{buyable}
-    Anonymous Searches    : {searches}
-    Paywall-Free Articles : {articles}
-    VIP Twitter Messages  : {messages}
+    status_buyable =     """{}
+    Search Queries        : {:<4} ({} Satoshis per search)
+    News Articles         : {:<4} ({} Satoshis per article)
+    Priority Twitter DMs  : {:<4} ({} Satoshis per message)
     """
 
     # mining
@@ -52,7 +57,7 @@ class UxString:
                    "in your wallet balance as soon as they appear on the Blockchain."
 
     # ad
-    buy_ad = "\nGet a 21 Bitcoin Computer at 21.co/buy"
+    buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
 
     # log
 

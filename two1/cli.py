@@ -68,8 +68,20 @@ Buy a search query with Bitcoin
 $ {0} buy search "Satoshi Nakamoto"
 
 \b
+View an ad-free article with Bitcoin
+$ {0} buy content http://on.wsj.com/1IV0HT5
+
+\b
+Message someone outside your social network for Bitcoin
+$ {0} buy social @balajis "Hi! I'm joe@example.com. My pitch deck: bit.ly/example"
+
+\b
 Show this help text
 $ {0}
+
+\b
+Show help for a command
+$ {0} COMMAND --help
 """
     cfg = Config(config_file, config)
     check_setup_twentyone_account(cfg)

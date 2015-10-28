@@ -9,7 +9,7 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @click.pass_context
 def flush(ctx):
-    """Flush your 21.co balance to the blockchain.
+    """Flush your 21.co buffer to the blockchain.
 
 """
     config = ctx.obj['config']
@@ -30,6 +30,11 @@ def _flush(config):
 def flush_earnings(config, client):
     response = client.flush_earnings(config.username)
     if response.ok:
-        config.log(UxString.flush_success)
+        success_msg = UxString.flush_success.format(
+            click.style("Flush to Blockchain", fg='magenta'),
+            config.wallet.current_address,
+            click.style("21 mine", bold=True)
+            )
+        config.log(success_msg, nl=False)
     else:
         config.log(UxString.Error.server_err)
