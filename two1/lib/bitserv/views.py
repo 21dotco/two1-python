@@ -5,12 +5,11 @@ from werkzeug.exceptions import BadRequest
 
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
-from two1.lib.wallet.two1_wallet import Two1Wallet
-from two1.lib.wallet.two1_wallet import Two1WalletProxy
+from two1.lib.wallet.two1_wallet import Wallet
 
 from .paymentserver import PaymentServer
 
-wallet = Two1WalletProxy(Two1Wallet.DEFAULT_WALLET_PATH)
+wallet = Wallet()
 
 
 class FlaskProcessor:
