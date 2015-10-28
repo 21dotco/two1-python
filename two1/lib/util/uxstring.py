@@ -5,7 +5,7 @@ class UxString:
 
     account_failed = "Failed to create 21.co account."
     username_exists = "User %s already exists."
-    enter_username = "Choose username for your account"
+    enter_username = "Enter Email address for your 21.co account:"
     enter_username_retry = "Create a new username and retry."
     # wallet
     create_wallet = "You do not have a Bitcoin wallet configured. "\
@@ -89,3 +89,4 @@ class UxString:
         update_failed = "Error occured during update process. Please try to run a manual update."
         version_not_found = "Did not find version '%s'. Defaulting to latest."
         update_server_connection = "Could not connect to the update server. Please try again later."
+        invalid_email = "Invalid email address."
