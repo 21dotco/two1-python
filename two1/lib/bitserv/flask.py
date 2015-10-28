@@ -115,9 +115,11 @@ class FlaskProcessor:
 class Channel(MethodView):
 
     def __init__(self, server):
+        """Initialize the channel view with a PaymentServer object."""
         self.server = server
 
     def get(self, deposit_txid):
+        """Return the merchant's public key or info about a channel."""
         if deposit_txid is None:
             return jsonify({'public_key': self.server.discovery()})
         else:
@@ -127,6 +129,14 @@ class Channel(MethodView):
                 raise BadRequest(str(e))
 
     def post(self):
+        """Initialize the payment channel handshake.
+
+        Params (query):
+            refund_tx (string): half-signed serialized refund transaction
+
+        Response (json) 2xx:
+            refund_tx (string): fully-signed serialized refund transaction
+        """
         try:
             params = request.values.to_dict()
             # Validate parameters
@@ -145,6 +155,15 @@ class Channel(MethodView):
             raise BadRequest(str(e))
 
     def put(self, deposit_txid):
+        """Complete the payment channel handshake or receive payments.
+
+        Args:
+            deposit_txid (string): initial signed deposit transaction id
+
+        Params (json) (one of the following):
+            deposit_tx (string): half-signed serialized deposit transaction
+            payment_tx (string):  half-signed serialized payment transaction
+        """
         try:
             params = request.values.to_dict()
             if 'deposit_tx' in params:
@@ -163,6 +182,14 @@ class Channel(MethodView):
             return BadRequest(str(e))
 
     def delete(self, deposit_txid):
+        """Close a payment channel.
+
+        Args:
+            deposit_txid (string): initial signed deposit transaction id
+
+        Response (json) 2xx:
+            payment_txid (string): final payment channel transaction id
+        """
         try:
             payment_txid = self.server.close(deposit_txid)
             return jsonify({'payment_txid': payment_txid})

@@ -1,8 +1,9 @@
 """Tools for Payment Channels."""
+import time
 import codecs
 from two1.lib.bitcoin.crypto import PublicKey
 from .helpers.wallet import Two1WalletWrapper
-from .helpers.wallet import get_redeem_script, get_tx_public_keys
+from .helpers.wallet import get_redeem_script
 from .helpers.blockchain import InsightBlockchain
 from .models import DatabaseSQLite3
 
@@ -46,6 +47,7 @@ class PaymentServer:
     # Minimum transaction fee and total payment amount (dust limit)
     MIN_TX_FEE = 5000
     DUST_LIMIT = 546
+    MIN_EXP_TIME = 4 * 3600
 
     def __init__(self, wallet, account='default', testnet=False,
                  blockchain=None, db=None):
@@ -93,17 +95,27 @@ class PaymentServer:
         Returns:
             (boolean): whether the handshake was successfully initialized.
         """
-        # Verify that the transaction is what we expect
+        # Verify that the transaction is build correctly
         self._wallet.verify_half_signed_tx(refund_tx)
 
-        # Sign the remaining half of the transaction
-        self._wallet.sign_half_signed_tx(refund_tx)
+        # Verify that the lock time is an allowable amount in the future
+        minimum_locktime = int(time.time()) + self.MIN_EXP_TIME
+        if refund_tx.lock_time < minimum_locktime:
+            raise TransactionVerificationError(
+                'Transaction locktime must be further in the future.')
 
         # Try to create the channel and verify that the deposit txid is good
         deposit_txid = str(refund_tx.inputs[0].outpoint)
-        cust_key, merch_key = get_tx_public_keys(refund_tx)
+        redeem_script = get_redeem_script(refund_tx)
+        pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
+        merch_pubkey = self._wallet.get_merchant_key_from_keys(pubkeys)
+
+        # Sign the remaining half of the transaction
+        self._wallet.sign_half_signed_tx(refund_tx, merch_pubkey)
+
         try:
-            self._db.pc.create(refund_tx, merch_key)
+            # Save the initial payment channel
+            self._db.pc.create(refund_tx, merch_pubkey)
         except:
             raise BadTransactionError(
                 'That deposit has already been used to create a channel.')
@@ -152,7 +164,6 @@ class PaymentServer:
         except:
             raise BadTransactionError('Deposit already used.')
 
-        # TODO: Broadcast the deposit transaction
         self._db.pc.update_state(deposit_txid, 'confirming')
 
         return True
@@ -221,10 +232,8 @@ class PaymentServer:
                     'Final payment must have outputs greater than {}.'.format(
                         PaymentServer.DUST_LIMIT))
 
-        # TODO Verify that the redeem script is the same as the last payment
-
         # Sign the remaining half of the transaction
-        self._wallet.sign_half_signed_tx(payment_tx)
+        self._wallet.sign_half_signed_tx(payment_tx, merch_pubkey)
 
         # Update the current payment transaction
         self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
