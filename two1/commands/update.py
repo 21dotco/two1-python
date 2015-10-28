@@ -5,6 +5,7 @@ from datetime import date
 from datetime import datetime
 from distutils.version import LooseVersion
 
+import re
 import os
 import click
 from two1.commands.config import TWO1_VERSION
@@ -134,16 +135,20 @@ def lookup_pypi_version(version='latest'):
 
     try:
         packages = data["packages"]
-        two1data = packages[0]
-        if version != 'latest':
-            data = next((p for p in packages if version in p["version"]), None)
-            if not data:
-                click.echo(UxString.Error.version_not_found % version)
-            else:
-                two1data = data
 
-        if two1data["name"] == TWO1_PACKAGE_NAME:
-            pypi_version = two1data["version"]
+        if version != "latest":
+            # Find the requested version or commit
+            data = next((p for p in packages if version in p["version"]), None)
+        else:
+            # Find the latest stable version matching '1.2' or '1.2.3'
+            data = next((p for p in packages if
+                         re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
+
+        if not data:
+            raise ServerRequestError(UxString.Error.version_not_found % version)
+        else:
+            pypi_version = data["version"]
+
     except (AttributeError, KeyError, TypeError):
         raise ServerRequestError(UxString.Error.server_err)
 
