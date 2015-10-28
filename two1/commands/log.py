@@ -34,7 +34,7 @@ def _log(config):
         prints.append("\n")
 
         # transaction details
-        if entry["amount"] < 0:
+        if entry["amount"] < 0 and "paid_to" in entry and "txns" in entry:
             prints.append(get_txn_details(entry))
             prints.append("\n")
 
