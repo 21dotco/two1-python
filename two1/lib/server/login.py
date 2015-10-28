@@ -1,7 +1,7 @@
 import base64
 import click
-import urllib
 import re
+from email.utils import parseaddr
 from two1.commands.config import TWO1_HOST
 from two1.commands.exceptions import ServerConnectionError
 from two1.commands.exceptions import ServerTimeout
@@ -17,9 +17,10 @@ class EmailAddress(click.ParamType):
         click.ParamType.__init__(self)
 
     def convert(self, value, param, ctx):
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
-            self.fail(UxString.Error.invalid_email)
-        return value
+        if parseaddr(value)[1] == value:
+            if "@" in value:
+                return value
+        self.fail(UxString.Error.invalid_email)
 
 
 def check_setup_twentyone_account(config):
