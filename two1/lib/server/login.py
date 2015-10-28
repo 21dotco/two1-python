@@ -1,5 +1,6 @@
 import base64
 import click
+import urllib
 import re
 from two1.commands.config import TWO1_HOST
 from two1.commands.exceptions import ServerConnectionError
@@ -17,7 +18,7 @@ class EmailAddress(click.ParamType):
 
     def convert(self, value, param, ctx):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
-            self.fail(UxString.invalid_email)
+            self.fail(UxString.Error.invalid_email)
         return value
 
 
@@ -91,7 +92,7 @@ def create_username(config, username=None):
 
     while True:
         if username == "" or username is None:
-            username = click.prompt(UxString.enter_username, type=click.STRING)
+            username = click.prompt(UxString.enter_username, type=EmailAddress())
             click.echo(UxString.creating_account % username)
         r = rest_client.account_post(username, bitcoin_payout_address)
         if r.status_code == 200:
