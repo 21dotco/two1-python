@@ -108,6 +108,7 @@ class BarcodeTests(TestCase):
 
 
 class WeatherTests(TestCase):
+    @skip("Temporarily commented out due to service problems")
     def test_current_temperature(self):
         response = Client().get("/weather/current-temperature?place=CA%2FSan%20Francisco&tx=paid")
         self.assertEqual(response.status_code, 200)
@@ -115,11 +116,13 @@ class WeatherTests(TestCase):
         self.assertGreater(float(result), 32)
         self.assertLess(float(result), 100)
 
+    @skip("Temporarily commented out due to service problems")
     def test_forecast(self):
         response = Client().get("/weather/forecast?place=CA%2FSan%20Francisco&tx=paid")
         self.assertEqual(response.status_code, 200)
         self.assertTrue("response" in response2json(response))
 
+    @skip("Temporarily commented out due to service problems")
     def test_radar(self):
         response = Client().get("/weather/radar?place=CA%2FSan%20Francisco&tx=paid")
         self.assertEqual(response.status_code, 200)
