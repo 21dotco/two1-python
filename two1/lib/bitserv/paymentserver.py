@@ -269,7 +269,7 @@ class PaymentServer:
             raise BadTransactionError('No payments made in channel.')
 
         # Broadcast payment transaction to the blockchain
-        self._blockchain.broadcast(channel['payment_tx'])
+        self._blockchain.broadcast(channel['payment_tx'].to_hex())
 
         # Record the broadcast in the database
         self._db.pc.update_state(deposit_txid, 'closed')
