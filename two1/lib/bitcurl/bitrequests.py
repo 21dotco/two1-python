@@ -73,7 +73,7 @@ class BitRequests(object):
         """
         raise NotImplementedError()
 
-    def request(self, method, url, data=None, headers=None, max_price=None):
+    def request(self, method, url, data=None, headers=None, max_price=None, **kwargs):
         """Make a 402 request for a resource.
 
         This is the BitRequests public method that should be used to complete a
@@ -92,7 +92,7 @@ class BitRequests(object):
                 the requested resource.
         """
         # Make the initial request for the resource
-        response = requests.request(method, url, data=data)
+        response = requests.request(method, url, data=data, **kwargs)
 
         # Return if we receive a status code other than 402: payment required
         if (response.status_code != requests.codes.payment_required):
@@ -109,7 +109,7 @@ class BitRequests(object):
 
         # Complete the response and return with a requests.response object
         paid_response = requests.request(
-            method, url, data=data, headers=headers)
+            method, url, data=data, headers=headers, **kwargs)
 
         return paid_response
 
