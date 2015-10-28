@@ -39,46 +39,49 @@ def buy(ctx, payment_method, max_price, info_only):
 \b
 Usage
 -----
-Search the internet, paying with bitcoin.
+Execute a search query for bitcoin. See no ads.
 $ 21 buy search "Satoshi Nakamoto"
 
 \b
-See the price in Satoshis of one search, and the user hosting it.
-$ 21 buy --info search "bitcoin computer"
+See the price in Satoshis of one bitcoin-payable search.
+$ 21 buy --info search
 
 \b
-See the help for search:
+See the help for search.
 $ 21 buy search -h
 
 \b
-See the price in Satoshis of one item of content.
-$ 21 buy --info content https://paywallurl.com/great-article
+See the price in Satoshis of one bitcoin-payable article.
+$ 21 buy --info content http://on.wsj.com/1IV0HT5
 
 \b
-See the help for content:
-$ 21 buy content -h
+Buy an article with bitcoin.
+$ 21 buy content http://on.wsj.com/1IV0HT5
 
 \b
-See the price in Satoshis of a paid direct message via social network.
-$ 21 buy --info social @balajis "Hey nice to meet you, i'm @syassami"
+See the price of a bitcoin-payable priority message.
+$ 21 buy --info social @balajis
 
 \b
-See the help for social:
-$ 21 buy social -h
+Direct message someone outside your social network for bitcoin.
+$ 21 buy social @balajis "Hey nice to meet you, I'm @example. My startup is example.com"
 """
     ctx.obj["payment_method"] = payment_method
     ctx.obj["max_price"] = max_price
     ctx.obj["info_only"] = info_only
 
 
-@click.argument('query', nargs=1)
+@click.argument('query', default="")
 @buy.command()
 @click.pass_context
-def search(ctx, query):
-    """Buy internet search results for provided query.
+def search(ctx, query=""):
+    """Execute a search query for bitcoin. See no ads.
 
-    $ 21 buy search "bitcoin computer"
-    """
+\b
+Example
+-------
+$ 21 buy search "First Bitcoin Computer"
+"""
     _buy(ctx.obj["config"],
          "search",
          dict(query=query),
@@ -91,15 +94,18 @@ def search(ctx, query):
          )
 
 
-@click.argument('message')
-@click.argument('twitter_user')
+@click.argument('message', default="")
+@click.argument('twitter_user', default="@balajis")
 @buy.command()
 @click.pass_context
 def social(ctx, message, twitter_user):
-    """Buy a direct message to @balajis.
+    """Send a paid message to someone outside your social network.
 
-    $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
-    """
+\b
+Example
+-------
+$ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
+"""
     _buy(ctx.obj["config"],
          "social",
          dict(message=message),
@@ -112,14 +118,17 @@ def social(ctx, message, twitter_user):
          )
 
 
-@click.argument('url')
+@click.argument('url', default="")
 @buy.command()
 @click.pass_context
 def content(ctx, url):
-    """Purchase paid online content.
+    """Purchase online content without ads or login.
 
-    $ 21 buy content https://paywallurl.com/great-article
-    """
+\b
+Example
+-------
+$ 21 buy content http://on.wsj.com/1IV0HT5
+"""
     _buy(ctx.obj["config"],
          "content",
          dict(url=url),
