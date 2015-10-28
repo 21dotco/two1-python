@@ -1,7 +1,4 @@
-import time
-
 import click
-from two1.commands.config import pass_config
 from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
@@ -35,45 +32,50 @@ def _status(config):
 
 
 def status_account(config):
-    config.log('''\n21.co Account''', fg='magenta')
-    config.log('''\
-    Username              : {}'''
-               .format(config.username))
 
+    status_account = UxString.status_account.format(
+        account=click.style("21.co Account", fg='magenta'),
+        username=config.username,
+        address=config.wallet.current_address)
+    config.log(status_account)
 
 SEARCH_UNIT_PRICE = 800
 ARTICLE_UNIT_PRICE = 4000
 MESSAGE_UNIT_PRICE = 8000
 
-
 def status_wallet(config, client):
-    total_balance, pending_transactions, flushed_earnings = _get_balances(config, client)
+    """
+
+    >>> from two1.commands.config import Config
+    >>> config = Config()
+    >>> client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                                 config.machine_auth,
+                                                 config.username)
+
+    """
+    total_balance, pending_transactions, flushed_earnings = \
+        _get_balances(config, client)
 
     try:
         bitcoin_address = config.wallet.current_address
     except AttributeError:
         bitcoin_address = "Not Set"
 
-    config.log('''\nWallet''', fg='magenta')
-    config.log('''\
-    Your Spendable Balance   :   {} Satoshi
-    Pending Debit or Credit  :   {} Satoshi'''
-               .format(total_balance, pending_transactions)
-               )
+    status_wallet = UxString.status_wallet.format(balance=click.style("Balance", fg='magenta'),
+                                                  spendable=total_balance,
+                                                  pending=pending_transactions,
+                                                  flushed=flushed_earnings)
+    config.log(status_wallet)
 
-    if flushed_earnings > 0:
-        config.log('''\
-    Your Flushed Amount      :   {} Satoshi *'''
-                   .format(flushed_earnings))
-    config.log('''\
-    Your Bitcoin Address     :   {}'''
-               .format(bitcoin_address))
-
-    if flushed_earnings > 0:
-        config.log(UxString.flush_status % flushed_earnings)
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
     buyable_messages = int(total_balance / MESSAGE_UNIT_PRICE)
+    status_buyable = UxString.status_buyable.format(
+        buyable=click.style("Bitcoin-payable API calls", fg='magenta'),
+        searches=buyable_searches,
+        articles=buyable_articles,
+        messages=buyable_messages)
+    config.log(status_buyable, nl=False)
 
     if total_balance == 0:
         config.log(UxString.status_empty_wallet.format(click.style("21 mine",
@@ -81,15 +83,12 @@ def status_wallet(config, client):
     else:
         buy21 = click.style("21 buy", bold=True)
         buy21help = click.style("21 buy --help", bold=True)
-        config.log(UxString.status_exit_message.format(buyable_searches,
-                                                       buyable_articles,
-                                                       buyable_messages,
-                                                       buy21,
-                                                       buy21help), nl=False)
-
+        config.log(UxString.status_exit_message.format(buy21, buy21help),
+                   nl=False)
 
 def status_postmine_balance(config, client):
-    total_balance, pending_transactions, flushed_earnings = _get_balances(config, client)
+    total_balance, pending_transactions, flushed_earnings = \
+        _get_balances(config, client)
     try:
         bitcoin_address = config.wallet.current_address
     except AttributeError:

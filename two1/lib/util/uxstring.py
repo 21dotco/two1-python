@@ -17,10 +17,24 @@ class UxString:
                     " our next payout cycle.\nEstimated time of payout: 20 minutes"
 
     # status
-    status_exit_message = "\nYou can use your spendable balance to buy {} searches, {} full text" \
-                          "\narticles, or send up to {} paid direct messages with {}." \
-                          "\nDo {} for more info."
+    status_exit_message = "\nUse {} to buy API calls for Bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some Bitcoin from 21.co."
+
+    status_account = "{account}\n"\
+        "    Username        : {username}\n"\
+        "    Bitcoin Address : {address}\n"
+
+    status_wallet =  """{balance}
+    Spendable : {spendable} Satoshi
+    Pending   : {pending} Satoshi
+    On Chain  : {flushed} Satoshi
+    """
+
+    status_buyable =     """{buyable}
+    Anonymous Searches    : {searches}
+    Paywall-Free Articles : {articles}
+    VIP Twitter Messages  : {messages}
+    """
 
     # mining
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
