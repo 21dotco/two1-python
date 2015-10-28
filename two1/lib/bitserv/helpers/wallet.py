@@ -2,9 +2,9 @@
 
 import codecs
 import two1.lib.bitcoin as bitcoin
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.crypto import PrivateKey, PublicKey
+from two1.lib.bitcoin import Script
+from two1.lib.bitcoin import Transaction
+from two1.lib.bitcoin import PrivateKey, PublicKey
 
 
 class WalletError(Exception):

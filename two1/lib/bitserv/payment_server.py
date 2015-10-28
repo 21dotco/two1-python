@@ -1,12 +1,10 @@
 """Tools for Payment Channels."""
-
 import codecs
 from two1.lib.bitcoin.crypto import PublicKey
-
-from .wallet import Two1WalletWrapper
-from .wallet import get_redeem_script, get_tx_public_keys
-from .channel_data import DatabaseSQLite3
-from .blockchain import InsightBlockchain
+from .helpers.wallet import Two1WalletWrapper
+from .helpers.wallet import get_redeem_script, get_tx_public_keys
+from .helpers.blockchain import InsightBlockchain
+from .models import DatabaseSQLite3
 
 
 class PaymentServerError(Exception):

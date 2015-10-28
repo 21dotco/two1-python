@@ -1,16 +1,13 @@
 """Tests for payment channel functionality."""
-
 import os
 import time
 import codecs
 import pytest
-
-from two1.lib.bitcoin.script import Script
-from .wallet import Two1WalletWrapper, MockTwo1Wallet
-from .paymentserver import PaymentServer, PaymentServerError
-from .channel_data import DatabaseSQLite3
-from .blockchain import MockBlockchain
-
+from two1.lib.bitcoin import Script
+from two1.lib.bitserv.helpers.blockchain import MockBlockchain
+from two1.lib.bitserv.helpers.wallet import Two1WalletWrapper, MockTwo1Wallet
+from two1.lib.bitserv.payment_server import PaymentServer, PaymentServerError
+from two1.lib.bitserv.models import DatabaseSQLite3
 
 TEST_DEP_AMOUNT = 100000
 TEST_PMT_AMOUNT = 5000

@@ -2,9 +2,8 @@
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.commands.config import TWO1_HOST
-from .onchain_data import OnChainSQLite3
-from .paymentserver import PaymentServer
-from .views import FlaskProcessor
+from .models import OnChainSQLite3
+from .payment_server import PaymentServer
 
 
 class PaymentError(Exception):
@@ -150,9 +149,9 @@ class PaymentChannel(PaymentBase):
     http_402_price = 'Price'
     http_402_micro_server = 'Bitcoin-Micropayment-Server'
 
-    def __init__(self, app, db=None):
+    def __init__(self, app, processor, db=None):
         """Initialize payment handling for on-chain payments."""
-        self._processor = FlaskProcessor(app, db)
+        self._processor = processor(app, db)
 
     @property
     def payment_headers(self):

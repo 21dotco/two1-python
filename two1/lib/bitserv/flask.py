@@ -1,8 +1,15 @@
 """Flask bitserv payment library for selling 402 API endpoints."""
-from flask import request
 from functools import wraps
+from flask import jsonify, request
+from flask.views import MethodView
 from werkzeug.exceptions import HTTPException, BadRequest
-from .methods import OnChain, PaymentChannel
+
+from two1.lib.wallet import Wallet
+from two1.lib.bitcoin import Transaction
+from two1.lib.bitcoin.utils import bytes_to_str
+
+from .payment_methods import OnChain, PaymentChannel
+from .payment_server import PaymentServer
 
 
 class PaymentRequiredException(HTTPException):
@@ -35,7 +42,8 @@ class Payment:
         self.default_price = default_price
         self.default_address = default_address
         self.default_micro_server = default_micro_server
-        self.allowed_methods = [OnChain(db), PaymentChannel(app, db)]
+        self.allowed_methods = [
+            PaymentChannel(app, FlaskProcessor, db), OnChain(db)]
 
     def required(self, price=None, address=None, micro_server=None):
         """API route decorator to request payment for a resource.
@@ -88,3 +96,75 @@ class Payment:
                     raise BadRequest(str(e))
                 return v
         return False
+
+
+class FlaskProcessor:
+
+    def __init__(self, app, db=None):
+        """Initialize the Flask views with RESTful access to the Channel."""
+        self.wallet = Wallet()
+        self.server = PaymentServer(self.wallet, db)
+        pmt_view = Channel.as_view('channel', self.server)
+        app.add_url_rule('/payment', defaults={'deposit_txid': None},
+                         view_func=pmt_view, methods=('GET',))
+        app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
+        app.add_url_rule('/payment/<deposit_txid>', view_func=pmt_view,
+                         methods=('GET', 'PUT', 'DELETE'))
+
+
+class Channel(MethodView):
+
+    def __init__(self, server):
+        self.server = server
+
+    def get(self, deposit_txid):
+        if deposit_txid is None:
+            return jsonify({'public_key': self.server.discovery()})
+        else:
+            try:
+                return jsonify(self.server.status(deposit_txid))
+            except Exception as e:
+                raise BadRequest(str(e))
+
+    def post(self):
+        try:
+            params = request.values.to_dict()
+            # Validate parameters
+            if 'refund_tx' not in params:
+                raise BadParametersError('No refund provided.')
+
+            # Initialize the payment channel
+            refund_tx = Transaction.from_hex(params['refund_tx'])
+            self.server.initialize_handshake(refund_tx)
+
+            # Respond with the fully-signed refund transaction
+            success = {'refund_tx': bytes_to_str(bytes(refund_tx))}
+            return jsonify(success)
+        except Exception as e:
+            # Catch payment exceptions and send error response to client
+            raise BadRequest(str(e))
+
+    def put(self, deposit_txid):
+        try:
+            params = request.values.to_dict()
+            if 'deposit_tx' in params:
+                # Complete the handshake using the received deposit
+                deposit_tx = Transaction.from_hex(params['deposit_tx'])
+                self.server.complete_handshake(deposit_txid, deposit_tx)
+                return jsonify()
+            elif 'payment_tx' in params:
+                # Receive a payment in the channel using the received payment
+                payment_tx = Transaction.from_hex(params['payment_tx'])
+                self.server.receive_payment(deposit_txid, payment_tx)
+                return jsonify({'payment_txid': str(payment_tx.hash)})
+            else:
+                raise KeyError('No deposit or payment received.')
+        except Exception as e:
+            return BadRequest(str(e))
+
+    def delete(self, deposit_txid):
+        try:
+            payment_txid = self.server.close(deposit_txid)
+            return jsonify({'payment_txid': payment_txid})
+        except Exception as e:
+            return BadRequest(str(e))
