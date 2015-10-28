@@ -83,7 +83,11 @@ def update_two1_package(config, version, force_update_check=False):
         set_update_check_date(config, date.today())
 
         installed_version = TWO1_VERSION
-        latest_version = lookup_pypi_version(version)
+        try:
+            latest_version = lookup_pypi_version(version)
+        except ServerRequestError as er:
+            click.echo(str(er))
+            latest_version = "0.0.0"
         # Check if available version is more recent than the installed version.
         if (LooseVersion(latest_version) > LooseVersion(installed_version) or
                 version != 'latest'):
@@ -124,7 +128,7 @@ def lookup_pypi_version(version='latest'):
         r = requests.get(url)
         data = r.json()
     except:
-        raise ServerRequestError(UxString.Error.connection % 'PyPI host.')
+        raise ServerRequestError(UxString.Error.update_server_connection)
 
     pypi_version = None
 

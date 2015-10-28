@@ -69,3 +69,4 @@ class UxString:
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
         version_not_found = "Did not find version '%s'. Defaulting to latest."
+        update_server_connection = "Could not connect to the update server. Please try again later."
