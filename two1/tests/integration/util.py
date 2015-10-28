@@ -1,5 +1,6 @@
 import random
 import string
+import pytest
 
 def random_str(length):
     return ''.join(

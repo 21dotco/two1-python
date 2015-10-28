@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 import shutil
-from util import random_str
+from two1.tests.integration.util import random_str
 import pytest
 from click.testing import CliRunner
 import pexpect
@@ -15,17 +15,9 @@ SINK_USER = "john950438506"
 FP = os.fdopen(sys.stdout.fileno(), 'wb')
 
 
-# TODO move to conftest
 def pytest_addoption(parser):
-    parser.addoption("--url21", action="store",
-                     default="startserver",
-                     help="The 21 server URL to hit with the tests"
-                     "(default: starts the server for you)")
-
-@pytest.fixture(scope="session", autouse=True)
-def urlpool():
-    # TODO source from CLI?
-    return "http://dotco-devel-pool2.herokuapp.com"
+    parser.addoption("--integration", action="store_true",
+                     help="Run the integration tests")
 
 @pytest.yield_fixture(scope="session")
 def temp_folder():
