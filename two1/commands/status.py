@@ -44,7 +44,7 @@ ARTICLE_UNIT_PRICE = 4000
 MESSAGE_UNIT_PRICE = 8000
 
 def status_wallet(config, client):
-    """
+    """Print wallet status to the command line.
 
     >>> from two1.commands.config import Config
     >>> config = Config()
@@ -64,17 +64,21 @@ def status_wallet(config, client):
     status_wallet = UxString.status_wallet.format(balance=click.style("Balance", fg='magenta'),
                                                   spendable=total_balance,
                                                   pending=pending_transactions,
-                                                  flushed=flushed_earnings)
+                                                  flushed=flushed_earnings,
+                                                  address=bitcoin_address)
     config.log(status_wallet)
 
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
     buyable_messages = int(total_balance / MESSAGE_UNIT_PRICE)
     status_buyable = UxString.status_buyable.format(
-        buyable=click.style("Bitcoin-payable API calls", fg='magenta'),
-        searches=buyable_searches,
-        articles=buyable_articles,
-        messages=buyable_messages)
+        click.style("How many API calls can you buy?", fg='magenta'),
+        buyable_searches,
+        SEARCH_UNIT_PRICE,
+        buyable_articles,
+        ARTICLE_UNIT_PRICE,
+        buyable_messages,
+        MESSAGE_UNIT_PRICE)
     config.log(status_buyable, nl=False)
 
     if total_balance == 0:
@@ -96,8 +100,8 @@ def status_postmine_balance(config, client):
 
     config.log('''\nWallet''', fg='magenta')
     config.log('''\
-    Your New Balance         :   {} Satoshi
-    Your Bitcoin Address     :   {}'''
+    New Balance                 :   {} Satoshi
+    Current Bitcoin Address     :   {}'''
                .format(total_balance, bitcoin_address)
                )
 
