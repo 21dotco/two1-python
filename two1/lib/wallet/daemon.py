@@ -14,6 +14,8 @@ from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
 from two1.lib.wallet.exceptions import AccountCreationError
 from two1.lib.wallet.exceptions import WalletBalanceError
+from two1.lib.wallet.exceptions import WalletLockedError
+from two1.lib.wallet.exceptions import WalletNotLoadedError
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.cli import validate_data_provider
 from two1.lib.wallet.cli import WALLET_VERSION
@@ -150,20 +152,35 @@ def load_wallet(wallet_path, data_provider, passphrase):
     global wallet
 
     try:
+        logger.debug("In load_wallet...")
+        logger.debug("\twallet_path = %s" % wallet_path)
+        logger.debug("\tdata_provider = %r" % data_provider)
+        logger.debug("\tpassphrase = %r" % bool(passphrase))
         wallet['obj'] = Two1Wallet(params_or_file=wallet_path,
                                    data_provider=data_provider,
                                    passphrase=passphrase)
         wallet['locked'] = False
-    except Exception:
-        logger.exception("Wallet loading failed!")
+    except Exception as e:
+        raise WalletNotLoadedError("Wallet loading failed: %s" % e)
 
 
-def check_unlocked():
-    """ Raises an error if the wallet is locked.
+def check_wallet_loaded():
+    """ Raises an error if the wallet is locked or not loaded.
     """
-    if wallet['obj'] is None or wallet['locked']:
-        last_exception = "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."
-        raise ServerError()
+    logger.debug("wallet obj = %r, wallet locked = %r" % (wallet['obj'],
+                                                          wallet['locked']))
+    if wallet['obj'] is None and not wallet['locked']:
+        # Try loading
+        try:
+            load_wallet(wallet_path=wallet['path'],
+                        data_provider=wallet['data_provider'],
+                        passphrase="")
+        except WalletNotLoadedError as e:
+            _handle_exception(e)
+
+    if wallet['locked']:
+        _handle_exception(WalletLockedError(
+            "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."))
 
 
 @methods.add
@@ -181,7 +198,7 @@ def testnet():
     Returns:
         bool: True if the wallet is a testnet wallet, False otherwise.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("testnet()")
     try:
         return wallet['obj'].testnet
@@ -196,7 +213,7 @@ def confirmed_balance(account=None):
     Returns:
         int: Current confirmed balance in satoshis.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("confirmed_balance(%r)" % (account))
     try:
         return wallet['obj'].confirmed_balance(account)
@@ -211,7 +228,7 @@ def unconfirmed_balance(account=None):
     Returns:
         int: Current unconfirmed balance in satoshis.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("unconfirmed_balance(%r)" % (account))
     try:
         return wallet['obj'].unconfirmed_balance(account)
@@ -231,7 +248,7 @@ def get_private_for_public(public_key):
         str: A Base58Check encoded serialization of the private key object
            or None.
     """
-    check_unlocked()
+    check_wallet_loaded()
     w = wallet['obj']
     logger.debug("get_private_for_public(xx)")
     try:
@@ -250,7 +267,7 @@ def current_address():
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("current_address()")
     try:
         return wallet['obj'].current_address
@@ -265,7 +282,7 @@ def get_change_address(account=None):
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("get_change_address(%r)" % (account))
     try:
         return wallet['obj'].get_change_address(account)
@@ -282,7 +299,7 @@ def get_payout_address(account=None):
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("get_payout_address(%r)" % (account))
     try:
         return wallet['obj'].get_payout_address(account)
@@ -297,7 +314,7 @@ def get_change_public_key(account=None):
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("get_change_public_key(%r)" % (account))
     try:
         return wallet['obj'].get_change_public_key(account).to_b58check()
@@ -312,7 +329,7 @@ def get_payout_public_key(account=None):
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("get_payout_public_key(%r)" % (account))
     try:
         return wallet['obj'].get_payout_public_key(account).to_b58check()
@@ -336,7 +353,7 @@ def sign_message(message,
     Returns:
         str: A Base64-encoded string containing the signature.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("sign_message(%r, %r, %d)" %
                  (message, account_name_or_index, key_index))
     try:
@@ -360,7 +377,7 @@ def sign_bitcoin_message(message, address):
         str: A Base64-encoded string containing the signature with recovery id
             embedded.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("sign_bitcoin_message(%r, %s)" % (message, address))
     try:
         return wallet['obj'].sign_bitcoin_message(message, address)
@@ -381,7 +398,7 @@ def verify_bitcoin_message(message, signature, address):
     Returns:
         bool: True if the signature verified properly, False otherwise.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("verify_bitcoin_message(%s, %s, %s)" %
                  (message, signature, address))
     try:
@@ -406,7 +423,7 @@ def get_message_signing_public_key(account_name_or_index=None,
     Returns:
         str: Base64 representation of the public key
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("get_message_signing_public_key(%r, %d)" %
                  (account_name_or_index,
                   key_index))
@@ -436,7 +453,7 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
     Returns:
         list(Transaction): A list of Transaction objects
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("build_signed_transaction(%r, %r, %r, %r)" %
                  (addresses_and_amounts,
                   use_unconfirmed,
@@ -474,7 +491,7 @@ def make_signed_transaction_for(address, amount,
            and raw transactions.  e.g.: [{"txid": txid0, "txn":
            txn_hex0}, ...]
     """
-    check_unlocked()
+    check_wallet_loaded()
     w = wallet['obj']
     logger.debug("make_signed_transaction_for(%s, %d, %r, %r, %r)" %
                  (address,
@@ -510,7 +527,7 @@ def send_to(address, amount,
     Returns:
         list: List of txids used to send the coins.
     """
-    check_unlocked()
+    check_wallet_loaded()
     logger.debug("send_to(%s, %d, %r, %r, %r)" %
                  (address,
                   amount,
@@ -672,6 +689,7 @@ def main(ctx, wallet_path, blockchain_data_provider,
     global wallet
 
     wallet['path'] = wallet_path
+    wallet['data_provider'] = ctx.obj['data_provider']
     if data_update_interval is not None:
         DEF_WALLET_UPDATE_INTERVAL = data_update_interval
         wallet['update_info']['interval'] = data_update_interval
@@ -687,10 +705,13 @@ def main(ctx, wallet_path, blockchain_data_provider,
         logger.info("Wallet is locked.")
     else:
         logger.info("Wallet unlocked. Loading ...")
-        load_wallet(wallet_path=wallet_path,
-                    data_provider=ctx.obj['data_provider'],
-                    passphrase="")
-        logger.info("... loading complete.")
+        try:
+            load_wallet(wallet_path=wallet_path,
+                        data_provider=ctx.obj['data_provider'],
+                        passphrase="")
+            logger.info("... loading complete.")
+        except WalletNotLoadedError as e:
+            logger.error(str(e))
 
     # Setup a signal handler
     signal.signal(signal.SIGINT, sig_handler)

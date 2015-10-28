@@ -192,7 +192,13 @@ def main(ctx, wallet_path, passphrase,
             logger.debug("".join(traceback.format_tb(e.__traceback__)))
             ctx.exit(code=2)
 
-        ctx.call_on_close(ctx.obj['wallet'].sync_wallet_file)
+        def _on_close():
+            try:
+                ctx.obj['wallet'].sync_wallet_file()
+            except:
+                pass
+
+        ctx.call_on_close(_on_close)
 
 
 @click.command()
