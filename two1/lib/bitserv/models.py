@@ -32,19 +32,19 @@ class ChannelDatabase:
         pass
 
     def create(self, refund_tx):
-        pass
+        raise NotImplementedError()
 
     def lookup(self, deposit_txid):
-        pass
+        raise NotImplementedError()
 
     def update_deposit(self, deposit_txid, deposit_tx):
-        pass
+        raise NotImplementedError()
 
     def update_payment(self, deposit_txid, payment_tx):
-        pass
+        raise NotImplementedError()
 
     def delete(self, deposit_txid):
-        pass
+        raise NotImplementedError()
 
 
 class PaymentDatabase:
@@ -53,13 +53,13 @@ class PaymentDatabase:
         pass
 
     def create(self, payment_tx):
-        pass
+        raise NotImplementedError()
 
     def lookup(self, payment_txid):
-        pass
+        raise NotImplementedError()
 
     def redeem(self, payment_txid):
-        pass
+        raise NotImplementedError()
 
 
 ##############################################################################

@@ -1,5 +1,4 @@
 """Wrapper around the two1 wallet for payment channels."""
-
 import codecs
 import two1.lib.bitcoin as bitcoin
 from two1.lib.bitcoin import Script
@@ -41,18 +40,6 @@ def get_redeem_script(transaction):
     return multisig_info['redeem_script']
 
 
-def get_tx_public_keys(transaction):
-    """Get the public keys from a multisignature Transaction object."""
-    redeem_script = get_redeem_script(transaction)
-    pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
-    # TODO lookup merchant public key in database
-    res = {
-        'customer': PublicKey.from_bytes(pubkeys[0]),
-        'merchant': PublicKey.from_bytes(pubkeys[1]),
-    }
-    return res['customer'], res['merchant']
-
-
 ###############################################################################
 
 
@@ -67,9 +54,6 @@ class Two1WalletWrapper(WalletWrapperBase):
 
     def get_public_key(self):
         """Get a public key for use in a payment channel.
-
-        Args:
-            None
 
         Returns:
             public_key (string): a string representation of a public key's hex.
@@ -90,19 +74,19 @@ class Two1WalletWrapper(WalletWrapperBase):
             raise TransactionVerificationError(
                 'Half-signed transaction could not be verified.')
 
-        # TODO
-        # Verify customer pubkey is in refund_tx
-        # Verify locktime is some amount of time in the future for refund
-        # Verify customer pubkey is not ours
         return True
 
-    def sign_half_signed_tx(self, tx_from_user):
+    def sign_half_signed_tx(self, tx_from_user, merch_key):
         """Sign a half-signed transaction.
 
         Args:
             tx_from_user (two1.lib.bitcoin.txn.Transaction): an object that
                 contains a transaction from a customer, whether for a refund
                 or general payment, to be signed by the merchant.
+
+            merch_key (two1.lib.bitcoin.crypto.PublicKey): an object that
+                contains the merchant's public key associated with the multisig
+                transaction in a payment channel.
 
         Returns:
             signed_tx (two1.lib.bitcoin.txn.Transaction): an object that
@@ -112,14 +96,11 @@ class Two1WalletWrapper(WalletWrapperBase):
         try:
             # Get the public keys associated with this transaction
             redeem_script = get_redeem_script(tx_from_user)
-            cust_keys, merch_keys = get_tx_public_keys(tx_from_user)
 
             # Sign the first (and hopefully only) input in the transaction
-
-            private_key = self._wallet.get_private_for_public(merch_keys)
+            private_key = self._wallet.get_private_for_public(merch_key)
             tx_from_user.sign_input(
-                0, Transaction.SIG_HASH_ALL, private_key, redeem_script
-            )
+                0, Transaction.SIG_HASH_ALL, private_key, redeem_script)
         except:
             # Catch the case where we can't sign the transaction
             raise NoMerchantPublicKeyError('No merchant public key to sign.')
@@ -127,6 +108,13 @@ class Two1WalletWrapper(WalletWrapperBase):
         # Return a Transaction containing the fully-signed transaction.
         return tx_from_user
 
+    def get_merchant_key_from_keys(self, pubkeys):
+        """Return which key from a list of keys belongs to the merchant."""
+        for pubkey in pubkeys:
+            public_key = PublicKey.from_bytes(pubkey)
+            private_key = self._wallet.get_private_for_public(public_key)
+            if private_key is not None:
+                return public_key
 
 ###############################################################################
 
@@ -148,8 +136,7 @@ class MockTwo1Wallet:
         if public_key.to_hex() == self._private_key.public_key.to_hex():
             return self._private_key
         else:
-            raise NoMerchantPublicKeyError(
-                'Mock merchant wallet does not own that public key.')
+            return None
 
     def create_deposit_tx(self, hash160):
         """Return a mocked deposit transaction.

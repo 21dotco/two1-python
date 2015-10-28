@@ -12,6 +12,7 @@ from two1.lib.bitserv.models import DatabaseSQLite3
 TEST_DEP_AMOUNT = 100000
 TEST_PMT_AMOUNT = 5000
 TEST_FEE_AMOUNT = 10000
+TEST_EXPIRY = 86400
 cust_wallet = MockTwo1Wallet()
 merch_wallet = MockTwo1Wallet()
 server = PaymentServer(merch_wallet, testnet=True)
@@ -22,7 +23,7 @@ def _create_client_txs():
     """Mock client transactions for opening a channel."""
     # Collect public keys
     deposit = TEST_DEP_AMOUNT
-    expiration_time = int(time.time() + 86400)
+    expiration_time = int(time.time() + TEST_EXPIRY)
     customer_public_key = cust_wallet.get_payout_public_key()
     merchant_public_key = merch_wallet.get_payout_public_key()
 

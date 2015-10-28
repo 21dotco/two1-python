@@ -164,15 +164,13 @@ class PaymentChannel(PaymentBase):
                 PaymentChannel.http_402_micro_server: kwargs['micro_server']}
 
     def redeem_payment(self, request_headers, payment_headers):
-        """Validate the transaction and broadcast it to the blockchain."""
+        """Validate the micropayment and redeem it."""
         txid = request_headers[PaymentChannel.http_payment_token]
         validated = False
         try:
             # Redeem the transaction in its payment channel
             paid_amount = int(self._processor.server.redeem(txid))
-            print(paid_amount)
             req_amount = int(payment_headers[PaymentChannel.http_402_price])
-            print(req_amount)
             # Verify the amount of the payment against the resource price
             if paid_amount == req_amount:
                 validated = True
