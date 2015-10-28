@@ -30,6 +30,14 @@ class DaemonNotRunningError(WalletError):
     pass
 
 
+class WalletNotLoadedError(WalletError):
+    pass
+
+
+class WalletLockedError(WalletError):
+    pass
+
+
 class UndefinedMethodError(WalletError):
     pass
 
