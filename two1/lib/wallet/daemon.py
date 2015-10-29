@@ -13,6 +13,7 @@ from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
 from two1.lib.wallet.exceptions import AccountCreationError
+from two1.lib.wallet.exceptions import DaemonRunningError
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.exceptions import WalletLockedError
 from two1.lib.wallet.exceptions import WalletNotLoadedError
@@ -729,10 +730,14 @@ def main(ctx, wallet_path, blockchain_data_provider,
     sys.exit(0)
 
 
-rpc_server = UnixSocketJSONRPCServer(dispatcher_methods=methods,
-                                     client_lock=client_lock,
-                                     request_cb=track_connections_cb,
-                                     logger=logger)
+try:
+    rpc_server = UnixSocketJSONRPCServer(dispatcher_methods=methods,
+                                         client_lock=client_lock,
+                                         request_cb=track_connections_cb,
+                                         logger=logger)
+except DaemonRunningError as e:
+    click.echo(str(e))
+    sys.exit(-1)
 
 if __name__ == "__main__":
     main()
