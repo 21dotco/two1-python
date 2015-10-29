@@ -1,5 +1,5 @@
+import getpass
 import json
-import logging
 import socket
 import socketserver
 
@@ -16,7 +16,7 @@ from two1.lib.wallet.exceptions import DaemonNotRunningError
 class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                               socketserver.UnixStreamServer):
     TEMP_DIR = Path(tempfile.gettempdir())
-    SOCKET_FILE_NAME = TEMP_DIR.joinpath("walletd.sock")
+    SOCKET_FILE_NAME = TEMP_DIR.joinpath("walletd.%s.sock" % getpass.getuser())
 
     class JSONRPCHandler(socketserver.BaseRequestHandler):
         """ The RequestHandler class for our server.
