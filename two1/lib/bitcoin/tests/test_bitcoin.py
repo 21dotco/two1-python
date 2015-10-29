@@ -153,6 +153,13 @@ def test_txn():
     assert tx.output_index_for_address(output_address) == 0
     assert not tx.output_index_for_address("1CmzK6oqWMwdyo4J7f2vkQTd6uu1RwtERP")
 
+    addrs = tx.get_addresses()
+    assert len(addrs['inputs']) == 1
+    assert len(addrs['outputs']) == 1
+
+    assert addrs['inputs'] == [["1NKxQnbtKDdL6BY1UaKdrzCxQHfn3TQnqZ"]]
+    assert addrs['outputs'] == [[output_address]]
+
     txn_str = "0100000002cb246d110b6087cd3b5e3d3b7a74505ea995721208ddfc15b6b3b718271e0b41010000006b48304502201f2cf747f9f8e3f770bef848e6787c9fca31e3086c390e505c1339936a15a78f022100a9e5f761162b8a4387c4009ce9469e92302fda68afe85371181b6e13b84f052d01210339e1274cd66db3dbe23e4def7ae9eb81644c15347cf0b39c741fb947c8ef1f12ffffffffb828405fca4f578073fe02bb00e999407bbaa3f5556f4c3571fd5fef28e47de8010000006a47304402206b7a8851fb2284201f31854bc857a8e1a1c4d5dbd19efe76d89d2c02083ff397022029a231c2750005b5ec4c437a8fa7163eaffe02e5fb51d9b8bb5edc5bb88040720121036744acff73b223a6f04190b60a980f8de1ed0271bba92144850e90c1af489fb3ffffffff0232530000000000001976a9146037aac7480f0fa0c7740560a7bf2f37ec17597988acb0ad01000000000017a914ef5a22f491632b2f18c59352dd64fa4ec346a8118700000000"
 
     tx = Transaction.from_hex(txn_str)
@@ -162,3 +169,12 @@ def test_txn():
 
     output_address = "3PWbQBs5YDbmFCe5RdDjzqApJxs25Apvnd"
     assert tx.output_index_for_address(output_address) == 1
+
+    addrs = tx.get_addresses()
+    assert len(addrs['inputs']) == 2
+    assert len(addrs['outputs']) == 2
+
+    assert addrs['inputs'] == [["16R5HjRwvsd5NdriQW6bBJsCFrAdqhPC1g"],
+                               ["18HMSYbh3PbXfxL6f6Cy9FjCK7AC4tB2ZX"]]
+    assert addrs['outputs'] == [["19mkZEZinQ77SrXbzxd5QJksikQFmfUNfo"],
+                                ["3PWbQBs5YDbmFCe5RdDjzqApJxs25Apvnd"]]

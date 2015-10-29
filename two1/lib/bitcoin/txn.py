@@ -60,6 +60,17 @@ class TransactionInput(object):
         self.script = script
         self.sequence_num = sequence_num
 
+    def get_addresses(self, testnet=False):
+        """ Returns all addresses associated with the script in this input.
+
+        Args:
+            testnet (bool): True if the transaction is a testnet transaction.
+
+        Returns:
+            list (str): A list of all addresses found in the script.
+        """
+        return self.script.get_addresses(testnet)
+
     def __str__(self):
         """ Returns a human readable formatting of this input.
 
@@ -179,6 +190,17 @@ class TransactionOutput(object):
     def __init__(self, value, script):
         self.value = value
         self.script = script
+
+    def get_addresses(self, testnet=False):
+        """ Returns all addresses associated with the script in this output.
+
+        Args:
+            testnet (bool): True if the transaction is a testnet transaction.
+
+        Returns:
+            list (str): A list of all addresses found in the script.
+        """
+        return self.script.get_addresses(testnet)
 
     def __str__(self):
         """ Returns a human readable formatting of this output.
@@ -824,3 +846,25 @@ class Transaction(object):
             str: Hex-encoded serialization.
         """
         return bytes_to_str(bytes(self))
+
+    def get_addresses(self, testnet=False):
+        """ Returns all addresses associated with this transaction.
+
+        Args:
+            testnet (bool): True if the transaction is a testnet transaction.
+
+        Returns:
+            dict: A dict containing the following key/value pairs:
+                'inputs': list of lists of addresses, one per input
+                'outputs': list of lists of addresses, one per output
+        """
+        input_addresses = []
+        output_addresses = []
+        for i in self.inputs:
+            input_addresses.append(i.get_addresses(testnet))
+
+        for o in self.outputs:
+            output_addresses.append(o.get_addresses(testnet))
+
+        return dict(inputs=input_addresses,
+                    outputs=output_addresses)
