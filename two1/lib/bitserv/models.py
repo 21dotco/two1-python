@@ -31,16 +31,16 @@ class ChannelDatabase:
     def __init__(self):
         pass
 
-    def create(self, refund_tx):
+    def create(self, refund_tx, merch_pubkey):
         raise NotImplementedError()
 
     def lookup(self, deposit_txid):
         raise NotImplementedError()
 
-    def update_deposit(self, deposit_txid, deposit_tx):
+    def update_deposit(self, deposit_txid, deposit_tx, amount):
         raise NotImplementedError()
 
-    def update_payment(self, deposit_txid, payment_tx):
+    def update_payment(self, deposit_txid, payment_tx, pmt_amt):
         raise NotImplementedError()
 
     def delete(self, deposit_txid):
@@ -65,7 +65,95 @@ class PaymentDatabase:
 ##############################################################################
 
 
+class DatabaseDjango:
+
+    """Payment channel data bindings for django models."""
+
+    def __init__(self, Channel, Payment):
+        self.Channel = ChannelDjango(Channel)
+        self.Payment = PaymentDjango(Payment)
+
+
+class ChannelDjango(ChannelDatabase):
+
+    def __init__(self, Channel):
+        self.Channel = Channel
+
+    def create(self, refund_tx, merch_pubkey):
+        """Create a payment channel entry."""
+        deposit_txid = str(refund_tx.inputs[0].outpoint)
+        state = 'opening'
+        now = time.time()
+        expiry = refund_tx.lock_time
+        mp = codecs.encode(merch_pubkey.compressed_bytes, 'hex_codec').decode()
+        self.Channel.create(deposit_txid=deposit_txid, state=state,
+                            refund_tx=refund_tx.to_hex(), merchant_pubkey=mp,
+                            expires_at=expiry)
+        return True
+
+    def lookup(self, deposit_txid):
+        """Look up a payment channel entry by deposit txid."""
+        rv = self.Channel.objects.get(deposit_txid=deposit_txid)
+        deposit_tx = Transaction.from_hex(rv.deposit_tx) if rv.deposit_tx else None
+        payment_tx = Transaction.from_hex(rv.payment_tx) if rv.payment_tx else None
+        refund_tx = Transaction.from_hex(rv.refund_tx) if rv.refund_tx else None
+        return {'deposit_txid': rv.deposit_txid, 'state': rv.state,
+                'deposit_tx': deposit_tx, 'payment_tx': payment_tx,
+                'refund_tx': refund_tx, 'merchant_pubkey': rv.merchant_pubkey,
+                'created_at': rv.created_at, 'expires_at': rv.expires_at,
+                'amount': rv.amount, 'last_payment_amount': rv.last_payment_amount}
+
+    def update_deposit(self, deposit_txid, deposit_tx, amount):
+        """Update a payment channel with the deposit transaction."""
+        # Make sure there isn't already a deposit in this channel
+        rv = self.Channel.objects.get(deposit_txid=deposit_txid)
+        if rv.deposit is not None:
+            raise DuplicateRequestError()
+        # Update the channel with the new deposit
+        rv.update(deposit_tx=deposit_tx.to_hex(), amount=amount)
+        return True
+
+    def update_payment(self, deposit_txid, payment_tx, pmt_amt):
+        """Update a payment channel with a new payment transaction."""
+        self.Channel.objects.get(deposit_txid=deposit_txid).update(
+            payment_tx=payment_tx, last_payment_amount=pmt_amt)
+        return True
+
+    def update_state(self, deposit_txid, new_state):
+        """Update payment channel state."""
+        self.Channel.objects.get(deposit_txid=deposit_txid).update(state=new_state)
+        return True
+
+
+class PaymentDjango(ChannelDatabase):
+
+    def __init__(self, Payment):
+        self.Payment = Payment
+
+    def create(self, deposit_txid, payment_tx, amount):
+        """Create a payment entry."""
+        self.Payment.create(payment_txid=payment_txid, amount=amount,
+                            payment_tx=payment_tx.to_hex(),
+                            deposit_txid=deposit_txid)
+        return True
+
+    def lookup(self, payment_txid):
+        """Look up a payment entry by deposit txid."""
+        rv = self.Payment.objects.get(payment_txid=payment_txid)
+        return {'payment_txid': rv.payment_txid,
+                'payment_tx': Transaction.from_hex(rv.payment_tx),
+                'amount': rv.amount, 'is_redeemed': rv.is_redeemed,
+                'deposit_txid': rv.deposit_txid}
+
+    def redeem(self, payment_txid):
+        """Update payment entry to be redeemed."""
+        self.Payment.objects.get(payment_txid=txid).update(is_redeemed=True)
+        return True
+
+
 class DatabaseSQLite3:
+
+    """Default payment channel data bindings when no data service is provided."""
 
     def __init__(self, db='payment.sqlite3'):
         self.connection = sqlite3.connect(db, check_same_thread=False)

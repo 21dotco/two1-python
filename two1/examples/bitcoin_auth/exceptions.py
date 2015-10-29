@@ -20,9 +20,9 @@ def payment_required_exception_handler(exc, context):
             response["Bitcoin-Address"] = \
                 settings.BITSERV_DEFAULT_PAYMENT_ADDRESS
             response["Bitcoin-Micropayment-Server"] = \
-                context['request'].build_absolute_uri(
-                    settings.DEFAULT_PAYMENT_CHANNEL_PATH
-                )
+                context["request"]._request.scheme + "://" + \
+                context["request"]._request.get_host() + \
+                settings.DEFAULT_PAYMENT_CHANNEL_PATH
             response["Price"] = \
                 get_price_for_request(
                     context['request']

@@ -17,18 +17,21 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 
+from two1.lib.wallet import Wallet
+from two1.lib.bitserv import PaymentServer, DatabaseDjango
 from two1.lib.blockchain.exceptions import DataProviderError
-from two1.examples.payment.paymentserver import (
-    PaymentServer, PaymentServerError
-)
 from two1.examples.bitcoin_auth.helpers.bitcoin_auth_provider_helper import (
     BitcoinAuthProvider
 )
 
-from .models import BitcoinToken
+from .models import BitcoinToken, PaymentChannel, PaymentChannelSpend
 from .pricing import get_price_for_request
 from .exceptions import PaymentRequiredException
 from .exceptions import ServiceUnavailable
+
+wallet = Wallet()
+payment_server = PaymentServer(
+    wallet, DatabaseDjango(PaymentChannel, PaymentChannelSpend))
 
 
 class BaseBitcoinAuthentication(BaseAuthentication):
@@ -295,7 +298,7 @@ class BitTransferAuthentication(BaseAuthentication):
             return False
 
 
-class PaymentChannelAuthentication(BaseBitcoinAuthentication):
+class PaymentServerAuthentication(BaseBitcoinAuthentication):
 
     """Authenticates a payment within a payment channel.
 
@@ -342,7 +345,7 @@ class PaymentChannelAuthentication(BaseBitcoinAuthentication):
 
         try:
             # Attempt to redeem the transaction in its payment channel
-            paid_amount = int(PaymentChannel.redeem(txid))
+            paid_amount = int(payment_server.redeem(txid))
             # Verify the amount of the payment against the resource price
             if paid_amount == int(get_price_for_request(request)):
                 validation = (self.pc_user, paid_amount)
@@ -358,7 +361,7 @@ class PaymentChannelAuthentication(BaseBitcoinAuthentication):
         Raises:
             PaymentRequiredException: payment is nonexistent or insufficient
         """
-        print("started: PaymentChannelAuthentication")
+        print("started: PaymentServerAuthentication")
         txid = self.get_payment_from_header(request)
         if txid:
             return self.validate_payment(txid, request)
