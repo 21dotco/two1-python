@@ -2,9 +2,11 @@
 import time
 import codecs
 from two1.lib.bitcoin.crypto import PublicKey
+from two1.commands.config import TWO1_HOST
+from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+
 from .helpers.wallet import Two1WalletWrapper
 from .helpers.wallet import get_redeem_script
-from .helpers.blockchain import InsightBlockchain
 from .models import DatabaseSQLite3
 
 
@@ -67,9 +69,7 @@ class PaymentServer:
         if db is None:
             self._db = DatabaseSQLite3()
         if blockchain is None:
-            self._blockchain = InsightBlockchain(
-                'https://blockexplorer.com' if not testnet
-                else 'https://testnet.blockexplorer.com')
+            self._blockchain = TwentyOneProvider(TWO1_HOST)
 
     def discovery(self):
         """Return the merchant's public key.
@@ -276,7 +276,7 @@ class PaymentServer:
             raise BadTransactionError('No payments made in channel.')
 
         # Broadcast payment transaction to the blockchain
-        self._blockchain.broadcast(channel['payment_tx'].to_hex())
+        self._blockchain.broadcast_transaction(channel['payment_tx'].to_hex())
 
         # Record the broadcast in the database
         self._db.pc.update_state(deposit_txid, 'closed')
