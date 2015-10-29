@@ -27,7 +27,6 @@ DEMOS = {
     "content": {"path": "/content/wsj", "formatter": content_formatter}
 }
 
-
 @click.group()
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
 @click.option('--max-price', default=10000, help="Maximum amount to pay")
@@ -82,6 +81,9 @@ Example
 -------
 $ 21 buy search "First Bitcoin Computer"
 """
+    if query == "":
+        ctx.obj["info_only"] = True
+    
     _buy(ctx.obj["config"],
          "search",
          dict(query=query),
@@ -106,6 +108,9 @@ Example
 -------
 $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
 """
+    if message == "" and twitter_user == "@balajis":
+        ctx.obj["info_only"] = True
+    
     _buy(ctx.obj["config"],
          "social",
          dict(message=message),
@@ -129,6 +134,9 @@ Example
 -------
 $ 21 buy content http://on.wsj.com/1IV0HT5
 """
+    if url == "":
+        ctx.obj["info_only"] = True
+    
     _buy(ctx.obj["config"],
          "content",
          dict(url=url),
