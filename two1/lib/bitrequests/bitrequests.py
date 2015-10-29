@@ -271,3 +271,88 @@ class OnChainRequests(BitRequests):
         payee_address = headers.get(OnChainRequests.HTTP_BITCOIN_ADDRESS)
         return {OnChainRequests.HTTP_BITCOIN_PRICE: int(price),
                 OnChainRequests.HTTP_BITCOIN_ADDRESS: payee_address}
+
+
+class ChannelRequests(BitRequests):
+
+    """BitRequests for making channel payments."""
+
+    HTTP_BITCOIN_PRICE = 'price'
+    HTTP_BITCOIN_MICROPAYMENT_SERVER = 'bitcoin-micropayment-server'
+    HTTP_BITCOIN_MICROPAYMENT_TOKEN = 'bitcoin-micropayment-token'
+
+    DEFAULT_DEPOSIT_AMOUNT = 100000
+    DEFAULT_DURATION = 86400
+    DEFAULT_CLOSE_AMOUNT = 1000
+
+    def __init__(self, wallet, deposit_amount=DEFAULT_DEPOSIT_AMOUNT, duration=DEFAULT_DURATION, close_amount=DEFAULT_CLOSE_AMOUNT):
+        """Initialize the channel requests with a payment channel client."""
+        super().__init__()
+        from two1.lib.channels import PaymentChannelClient
+        self._channelclient = PaymentChannelClient(wallet)
+        self._deposit_amount = deposit_amount
+        self._duration = duration
+        self._close_amount = close_amount
+
+    def make_402_payment(self, response, max_price):
+        """Make a channel payment."""
+
+        # Retrieve payment headers
+        price = response.headers.get(ChannelRequests.HTTP_BITCOIN_PRICE)
+        server_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER)
+
+        # Verify that the payment method is supported
+        if price is None or server_url is None:
+            raise UnsupportedPaymentMethodError(
+                'Resource does not support channels payment method.')
+
+        # Convert string headers into correct data types
+        price = int(price)
+
+        # Verify resource cost against our budget
+        if max_price and price > max_price:
+            max_price_err = 'Resource price ({}) exceeds max price ({}).'
+            raise ValueError(max_price_err.format(price, max_price))
+
+        # Look up channel
+        channel_urls = self._channelclient.list(server_url)
+        channel_url = channel_urls[0] if channel_urls else None
+
+        if channel_url:
+            # Get channel status
+            status = self._channelclient.status(channel_url)
+
+            # Check if channel has expired
+            if status.ready and status.expired:
+                logger.debug("[ChannelRequests] Channel expired. Refreshing channel.")
+                self._channelclient.sync(channel_url)
+                channel_url = None
+
+            # Check if the channel balance is sufficient
+            elif status.ready and (status.balance - price) < self._close_amount:
+                logger.debug("[ChannelRequests] Channel balance low. Refreshing channel.")
+                self._channelclient.close(channel_url)
+                status = self._channelclient.status(channel_url)
+                logger.debug("[ChannelRequests] Channel spend txid is {}".format(status.spend_txid))
+                channel_url = None
+
+        # Open a new channel if we don't have a usable one
+        if not channel_url or not status.ready:
+            logger.debug("[ChannelRequests] Opening channel at {} with deposit {}.".format(channel_url, self._deposit_amount))
+            channel_url = self._channelclient.open(server_url, self._deposit_amount, self._duration, zeroconf=True, use_unconfirmed=True)
+            status = self._channelclient.status(channel_url)
+            logger.debug("[ChannelRequests] Channel deposit txid is {}".format(status.deposit_txid))
+
+        # Pay through the channel
+        logger.debug("[ChannelRequests] Paying channel {} with amount {}.".format(channel_url, price))
+        token = self._channelclient.pay(channel_url, price)
+
+        return {ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_TOKEN: token}
+
+    def get_402_info(self, url):
+        """Get channel payment information about the resource."""
+        response = requests.get(url)
+        price = response.headers.get(ChannelRequests.HTTP_BITCOIN_PRICE)
+        channel_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER)
+        return {ChannelRequests.HTTP_BITCOIN_PRICE: price,
+                ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER: channel_url}
