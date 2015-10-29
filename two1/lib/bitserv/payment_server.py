@@ -49,8 +49,8 @@ class PaymentServer:
     DUST_LIMIT = 546
     MIN_EXP_TIME = 4 * 3600
 
-    def __init__(self, wallet, account='default', testnet=False,
-                 blockchain=None, db=None):
+    def __init__(self, wallet, db=None, account='default', testnet=False,
+                 blockchain=None):
         """Initalize the payment server.
 
         Args:

@@ -89,23 +89,23 @@ class OnChain(PaymentBase):
     http_402_price = 'Price'
     http_402_address = 'Bitcoin-Address'
 
-    def __init__(self, db=None):
+    def __init__(self, wallet, db=None):
         """Initialize payment handling for on-chain payments."""
-        self.db = db
-        if db is None:
-            self.db = OnChainSQLite3()
+        self.db = db or OnChainSQLite3()
+        self.address = wallet.get_payout_address()
+        self.provider = TwentyOneProvider(TWO1_HOST)
 
     @property
     def payment_headers(self):
         """List of headers to use for payment processing."""
         return [OnChain.http_payment_data]
 
-    def get_402_headers(self, **kwargs):
+    def get_402_headers(self, price, **kwargs):
         """Dict of headers to return in the initial 402 response."""
-        return {OnChain.http_402_price: kwargs['price'],
-                OnChain.http_402_address: kwargs['address']}
+        return {OnChain.http_402_price: price,
+                OnChain.http_402_address: kwargs.get('address', self.address)}
 
-    def redeem_payment(self, request_headers, payment_headers):
+    def redeem_payment(self, price, request_headers, **kwargs):
         """Validate the transaction and broadcast it to the blockchain."""
         raw_tx = request_headers[OnChain.http_payment_data]
         print('Receieved transaction: {}'.format(raw_tx))
@@ -114,26 +114,23 @@ class OnChain(PaymentBase):
         except:
             raise InvalidPaymentParameterError('Error: Invalid tx hex.')
 
-        resource_price = payment_headers[OnChain.http_402_price]
-
         # Find the output with the merchant's address
-        merchant_address = payment_headers[OnChain.http_402_address]
-        payment_index = payment_tx.output_index_for_address(merchant_address)
+        payment_index = payment_tx.output_index_for_address(kwargs.get('address', self.address))
         if payment_index is None:
             raise InvalidPaymentParameterError('Error: Not paid to merchant.')
 
         # Verify that the payment is made for the correct amount
-        if payment_tx.outputs[payment_index].value != resource_price:
+        if payment_tx.outputs[payment_index].value != price:
             raise InsufficientPaymentError('Error: Incorrect payment amount.')
 
         # Store and verify that we haven't seen this payment before
-        txid, new = self.db.get_or_create(str(payment_tx.hash), resource_price)
+        txid, new = self.db.get_or_create(str(payment_tx.hash), price)
         if not new:
             raise DuplicatePaymentError('Error: Payment already used.')
 
         # Broadcast payment
         try:
-            txid = TwentyOneProvider(TWO1_HOST).broadcast_transaction(raw_tx)
+            txid = self.provider.broadcast_transaction(raw_tx)
             print('Broadcasted: ' + txid)
         except Exception as e:
             raise TransactionBroadcastError(str(e))
@@ -149,30 +146,30 @@ class PaymentChannel(PaymentBase):
     http_402_price = 'Price'
     http_402_micro_server = 'Bitcoin-Micropayment-Server'
 
-    def __init__(self, app, processor, db=None):
+    def __init__(self, server, endpoint_path):
         """Initialize payment handling for on-chain payments."""
-        self._processor = processor(app, db)
+        self.server = server
+        self.endpoint_path = endpoint_path
 
     @property
     def payment_headers(self):
         """List of headers to use for payment processing."""
         return [PaymentChannel.http_payment_token]
 
-    def get_402_headers(self, **kwargs):
+    def get_402_headers(self, price, **kwargs):
         """Dict of headers to return in the initial 402 response."""
-        return {PaymentChannel.http_402_price: kwargs['price'],
-                PaymentChannel.http_402_micro_server: kwargs['micro_server']}
+        return {PaymentChannel.http_402_price: price,
+                PaymentChannel.http_402_micro_server: kwargs['server_url'] + self.endpoint_path}
 
-    def redeem_payment(self, request_headers, payment_headers):
+    def redeem_payment(self, price, request_headers, **kwargs):
         """Validate the micropayment and redeem it."""
         txid = request_headers[PaymentChannel.http_payment_token]
         validated = False
         try:
             # Redeem the transaction in its payment channel
-            paid_amount = int(self._processor.server.redeem(txid))
-            req_amount = int(payment_headers[PaymentChannel.http_402_price])
+            paid_amount = int(self.server.redeem(txid))
             # Verify the amount of the payment against the resource price
-            if paid_amount == req_amount:
+            if paid_amount == int(price):
                 validated = True
         except Exception as e:
             raise e
