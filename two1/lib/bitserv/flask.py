@@ -9,7 +9,7 @@ from two1.lib.wallet import Wallet
 from two1.lib.bitcoin import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
 
-from .payment_methods import OnChain, PaymentChannel
+from .payment_methods import OnChain, PaymentChannel, BitTransfer
 from .payment_server import PaymentServer
 
 
@@ -42,7 +42,8 @@ class Payment:
         if allowed_methods is None:
             self.allowed_methods = [
                 PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet))),
-                OnChain(wallet)]
+                OnChain(wallet),
+                BitTransfer(wallet)]
 
     def required(self, price, **kwargs):
         """API route decorator to request payment for a resource.
