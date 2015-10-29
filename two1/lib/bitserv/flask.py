@@ -1,4 +1,5 @@
 """Flask bitserv payment library for selling 402 API endpoints."""
+from urllib.parse import urlparse
 from functools import wraps
 from flask import jsonify, request
 from flask.views import MethodView
@@ -32,20 +33,18 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, db=None, default_price=None, default_address=None,
-                 default_micro_server='payment'):
+    def __init__(self, app, wallet, allowed_methods=None):
         """Configure bitserv settings.
 
         Args:
             app (flask.Flask): a flask app to wrap payment handling around.
         """
-        self.default_price = default_price
-        self.default_address = default_address
-        self.default_micro_server = default_micro_server
-        self.allowed_methods = [
-            PaymentChannel(app, FlaskProcessor, db), OnChain(db)]
+        if allowed_methods is None:
+            self.allowed_methods = [
+                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet))),
+                OnChain(wallet)]
 
-    def required(self, price=None, address=None, micro_server=None):
+    def required(self, price, **kwargs):
         """API route decorator to request payment for a resource.
 
         This function stores the resource price in a closure. It will verify
@@ -61,25 +60,28 @@ class Payment:
         """
         def decorator(fn):
             @wraps(fn)
-            def _fn(*args, **kwargs):
-                # Get headers for initial 402 response
-                payment_headers = {}
-                micro_server_path = (micro_server or self.default_micro_server)
-                for method in self.allowed_methods:
-                    payment_headers.update(method.get_402_headers(
-                        price=price or self.default_price,
-                        micro_server=request.url_root + micro_server_path,
-                        address=address or self.default_address))
+            def _fn(*fn_args, **fn_kwargs):
+                # Calculate resource cost
+                nonlocal price
+                if callable(price):
+                    price = price(request)
+                # Need better way to pass server url to payment methods (FIXME)
+                url = urlparse(request.url_root)
+                kwargs.update({'server_url': url.scheme + '://' + url.netloc})
 
-                # Continue to the API view if payment is valid
-                if self.is_valid_payment(request.headers, payment_headers):
-                    return fn(*args, **kwargs)
+                # Continue to the API view if payment is valid or price is 0
+                if price == 0 or self.is_valid_payment(price, request.headers, **kwargs):
+                    return fn(*fn_args, **fn_kwargs)
                 else:
+                    # Get headers for initial 402 response
+                    payment_headers = {}
+                    for method in self.allowed_methods:
+                        payment_headers.update(method.get_402_headers(price, **kwargs))
                     raise PaymentRequiredException(payment_headers)
             return _fn
         return decorator
 
-    def is_valid_payment(self, request_headers, payment_headers):
+    def is_valid_payment(self, price, request_headers, **kwargs):
         """Validate the payment information received in the request headers.
 
         Args:
@@ -90,7 +92,7 @@ class Payment:
         for method in self.allowed_methods:
             if method.should_redeem(request_headers):
                 try:
-                    v = method.redeem_payment(request_headers, payment_headers)
+                    v = method.redeem_payment(price, request_headers, **kwargs)
                 except Exception as e:
                     print(str(e))  # TODO better logging for errors
                     raise BadRequest(str(e))
@@ -98,18 +100,15 @@ class Payment:
         return False
 
 
-class FlaskProcessor:
-
-    def __init__(self, app, db=None):
-        """Initialize the Flask views with RESTful access to the Channel."""
-        self.wallet = Wallet()
-        self.server = PaymentServer(self.wallet, db)
-        pmt_view = Channel.as_view('channel', self.server)
-        app.add_url_rule('/payment', defaults={'deposit_txid': None},
-                         view_func=pmt_view, methods=('GET',))
-        app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
-        app.add_url_rule('/payment/<deposit_txid>', view_func=pmt_view,
-                         methods=('GET', 'PUT', 'DELETE'))
+def flask_channel_adapter(app, server):
+    """Initialize the Flask views with RESTful access to the Channel."""
+    pmt_view = Channel.as_view('channel', server)
+    app.add_url_rule('/payment', defaults={'deposit_txid': None},
+                     view_func=pmt_view, methods=('GET',))
+    app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
+    app.add_url_rule('/payment/<deposit_txid>', view_func=pmt_view,
+                     methods=('GET', 'PUT', 'DELETE'))
+    return server, '/payment'
 
 
 class Channel(MethodView):
@@ -179,7 +178,7 @@ class Channel(MethodView):
             else:
                 raise KeyError('No deposit or payment received.')
         except Exception as e:
-            return BadRequest(str(e))
+            raise BadRequest(str(e))
 
     def delete(self, deposit_txid):
         """Close a payment channel.
@@ -194,4 +193,4 @@ class Channel(MethodView):
             payment_txid = self.server.close(deposit_txid)
             return jsonify({'payment_txid': payment_txid})
         except Exception as e:
-            return BadRequest(str(e))
+            raise BadRequest(str(e))
