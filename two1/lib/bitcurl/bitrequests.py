@@ -23,6 +23,7 @@ Flow from clients perspective (user 1):
             - server updates u2 & u1's balance to reflect the payment price.
             - server sends 200 OK to u2, who then sends data to u1 in 200
 """
+import time
 import json
 import requests
 
@@ -155,10 +156,13 @@ class BitTransferRequests(BitRequests):
             'payee_address': payee_address,
             'payee_username': payee_username,
             'amount': price,
+            'timestamp' : time.time(),
             'description': response.url
         })
         signature = self.machine_auth.sign_message(bittransfer)
-
+        print("signature here: {} bittransfer: {}".format(
+            signature, bittransfer
+        ))
         return {
             'Bitcoin-Transfer': bittransfer,
             'Authorization': signature
