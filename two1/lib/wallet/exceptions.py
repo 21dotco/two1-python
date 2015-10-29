@@ -26,6 +26,9 @@ class PassphraseError(WalletError):
     pass
 
 
+class DaemonRunningError(WalletError):
+    pass
+
 class DaemonNotRunningError(WalletError):
     pass
 

@@ -10,6 +10,7 @@ from jsonrpcserver.response import ErrorResponse
 from jsonrpcserver.status import HTTP_STATUS_CODES
 from jsonrpcclient.server import Server
 from path import Path
+from two1.lib.wallet.exceptions import DaemonRunningError
 from two1.lib.wallet.exceptions import DaemonNotRunningError
 
 
@@ -67,7 +68,13 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
     def __init__(self, dispatcher_methods, client_lock,
                  request_cb=None, logger=None):
         if self.SOCKET_FILE_NAME.exists():
-            self.SOCKET_FILE_NAME.unlink()
+            # Try connecting to it
+            try:
+                sock = socket.socket(family=socket.AF_UNIX)
+                sock.connect(UnixSocketJSONRPCServer.SOCKET_FILE_NAME)
+                raise DaemonRunningError("A daemon is already running.")
+            except ConnectionRefusedError:
+                self.SOCKET_FILE_NAME.unlink()
 
         self._methods = dispatcher_methods
         self._client_lock = client_lock
