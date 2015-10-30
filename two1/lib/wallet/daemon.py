@@ -6,6 +6,7 @@ import threading
 import time
 
 import click
+import json
 from jsonrpcserver import Methods
 from jsonrpcserver.exceptions import ServerError
 from path import Path
@@ -35,7 +36,6 @@ wallet = dict(obj=None,
                                last_update=time.time(),
                                last_connection=time.time(),
                                in_need=False))
-last_exception = None
 wallet_dict_lock = threading.Lock()
 client_lock = threading.Lock()
 
@@ -78,11 +78,10 @@ def sig_handler(sig_num, stack_frame):
 
 
 def _handle_exception(e):
-    global last_exception
-
-    last_exception = e
-    logger.debug("exception: %s" % str(last_exception))
-    raise ServerError(str(last_exception))
+    logger.debug("exception: %s" % str(e))
+    data = dict(type=e.__class__.__name__,
+                message=str(e))
+    raise ServerError(data=json.dumps(data))
 
 
 def do_update(block_on_acquire=True):
@@ -182,14 +181,6 @@ def check_wallet_loaded():
     if wallet['locked']:
         _handle_exception(WalletLockedError(
             "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."))
-
-
-@methods.add
-def exception_info():
-    """ RPC method to get info about the last exception.
-    """
-    return {'message': str(last_exception),
-            'type': last_exception.__class__.__name__}
 
 
 @methods.add
