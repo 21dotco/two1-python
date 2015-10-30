@@ -2,6 +2,7 @@ import decimal
 import getpass
 import logging
 import logging.handlers
+import os
 import traceback
 
 import click
@@ -206,6 +207,11 @@ def main(ctx, wallet_path, passphrase,
 def startdaemon(ctx):
     """ Starts the daemon
     """
+    # Check to sere if we're in a venv and don't do anything if we are
+    if os.environ.get("VIRTUAL_ENV"):
+        click.echo("Not starting daemon while inside a virtualenv. It can be manually started by doing 'walletd' and backgrounding the process.")
+        return
+
     d = get_daemonizer()
     if d is None:
         return
@@ -236,6 +242,11 @@ def startdaemon(ctx):
 def stopdaemon(ctx):
     """ Stops the daemon
     """
+    # Check to sere if we're in a venv and don't do anything if we are
+    if os.environ.get("VIRTUAL_ENV"):
+        click.echo("Not stopping any daemons from within a virtualenv.")
+        return
+
     d = get_daemonizer()
     if d is None:
         return
