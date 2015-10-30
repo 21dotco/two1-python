@@ -93,9 +93,10 @@ def create_username(config, username=None):
 
     while True:
         if username == "" or username is None:
-            username = click.prompt(UxString.enter_username, type=EmailAddress())
-            click.echo(UxString.creating_account % username)
-        r = rest_client.account_post(username, bitcoin_payout_address)
+            email = click.prompt(UxString.enter_username, type=EmailAddress())
+            click.echo(UxString.creating_account % email)
+            rest_client.email = email
+        r = rest_client.account_post(bitcoin_payout_address)
         if r.status_code == 200:
             break
         elif r.status_code == 201:
