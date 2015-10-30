@@ -164,7 +164,7 @@ def load_wallet(wallet_path, data_provider, passphrase):
         raise WalletNotLoadedError("Wallet loading failed: %s" % e)
 
 
-def check_wallet_loaded():
+def _check_wallet_loaded():
     """ Raises an error if the wallet is locked or not loaded.
     """
     logger.debug("wallet obj = %r, wallet locked = %r" % (wallet['obj'],
@@ -183,52 +183,62 @@ def check_wallet_loaded():
             "Wallet is locked. Use the 'unlock' command with the passphrase as an arg."))
 
 
-@methods.add
+def daemon_method(f):
+    """ Decorator function to create a daemon method.
+
+        This function also checks if the wallet is loaded and handles
+        exceptions.
+
+    Args:
+        f (function): The function to make a daemon method
+
+    Returns:
+        function: A wrapper function
+    """
+    def wrapper(*args, **kwargs):
+        _check_wallet_loaded()
+        logger.debug("%s(%r, %r)" % (f.__name__, args, kwargs))
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e)
+
+    methods.add(wrapper, f.__name__)
+
+    return wrapper
+
+
+@daemon_method
 def testnet():
     """ RPC method to determine whether the wallet is a testnet wallet.
 
     Returns:
         bool: True if the wallet is a testnet wallet, False otherwise.
     """
-    check_wallet_loaded()
-    logger.debug("testnet()")
-    try:
-        return wallet['obj'].testnet
-    except Exception as e:
-        _handle_exception(e)
+    return wallet['obj'].testnet
 
 
-@methods.add
+@daemon_method
 def confirmed_balance(account=None):
     """ RPC method to get the current confirmed balance.
 
     Returns:
         int: Current confirmed balance in satoshis.
     """
-    check_wallet_loaded()
-    logger.debug("confirmed_balance(%r)" % (account))
-    try:
-        return wallet['obj'].confirmed_balance(account)
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].confirmed_balance(account)
 
 
-@methods.add
+@daemon_method
 def unconfirmed_balance(account=None):
     """ RPC method to get the current unconfirmed balance.
 
     Returns:
         int: Current unconfirmed balance in satoshis.
     """
-    check_wallet_loaded()
-    logger.debug("unconfirmed_balance(%r)" % (account))
-    try:
-        return wallet['obj'].unconfirmed_balance(account)
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].unconfirmed_balance(account)
 
 
-@methods.add
+@daemon_method
 def get_private_for_public(public_key):
     """ RPC method to get the private key for the given public_key, if it is
         a part of this wallet.
@@ -240,9 +250,7 @@ def get_private_for_public(public_key):
         str: A Base58Check encoded serialization of the private key object
            or None.
     """
-    check_wallet_loaded()
     w = wallet['obj']
-    logger.debug("get_private_for_public(xx)")
     try:
         pub_key = HDPublicKey.from_b58check(public_key)
     except ValueError:
@@ -252,37 +260,27 @@ def get_private_for_public(public_key):
     return priv_key.to_b58check() if priv_key is not None else None
 
 
-@methods.add
+@daemon_method
 def current_address():
     """ RPC method to get the current payout address.
 
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_wallet_loaded()
-    logger.debug("current_address()")
-    try:
-        return wallet['obj'].current_address
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].current_address
 
 
-@methods.add
+@daemon_method
 def get_change_address(account=None):
     """ RPC method to get the current change address.
 
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_wallet_loaded()
-    logger.debug("get_change_address(%r)" % (account))
-    try:
-        return wallet['obj'].get_change_address(account)
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].get_change_address(account)
 
 
-@methods.add
+@daemon_method
 def get_payout_address(account=None):
     """ RPC method to get the current payout address.
 
@@ -291,45 +289,30 @@ def get_payout_address(account=None):
     Returns:
         str: Base58Check encoded bitcoin address.
     """
-    check_wallet_loaded()
-    logger.debug("get_payout_address(%r)" % (account))
-    try:
-        return wallet['obj'].get_payout_address(account)
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].get_payout_address(account)
 
 
-@methods.add
+@daemon_method
 def get_change_public_key(account=None):
     """ RPC method to get the current change public key.
 
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
-    check_wallet_loaded()
-    logger.debug("get_change_public_key(%r)" % (account))
-    try:
-        return wallet['obj'].get_change_public_key(account).to_b58check()
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].get_change_public_key(account).to_b58check()
 
 
-@methods.add
+@daemon_method
 def get_payout_public_key(account=None):
     """ RPC method to get the current payout public key.
 
     Returns:
         str: A Base58Check encoded serialization of the public key
     """
-    check_wallet_loaded()
-    logger.debug("get_payout_public_key(%r)" % (account))
-    try:
-        return wallet['obj'].get_payout_public_key(account).to_b58check()
-    except (ValueError, TypeError) as e:
-        _handle_exception(e)
+    return wallet['obj'].get_payout_public_key(account).to_b58check()
 
 
-@methods.add
+@daemon_method
 def sign_message(message,
                  account_name_or_index=None,
                  key_index=0):
@@ -345,18 +328,12 @@ def sign_message(message,
     Returns:
         str: A Base64-encoded string containing the signature.
     """
-    check_wallet_loaded()
-    logger.debug("sign_message(%r, %r, %d)" %
-                 (message, account_name_or_index, key_index))
-    try:
-        return wallet['obj'].sign_message(message,
-                                          account_name_or_index,
-                                          key_index)
-    except Exception as e:
-        _handle_exception(e)
+    return wallet['obj'].sign_message(message,
+                                      account_name_or_index,
+                                      key_index)
 
 
-@methods.add
+@daemon_method
 def sign_bitcoin_message(message, address):
     """ RPC method to bitcoin sign an arbitrary message
 
@@ -369,15 +346,10 @@ def sign_bitcoin_message(message, address):
         str: A Base64-encoded string containing the signature with recovery id
             embedded.
     """
-    check_wallet_loaded()
-    logger.debug("sign_bitcoin_message(%r, %s)" % (message, address))
-    try:
-        return wallet['obj'].sign_bitcoin_message(message, address)
-    except Exception as e:
-        _handle_exception(e)
+    return wallet['obj'].sign_bitcoin_message(message, address)
 
 
-@methods.add
+@daemon_method
 def verify_bitcoin_message(message, signature, address):
     """ RPC method to verify a bitcoin signed message
 
@@ -390,18 +362,12 @@ def verify_bitcoin_message(message, signature, address):
     Returns:
         bool: True if the signature verified properly, False otherwise.
     """
-    check_wallet_loaded()
-    logger.debug("verify_bitcoin_message(%s, %s, %s)" %
-                 (message, signature, address))
-    try:
-        return wallet['obj'].verify_bitcoin_message(message,
-                                                    signature,
-                                                    address)
-    except Exception as e:
-        _handle_exception(e)
+    return wallet['obj'].verify_bitcoin_message(message,
+                                                signature,
+                                                address)
 
 
-@methods.add
+@daemon_method
 def get_message_signing_public_key(account_name_or_index=None,
                                    key_index=0):
     """ RPC method to get the public key used for message signing.
@@ -415,19 +381,12 @@ def get_message_signing_public_key(account_name_or_index=None,
     Returns:
         str: Base64 representation of the public key
     """
-    check_wallet_loaded()
-    logger.debug("get_message_signing_public_key(%r, %d)" %
-                 (account_name_or_index,
-                  key_index))
-    try:
-        pub_key = wallet['obj'].get_message_signing_public_key(account_name_or_index,
-                                                               key_index)
-        return pub_key.to_base64().decode()
-    except Exception as e:
-        _handle_exception(e)
+    pub_key = wallet['obj'].get_message_signing_public_key(account_name_or_index,
+                                                           key_index)
+    return pub_key.to_base64().decode()
 
 
-@methods.add
+@daemon_method
 def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
                              fees=None, accounts=[]):
     """ RPC method to build and sign a transaction.
@@ -445,25 +404,16 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
     Returns:
         list(Transaction): A list of Transaction objects
     """
-    check_wallet_loaded()
-    logger.debug("build_signed_transaction(%r, %r, %r, %r)" %
-                 (addresses_and_amounts,
-                  use_unconfirmed,
-                  fees,
-                  accounts))
-    try:
-        txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
-                                                      use_unconfirmed,
-                                                      fees,
-                                                      accounts)
-        txns_hex = [t.to_hex() for t in txns]
-        logger.debug("txns: %r" % (txns_hex))
-        return txns_hex
-    except Exception as e:
-        _handle_exception(e)
+    txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
+                                                  use_unconfirmed,
+                                                  fees,
+                                                  accounts)
+    txns_hex = [t.to_hex() for t in txns]
+    logger.debug("txns: %r" % (txns_hex))
+    return txns_hex
 
 
-@methods.add
+@daemon_method
 def make_signed_transaction_for(address, amount,
                                 use_unconfirmed=False, fees=None,
                                 accounts=[]):
@@ -483,27 +433,17 @@ def make_signed_transaction_for(address, amount,
            and raw transactions.  e.g.: [{"txid": txid0, "txn":
            txn_hex0}, ...]
     """
-    check_wallet_loaded()
     w = wallet['obj']
-    logger.debug("make_signed_transaction_for(%s, %d, %r, %r, %r)" %
-                 (address,
-                  amount,
-                  use_unconfirmed,
-                  fees,
-                  accounts))
-    try:
-        txns = w.make_signed_transaction_for(address, amount,
-                                             use_unconfirmed,
-                                             fees,
-                                             accounts)
-        logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    txns = w.make_signed_transaction_for(address, amount,
+                                         use_unconfirmed,
+                                         fees,
+                                         accounts)
+    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
 
-        return txns
-    except Exception as e:
-        _handle_exception(e)
+    return txns
 
 
-@methods.add
+@daemon_method
 def send_to(address, amount,
             use_unconfirmed=False, fees=None,
             accounts=[]):
@@ -519,24 +459,14 @@ def send_to(address, amount,
     Returns:
         list: List of txids used to send the coins.
     """
-    check_wallet_loaded()
-    logger.debug("send_to(%s, %d, %r, %r, %r)" %
-                 (address,
-                  amount,
-                  use_unconfirmed,
-                  fees,
-                  accounts))
-    try:
-        txns = wallet['obj'].send_to(address=address,
-                                     amount=amount,
-                                     use_unconfirmed=use_unconfirmed,
-                                     fees=fees,
-                                     accounts=accounts)
-        logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    txns = wallet['obj'].send_to(address=address,
+                                 amount=amount,
+                                 use_unconfirmed=use_unconfirmed,
+                                 fees=fees,
+                                 accounts=accounts)
+    logger.debug("txns: %r" % ([t['txid'] for t in txns]))
 
-        return txns
-    except Exception as e:
-        _handle_exception(e)
+    return txns
 
 
 @methods.add
@@ -557,7 +487,7 @@ def unlock(passphrase):
     logger.info("... loading complete.")
 
 
-@methods.add
+@daemon_method
 def is_locked():
     """ RPC method to determine whether the wallet is currently locked.
 
@@ -567,7 +497,7 @@ def is_locked():
     return wallet['locked']
 
 
-@methods.add
+@daemon_method
 def wallet_path():
     """ RPC method to return the wallet path of the currently loaded wallet.
 
@@ -577,54 +507,39 @@ def wallet_path():
     return wallet['path']
 
 
-@methods.add
+@daemon_method
 def sync_wallet_file():
     """ RPC method to trigger a write to the wallet file.
     """
-    try:
-        return wallet['obj'].sync_wallet_file()
-    except Exception as e:
-        _handle_exception(e)
+    return wallet['obj'].sync_wallet_file()
 
 
-@methods.add
+@daemon_method
 def create_account(name):
     """ RPC method to create an account
     """
-    logger.debug("create_account(%r)" % (name))
-    try:
-        return wallet['obj'].create_account(name)
-    except AccountCreationError as e:
-        _handle_exception(e)
+    return wallet['obj'].create_account(name)
 
 
-@methods.add
+@daemon_method
 def account_names():
     """ RPC method to return all account names
     """
     return wallet['obj'].account_names
 
 
-@methods.add
+@daemon_method
 def addresses(accounts):
     """ RPC method to return all addresses
     """
-    logger.debug("addresses(%r)" % (accounts))
-    try:
-        return wallet['obj'].addresses(accounts)
-    except ValueError as e:
-        _handle_exception(e)
+    return wallet['obj'].addresses(accounts)
 
 
-@methods.add
+@daemon_method
 def sweep(address, accounts=[]):
     """ RPC method to sweep balance to a single address
     """
-    logger.debug("sweep(%s, %r)" % (address, accounts))
-    try:
-        return wallet['obj'].sweep(address, accounts)
-    except WalletBalanceError as e:
-        _handle_exception(e)
+    return wallet['obj'].sweep(address, accounts)
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
