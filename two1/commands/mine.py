@@ -21,8 +21,9 @@ import two1.commands.config as app_config
 
 
 @click.command()
+@click.option('--details', default=False, is_flag=True, help="Dashboard with mining details")
 @click.pass_context
-def mine(ctx):
+def mine(ctx, details):
     """Mine bitcoin at the command line.
 
 \b
@@ -38,14 +39,19 @@ $ 21 status
 \b
 Invoke again and again, limited only by speed of your CPU/mining chip.
 $ 21 mine
+
+\b
+See a mining dashboard (only works on a 21 Bitcoin Computer)
+$ 21 mine --details
 """
     config = ctx.obj['config']
-    _mine(config)
+    _mine(config, details=details)
 
 
 @capture_usage
-def _mine(config):
-    if has_bitcoinkit():
+def _mine(config, details):
+    print("--details flag on:" + details)
+    if has_bitcoinkit() and details:
         start_minerd(config)
     else:
         start_cpu_mining(config)
@@ -95,6 +101,11 @@ def start_minerd(config):
 
 
 def start_cpu_mining(config):
+    """Mine at the CPU.
+    >>> from two1.commands.config import Config
+    >>> config = Config()
+    >>> start_cpu_mining(config)
+    """
     click.secho(UxString.buy_ad, fg="magenta")
 
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
