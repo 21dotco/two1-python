@@ -26,6 +26,9 @@ Flow from clients perspective (user 1):
 import time
 import json
 import requests
+import logging
+
+logger = logging.getLogger('bitrequests')
 
 
 class BitRequestsError(Exception):
@@ -74,7 +77,7 @@ class BitRequests(object):
         """
         raise NotImplementedError()
 
-    def request(self, method, url, data=None, headers=None, max_price=None, **kwargs):
+    def request(self, method, url, max_price=None, **kwargs):
         """Make a 402 request for a resource.
 
         This is the BitRequests public method that should be used to complete a
@@ -93,26 +96,59 @@ class BitRequests(object):
                 the requested resource.
         """
         # Make the initial request for the resource
-        response = requests.request(method, url, data=data, **kwargs)
+        response = requests.request(method, url, **kwargs)
 
         # Return if we receive a status code other than 402: payment required
         if (response.status_code != requests.codes.payment_required):
             return response
 
         # Pass the response to the main method for handling payment
+        logger.debug('[BitRequests] 402 payment required: {} satoshi.'.format(
+            response.headers['price']))
         payment_headers = self.make_402_payment(response, max_price)
 
-        # Add the payment data headers to the current headers dict
-        if headers is None:
-            headers = payment_headers
+        # Add any user-provided headers to the payment headers dict
+        if 'headers' in kwargs:
+            if isinstance(kwargs['headers'], dict):
+                kwargs['headers'].update(payment_headers)
+            else:
+                raise ValueError('argument \'headers\' must be a dict.')
         else:
-            headers.update(payment_headers)
+            kwargs['headers'] = payment_headers
 
-        # Complete the response and return with a requests.response object
-        paid_response = requests.request(
-            method, url, data=data, headers=headers, **kwargs)
+        # Complete the original resource request
+        paid_response = requests.request(method, url, **kwargs)
+
+        # Log success or failure of the operation
+        if paid_response.status_code == requests.codes.ok:
+            logger.debug('[BitRequests] Successfully purchased resource.')
+        else:
+            logger.debug('[BitRequests] Could not purchase resource.')
+
+        # Add the amount that was paid as an attribute to the response object
+        setattr(paid_response, 'amount_paid', int(response.headers['price']))
 
         return paid_response
+
+    def get(self, url, max_price=None, **kwargs):
+        """Make a paid GET request for a resource."""
+        return self.request('get', url, max_price, **kwargs)
+
+    def put(self, url, max_price=None, **kwargs):
+        """Make a paid PUT request for a resource."""
+        return self.request('put', url, max_price, **kwargs)
+
+    def post(self, url, max_price=None, **kwargs):
+        """Make a paid POST request for a resource."""
+        return self.request('post', url, max_price, **kwargs)
+
+    def delete(self, url, max_price=None, **kwargs):
+        """Make a paid DELETE request for a resource."""
+        return self.request('delete', url, max_price, **kwargs)
+
+    def head(self, url, max_price=None, **kwargs):
+        """Make a paid HEAD request for a resource."""
+        return self.request('head', url, max_price, **kwargs)
 
 
 class BitTransferRequests(BitRequests):
@@ -156,13 +192,12 @@ class BitTransferRequests(BitRequests):
             'payee_address': payee_address,
             'payee_username': payee_username,
             'amount': price,
-            'timestamp' : time.time(),
+            'timestamp': time.time(),
             'description': response.url
         })
         signature = self.machine_auth.sign_message(bittransfer)
-        print("signature here: {} bittransfer: {}".format(
-            signature, bittransfer
-        ))
+        logger.debug('[BitTransferRequests] Signature: {}'.format(signature))
+        logger.debug('[BitTransferRequests] BitTransfer: {}'.format(bittransfer))
         return {
             'Bitcoin-Transfer': bittransfer,
             'Authorization': signature
@@ -215,6 +250,8 @@ class OnChainRequests(BitRequests):
         onchain_payment = self.wallet.make_signed_transaction_for(
             payee_address, price, use_unconfirmed=True)[0].get('txn')
         return_address = self.wallet.current_address
+        logger.debug('[OnChainRequests] Signed transaction: {}'.format(
+            onchain_payment))
 
         return {
             'Bitcoin-Transaction': onchain_payment,
