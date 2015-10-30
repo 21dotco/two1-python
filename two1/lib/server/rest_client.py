@@ -6,40 +6,27 @@ from collections import namedtuple
 import urllib.parse
 import datetime
 
+import requests
+
 from two1.lib.bitcoin.crypto import PrivateKey
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.commands.exceptions import ServerRequestError
 
-
-def transform_username(func):
-    """ Decorator Replaces the email characters (in the second argument of a function)
-    to \w matchable characters.
-    This is done by replacing @ and . with _AT_ and _DOT_ respectively.
-    """
-    def wrapper(*args, **kwargs):
-        assert len(args) > 1
-        email = args[1]
-        username = email.replace("@", "_AT_").replace(".", "_DOT_")
-        newargs = list(args)
-        newargs[1] = username
-        args = tuple(newargs)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
 class TwentyOneRestClient(object):
 
-    def __init__(self, server_url, machine_auth, username=None,
+    def __init__(self, server_url, machine_auth, email=None,
                  version="0"):
         self.auth = machine_auth
         self.server_url = server_url
         self.version = version
-        self.username = username.replace("@", "_AT_").replace(".", "_DOT_") if username else None
+        self.email = email
         self._session = None
 
+    @property
+    def username(self):
+        return self.email.replace("@", "_AT_").replace(".", "_DOT_") if self.email else None
+
     def _create_session(self):
-        import requests
         self._session = requests.Session()
 
     def _request(self, sign_username=None, method="GET", path="", **kwargs):
@@ -65,59 +52,52 @@ class TwentyOneRestClient(object):
         return result
 
     # POST /pool/account
-    @transform_username
-    def account_post(self, username, payout_address):
-        path = "/pool/account/%s/" % username
+    def account_post(self, payout_address):
+        path = "/pool/account/%s/" % self.username
         cb = self.auth.public_key.compressed_bytes
         body = {
             "payout_address": payout_address,
             "public_key": base64.b64encode(cb).decode(),
         }
         data = json.dumps(body)
-        ret = self._request(sign_username=username, method="POST", path=path, data=data)
+        ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
         return ret
 
     # GET /pool/work/{username}
-    @transform_username
-    def get_work(self, username):
-        path = "/pool/work/%s/" % username
-        return self._request(sign_username=username, method="GET", path=path)
+    def get_work(self):
+        path = "/pool/work/%s/" % self.username
+        return self._request(sign_username=self.username, method="GET", path=path)
 
     # POST /pool/work/{username}
-    @transform_username
-    def send_work(self, username, data):
-        path = "/pool/work/%s/" % username
+    def send_work(self, data):
+        path = "/pool/work/%s/" % self.username
         return self._request(sign_username=None, method="POST", path=path, data=data)
 
     # POST /pool/account/{username}/payoutaddress
-    @transform_username
-    def account_payout_address_post(self, username, payout_address):
-        path = "/pool/account/%s/payout_address/" % username
+    def account_payout_address_post(self, payout_address):
+        path = "/pool/account/%s/payout_address/" % self.username
         body = {
             "payout_address": payout_address,
         }
         data = json.dumps(body)
-        return self._request(sign_username=username, method="POST", path=path, data=data)
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     # GET /pool/statistics/{username}/shares/
-    @transform_username
-    def get_shares(self, username):
-        path = "/pool/statistics/%s/shares/" % username
-        return (self._request(sign_username=username,
-                             path=path).json())[username]
+    def get_shares(self):
+        path = "/pool/statistics/%s/shares/" % self.username
+        return (self._request(sign_username=self.username,
+                             path=path).json())[self.username]
 
     # GET /pool/statistics/{username}/earninglogs/
-    @transform_username
-    def get_earning_logs(self, username):
-        path = "/pool/statistics/%s/earninglogs/" % username
-        return self._request(sign_username=username,
+    def get_earning_logs(self):
+        path = "/pool/statistics/%s/earninglogs/" % self.username
+        return self._request(sign_username=self.username,
                              path=path).json()
 
     # POST /pool/{username}/earnings/?action=True
-    @transform_username
-    def flush_earnings(self, username):
-        path = "/pool/account/%s/earnings/?action=flush" % username
-        return self._request(sign_username=username, method="POST", path=path)
+    def flush_earnings(self, self.username):
+        path = "/pool/account/%s/earnings/?action=flush" % self.username
+        return self._request(sign_username=self.username, method="POST", path=path)
 
     # GET /mmm/v1/search
     def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
@@ -285,11 +265,10 @@ class TwentyOneRestClient(object):
         return self._request(False, method, path, data=data)
 
     # GET /pool/statistics/{username}/earnings/
-    @transform_username
-    def get_earnings(self, username):
-        path = "/pool/statistics/%s/earnings/" % username
-        return (self._request(sign_username=username,
-                             path=path).json())[username]
+    def get_earnings(self):
+        path = "/pool/statistics/%s/earnings/" % self.username
+        return (self._request(sign_username=self.username,
+                             path=path).json())[self.username]
 
     @staticmethod
     def params2example(parameters, url):
