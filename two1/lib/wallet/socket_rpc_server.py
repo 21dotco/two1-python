@@ -41,7 +41,7 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                         logger.debug("Dispatching %s" % (self.data))
                         response = dispatcher.dispatch(self.server._methods,
                                                        self.data)
-                        logger.debug("Responding with: %s" % response.json)
+                        logger.debug("Responding with: %s" % response.json_debug)
                         self.server._client_lock.release()
                     else:
                         # Send a time out response
@@ -58,7 +58,7 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                         logger.exception(e)
 
                 try:
-                    self.request.sendall(json.dumps(response.json).encode())
+                    self.request.sendall(json.dumps(response.json_debug).encode())
                 except BrokenPipeError:
                     break
                 except Exception as e:
