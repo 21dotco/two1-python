@@ -89,13 +89,14 @@ def create_username(config, username=None):
     # use the same key for the payout address as well.
     # this will come from the wallet
     bitcoin_payout_address = config.wallet.current_address
-    rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth)
 
     while True:
         if username == "" or username is None:
             email = click.prompt(UxString.enter_username, type=EmailAddress())
+            username = email
             click.echo(UxString.creating_account % email)
-            rest_client.email = email
+
+        rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, email)
         r = rest_client.account_post(bitcoin_payout_address)
         if r.status_code == 200:
             break
