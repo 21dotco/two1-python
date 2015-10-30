@@ -1,5 +1,6 @@
 import json
 import pytest
+import requests
 from two1.commands.config import Config
 from two1.lib.bitcurl.bitrequests import BitTransferRequests
 from two1.lib.bitcurl.bitrequests import OnChainRequests
@@ -33,6 +34,14 @@ class MockWallet:
 class MockBitRequests(BitRequests):
     def make_402_payment(self, response, max_price):
         return {'Bitcoin-Transaction': 'paid'}
+
+
+def mockrequest(*args, **kwargs):
+    mock_request = MockRequest()
+    setattr(mock_request, 'status_code', 402)
+    setattr(mock_request, 'headers', {'price': '1337'})
+    setattr(mock_request, 'response_method', args[0])
+    return mock_request
 
 
 ##############################################################################
@@ -110,3 +119,47 @@ def test_bitrequest_kwargs():
     assert res.status_code == 200
     assert res.raw.read() != b''
     assert res.headers['transfer-encoding'] == 'chunked'
+
+
+def test_bitrequest_amount(monkeypatch):
+    # Patch requests from making actual http requests
+    monkeypatch.setattr(requests, 'request', mockrequest)
+    bit_req = MockBitRequests()
+
+    # Test that the response object contains and amount paid attribute
+    res = bit_req.request('get', 'fakeurl')
+    assert res.amount_paid == 1337
+
+
+def test_bitrequest_custom_headers(monkeypatch):
+    # Patch requests from making actual http requests
+    monkeypatch.setattr(requests, 'request', mockrequest)
+    bit_req = MockBitRequests()
+
+    # Test that the request can have custom headers
+    headers = {'Content-Type': 'application/json'}
+    res = bit_req.request('get', 'fakeurl', headers=headers)
+    assert res.status_code == 402
+
+    # Test for error response when improper headers are provided
+    headers = 'bad-headers'
+    with pytest.raises(ValueError):
+        res = bit_req.request('get', 'fakeurl', headers=headers)
+
+
+def test_bitrequest_methods(monkeypatch):
+    # Patch requests from making actual http requests
+    monkeypatch.setattr(requests, 'request', mockrequest)
+    bit_req = MockBitRequests()
+
+    # Test that convenience methods are run as the correct methods
+    res = bit_req.get('fakeurl')
+    assert res.response_method == 'get'
+    res = bit_req.put('fakeurl')
+    assert res.response_method == 'put'
+    res = bit_req.post('fakeurl')
+    assert res.response_method == 'post'
+    res = bit_req.delete('fakeurl')
+    assert res.response_method == 'delete'
+    res = bit_req.head('fakeurl')
+    assert res.response_method == 'head'
