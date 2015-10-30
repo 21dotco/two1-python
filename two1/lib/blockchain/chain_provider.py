@@ -24,11 +24,13 @@ class ChainProvider(BaseProvider):
             mainnet (default)
     """
 
-    def __init__(self, api_key_id, api_key_secret, testnet=False):
+    def __init__(self, api_key_id, api_key_secret, testnet=False,
+                 connection_pool_size=0):
         self.testnet = testnet
         self.auth = (api_key_id, api_key_secret)
         self._set_url()
         self._session = None
+        self._pool_size = connection_pool_size
 
     @property
     def testnet(self):
@@ -46,6 +48,11 @@ class ChainProvider(BaseProvider):
     def _create_session(self):
         import requests
         self._session = requests.Session()
+        if self._pool_size > 0:
+            adapter = requests.adapters.HTTPAdapter(pool_connections=self._pool_size,
+                                                    pool_maxsize=self._pool_size)
+            self._session.mount('http://', adapter)
+            self._session.mount('https://', adapter)
         self._session.auth = self.auth
 
     @staticmethod
@@ -324,7 +331,6 @@ class ChainProvider(BaseProvider):
         else:
             raise TypeError(
                 "transaction must be one of: bytes, str, Transaction.")
-
 
         data = {"signed_hex": signed_hex}
         r = self._request("POST", "transactions/send", json=data)
