@@ -23,7 +23,7 @@ def _log(config, debug):
                                              config.machine_auth,
                                              config.username)
 
-    response = client.get_earning_logs(config.username)
+    response = client.get_earning_logs()
 
     logs = response["logs"]
     prints = []
