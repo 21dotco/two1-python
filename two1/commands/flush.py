@@ -28,7 +28,7 @@ def _flush(config):
 
 
 def flush_earnings(config, client):
-    response = client.flush_earnings(config.username)
+    response = client.flush_earnings()
     if response.ok:
         success_msg = UxString.flush_success.format(
             click.style("Flush to Blockchain", fg='magenta'),
