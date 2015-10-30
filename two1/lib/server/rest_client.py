@@ -17,7 +17,12 @@ def transform_username(func):
     This is done by replacing @ and . with _AT_ and _DOT_ respectively.
     """
     def wrapper(*args, **kwargs):
-        args = args[:1] + (args[1].replace("@", "_AT_").replace(".", "_DOT_"),) + args[2:]
+        assert len(args) > 1
+        email = args[1]
+        username = email.replace("@", "_AT_").replace(".", "_DOT_")
+        newargs = list(args)
+        newargs[1] = username
+        args = tuple(newargs)
         return func(*args, **kwargs)
 
     return wrapper
