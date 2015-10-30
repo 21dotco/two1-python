@@ -95,7 +95,7 @@ class TwentyOneRestClient(object):
                              path=path).json()
 
     # POST /pool/{username}/earnings/?action=True
-    def flush_earnings(self, self.username):
+    def flush_earnings(self):
         path = "/pool/account/%s/earnings/?action=flush" % self.username
         return self._request(sign_username=self.username, method="POST", path=path)
 
