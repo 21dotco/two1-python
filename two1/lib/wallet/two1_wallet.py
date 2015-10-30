@@ -483,7 +483,7 @@ class Two1Wallet(BaseWallet):
         rv = False
         last_index = len(self._accounts) - 1
 
-        if name in self._accounts:
+        if name not in self._account_map:
             if self._accounts[last_index].has_txns():
                 self._init_account(index=last_index + 1,
                                    name=name)
@@ -491,7 +491,7 @@ class Two1Wallet(BaseWallet):
             else:
                 raise exceptions.AccountCreationError(
                     "The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
-                    (self._accounts.name,
+                    (self._accounts[last_index].name,
                      last_index))
         else:
             raise exceptions.AccountCreationError(
