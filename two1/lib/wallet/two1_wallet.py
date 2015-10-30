@@ -1,3 +1,4 @@
+import builtins
 import getpass
 import json
 import logging
@@ -22,7 +23,7 @@ from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount
 from two1.lib.wallet.base_wallet import BaseWallet
-from two1.lib.wallet.exceptions import AccountCreationError
+from two1.lib.wallet import exceptions
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
@@ -488,11 +489,13 @@ class Two1Wallet(BaseWallet):
                                    name=name)
                 rv = name in self._account_map
             else:
-                raise AccountCreationError("The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
-                                           self._accounts.name,
-                                           last_index)
+                raise exceptions.AccountCreationError(
+                    "The last account (name: '%s', index: %d) has no transactions. Cannot create new account." %
+                    (self._accounts.name,
+                     last_index))
         else:
-            raise AccountCreationError("An account named '%s' already exists." % name)
+            raise exceptions.AccountCreationError(
+                "An account named '%s' already exists." % name)
 
         return rv
 
@@ -1604,11 +1607,15 @@ class Wallet(object):
 
         return rv
 
-    def exception_info(self):
-        if not isinstance(self.w, Two1Wallet):
-            return self.w.exception_info()
+    def _handle_server_error(self, error):
+        data = json.loads(error.data)
+        if 'type' not in data or 'message' not in data:
+            raise error
+
+        if hasattr(exceptions, data['type']):
+            raise getattr(exceptions, data['type'])(data['message'])
         else:
-            return dict(message="Fix me")
+            raise getattr(builtins, data['type'])(data['message'])
 
     def __getattr__(self, method_name):
         rv = None
@@ -1616,7 +1623,10 @@ class Wallet(object):
             attr = getattr(self.w, method_name)
 
             def wrapper(*args, **kwargs):
-                return attr(*args, **kwargs)
+                try:
+                    return attr(*args, **kwargs)
+                except ReceivedErrorResponse as e:
+                    self._handle_server_error(e)
 
             if isinstance(self.w, Two1Wallet):
                 # If it's the actual wallet object, just return the
@@ -1627,7 +1637,10 @@ class Wallet(object):
                 # creative: we should look up whether this is a
                 # property and if it is actually call the function.
                 if isinstance(getattr(Two1Wallet, method_name), property):
-                    rv = attr()
+                    try:
+                        rv = attr()
+                    except ReceivedErrorResponse as e:
+                        self._handle_server_error(e)
                 else:
                     rv = wrapper
         else:
