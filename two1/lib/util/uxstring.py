@@ -5,7 +5,7 @@ class UxString:
 
     account_failed = "Failed to create 21.co account."
     username_exists = "User %s already exists."
-    enter_username = "Enter Email address for your 21.co account:"
+    enter_username = "Enter an email address for your 21.co account"
     enter_username_retry = "Create a new username and retry."
     # wallet
     create_wallet = "You do not have a Bitcoin wallet configured. "\
