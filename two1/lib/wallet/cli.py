@@ -28,22 +28,40 @@ REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_se
 logger = logging.getLogger('wallet')
 
 
-def _handle_exception(ctx, e, custom_msg=""):
-    if hasattr(e, 'message'):
-        if e.message == "Timed out waiting for lock":
-            msg = e.message + ". Please try again."
-    else:
-        tb = e.__traceback__
-        if custom_msg:
-            msg = "%s: %s" % (custom_msg, e)
-        else:
-            msg = str(e)
-    logger.error(msg)
-    logger.debug("".join(traceback.format_tb(tb)))
-    if not logger.hasHandlers():
-        click.echo(msg)
+def handle_exceptions(f, custom_msg=""):
+    """ Decorator for handling exceptions
 
-    ctx.exit(code=1)
+    Args:
+        f (function): The function to decorate. This assumes that f
+            is a click wrapper function which will be passed a context
+            object as its first argument.
+
+    Returns:
+        function: A wrapper function that handles exceptions in f.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            rv = f(*args, **kwargs)
+        except Exception as e:
+            if hasattr(e, 'message'):
+                if e.message == "Timed out waiting for lock":
+                    msg = e.message + ". Please try again."
+            else:
+                tb = e.__traceback__
+                if custom_msg:
+                    msg = "%s: %s" % (custom_msg, e)
+                else:
+                    msg = str(e)
+            logger.error(msg)
+            logger.debug("".join(traceback.format_tb(tb)))
+            if not logger.hasHandlers():
+                click.echo(msg)
+
+            args[0].exit(code=1)
+
+        return rv
+
+    return wrapper
 
 
 def log_usage(f):
@@ -56,7 +74,7 @@ def log_usage(f):
         function: A wrapper function that logs usage information
     """
     def wrapper(*args, **kwargs):
-        logger.info("%s(args=%r, kwargs=%r)" % (f.__name__, args, kwargs))
+        logger.info("%s(args=%r, kwargs=%r)" % (f.__name__, args[1:], kwargs))
         return f(*args, **kwargs)
 
     return wrapper
@@ -353,15 +371,13 @@ def create(ctx, account_type, testnet):
               default=None,
               help="Account")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def payout_address(ctx, account):
     """ Prints the current payout address
     """
     w = ctx.obj['wallet']
-    try:
-        click.echo(w.get_payout_address(account))
-    except Exception as e:
-        _handle_exception(ctx, e)
+    click.echo(w.get_payout_address(account))
 
 
 @click.command(name="confirmedbalance")
@@ -370,17 +386,15 @@ def payout_address(ctx, account):
               default=None,
               help="Account")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def confirmed_balance(ctx, account):
     """ Prints the current *confirmed* balance
     """
     w = ctx.obj['wallet']
-    try:
-        cb = w.confirmed_balance(account)
-        click.echo("Confirmed balance: %0.8f BTC" %
-                   convert_to_btc(cb))
-    except Exception as e:
-        _handle_exception(ctx, e)
+    cb = w.confirmed_balance(account)
+    click.echo("Confirmed balance: %0.8f BTC" %
+               convert_to_btc(cb))
 
 
 @click.command(name="balance")
@@ -389,21 +403,20 @@ def confirmed_balance(ctx, account):
               default=None,
               help="Account")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def balance(ctx, account):
     """ Prints the current total balance.
     """
     w = ctx.obj['wallet']
-    try:
-        ucb = w.unconfirmed_balance(account)
-        click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
-                   convert_to_btc(ucb))
-    except Exception as e:
-        _handle_exception(ctx, e)
+    ucb = w.unconfirmed_balance(account)
+    click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
+               convert_to_btc(ucb))
 
 
 @click.command(name='listbalances')
 @click.pass_context
+@handle_exceptions
 @log_usage
 def list_balances(ctx):
     """ Prints the current balances of each account.
@@ -442,6 +455,7 @@ def list_balances(ctx):
               multiple=True,
               help="List of accounts to use")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
@@ -458,19 +472,16 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     logger.info("Sending %d satoshis to %s from accounts = %r" %
                 (satoshis, address, list(account)))
 
-    try:
-        txids = w.send_to(address=address,
-                          amount=satoshis,
-                          use_unconfirmed=use_unconfirmed,
-                          fees=fees,
-                          accounts=list(account))
-        if txids:
-            click.echo("Successfully sent %0.8f BTC to %s. txids:" %
-                       (amount, address))
-            for t in txids:
-                click.echo(t['txid'])
-    except Exception as e:
-        _handle_exception(ctx, e, "Problem sending coins")
+    txids = w.send_to(address=address,
+                      amount=satoshis,
+                      use_unconfirmed=use_unconfirmed,
+                      fees=fees,
+                      accounts=list(account))
+    if txids:
+        click.echo("Successfully sent %0.8f BTC to %s. txids:" %
+                   (amount, address))
+        for t in txids:
+            click.echo(t['txid'])
 
 
 @click.command(name="spreadutxos")
@@ -483,6 +494,7 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
               multiple=True,
               help="List of accounts to use")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def spread_utxos(ctx, num_addresses, threshold, account):
     """ Spreads out all UTXOs with value > threshold into
@@ -495,33 +507,26 @@ def spread_utxos(ctx, num_addresses, threshold, account):
         ctx.fail("'%s' is an invalid value for threshold. It must be in BTC." %
                  (threshold))
 
-    try:
-        txids = w.spread_utxos(threshold=satoshis,
-                               num_addresses=num_addresses,
-                               accounts=list(account))
-        if txids:
-            click.echo("Successfully spread UTXOs in the following txids:")
-            for t in txids:
-                click.echo(t['txid'])
-
-    except Exception as e:
-        _handle_exception(ctx, e, "Problem spreading utxos")
+    txids = w.spread_utxos(threshold=satoshis,
+                           num_addresses=num_addresses,
+                           accounts=list(account))
+    if txids:
+        click.echo("Successfully spread UTXOs in the following txids:")
+        for t in txids:
+            click.echo(t['txid'])
 
 
 @click.command(name="createaccount")
 @click.argument('name',
                 metavar="STRING")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def create_account(ctx, name):
     """ Creates a named account within the wallet
     """
     w = ctx.obj['wallet']
-    rv = False
-    try:
-        rv = w.create_account(name)
-    except Exception as e:
-        _handle_exception(ctx, e)
+    rv = w.create_account(name)
 
     if rv:
         click.echo("Successfully created account '%s'." % name)
@@ -531,6 +536,7 @@ def create_account(ctx, name):
 
 @click.command(name="listaccounts")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def list_accounts(ctx):
     """ Lists all accounts in the wallet
@@ -546,25 +552,23 @@ def list_accounts(ctx):
               multiple=True,
               help="List of accounts to use")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def list_addresses(ctx, account):
     """ List all addresses in the specified accounts
     """
     w = ctx.obj['wallet']
 
-    try:
-        addresses = w.addresses(accounts=list(account))
-        for acct, addr_list in addresses.items():
-            len_acct_name = len(acct)
-            click.echo("Account: %s" % (acct))
-            click.echo("---------%s" % ("-" * len_acct_name))
+    addresses = w.addresses(accounts=list(account))
+    for acct, addr_list in addresses.items():
+        len_acct_name = len(acct)
+        click.echo("Account: %s" % (acct))
+        click.echo("---------%s" % ("-" * len_acct_name))
 
-            for addr in addr_list:
-                click.echo(addr)
+        for addr in addr_list:
+            click.echo(addr)
 
-            click.echo("")
-    except Exception as e:
-        _handle_exception(ctx, e)
+        click.echo("")
 
 
 @click.command(name="sweep")
@@ -575,22 +579,21 @@ def list_addresses(ctx, account):
               multiple=True,
               help="List of accounts to sweep")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def sweep(ctx, address, account):
     """ Lists all accounts in the wallet
     """
     w = ctx.obj['wallet']
-    try:
-        txids = w.sweep(address=address,
-                        accounts=list(account))
 
-        if txids:
-            click.echo("Swept balance in the following transactions:")
+    txids = w.sweep(address=address,
+                    accounts=list(account))
 
-        for txid in txids:
-            click.echo(txid)
-    except Exception as e:
-        _handle_exception(ctx, e)
+    if txids:
+        click.echo("Swept balance in the following transactions:")
+
+    for txid in txids:
+        click.echo(txid)
 
 
 @click.command(name="signmessage")
@@ -599,16 +602,14 @@ def sweep(ctx, address, account):
 @click.argument('address',
                 metavar="STRING")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def sign_bitcoin_message(ctx, message, address):
     """ Signs an arbitrary message
     """
     w = ctx.obj['wallet']
-    try:
-        sig = w.sign_bitcoin_message(message=message, address=address)
-        click.echo("Signature: %s" % sig)
-    except Exception as e:
-        _handle_exception(ctx, e)
+    sig = w.sign_bitcoin_message(message=message, address=address)
+    click.echo("Signature: %s" % sig)
 
 
 @click.command(name='verifymessage')
@@ -619,22 +620,20 @@ def sign_bitcoin_message(ctx, message, address):
 @click.argument('address',
                 metavar="STRING")
 @click.pass_context
+@handle_exceptions
 @log_usage
 def verify_bitcoin_message(ctx, message, signature, address):
     """ Verifies that an arbitrary message was signed by
         the private key corresponding to address
     """
     w = ctx.obj['wallet']
-    try:
-        verified = w.verify_bitcoin_message(message=message,
-                                            signature=signature,
-                                            address=address)
-        if verified:
-            click.echo("Verified")
-        else:
-            click.echo("Not verified")
-    except Exception as e:
-        _handle_exception(ctx, e)
+    verified = w.verify_bitcoin_message(message=message,
+                                        signature=signature,
+                                        address=address)
+    if verified:
+        click.echo("Verified")
+    else:
+        click.echo("Not verified")
 
 
 main.add_command(startdaemon)
