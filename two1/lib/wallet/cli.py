@@ -28,24 +28,16 @@ REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_se
 logger = logging.getLogger('wallet')
 
 
-def _handle_daemon_exception(ctx, e, w):
-    if e.message == "Timed out waiting for lock":
-        msg = e.message + ". Please try again."
+def _handle_exception(ctx, e, custom_msg=""):
+    if hasattr(e, 'message'):
+        if e.message == "Timed out waiting for lock":
+            msg = e.message + ". Please try again."
     else:
-        msg = w.exception_info()['message']
-    logger.error(msg)
-    if not logger.hasHandlers():
-        click.echo(msg)
-
-    ctx.exit(code=1)
-
-
-def _handle_generic_exception(ctx, e, custom_msg=""):
-    tb = e.__traceback__
-    if custom_msg:
-        msg = "%s: %s" % (custom_msg, e)
-    else:
-        msg = str(e)
+        tb = e.__traceback__
+        if custom_msg:
+            msg = "%s: %s" % (custom_msg, e)
+        else:
+            msg = str(e)
     logger.error(msg)
     logger.debug("".join(traceback.format_tb(tb)))
     if not logger.hasHandlers():
@@ -351,10 +343,8 @@ def payout_address(ctx, account):
     logger.info('payout_address(%r)' % account)
     try:
         click.echo(w.get_payout_address(account))
-    except (ValueError, TypeError) as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command(name="confirmedbalance")
@@ -372,10 +362,8 @@ def confirmed_balance(ctx, account):
         cb = w.confirmed_balance(account)
         click.echo("Confirmed balance: %0.8f BTC" %
                    convert_to_btc(cb))
-    except (ValueError, TypeError) as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command()
@@ -393,10 +381,8 @@ def balance(ctx, account):
         ucb = w.unconfirmed_balance(account)
         click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
                    convert_to_btc(ucb))
-    except (ValueError, TypeError) as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command(name='listbalances')
@@ -464,10 +450,8 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                        (amount, address))
             for t in txids:
                 click.echo(t['txid'])
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
     except Exception as e:
-        _handle_generic_exception(ctx, e, "Problem sending coins")
+        _handle_exception(ctx, e, "Problem sending coins")
 
 
 @click.command(name="spreadutxos")
@@ -500,10 +484,8 @@ def spread_utxos(ctx, num_addresses, threshold, account):
             for t in txids:
                 click.echo(t['txid'])
 
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
     except Exception as e:
-        _handle_generic_exception(ctx, e, "Problem spreading utxos")
+        _handle_exception(ctx, e, "Problem spreading utxos")
 
 
 @click.command(name="createaccount")
@@ -518,10 +500,8 @@ def create_account(ctx, name):
     logger.info('create_account(%s)' % name)
     try:
         rv = w.create_account(name)
-    except exceptions.AccountCreationError as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
     if rv:
         click.echo("Successfully created account '%s'." % name)
@@ -562,8 +542,8 @@ def list_addresses(ctx, account):
                 click.echo(addr)
 
             click.echo("")
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command(name="sweep")
@@ -588,10 +568,8 @@ def sweep(ctx, address, account):
 
         for txid in txids:
             click.echo(txid)
-    except exceptions.WalletBalanceError as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command(name="signmessage")
@@ -609,10 +587,8 @@ def sign_bitcoin_message(ctx, message, address):
     try:
         sig = w.sign_bitcoin_message(message=message, address=address)
         click.echo("Signature: %s" % sig)
-    except ValueError as e:
-        _handle_generic_exception(ctx, e)
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 @click.command(name='verifymessage')
@@ -638,8 +614,8 @@ def verify_bitcoin_message(ctx, message, signature, address):
             click.echo("Verified")
         else:
             click.echo("Not verified")
-    except ReceivedErrorResponse as e:
-        _handle_daemon_exception(ctx, e, w)
+    except Exception as e:
+        _handle_exception(ctx, e)
 
 
 main.add_command(startdaemon)
