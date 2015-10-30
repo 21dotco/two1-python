@@ -50,7 +50,7 @@ $ 21 mine --details
 
 @capture_usage
 def _mine(config, details):
-    print("--details flag on:" + details)
+    print("--details flag on: {}".format(details))
     if has_bitcoinkit() and details:
         start_minerd(config)
     else:
@@ -109,7 +109,8 @@ def start_cpu_mining(config):
     click.secho(UxString.buy_ad, fg="magenta")
 
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
-                                             config.machine_auth)
+                                             config.machine_auth,
+                                             config.username)
 
     enonce1, enonce2_size, reward = set_payout_address(config, client)
 
@@ -138,7 +139,7 @@ def start_cpu_mining(config):
 def set_payout_address(config, client):
     # set a new address from the HD wallet for payouts
     payout_address = config.wallet.current_address
-    auth_resp = client.account_payout_address_post(config.username, payout_address)
+    auth_resp = client.account_payout_address_post(payout_address)
     if auth_resp.status_code != 200:
         raise ServerRequestError("status=%s" % auth_resp.status_code)
 
@@ -176,7 +177,7 @@ def check_pid(pid):
 
 def get_work(config, client):
     username = config.username
-    work_msg = client.get_work(username=username)
+    work_msg = client.get_work()
     if work_msg.status_code == 200:
         msg_factory = message_factory.SwirlMessageFactory()
         work = msg_factory.read_object(work_msg.content)
@@ -242,7 +243,7 @@ def save_work(client, share, username):
                                                       otime=share.otime,
                                                       nonce=share.nonce)
 
-    payment_result = client.send_work(username=username, data=req_msg)
+    payment_result = client.send_work(data=req_msg)
 
     if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
         raise ServerRequestError("status=%s" % payment_result.status_code)
