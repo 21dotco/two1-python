@@ -113,7 +113,7 @@ def _get_balances(config, client):
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
 
-    data = client.get_earnings(config.username)
+    data = client.get_earnings()
     total_earnings = data["total_earnings"]
     flushed_earnings = data["flush_amount"]
 
@@ -122,7 +122,7 @@ def _get_balances(config, client):
 
 
 def status_earnings(config, client):
-    data = client.get_earnings(config.username)
+    data = client.get_earnings()
     total_earnings = data["total_earnings"]
     total_payouts = data["total_payouts"]
     config.log('\nMining Proceeds', fg='magenta')
@@ -144,7 +144,7 @@ def status_earnings(config, client):
 
 def status_shares(config, client):
     try:
-        share_data = client.get_shares(config.username)
+        share_data = client.get_shares()
     except:
         share_data = None
     headers = ("", "Total", "Today", "Past Hour")
