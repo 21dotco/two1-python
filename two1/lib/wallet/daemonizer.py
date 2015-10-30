@@ -612,6 +612,7 @@ class Launchd(Daemonizer):
             bool: True if the daemon was successfully un-installed, False
                 otherwise.
         """
+        cls.stop()
         if cls.PLIST_FILE_PATH.exists():
             cls.PLIST_FILE_PATH.unlink()
 
@@ -716,7 +717,7 @@ class Launchd(Daemonizer):
                                          cls.PLIST_FILE_PATH],
                                         stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
-                print("Couldn't disable daemon using launctl: %s" % e)
+                print("Couldn't disable daemon using launchctl: %s" % e)
                 rv = False
 
         return rv
