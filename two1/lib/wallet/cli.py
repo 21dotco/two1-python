@@ -258,6 +258,28 @@ def stopdaemon(ctx):
 
 
 @click.command()
+@click.pass_context
+def uninstalldaemon(ctx):
+    """ Uninstalls the daemon from the init system
+    """
+    d = get_daemonizer()
+    if d is None:
+        return
+
+    d.stop()
+    if d.installed():
+        rv = d.uninstall()
+        if rv:
+            msg = "walletd successfully uninstalled from init system."
+            logger.debug(msg)
+            click.echo(msg)
+    else:
+        msg = "Unable to uninstall walletd!"
+        logger.debug(msg)
+        click.echo(msg)
+
+
+@click.command()
 @click.option('--account-type', '-a',
               default=Two1Wallet.DEFAULT_ACCOUNT_TYPE,
               type=click.Choice(list(account_types.keys())),
@@ -622,6 +644,7 @@ def verify_bitcoin_message(ctx, message, signature, address):
 
 main.add_command(startdaemon)
 main.add_command(stopdaemon)
+main.add_command(uninstalldaemon)
 main.add_command(create)
 main.add_command(payout_address)
 main.add_command(confirmed_balance)
