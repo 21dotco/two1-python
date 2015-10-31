@@ -24,7 +24,7 @@ class Payment:
         """Configure bitserv settings.
 
         Args:
-            wallet (two1.lib.wallet.Wallet): the merchant's wallet instance.
+            wallet (two1.lib.wallet.Wallet): The merchant's wallet instance.
         """
         from .models import PaymentChannel, PaymentChannelSpend, BlockchainTransaction
         if allowed_methods is None:
@@ -32,7 +32,8 @@ class Payment:
             self.server = bitserv.PaymentServer(wallet, pc_db)
             self.allowed_methods = [
                 bitserv.PaymentChannel(self.server, '/payments/channel'),
-                bitserv.OnChain(wallet, bitserv.OnChainDjango(BlockchainTransaction))]
+                bitserv.OnChain(wallet, bitserv.OnChainDjango(BlockchainTransaction)),
+                bitserv.BitTransfer(wallet)]
 
     def required(self, price, **kwargs):
         """API route decorator to request payment for a resource.
@@ -40,21 +41,13 @@ class Payment:
         This function stores the resource price in a closure. It will verify
         the validity of a payment, and allow access to the resource if the
         payment is successfully accepted.
-
-        Usage:
-            @app.route('/myroute')
-            @payment.required(100, '1MDxJYsp4q4P46RiigaGzrdyi3dsNWCTaR')
-
-        Raises:
-            PaymentRequiredException: HTTP 402 response with payment headers.
         """
         def decorator(fn):
             @wraps(fn)
             def _fn(request, *fn_args, **fn_kwargs):
                 # Calculate resource cost
                 nonlocal price
-                if callable(price):
-                    price = price(request)
+                _price = price(request) if callable(price) else price
                 # Need better way to pass server url to payment methods (FIXME)
                 kwargs.update({'server_url': request.scheme + '://' + request.get_host()})
 
@@ -66,13 +59,13 @@ class Payment:
                         headers[header] = v
 
                 # Continue to the API view if payment is valid or price is 0
-                if price == 0 or self.is_valid_payment(price, headers, **kwargs):
-                    return fn(*fn_args, **fn_kwargs)
+                if _price == 0 or self.is_valid_payment(_price, headers, **kwargs):
+                    return fn(request, *fn_args, **fn_kwargs)
                 else:
                     # Get headers for initial 402 response
                     payment_headers = {}
                     for method in self.allowed_methods:
-                        payment_headers.update(method.get_402_headers(price, **kwargs))
+                        payment_headers.update(method.get_402_headers(_price, **kwargs))
                     return PaymentRequiredResponse(headers=payment_headers)
             return _fn
         return decorator
@@ -81,16 +74,17 @@ class Payment:
         """Validate the payment information received in the request headers.
 
         Args:
+            price (int): The price the user must pay for the resource.
             request_headers (dict): Headers sent by client with their request.
-            payment_headers (dict): Required headers to verify the client's
-                request against.
+            keyword args: Any other headers needed to verify payment.
+        Returns:
+            (bool): Whether or not the payment is deemed valid.
         """
         for method in self.allowed_methods:
             if method.should_redeem(request_headers):
                 try:
                     v = method.redeem_payment(price, request_headers, **kwargs)
                 except Exception as e:
-                    print(str(e))  # TODO better logging for errors
                     raise BadRequest(str(e))
                 return v
         return False

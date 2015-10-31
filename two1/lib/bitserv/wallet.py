@@ -18,6 +18,10 @@ class TransactionVerificationError(WalletError):
     pass
 
 
+class InvalidPaymentError(WalletError):
+    pass
+
+
 class WalletWrapperBase:
 
     def __init__(self):
@@ -97,7 +101,11 @@ class Two1WalletWrapper(WalletWrapperBase):
             # Get the public keys associated with this transaction
             redeem_script = get_redeem_script(tx_from_user)
 
-            # Sign the first (and hopefully only) input in the transaction
+            # Verify that the deposit spend has only one input
+            if len(tx_from_user.inputs) != 1:
+                raise InvalidPaymentError('Transaction should have one input.')
+
+            # Sign the first (and only) input in the transaction
             private_key = self._wallet.get_private_for_public(merch_key)
             tx_from_user.sign_input(
                 0, Transaction.SIG_HASH_ALL, private_key, redeem_script)

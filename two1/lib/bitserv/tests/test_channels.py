@@ -4,7 +4,7 @@ import time
 import codecs
 import pytest
 from two1.lib.bitcoin import Script
-from two1.lib.bitserv.helpers.wallet import Two1WalletWrapper, MockTwo1Wallet
+from two1.lib.bitserv.wallet import Two1WalletWrapper, MockTwo1Wallet
 from two1.lib.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.lib.bitserv.models import DatabaseSQLite3
 

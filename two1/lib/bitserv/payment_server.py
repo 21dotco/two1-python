@@ -5,16 +5,12 @@ from two1.lib.bitcoin.crypto import PublicKey
 from two1.commands.config import TWO1_HOST
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 
-from .helpers.wallet import Two1WalletWrapper
-from .helpers.wallet import get_redeem_script
+from .wallet import Two1WalletWrapper
+from .wallet import get_redeem_script
 from .models import DatabaseSQLite3
 
 
 class PaymentServerError(Exception):
-    pass
-
-
-class InvalidPaymentError(PaymentServerError):
     pass
 
 
@@ -23,10 +19,6 @@ class RedeemPaymentError(PaymentServerError):
 
 
 class ChannelClosedError(PaymentServerError):
-    pass
-
-
-class PaymentBroadcastError(PaymentServerError):
     pass
 
 
@@ -224,13 +216,6 @@ class PaymentServer:
         deposit_amount = channel['amount']
         if deposit_amount < net_pmt_amount + PaymentServer.MIN_TX_FEE:
             raise BadTransactionError('Payment must have adequate fees.')
-
-        # Verify that both payments are not below the dust limit
-        for payment in payment_tx.outputs:
-            if payment.value < PaymentServer.DUST_LIMIT:
-                raise BadTransactionError(
-                    'Final payment must have outputs greater than {}.'.format(
-                        PaymentServer.DUST_LIMIT))
 
         # Sign the remaining half of the transaction
         self._wallet.sign_half_signed_tx(payment_tx, merch_pubkey)

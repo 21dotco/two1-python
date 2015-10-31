@@ -1,6 +1,7 @@
 """Allowed payment methods."""
 import json
 import requests
+import logging
 
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
@@ -8,6 +9,8 @@ from two1.commands.config import TWO1_HOST
 from two1.commands.config import TWO1_CONFIG_FILE
 from .models import OnChainSQLite3
 from .payment_server import PaymentServer
+
+logger = logging.getLogger('bitserv')
 
 
 class PaymentError(Exception):
@@ -117,7 +120,7 @@ class OnChain(PaymentBase):
     def redeem_payment(self, price, request_headers, **kwargs):
         """Validate the transaction and broadcast it to the blockchain."""
         raw_tx = request_headers[OnChain.http_payment_data]
-        print('Receieved transaction: {}'.format(raw_tx))
+        logger.debug('[BitServ] Receieved transaction: {}'.format(raw_tx))
         try:
             payment_tx = Transaction.from_hex(raw_tx)
         except:
@@ -140,7 +143,7 @@ class OnChain(PaymentBase):
         # Broadcast payment
         try:
             txid = self.provider.broadcast_transaction(raw_tx)
-            print('Broadcasted: ' + txid)
+            logger.debug('[BitServ] Broadcasted: ' + txid)
         except Exception as e:
             raise TransactionBroadcastError(str(e))
 
@@ -173,16 +176,13 @@ class PaymentChannel(PaymentBase):
     def redeem_payment(self, price, request_headers, **kwargs):
         """Validate the micropayment and redeem it."""
         txid = request_headers[PaymentChannel.http_payment_token]
-        validated = False
         try:
             # Redeem the transaction in its payment channel
-            paid_amount = int(self.server.redeem(txid))
+            paid_amount = self.server.redeem(txid)
             # Verify the amount of the payment against the resource price
-            if paid_amount == int(price):
-                validated = True
+            return paid_amount == int(price)
         except Exception as e:
             raise e
-        return validated
 
 
 class BitTransfer(PaymentBase):
@@ -234,7 +234,7 @@ class BitTransfer(PaymentBase):
 
         # check amount in transfer
         resource_price = price
-        if not json.loads(bittransfer)["amount"] == resource_price:
+        if not json.loads(bittransfer)['amount'] == resource_price:
             raise InsufficientPaymentError('Error: Incorrect payment amount.')
 
         # now verify with 21.co server that transfer is valid
@@ -244,20 +244,20 @@ class BitTransfer(PaymentBase):
                     self.seller_username
                 ),
                 data=json.dumps({
-                    "bittransfer": bittransfer,
-                    "signature": signature
+                    'bittransfer': bittransfer,
+                    'signature': signature
                 }),
                 headers={'content-type': 'application/json'}
             )
             if verification_response.ok:
                 return True
         except requests.ConnectionError:
-            print("Client failed to connect to server.")
+            logger.debug('[BitServ] Client failed to connect to server.')
 
         # handle verification server bad response
-        if "message" in verification_response.text:
+        if 'message' in verification_response.text:
             raise InvalidPaymentParameterError(
-                verification_response.json()["message"]
+                verification_response.json()['message']
             )
         else:
             raise ServerError
