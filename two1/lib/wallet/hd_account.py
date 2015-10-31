@@ -89,6 +89,14 @@ class HDAccount(object):
         for change in [0, 1]:
             found_last = False
             current_last = self.last_indices[change]
+
+            # Check the txn cache to see which address is the last
+            # we have information for.
+            addr = self.get_address(change, current_last)
+            while addr not in self._txn_cache and current_last >= 0:
+                current_last -= 1
+                addr = self.get_address(change, current_last)
+
             addr_range = 0 if check_all else current_last + 1
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
