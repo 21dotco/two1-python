@@ -10,8 +10,6 @@ from two1.lib.bitcoin.crypto import PrivateKey
 
 
 class ServerRequestError(Exception):
-    """
-    """
     pass
 
 
@@ -64,7 +62,11 @@ class TwentyOneRestClient(object):
         if result.status_code > 299:
             x = ServerRequestError()
             x.status_code = result.status_code
-            x.data = result.json()
+            # attempt to interpret the returned content as JSON
+            try:
+                x.data = result.json()
+            except:
+                x.data = {"error": "Request Error"}
             raise x
 
         return result
