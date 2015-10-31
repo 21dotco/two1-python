@@ -3,6 +3,7 @@ import json
 from collections import defaultdict
 from two1.lib.blockchain import exceptions
 from two1.lib.blockchain.base_provider import BaseProvider
+from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.txn import UnspentTransactionOutput
 from two1.lib.bitcoin.txn import TransactionInput
 from two1.lib.bitcoin.txn import TransactionOutput
@@ -221,10 +222,15 @@ class ChainProvider(BaseProvider):
             txn_data = r.json()
 
             for data in txn_data:
+                metadata = dict(block=data['block_height'],
+                                block_hash=Hash(data['block_hash']),
+                                confirmations=data['confirmations'])
+
                 txn, addr_keys = self.txn_from_json(data)
                 for addr in addr_keys:
                     if addr in addresses:
-                        ret[addr].append(txn)
+                        ret[addr].append(dict(metadata=metadata,
+                                              transaction=txn))
 
         return ret
 
@@ -239,13 +245,18 @@ class ChainProvider(BaseProvider):
         """
         ret = {}
         for txid in ids:
-            r = self._request("GET", "transactions/%s/hex" % txid)
+            r = self._request("GET", "transactions/%s" % txid)
             data = r.json()
+
             if r.status_code == 200:
-                txn, _ = Transaction.from_bytes(bytes.fromhex(data["hex"]))
+                metadata = dict(block=data['block_height'],
+                                block_hash=Hash(data['block_hash']),
+                                confirmations=data['confirmations'])
+                txn, _ = self.txn_from_json(data)
                 assert str(txn.hash) == txid
 
-                ret[txid] = txn
+                ret[txid] = dict(metadata=metadata,
+                                 transaction=txn)
 
         return ret
 
