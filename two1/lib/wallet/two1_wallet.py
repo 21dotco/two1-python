@@ -1,5 +1,6 @@
 import builtins
 import getpass
+import inspect
 import json
 import logging
 
@@ -1478,6 +1479,11 @@ class Two1Wallet(BaseWallet):
         return self._account_map
 
 
+def _public_key_serializer(public_key):
+    return public_key.to_b58check() if isinstance(public_key, HDPublicKey) \
+        else public_key.to_base64().decode()
+
+
 class Wallet(object):
     """ Abstraction layer between wallet object and wallet daemon proxy.
 
@@ -1549,6 +1555,18 @@ class Wallet(object):
 
         return not w.is_locked()
 
+    serializers = dict(
+        get_private_for_public=dict(args=dict(public_key=_public_key_serializer),
+                                    return_value=HDPrivateKey.from_b58check),
+        get_change_public_key=dict(args=dict(),
+                                   return_value=HDPublicKey.from_b58check),
+        get_payout_public_key=dict(args=dict(),
+                                   return_value=HDPublicKey.from_b58check),
+        get_message_signing_public_key=dict(args=dict(),
+                                            return_value=PublicKey.from_base64),
+        build_signed_transaction=dict(args=dict(),
+                                      return_value=lambda rv: [Transaction.from_hex(t) for t in rv]))
+
     def __init__(self, wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
                  data_provider=None, passphrase=''):
         w = self.check_daemon_running(wallet_path)
@@ -1564,58 +1582,6 @@ class Wallet(object):
                                 data_provider=dp,
                                 passphrase=passphrase)
 
-    def get_private_for_public(self, public_key):
-        rv = None
-        if isinstance(self.w, Two1Wallet):
-            rv = self.w.get_private_for_public(public_key)
-        else:
-            if isinstance(public_key, HDPublicKey):
-                pub_key = public_key.to_b58check()
-            else:
-                pub_key = public_key.to_base64().decode()
-            rv = self.w.get_private_for_public(pub_key)
-            if rv is not None:
-                rv = HDPrivateKey.from_b58check(rv)
-
-        return rv
-
-    def get_change_public_key(self, account=None):
-        rv = self.w.get_change_public_key(account)
-        if not isinstance(self.w, Two1Wallet):
-            rv = HDPublicKey.from_b58check(rv)
-
-        return rv
-
-    def get_payout_public_key(self, account=None):
-        rv = self.w.get_payout_public_key(account)
-        if not isinstance(self.w, Two1Wallet):
-            rv = HDPublicKey.from_b58check(rv)
-
-        return rv
-
-    def get_message_signing_public_key(self,
-                                       account_name_or_index=None,
-                                       key_index=0):
-        rv = self.w.get_message_signing_public_key(account_name_or_index,
-                                                   key_index)
-        if not isinstance(self.w, Two1Wallet):
-            rv = PublicKey.from_base64(rv)
-
-        return rv
-
-    def build_signed_transaction(self, addresses_and_amounts,
-                                 use_unconfirmed=False,
-                                 fees=None, accounts=[]):
-
-        rv = self.w.build_signed_transaction(addresses_and_amounts,
-                                             use_unconfirmed,
-                                             fees,
-                                             accounts)
-        if not isinstance(self.w, Two1Wallet):
-            rv = [Transaction.from_hex(t) for t in rv]
-
-        return rv
-
     def _handle_server_error(self, error):
         data = json.loads(error.data)
         if 'type' not in data or 'message' not in data:
@@ -1626,6 +1592,41 @@ class Wallet(object):
         else:
             raise getattr(builtins, data['type'])(data['message'])
 
+    def _do_args_serialize(self, method_name, *args, **kwargs):
+        new_args = []
+        new_kwargs = {}
+
+        if isinstance(self.w, Two1Wallet):
+            attr = getattr(self.w, method_name)
+        else:
+            attr = getattr(Two1Wallet, method_name)
+        sig = inspect.signature(attr)
+        param_names = list(sig.parameters)
+        if not isinstance(self.w, Two1Wallet):
+            param_names = param_names[1:]
+
+        if method_name in self.serializers:
+            ms = self.serializers[method_name]['args']
+
+            for i, a in enumerate(args):
+                pname = param_names[i]
+                new_args.append(ms[pname](a) if pname in ms else a)
+
+            for pname, val in kwargs.items():
+                new_kwargs[pname] = ms[pname](val) if pname in ms else val
+        else:
+            new_args = args
+            new_kwargs = kwargs
+
+        return (new_args, new_kwargs)
+
+    def _do_return_deserialize(self, method_name, rv):
+        if method_name in self.serializers and \
+           self.serializers[method_name]['return_value']:
+            rv = self.serializers[method_name]['return_value'](rv)
+
+        return rv
+
     def __getattr__(self, method_name):
         rv = None
         if hasattr(self.w, method_name):
@@ -1633,7 +1634,12 @@ class Wallet(object):
 
             def wrapper(*args, **kwargs):
                 try:
-                    return attr(*args, **kwargs)
+                    new_args, new_kwargs = self._do_args_serialize(method_name,
+                                                                   *args,
+                                                                   **kwargs)
+                    return self._do_return_deserialize(
+                        method_name,
+                        attr(*new_args, **new_kwargs))
                 except ReceivedErrorResponse as e:
                     self._handle_server_error(e)
 
