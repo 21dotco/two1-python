@@ -529,6 +529,13 @@ def account_names():
 
 
 @daemon_method
+def account_map():
+    """ RPC method to return the account map
+    """
+    return wallet['obj'].account_map
+
+
+@daemon_method
 def addresses(accounts):
     """ RPC method to return all addresses
     """
