@@ -37,9 +37,10 @@ url(r'^payments/', include('two1.lib.bitserv.django.urls'))
 
 ### Usage
 
-`weather.py`
+`views.py`
 
 ``` python
+from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from two1.lib.bitserv.django import payment
 
@@ -47,6 +48,6 @@ from two1.lib.bitserv.django import payment
 @api_view(['GET'])
 @payment.required(50)
 def current_temperature(request):
-    return 'Probably about 65 degrees Fahrenheit.'
+    return HttpResponse('Probably about 65 degrees Fahrenheit.')
 
 ```

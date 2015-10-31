@@ -316,44 +316,8 @@ class PaymentServerAuthentication(BaseBitcoinAuthentication):
         self.pc_user, _ = get_user_model().objects.get_or_create(
             username='payment_channel_user')
 
-    def get_payment_from_header(self, request):
-        """Fetch bitcoin transaction from HTTP header.
-
-        Args:
-            request (request): object representing the client's http request
-
-        Returns (one of the following):
-            (string): the payment transaction id found in the headers
-            (None): if a payment transaction id does not exist
-
-        """
-        return request.META.get("HTTP_BITCOIN_MICROPAYMENT_TOKEN")
-
-    def validate_payment(self, txid, request):
-        """Validate a bitcoin payment.
-
-        Args:
-            txid (string): payment transaction id
-            request (request): object representing the client's http request
-
-        Raises:
-            PaymentRequiredException: raised if the payment is invalid in the
-                channel for any reason or if the payment amount is not enough
-                to pay for the requested resource.
-        """
-        validation = None
-
-        try:
-            # Attempt to redeem the transaction in its payment channel
-            paid_amount = int(payment_server.redeem(txid))
-            # Verify the amount of the payment against the resource price
-            if paid_amount == int(get_price_for_request(request)):
-                validation = (self.pc_user, paid_amount)
-        finally:
-            return validation
-
     def authenticate(self, request):
-        """Handle bitcoin authentication.
+        """Handle payment channel authentication.
 
         Args:
             request (request): object representing the client's http request
@@ -361,9 +325,17 @@ class PaymentServerAuthentication(BaseBitcoinAuthentication):
         Raises:
             PaymentRequiredException: payment is nonexistent or insufficient
         """
-        print("started: PaymentServerAuthentication")
-        txid = self.get_payment_from_header(request)
-        if txid:
-            return self.validate_payment(txid, request)
-        else:
+        # Do not authenticate if no micropayment token exists
+        payment_header = 'HTTP_BITCOIN_MICROPAYMENT_TOKEN'
+        if payment_header not in request.META:
             return None
+
+        validation = None
+        try:
+            # Redeem the transaction in its payment channel
+            paid_amount = payment_server.redeem(request.META[payment_header])
+            # Verify the amount of the payment against the resource price
+            if paid_amount == int(get_price_for_request(request)):
+                validation = (self.pc_user, paid_amount)
+        finally:
+            return validation
