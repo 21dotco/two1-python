@@ -478,7 +478,7 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                       fees=fees,
                       accounts=list(account))
     if txids:
-        click.echo("Successfully sent %0.8f BTC to %s. txids:" %
+        click.echo("Successfully sent %s BTC to %s. txids:" %
                    (amount, address))
         for t in txids:
             click.echo(t['txid'])
