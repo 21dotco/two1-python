@@ -138,4 +138,4 @@ def test_get_transactions_by_id(provider, testnet):
     assert len(data) == exp_len
     for txid, txn in data.items():
         assert txid in txids
-        assert isinstance(txn, Transaction)
+        assert isinstance(txn['transaction'], Transaction)
