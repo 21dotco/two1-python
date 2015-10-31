@@ -184,6 +184,7 @@ class PaymentChannel(PaymentBase):
             raise e
         return validated
 
+
 class BitTransfer(PaymentBase):
 
     """Making a payment via 21 BitTransfer protocol."""
@@ -196,13 +197,13 @@ class BitTransfer(PaymentBase):
 
     verification_url = TWO1_HOST + '/pool/account/{}/bittransfer/'
     account_file = TWO1_CONFIG_FILE
-    
+
     def __init__(self, wallet, verification_url=None, seller_account=None):
         """Initialize payment handling for on-chain payments."""
         self.address = wallet.get_payout_address()
         self.verification_url = verification_url or BitTransfer.verification_url
         acct = seller_account or BitTransfer.account_file
-        
+
         with open(acct, 'r') as f:
             account = json.loads(f.read())
         seller = account['username']
@@ -235,7 +236,7 @@ class BitTransfer(PaymentBase):
         resource_price = price
         if not json.loads(bittransfer)["amount"] == resource_price:
             raise InsufficientPaymentError('Error: Incorrect payment amount.')
-        
+
         # now verify with 21.co server that transfer is valid
         try:
             verification_response = requests.post(

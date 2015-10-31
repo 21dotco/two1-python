@@ -5,10 +5,11 @@ import sqlite3
 from two1.lib.bitcoin import Transaction
 
 
-##############################################################################
-# Payment Channel Models                                                     #
-##############################################################################
+###############################################################################
+# Payment Channel Models                                                      #
+###############################################################################
 
+# *************************** Base Data Models ****************************** #
 
 class ChannelError(Exception):
     pass
@@ -62,7 +63,7 @@ class PaymentDatabase:
         raise NotImplementedError()
 
 
-##############################################################################
+# *************************** Django Data ORM ****************************** #
 
 
 class DatabaseDjango:
@@ -161,6 +162,8 @@ class DatabaseSQLite3:
         self.pc = ChannelSQLite3(self)
         self.pmt = PaymentSQLite3(self)
 
+
+# *************************** Default SQLite3 ****************************** #
 
 class ChannelSQLite3(ChannelDatabase):
 
@@ -278,6 +281,7 @@ class PaymentSQLite3(PaymentDatabase):
 # On-Chain Transaction Models                                                #
 ##############################################################################
 
+# *************************** Base Data Models ****************************** #
 
 class OnChainError(Exception):
     pass
@@ -298,7 +302,30 @@ class OnChainDatabase:
     def lookup(txid):
         pass
 
-##############################################################################
+# *************************** Django Data ORM ****************************** #
+
+
+class OnChainDjango(OnChainDatabase):
+
+    def __init__(self, BlockchainTransaction):
+        self.BlockchainTransaction = BlockchainTransaction
+
+    def create(self, txid, amount):
+        """Create a transaction entry."""
+        self.BlockchainTransaction.create(txid=txid, amount=amount)
+        return True
+
+    def lookup(self, txid):
+        """Look up a transaction entry."""
+        rv = self.BlockchainTransaction.objects.get(txid=txid)
+        return {'txid': rv[0], 'amount': rv[1]}
+
+    def get_or_create(self, txid, amount):
+        """Attempt a lookup and create the record if it doesn't exist."""
+        return self.BlockchainTransaction.objects.get_or_create(
+            txid=txid, defaults={'amount': amount})
+
+# *************************** Default SQLite3 ****************************** #
 
 
 class OnChainSQLite3(OnChainDatabase):
