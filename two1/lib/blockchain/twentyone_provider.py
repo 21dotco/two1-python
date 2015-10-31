@@ -10,10 +10,12 @@ class TwentyOneProvider(ChainProvider):
     """
     DEFAULT_HOST = "https://dotco-devel-pool2.herokuapp.com"
 
-    def __init__(self, twentyone_host_name=DEFAULT_HOST, testnet=False):
+    def __init__(self, twentyone_host_name=DEFAULT_HOST, testnet=False,
+                 connection_pool_size=0):
         self.host_name = twentyone_host_name
 
-        super().__init__(None, None, testnet)
+        super().__init__(None, None, testnet,
+                         connection_pool_size=connection_pool_size)
         self.testnet = testnet
         self.auth = None
 
