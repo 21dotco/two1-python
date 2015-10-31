@@ -542,8 +542,8 @@ def list_accounts(ctx):
     """ Lists all accounts in the wallet
     """
     w = ctx.obj['wallet']
-    for i, n in enumerate(w.account_names):
-        click.echo("Account %d: %s" % (i, n))
+    for name, n in sorted(w.account_map.items(), key=lambda x: x[1]):
+        click.echo("Account %d: %s" % (n, name))
 
 
 @click.command(name='listaddresses')

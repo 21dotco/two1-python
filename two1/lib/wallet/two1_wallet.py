@@ -1468,6 +1468,15 @@ class Two1Wallet(BaseWallet):
         """
         return list(self._account_map.keys())
 
+    @property
+    def account_map(self):
+        """ Returns the mapping of account name to account index.
+
+        Returns:
+            dict: Key/value pairs of account names and indices.
+        """
+        return self._account_map
+
 
 class Wallet(object):
     """ Abstraction layer between wallet object and wallet daemon proxy.
