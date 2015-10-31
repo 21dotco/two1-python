@@ -1,12 +1,10 @@
 import base64
 import click
-import re
 from email.utils import parseaddr
 from two1.commands.config import TWO1_HOST
-from two1.commands.exceptions import ServerConnectionError
-from two1.commands.exceptions import ServerTimeout
-from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.server.rest_client import TwentyOneRestClient
+from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.server.rest_client import ServerConnectionError
 from two1.lib.util.uxstring import UxString
 
 
@@ -49,15 +47,8 @@ def create_twentyone_account(config):
     Returns:
         str: Returns the username that was created, None otherwise
     """
-    try:
-        create_username(config)
-        return config.username
-    except ServerConnectionError:
-        click.echo(UxString.Error.connection % TWO1_HOST)
-    except ServerTimeout:
-        click.echo(UxString.Error.timeout % TWO1_HOST)
-
-    return None
+    create_username(config)
+    return config.username
 
 
 def create_username(config, username=None):
@@ -97,18 +88,17 @@ def create_username(config, username=None):
             click.echo(UxString.creating_account % email)
 
         rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, email)
-        r = rest_client.account_post(bitcoin_payout_address)
-        if r.status_code == 200:
-            break
-        elif r.status_code == 201:
+        try:
+            r = rest_client.account_post(bitcoin_payout_address)
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
             config.save()
             break
-        elif r.status_code == 400:
-            click.echo(UxString.username_exists % username)
-            username = None
-        else:
-            username = None
+        except ServerRequestError as e:
+            if e.status_code == 400:
+                click.echo(UxString.username_exists % username)
+                username = None
+            else:
+                username = None
     return username
