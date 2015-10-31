@@ -5,12 +5,19 @@ import click
 from collections import namedtuple
 import urllib.parse
 import datetime
-
 import requests
-
 from two1.lib.bitcoin.crypto import PrivateKey
-from two1.lib.server.machine_auth_wallet import MachineAuthWallet
-from two1.commands.exceptions import ServerRequestError
+
+
+class ServerRequestError(Exception):
+    """
+    """
+    pass
+
+
+class ServerConnectionError(Exception):
+    pass
+
 
 class TwentyOneRestClient(object):
 
@@ -48,7 +55,18 @@ class TwentyOneRestClient(object):
                                                             sign_username,
                                                             sig)
 
-        result = self._session.request(method, url, headers=headers, **kwargs)
+        try:
+            result = self._session.request(method, url, headers=headers, **kwargs)
+        except (requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError):
+            raise ServerConnectionError
+        # Raise ServerRequestError (if status_code > 299)
+        if result.status_code > 299:
+            x = ServerRequestError()
+            x.status_code = result.status_code
+            x.data = result.json()
+            raise x
+
         return result
 
     # POST /pool/account
