@@ -126,7 +126,7 @@ class HDAccount(object):
                         # around. Revisit later.
                         seen = set()
                         for t in txns[addr]:
-                            txid = str(t.hash)
+                            txid = str(t['transaction'].hash)
                             seen.add(txid)
                         self._txn_cache[addr] = list(seen)
 
