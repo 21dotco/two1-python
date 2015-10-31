@@ -9,8 +9,8 @@ from two1.lib.wallet import Wallet
 from two1.lib.bitcoin import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
 
-from .payment_methods import OnChain, PaymentChannel, BitTransfer
-from .payment_server import PaymentServer
+from ..payment_methods import OnChain, PaymentChannel, BitTransfer
+from ..payment_server import PaymentServer
 
 
 class PaymentRequiredException(HTTPException):
