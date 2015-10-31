@@ -1,0 +1,96 @@
+"""Django bitserv payment library for selling 402 API endpoints."""
+from functools import wraps
+from rest_framework import status
+from rest_framework.response import Response
+import two1.lib.bitserv as bitserv
+
+
+class PaymentRequiredResponse(Response):
+
+    """Payment required response."""
+
+    status_code = status.HTTP_402_PAYMENT_REQUIRED
+    data = 'Payment Required'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(PaymentRequiredResponse.data, *args, **kwargs)
+
+
+class Payment:
+
+    """Class to store merchant settings."""
+
+    def __init__(self, wallet, allowed_methods=None):
+        """Configure bitserv settings.
+
+        Args:
+            wallet (two1.lib.wallet.Wallet): the merchant's wallet instance.
+        """
+        from .models import PaymentChannel, PaymentChannelSpend, BlockchainTransaction
+        if allowed_methods is None:
+            pc_db = bitserv.DatabaseDjango(PaymentChannel, PaymentChannelSpend)
+            self.server = bitserv.PaymentServer(wallet, pc_db)
+            self.allowed_methods = [
+                bitserv.PaymentChannel(self.server, '/payments/channel'),
+                bitserv.OnChain(wallet, bitserv.OnChainDjango(BlockchainTransaction))]
+
+    def required(self, price, **kwargs):
+        """API route decorator to request payment for a resource.
+
+        This function stores the resource price in a closure. It will verify
+        the validity of a payment, and allow access to the resource if the
+        payment is successfully accepted.
+
+        Usage:
+            @app.route('/myroute')
+            @payment.required(100, '1MDxJYsp4q4P46RiigaGzrdyi3dsNWCTaR')
+
+        Raises:
+            PaymentRequiredException: HTTP 402 response with payment headers.
+        """
+        def decorator(fn):
+            @wraps(fn)
+            def _fn(request, *fn_args, **fn_kwargs):
+                # Calculate resource cost
+                nonlocal price
+                if callable(price):
+                    price = price(request)
+                # Need better way to pass server url to payment methods (FIXME)
+                kwargs.update({'server_url': request.scheme + '://' + request.get_host()})
+
+                # Convert from django META object to normal header format
+                headers = {}
+                for k, v in request.META.items():
+                    if 'HTTP_' in k:
+                        header = '-'.join([w.title() for w in k.split('_')[1:]])
+                        headers[header] = v
+
+                # Continue to the API view if payment is valid or price is 0
+                if price == 0 or self.is_valid_payment(price, headers, **kwargs):
+                    return fn(*fn_args, **fn_kwargs)
+                else:
+                    # Get headers for initial 402 response
+                    payment_headers = {}
+                    for method in self.allowed_methods:
+                        payment_headers.update(method.get_402_headers(price, **kwargs))
+                    return PaymentRequiredResponse(headers=payment_headers)
+            return _fn
+        return decorator
+
+    def is_valid_payment(self, price, request_headers, **kwargs):
+        """Validate the payment information received in the request headers.
+
+        Args:
+            request_headers (dict): Headers sent by client with their request.
+            payment_headers (dict): Required headers to verify the client's
+                request against.
+        """
+        for method in self.allowed_methods:
+            if method.should_redeem(request_headers):
+                try:
+                    v = method.redeem_payment(price, request_headers, **kwargs)
+                except Exception as e:
+                    print(str(e))  # TODO better logging for errors
+                    raise BadRequest(str(e))
+                return v
+        return False
