@@ -90,3 +90,4 @@ class UxString:
         version_not_found = "Did not find version {}."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
+        account_failed = "Could not create 21 account. Please check your email address."

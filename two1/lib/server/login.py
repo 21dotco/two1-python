@@ -1,10 +1,9 @@
 import base64
 import click
-from email.utils import parseaddr
+import re
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.rest_client import ServerRequestError
-from two1.lib.server.rest_client import ServerConnectionError
 from two1.lib.util.uxstring import UxString
 
 
@@ -15,9 +14,9 @@ class EmailAddress(click.ParamType):
         click.ParamType.__init__(self)
 
     def convert(self, value, param, ctx):
-        if parseaddr(value)[1] == value:
-            if "@" in value:
-                return value
+        if re.match(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
+                    value):
+            return value
         self.fail(UxString.Error.invalid_email)
 
 
@@ -98,7 +97,9 @@ def create_username(config, username=None):
         except ServerRequestError as e:
             if e.status_code == 400:
                 click.echo(UxString.username_exists % username)
-                username = None
+            elif e.status_code == 404:
+                click.echo(UxString.Error.invalid_email)
             else:
-                username = None
+                click.echo(UxString.Error.account_failed)
+            username = None
     return username
