@@ -5,6 +5,9 @@ import traceback
 import requests
 from two1.commands import config as app_config
 from two1.lib.util.uxstring import UxString
+from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.server.rest_client import ServerConnectionError
+
 
 
 def capture_usage(func):
@@ -29,6 +32,15 @@ def capture_usage(func):
             res = func(*args, **kw)
 
             return res
+
+        except ServerRequestError as e:
+            click.echo(str(next(iter(e.data.values()))) + "({})".format(e.status_code))
+
+        except ServerConnectionError:
+            click.echo(UxString.Error.connection.format("21 Servers"))
+
+        except click.ClickException:
+            raise
 
         except Exception as e:
             tb = traceback.format_exc()
