@@ -4,14 +4,12 @@ from urllib.parse import urljoin
 from datetime import date
 from datetime import datetime
 from distutils.version import LooseVersion
-
 import re
 import os
 import click
 from two1.commands.config import TWO1_VERSION
 from two1.commands.config import TWO1_PYPI_HOST
 from two1.commands.config import TWO1_PACKAGE_NAME
-from two1.commands.exceptions import ServerRequestError
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 from two1.commands.config import pass_config
@@ -84,11 +82,11 @@ def update_two1_package(config, version, force_update_check=False):
         set_update_check_date(config, date.today())
 
         installed_version = TWO1_VERSION
-        try:
-            latest_version = lookup_pypi_version(version)
-        except ServerRequestError as er:
-            click.echo(str(er))
-            latest_version = "0.0.0"
+        #try:
+        latest_version = lookup_pypi_version(version)
+        #except ServerRequestError as er:
+        #    click.echo(str(er))
+        #    latest_version = "0.0.0"
         # Check if available version is more recent than the installed version.
         if (LooseVersion(latest_version) > LooseVersion(installed_version) or
                 version != 'latest'):
@@ -128,8 +126,9 @@ def lookup_pypi_version(version='latest'):
                       "api/package/{}/".format(TWO1_PACKAGE_NAME))
         r = requests.get(url)
         data = r.json()
-    except:
-        raise ServerRequestError(UxString.Error.update_server_connection)
+    except (requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError):
+        raise click.ClickException(UxString.Error.update_server_connection)
 
     pypi_version = None
 
@@ -149,12 +148,12 @@ def lookup_pypi_version(version='latest'):
                          re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
 
         if not data:
-            raise ServerRequestError(UxString.Error.version_not_found % version)
+            raise click.ClickException(UxString.Error.version_not_found.format(version))
         else:
             pypi_version = data["version"]
 
     except (AttributeError, KeyError, TypeError):
-        raise ServerRequestError(UxString.Error.server_err)
+        raise click.ClickException(UxString.Error.server_err)
 
     return pypi_version
 
