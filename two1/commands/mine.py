@@ -7,7 +7,6 @@ import os
 import random
 from collections import namedtuple
 from two1.commands.config import pass_config
-from two1.commands.exceptions import ServerRequestError
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory, login
@@ -140,8 +139,6 @@ def set_payout_address(config, client):
     # set a new address from the HD wallet for payouts
     payout_address = config.wallet.current_address
     auth_resp = client.account_payout_address_post(payout_address)
-    if auth_resp.status_code != 200:
-        raise ServerRequestError("status=%s" % auth_resp.status_code)
 
     user_info = json.loads(auth_resp.text)
     enonce1_base64 = user_info["enonce1"]
@@ -176,18 +173,10 @@ def check_pid(pid):
 
 
 def get_work(config, client):
-    username = config.username
     work_msg = client.get_work()
-    if work_msg.status_code == 200:
-        msg_factory = message_factory.SwirlMessageFactory()
-        work = msg_factory.read_object(work_msg.content)
-        return work
-    elif work_msg.status_code == 400:
-        click.echo(UxString.Error.non_existing_user % username)
-        click.echo(UxString.enter_username_retry)
-        login.create_username(config=config, username=None)
-    else:
-        ServerRequestError("status=%s" % work_msg.status_code)
+    msg_factory = message_factory.SwirlMessageFactory()
+    work = msg_factory.read_object(work_msg.content)
+    return work
 
 
 Share = namedtuple('Share', ['enonce2', 'nonce', 'otime', 'work_id'])
@@ -244,10 +233,6 @@ def save_work(client, share, username):
                                                       nonce=share.nonce)
 
     payment_result = client.send_work(data=req_msg)
-
-    if payment_result.status_code != 200 or not hasattr(payment_result, "text"):
-        raise ServerRequestError("status=%s" % payment_result.status_code)
-
     payment_details = json.loads(payment_result.text)
     amount = payment_details["amount"]
     return amount
