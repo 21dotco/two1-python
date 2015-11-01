@@ -254,7 +254,7 @@ class OnChainRequests(BitRequests):
 
         # Create the signed transaction
         onchain_payment = self.wallet.make_signed_transaction_for(
-            payee_address, price, use_unconfirmed=True)[0].get('txn')
+            payee_address, price, use_unconfirmed=True)[0].get('txn').to_hex()
         return_address = self.wallet.current_address
         logger.debug('[OnChainRequests] Signed transaction: {}'.format(
             onchain_payment))

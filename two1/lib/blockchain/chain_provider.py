@@ -1,4 +1,7 @@
+import arrow
 import json
+
+from calendar import timegm
 
 from collections import defaultdict
 from two1.lib.blockchain import exceptions
@@ -25,6 +28,7 @@ class ChainProvider(BaseProvider):
 
     def __init__(self, api_key_id, api_key_secret, testnet=False,
                  connection_pool_size=0):
+        super().__init__()
         self.testnet = testnet
         self.auth = (api_key_id, api_key_secret)
         self._set_url()
@@ -138,7 +142,7 @@ class ChainProvider(BaseProvider):
         if self._session is None:
             self._create_session()
 
-        url = self.server_url + path + "/"
+        url = self.server_url + path
         result = None
         try:
             result = self._session.request(method,
@@ -210,13 +214,16 @@ class ChainProvider(BaseProvider):
 
         return ret
 
-    def get_transactions(self, address_list, limit=100):
+    def get_transactions(self, address_list, limit=100, min_block=None):
         """ Provides transactions associated with each address in address_list.
 
         Args:
             address_list (list(str)): List of Base58Check encoded Bitcoin
             addresses.
             limit (int): Maximum number of transactions to return.
+            min_block (int): Block height from which to start getting
+                transactions. If None, will get transactions from the
+                entire blockchain.
 
         Returns:
             dict: A dict keyed by address with each value being a list of
@@ -235,6 +242,8 @@ class ChainProvider(BaseProvider):
                     block_hash = Hash(data['block_hash'])
                 metadata = dict(block=data['block_height'],
                                 block_hash=block_hash,
+                                network_time=timegm(arrow.get(
+                                    data['chain_received_at']).datetime.timetuple()),
                                 confirmations=data['confirmations'])
 
                 txn, addr_keys = self.txn_from_json(data)
@@ -265,6 +274,8 @@ class ChainProvider(BaseProvider):
                     block_hash = Hash(data['block_hash'])
                 metadata = dict(block=data['block_height'],
                                 block_hash=block_hash,
+                                network_time=timegm(arrow.get(
+                                    data['chain_received_at']).datetime.timetuple()),
                                 confirmations=data['confirmations'])
                 txn, _ = self.txn_from_json(data)
                 assert str(txn.hash) == txid
@@ -353,3 +364,18 @@ class ChainProvider(BaseProvider):
             # Some other status code... should never happen.
             raise exceptions.TransactionBroadcastError(
                 "Unexpected response: %r" % r.status_code)
+
+    def get_block_height(self):
+        """ Returns the latest block height
+
+        Returns:
+            int: Block height
+        """
+        r = self._request("GET", "blocks/latest")
+
+        ret = None
+        if r.status_code == 200:
+            data = r.json()
+            ret = data['height']
+
+        return ret

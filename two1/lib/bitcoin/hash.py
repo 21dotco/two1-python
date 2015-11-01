@@ -51,6 +51,8 @@ class Hash(object):
             return self._bytes == b
         elif isinstance(b, Hash):
             return self._bytes == b._bytes
+        elif isinstance(b, str):
+            return self._bytes == Hash(b)._bytes
         else:
             raise TypeError("b must be either a Hash object or bytes")
     

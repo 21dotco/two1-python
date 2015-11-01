@@ -8,6 +8,11 @@ from two1.lib.bitrequests import BitRequestsError
 from two1.lib.bitrequests import BitRequests
 
 
+class MockWalletTxn:
+    def to_hex(self):
+        return 'test_transaction_hex'
+
+
 class MockRequest:
     text = ""
 
@@ -18,7 +23,7 @@ class MockWallet:
 
     ADDR = 'test_21_user_address'
     TXID = 'test_txid'
-    TXN = 'test_transaction_hex'
+    TXN = MockWalletTxn()
 
     @property
     def current_address(self):
@@ -72,7 +77,7 @@ def test_onchain_request():
     # Test that we can make a successful 402 payment
     onchain_pmt = bit_req.make_402_payment(mock_request, test_max_price)
     assert type(onchain_pmt) == dict
-    assert onchain_pmt['Bitcoin-Transaction'] == MockWallet.TXN
+    assert onchain_pmt['Bitcoin-Transaction'] == MockWallet.TXN.to_hex()
     assert onchain_pmt['Return-Wallet-Address'] == MockWallet.ADDR
 
     # Test that an error is raised if the server doesn't support onchain

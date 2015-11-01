@@ -6,7 +6,7 @@ class BaseProvider(object):
     """
 
     def __init__(self):
-        pass
+        self.can_limit_by_height = False
 
     def get_balance(self, address_list):
         """ Provides the balance for each address.

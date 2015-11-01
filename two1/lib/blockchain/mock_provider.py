@@ -3,7 +3,10 @@ from unittest.mock import MagicMock
 
 from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
 from two1.lib.bitcoin.hash import Hash
+from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin.txn import Transaction
+from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.blockchain.base_provider import BaseProvider
 from two1.lib.wallet.account_types import AccountType
 from two1.lib.wallet.account_types import account_types
@@ -150,11 +153,6 @@ class MockProvider(BaseProvider):
         self.get_transactions.side_effect = [mtd]
 
     def set_txn_side_effect_for_hd_discovery(self):
-        dummy_txn = Transaction(1, [], [], 0)
-        metadata = dict(block_height=234790,
-                        block_hash=Hash("000000000000000007d57f03ebe36dbe4f87ab2f340e93b45999ab249b6dc0df"),
-                        confirmations=23890)
-
         # For each used account, there are at least 2 calls required:
         # 1 for the first DISCOVERY_INCREMENT payout addresses and 1
         # for the first DISCOVERY_INCREMENT change
@@ -175,11 +173,31 @@ class MockProvider(BaseProvider):
                 k = 'change_addresses' if change else 'payout_addresses'
                 addr_list = self._acct_keys[acct_num][k]
 
+                if change:
+                    metadata = dict(block=234790 + r,
+                                    block_hash=Hash("000000000000000007d57f03ebe36dbe4f87ab2f340e93b45999ab249b6dc0df"),
+                                    confirmations=23890 - r)
+                else:
+                    metadata = dict(block=None,
+                                    block_hash=None,
+                                    confirmations=0)
+
                 if r == 0:
                     r = 1
                 for i in range(r):
-                    addr_range = range(i * self.address_increment,
-                                       (i + 1) * self.address_increment)
+                    start = i * self.address_increment
+                    end = (i + 1) * self.address_increment
+                    addr_range = range(start, end)
+
+                    out = TransactionOutput(value=10000,
+                                            script=Script.build_p2pkh(
+                                                address_to_key_hash(
+                                                    addr_list[i])[1]))
+                    dummy_txn = Transaction(1,
+                                            [],
+                                            [out],
+                                            0)
+
                     m = MockTxnDict(num_used=num_used,
                                     addr_range=addr_range,
                                     addr_list=addr_list,

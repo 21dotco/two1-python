@@ -1,5 +1,7 @@
 import time
 from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
+from two1.lib.wallet.cache_manager import CacheManager
+from two1.lib.wallet.wallet_txn import WalletTransaction
 
 
 class HDAccount(object):
@@ -34,9 +36,9 @@ class HDAccount(object):
     CHANGE_CHAIN = 1
     GAP_LIMIT = 20
     DISCOVERY_INCREMENT = GAP_LIMIT
-    MAX_BALANCE_UPDATE_THRESHOLD = 30  # seconds
+    MAX_UPDATE_THRESHOLD = 30  # seconds
 
-    def __init__(self, hd_key, name, index, data_provider,
+    def __init__(self, hd_key, name, index, data_provider, cache_manager,
                  testnet=False, last_state=None, skip_discovery=False):
         # Take in either public or private key for this account as we
         # can derive everything from it.
@@ -50,23 +52,19 @@ class HDAccount(object):
         self.testnet = testnet
 
         self.last_indices = [-1, -1]
-        self._txn_cache = {}
-        self._address_cache = {self.CHANGE_CHAIN: {}, self.PAYOUT_CHAIN: {}}
-        self._last_balance_update = 0
+        self._cache_manager = cache_manager
+        self._last_update = 0
+        self._last_full_update = 0
 
         if last_state is not None and isinstance(last_state, dict):
             if "last_payout_index" in last_state:
                 self.last_indices[self.PAYOUT_CHAIN] = last_state["last_payout_index"]
             if "last_change_index" in last_state:
                 self.last_indices[self.CHANGE_CHAIN] = last_state["last_change_index"]
-            if "addresses" in last_state:
-                self._address_cache = last_state["addresses"]
-            if "transactions" in last_state:
-                self._txn_cache = last_state["transactions"]
 
         # Check to see that the address cache has up to last_indices
         for change in [self.PAYOUT_CHAIN, self.CHANGE_CHAIN]:
-            k = sorted(list(self._address_cache[change].keys()))
+            k = self._cache_manager.get_chain_indices(self.index, change)
             for i in range(self.last_indices[change] + 1):
                 if i not in k or k[i] != i:
                     self.last_indices[change] = -1
@@ -83,10 +81,14 @@ class HDAccount(object):
                 self._chain_pub_keys[change] = HDPublicKey.from_parent(self.key, change)
 
         if not skip_discovery:
-            self._discover_used_addresses()
+            self._sync_txns(check_all=True)
             self._update_balance()
 
-    def _discover_used_addresses(self, max_index=0, check_all=False):
+    def _sync_txns(self, max_index=0, check_all=False):
+        now = time.time()
+        if now - self._last_full_update > 20 * 60:
+            check_all = True
+
         for change in [0, 1]:
             found_last = False
             current_last = self.last_indices[change]
@@ -94,68 +96,87 @@ class HDAccount(object):
             # Check the txn cache to see which address is the last
             # we have information for.
             addr = self.get_address(change, current_last)
-            while addr not in self._txn_cache and current_last >= 0:
+            addr_has_txns = self._cache_manager.address_has_txns(addr)
+            while not addr_has_txns and current_last >= 0:
                 current_last -= 1
                 addr = self.get_address(change, current_last)
+                addr_has_txns = self._cache_manager.address_has_txns(addr)
 
-            addr_range = 0 if check_all else current_last + 1
+            addr_range = 0 if check_all else current_last
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
                 end = addr_range + self.DISCOVERY_INCREMENT
-                addresses = {}
-                addresses_to_retrieve = []
+                addresses = {i:self.get_address(change, i)
+                             for i in range(addr_range, end)}
 
-                for i in range(addr_range, end):
-                    addresses[i] = self.get_address(change, i)
+                if self.data_provider.can_limit_by_height:
+                    txns = self.data_provider.get_transactions(
+                        list(addresses.values()),
+                        limit=10000,
+                        min_block=self._cache_manager.last_block)
+                else:
+                    txns = self.data_provider.get_transactions(
+                        list(addresses.values()),
+                        limit=10000)
 
-                    # Check any addresses we may have in the cache
-                    if addresses[i] not in self._txn_cache or \
-                       not self._txn_cache[addresses[i]]:
-                        addresses_to_retrieve.append(addresses[i])
-
-                txns = self.data_provider.get_transactions(addresses_to_retrieve, 10000)
-
+                inserted_txns = set()
                 for i in sorted(addresses.keys()):
                     addr = addresses[i]
-                    if i not in self._address_cache[change]:
-                        self._address_cache[change][i] = addr
-                    else:
-                        assert self._address_cache[change][i] == addr
 
-                    if addr not in self._txn_cache or not self._txn_cache[addr] or \
-                       addr not in txns or not bool(txns[addr]):
+                    self._cache_manager.insert_address(self.index, change, i, addr)
+
+                    addr_has_txns = self._cache_manager.address_has_txns(addr)
+
+                    if not addr_has_txns or addr not in txns or \
+                       not bool(txns[addr]):
                         if i - current_last >= self.GAP_LIMIT:
                             found_last = True
                             break
 
-                    if addr in self._txn_cache and self._txn_cache[addr]:
+                    if txns[addr]:
                         current_last = i
-                    elif bool(txns[addr]):
-                        # For now we keep only txn hashes
-                        # around. Revisit later.
-                        seen = set()
                         for t in txns[addr]:
                             txid = str(t['transaction'].hash)
-                            seen.add(txid)
-                        self._txn_cache[addr] = list(seen)
+                            if txid not in inserted_txns:
+                                wt = WalletTransaction.from_transaction(
+                                    t['transaction'])
+                                wt.block = t['metadata']['block']
+                                wt.block_hash = t['metadata']['block_hash']
+                                wt.confirmations = t['metadata']['confirmations']
+                                if 'network_time' in t['metadata']:
+                                    wt.network_time = t['metadata']['network_time']
+                                self._cache_manager.insert_txn(wt)
+                                inserted_txns.add(txid)
 
+                    if addr_has_txns:
                         current_last = i
 
                 addr_range += self.DISCOVERY_INCREMENT
 
             self.last_indices[change] = current_last
 
+        self._last_update = time.time()
+        if check_all:
+            self._last_full_update = self._last_update
+
     def _update_balance(self):
-        self._address_balances = self.data_provider.get_balance(
-            self.all_used_addresses)
+        #address_balances = self.data_provider.get_balance(self.all_used_addresses)
 
         balance = {'confirmed': 0, 'total': 0}
-        for k, v in self._address_balances.items():
-            balance['confirmed'] += v['confirmed']
-            balance['total'] += v['total']
+        self._address_balances = {}
+        for unconfirmed in [True, False]:
+            addr_balances = self._cache_manager.get_balances(
+                addresses=self.all_used_addresses,
+                include_unconfirmed=unconfirmed)
+
+            key = 'total' if unconfirmed else 'confirmed'
+            for k, v in addr_balances.items():
+                if k not in self._address_balances:
+                    self._address_balances[k] = {'confirmed': 0, 'total': 0}
+                self._address_balances[k][key] = v
+                balance[key] += v
 
         self._balance_cache = balance
-        self._last_balance_update = time.time()
 
     def has_txns(self):
         """ Returns whether or not there are any discovered transactions
@@ -164,7 +185,7 @@ class HDAccount(object):
         Returns:
             bool: True if there are discovered transactions, False otherwise.
         """
-        return bool(self._txn_cache)
+        return self._cache_manager.has_txns(self.index)
 
     def find_addresses(self, addresses):
         """ Searches both the change and payout chains up to self.GAP_LIMIT
@@ -208,11 +229,7 @@ class HDAccount(object):
             i = self.last_indices[c]
             pub_key = HDPublicKey.from_parent(k, i)
             addr = pub_key.address(True, self.testnet)
-            if i not in self._address_cache[c]:
-                self._address_cache[c][i] = addr
-            else:
-                # Make sure it's the same
-                assert self._address_cache[c][i] == addr
+            self._cache_manager.insert_address(self.index, change, i, addr)
         else:
             pub_key = HDPublicKey.from_parent(k, n)
 
@@ -250,8 +267,9 @@ class HDAccount(object):
         """
         # If this is an address we've already generated, don't regenerate.
         c = int(change)
-        if n in self._address_cache[c]:
-            return self._address_cache[c][n]
+        cached = self._cache_manager.get_address(self.index, c, n)
+        if cached is not None:
+            return cached
 
         # Always do compressed keys
         return self.get_public_key(change, n).address(True, self.testnet)
@@ -265,9 +283,8 @@ class HDAccount(object):
         ret = None
         need_new = False
         if last_index >= 0:
-            current_addr = self._address_cache[c][last_index]
-            txns = self.data_provider.get_transactions([current_addr])
-            need_new = current_addr in txns and txns[current_addr]
+            current_addr = self._cache_manager.get_address(self.index, c, last_index)
+            need_new = self._cache_manager.address_has_txns(current_addr)
         else:
             need_new = True
 
@@ -308,24 +325,14 @@ class HDAccount(object):
         """
         return self._new_key_or_address(change, True)
 
-    def get_utxos(self):
+    def get_utxos(self, include_unconfirmed=False):
         """ Gets all unspent transactions associated with all addresses
             up to and including the last known indices for both change
             and payout chains.
         """
-        return self.data_provider.get_utxos(self.all_used_addresses)
-
-    @property
-    def address_cache(self):
-        """ Returns the address cache
-        """
-        return self._address_cache
-
-    @property
-    def transaction_cache(self):
-        """ Returns the transaction cache
-        """
-        return self._txn_cache
+        #return self.data_provider.get_utxos(self.all_used_addresses)
+        return self._cache_manager.get_utxos(addresses=self.all_used_addresses,
+                                             include_unconfirmed=include_unconfirmed)
 
     def to_dict(self):
         """ Returns a JSON-serializable dict to save account data
@@ -360,7 +367,8 @@ class HDAccount(object):
                 satoshis for each. The total balance includes
                 unconfirmed transactions.
         """
-        if time.time() - self._last_balance_update > self.MAX_BALANCE_UPDATE_THRESHOLD:
+        if time.time() - self._last_update > self.MAX_UPDATE_THRESHOLD:
+            self._sync_txns()
             self._update_balance()
         return self._balance_cache
 
@@ -374,7 +382,8 @@ class HDAccount(object):
         all_addresses = []
         for change in [self.PAYOUT_CHAIN, self.CHANGE_CHAIN]:
             last = self.last_indices[change]
-            all_addresses += [v for k, v in self._address_cache[change].items() if k <= last]
+            all_addresses += [self.get_address(change, i)
+                              for i in range(last + 1)]
 
         return all_addresses
 
