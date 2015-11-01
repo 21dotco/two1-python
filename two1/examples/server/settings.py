@@ -144,7 +144,7 @@ BITSERV_DEFAULT_PAYMENT_ADDRESS = os.environ.get(
 DEFAULT_PAYMENT_CHANNEL_PATH = '/bitcoin_auth/payment/'
 
 # Import a wallet if a mnemonic exists, else use defaults
-WALLET_MNEMONIC = os.environ.get('WALLET_MNEMONIC')
+WALLET_MNEMONIC = os.environ.get('WALLET_MNEMONIC', 'secret mnemonic phrase')
 
 # In satoshi
 BITSERV_DEFAULT_PRICE = int(
