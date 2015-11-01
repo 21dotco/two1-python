@@ -19,17 +19,17 @@ class ServerConnectionError(Exception):
 
 class TwentyOneRestClient(object):
 
-    def __init__(self, server_url, machine_auth, email=None,
+    def __init__(self, server_url, machine_auth, username=None,
                  version="0"):
         self.auth = machine_auth
         self.server_url = server_url
         self.version = version
-        self.email = email
+        self.username = username
         self._session = None
 
-    @property
-    def username(self):
-        return self.email.replace("@", "_AT_").replace(".", "_DOT_") if self.email else None
+    # @property
+    # def username(self):
+    #    return self.email.replace("@", "_AT_").replace(".", "_DOT_") if self.email else None
 
     def _create_session(self):
         self._session = requests.Session()
