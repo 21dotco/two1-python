@@ -20,6 +20,20 @@ class EmailAddress(click.ParamType):
         self.fail(UxString.Error.invalid_email)
 
 
+class Username(click.ParamType):
+    name = "Username"
+
+    def __init__(self):
+        click.ParamType.__init__(self)
+
+    def convert(self, value, param, ctx):
+        if re.match(r"[a-zA-Z][a-zA-Z0-9_.+-]+", value):
+            if len(value) > 4 and len(value) < 32:
+                return value
+        self.fail(UxString.Error.invalid_username)
+
+
+
 def check_setup_twentyone_account(config):
     """ Checks for a working wallet and a 21 a/c.
     Sets up the a/c and configures a wallet if needed.
@@ -82,11 +96,10 @@ def create_username(config, username=None):
 
     while True:
         if username == "" or username is None:
-            email = click.prompt(UxString.enter_username, type=EmailAddress())
-            username = email
-            click.echo(UxString.creating_account % email)
+            username = click.prompt(UxString.enter_username, type=Username())
+            click.echo(UxString.creating_account % username)
 
-        rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, email)
+        rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, username)
         try:
             r = rest_client.account_post(bitcoin_payout_address)
             click.echo(UxString.payout_address % bitcoin_payout_address)
@@ -98,7 +111,7 @@ def create_username(config, username=None):
             if e.status_code == 400:
                 click.echo(UxString.username_exists % username)
             elif e.status_code == 404:
-                click.echo(UxString.Error.invalid_email)
+                click.echo(UxString.Error.invalid_username)
             else:
                 click.echo(UxString.Error.account_failed)
             username = None
