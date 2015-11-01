@@ -17,8 +17,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 
-from two1.lib.wallet import Wallet
+from two1.lib.wallet import Wallet, Two1Wallet
+from two1.commands.config import TWO1_HOST
 from two1.lib.bitserv import PaymentServer, DatabaseDjango
+from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.examples.bitcoin_auth.helpers.bitcoin_auth_provider_helper import (
     BitcoinAuthProvider
@@ -29,7 +31,11 @@ from .pricing import get_price_for_request
 from .exceptions import PaymentRequiredException
 from .exceptions import ServiceUnavailable
 
-wallet = Wallet()
+if settings.WALLET_MNEMONIC:
+    dp = TwentyOneProvider(TWO1_HOST)
+    wallet = Two1Wallet.import_from_mnemonic(dp, settings.WALLET_MNEMONIC)
+else:
+    wallet = Wallet()
 payment_server = PaymentServer(
     wallet, DatabaseDjango(PaymentChannel, PaymentChannelSpend))
 
@@ -325,8 +331,11 @@ class PaymentServerAuthentication(BaseBitcoinAuthentication):
         Raises:
             PaymentRequiredException: payment is nonexistent or insufficient
         """
-        # Do not authenticate if no micropayment token exists
         payment_header = 'HTTP_BITCOIN_MICROPAYMENT_TOKEN'
+        # Whitelist payment channel route
+        if request._request.path in settings.DEFAULT_PAYMENT_CHANNEL_PATH:
+            return (self.pc_user, None)
+        # Do not authenticate if no micropayment token exists
         if payment_header not in request.META:
             return None
 
