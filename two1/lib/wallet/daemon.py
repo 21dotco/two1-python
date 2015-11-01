@@ -93,7 +93,7 @@ def do_update(block_on_acquire=True):
             if wallet_dict_lock.acquire(block_on_acquire):
                 lock_acquired = True
                 logger.debug("Starting wallet update ...")
-                wallet['obj']._update_account_balances()
+                wallet['obj']._sync_accounts()
                 wallet['update_info']['last_update'] = time.time()
                 logger.debug("Completed update.")
 
@@ -195,11 +195,13 @@ def daemon_method(f):
     Returns:
         function: A wrapper function
     """
-    def wrapper(*args, **kwargs):
+    def wrapper(params):
         _check_wallet_loaded()
-        logger.debug("%s(%r, %r)" % (f.__name__, args, kwargs))
+        logger.debug("%s(%r, %r)" % (f.__name__,
+                                     params['args'],
+                                     params['kwargs']))
         try:
-            return f(*args, **kwargs)
+            return f(*params['args'], **params['kwargs'])
         except Exception as e:
             _handle_exception(e)
 
@@ -388,7 +390,7 @@ def get_message_signing_public_key(account_name_or_index=None,
 
 @daemon_method
 def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
-                             fees=None, accounts=[]):
+                             insert_into_cache=False, fees=None, accounts=[]):
     """ RPC method to build and sign a transaction.
 
     Args:
@@ -396,26 +398,31 @@ def build_signed_transaction(addresses_and_amounts, use_unconfirmed=False,
            and corresponding values being the amount - *in satoshis* - to
            send to that address.
         use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+        insert_into_cache (bool): Insert the transaction into the
+           wallet's cache and mark it as provisional.
         fees (int): Specify the fee amount manually.
         accounts (list(str or int)): List of accounts to use. If
            not provided, all discovered accounts may be used based
            on the chosen UTXO selection algorithm.
 
     Returns:
-        list(Transaction): A list of Transaction objects
+        list(WalletTransaction): A list of WalletTransaction objects
     """
     txns = wallet['obj'].build_signed_transaction(addresses_and_amounts,
                                                   use_unconfirmed,
+                                                  insert_into_cache,
                                                   fees,
                                                   accounts)
-    txns_hex = [t.to_hex() for t in txns]
-    logger.debug("txns: %r" % (txns_hex))
-    return txns_hex
+    txns_ser = [t._serialize() for t in txns]
+    logger.debug("txns: %r" % (txns_ser))
+    return txns_ser
 
 
 @daemon_method
 def make_signed_transaction_for(address, amount,
-                                use_unconfirmed=False, fees=None,
+                                use_unconfirmed=False,
+                                insert_into_cache=False,
+                                fees=None,
                                 accounts=[]):
     """ Makes a raw signed unbroadcasted transaction for the specified amount.
 
@@ -423,6 +430,8 @@ def make_signed_transaction_for(address, amount,
         address (str): The address to send the Bitcoin to.
         amount (number): The amount of Bitcoin to send.
         use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+        insert_into_cache (bool): Insert the transaction into the
+           wallet's cache and mark it as provisional.
         fees (int): Specify the fee amount manually.
         accounts (list(str or int)): List of accounts to use. If
            not provided, all discovered accounts may be used based
@@ -436,11 +445,14 @@ def make_signed_transaction_for(address, amount,
     w = wallet['obj']
     txns = w.make_signed_transaction_for(address, amount,
                                          use_unconfirmed,
+                                         insert_into_cache,
                                          fees,
                                          accounts)
     logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    txns_ser = [dict(txid=t["txid"],
+                     txn=t["txn"]._serialize()) for t in txns]
 
-    return txns
+    return txns_ser
 
 
 @daemon_method
@@ -465,8 +477,10 @@ def send_to(address, amount,
                                  fees=fees,
                                  accounts=accounts)
     logger.debug("txns: %r" % ([t['txid'] for t in txns]))
+    txns_ser = [dict(txid=t["txid"],
+                     txn=t["txn"]._serialize()) for t in txns]
 
-    return txns
+    return txns_ser
 
 
 @methods.add
@@ -600,11 +614,16 @@ def main(ctx, wallet_path, blockchain_data_provider,
                                                    when='midnight',
                                                    backupCount=5)
     ch_formatter = logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s')
+        '%(asctime)s %(levelname)s %(name)-8s: %(message)s')
     ch.setFormatter(ch_formatter)
-    logger.addHandler(ch)
+    ch.setLevel(logging.DEBUG if debug else logging.INFO)
+    logging.getLogger().addHandler(ch)
 
-    logger.setLevel('DEBUG' if debug else 'INFO')
+    console = logging.StreamHandler()
+    console.setLevel(logging.CRITICAL)
+    logging.getLogger().addHandler(console)
+
+    logging.getLogger().setLevel(logging.DEBUG)
 
     global wallet
 
@@ -652,6 +671,13 @@ def main(ctx, wallet_path, blockchain_data_provider,
     server_thread.join()
 
     rpc_server.server_close()
+
+    try:
+        _check_wallet_loaded()
+        wallet['obj'].sync_wallet_file(force_cache_write=True)
+    except:
+        pass
+
     sys.exit(0)
 
 

@@ -3,6 +3,7 @@ import pytest
 from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey
 from two1.lib.blockchain.mock_provider import MockProvider
 from two1.lib.wallet.account_types import account_types
+from two1.lib.wallet.cache_manager import CacheManager
 from two1.lib.wallet.hd_account import HDAccount
 
 
@@ -20,15 +21,16 @@ mock_provider = MockProvider(account_type, master_key)
 
 def test_init():
     with pytest.raises(TypeError):
-        HDAccount(master_key_passphrase, "default", 0, mock_provider)
+        HDAccount(master_key_passphrase, "default", 0, mock_provider,
+                  CacheManager())
 
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
                          [(0, 0, {'confirmed': 0, 'total': 0}),
-                          (1, 0, {'confirmed': 100000, 'total': 100000}),
-                          (1, 2, {'confirmed': 100000, 'total': 120000}),
-                          (41, 2, {'confirmed': 4100000, 'total': 4120000}),
-                          (41, 45, {'confirmed': 4100000, 'total': 4550000}),
-                          (55, 60, {'confirmed': 5500000, 'total': 6100000})])
+                          (1, 0, {'confirmed': 0, 'total': 10000}),
+                          (1, 2, {'confirmed': 10000, 'total': 20000}),
+                          (41, 2, {'confirmed': 10000, 'total': 40000}),
+                          (41, 21, {'confirmed': 20000, 'total': 50000}),
+                          (55, 60, {'confirmed': 30000, 'total': 60000})])
 def test_all(num_used_payout_addresses, num_used_change_addresses, expected_balance):
     m = mock_provider
     m.reset_mocks()
@@ -39,7 +41,8 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
 
     expected_call_count = m.set_txn_side_effect_for_hd_discovery()
 
-    acct = HDAccount(acct0_key, "default", 0, m)
+    cm = CacheManager()
+    acct = HDAccount(acct0_key, "default", 0, m, cm)
     mk0 = m._acct_keys[0]
 
     assert acct._chain_priv_keys[0].to_b58check() == mk0['payout_key'].to_b58check()

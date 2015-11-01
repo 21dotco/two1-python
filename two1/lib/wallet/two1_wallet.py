@@ -3,6 +3,7 @@ import getpass
 import inspect
 import json
 import logging
+import time
 
 import base64
 import os
@@ -24,7 +25,9 @@ from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount
 from two1.lib.wallet.base_wallet import BaseWallet
+from two1.lib.wallet.cache_manager import CacheManager
 from two1.lib.wallet import exceptions
+from two1.lib.wallet.wallet_txn import WalletTransaction
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
@@ -367,6 +370,7 @@ class Two1Wallet(BaseWallet):
         self.utxo_selector = utxo_selector
         self._testnet = False
         self._filename = ""
+        self._cache_manager = CacheManager(self._testnet)
 
         params = {}
         if isinstance(params_or_file, dict):
@@ -421,7 +425,8 @@ class Two1Wallet(BaseWallet):
         cache_file = params.get("cache_file", None)
         if account_params is None:
             # Create default account
-            self._init_account(0, "default", skip_discovery=skip_discovery)
+            self._init_account(index=0, name="default",
+                               skip_discovery=skip_discovery)
         else:
             # Setup the account map first
             self._account_map = params.get("account_map", {})
@@ -460,7 +465,7 @@ class Two1Wallet(BaseWallet):
         i = 0
         while has_txns:
             if i >= len(self._accounts):
-                self._init_account(i)
+                self._init_account(index=i)
             has_txns = self._accounts[i].has_txns()
             i += 1
 
@@ -493,7 +498,8 @@ class Two1Wallet(BaseWallet):
         if name not in self._account_map:
             if self._accounts[last_index].has_txns():
                 self._init_account(index=last_index + 1,
-                                   name=name)
+                                   name=name,
+                                   cache_manager=self._cache_manager)
                 rv = name in self._account_map
             else:
                 raise exceptions.AccountCreationError(
@@ -517,6 +523,7 @@ class Two1Wallet(BaseWallet):
                          name=name,
                          index=acct_index,
                          data_provider=self.data_provider,
+                         cache_manager=self._cache_manager,
                          testnet=self._testnet,
                          last_state=account_state,
                          skip_discovery=skip_discovery)
@@ -529,19 +536,18 @@ class Two1Wallet(BaseWallet):
             with open(cache_file) as cf:
                 cache = json.load(cf)
 
+        if cache:
+            self._cache_manager.load_from_dict(cache)
+
         for i, a in enumerate(account_params):
             # Determine account name
             state = {"last_payout_index": a["last_payout_index"],
                      "last_change_index": a["last_change_index"]}
 
-            if "addresses" in cache:
-                state["addresses"] = {int(k): {int(ik): iv for ik, iv in v.items()}
-                                      for k, v in cache["addresses"][i].items()}
-            if "transactions" in cache:
-                state["transactions"] = cache["transactions"][i]
-
             name = self.get_account_name(i)
-            self._init_account(i, name, state)
+            self._init_account(index=i,
+                               name=name,
+                               account_state=state)
 
             # Make sure that the key serialization in the params matches
             # that from our init
@@ -572,9 +578,17 @@ class Two1Wallet(BaseWallet):
 
         return accts
 
-    def _update_account_balances(self):
+    def _sync_accounts(self,
+                       provisional_txn_timeout=CacheManager.PROVISIONAL_TXN_TIMEOUT):
         for a in self._accounts:
+            a._sync_txns()
             a._update_balance()
+
+        self._cache_manager.prune_provisional_txns(
+            age=provisional_txn_timeout)
+
+        self._cache_manager.last_block = self.data_provider.get_block_height()
+        self.sync_wallet_file()
 
     def get_private_keys(self, addresses):
         """ Returns private keys for a list of addresses, if they
@@ -688,10 +702,12 @@ class Two1Wallet(BaseWallet):
 
         return None
 
-    def get_utxos(self, accounts=[]):
+    def get_utxos(self, include_unconfirmed=False, accounts=[]):
         """ Returns all UTXOs for all addresses in all specified accounts.
 
         Args:
+            include_unconfirmed (bool): If True, includes any
+                unconfirmed UTXOs.
             accounts (list): A list of either account indices or names.
 
         Returns:
@@ -702,7 +718,7 @@ class Two1Wallet(BaseWallet):
         """
         utxos = {}
         for acct in self._check_and_get_accounts(accounts):
-            utxos.update(acct.get_utxos())
+            utxos.update(acct.get_utxos(include_unconfirmed))
 
         return utxos
 
@@ -719,15 +735,9 @@ class Two1Wallet(BaseWallet):
 
         return params
 
-    def to_file(self, file_or_filename):
+    def to_file(self, file_or_filename, force_cache_write=False):
         """ Writes all wallet information to a file.
         """
-        address_cache = [a.address_cache for a in self._accounts]
-        txn_cache = [a.transaction_cache for a in self._accounts]
-        cache = {"version": self.WALLET_CACHE_VERSION,
-                 "addresses": address_cache,
-                 "transactions": txn_cache}
-
         if isinstance(file_or_filename, str):
             f = file_or_filename
         else:
@@ -754,17 +764,16 @@ class Two1Wallet(BaseWallet):
             dirname = os.path.dirname(file_or_filename.name)
             file_or_filename.write(d)
 
-        with open(cache_file, 'wb') as f:
-            f.write(json.dumps(cache).encode('utf-8'))
+        self._cache_manager.to_file(cache_file, force_cache_write)
 
-    def sync_wallet_file(self):
+    def sync_wallet_file(self, force_cache_write=False):
         """ Syncs all wallet data to the wallet file used
             to construct this wallet instance, if one was used.
         """
         # TODO: In the future, we can keep track of whether syncing
         # is necessary and only write out if necessary.
         if self._filename:
-            self.to_file(self._filename)
+            self.to_file(self._filename, force_cache_write)
             self.logger.debug("Sync'ed file %s" % self._filename)
 
     def addresses(self, accounts=[]):
@@ -982,15 +991,27 @@ class Two1Wallet(BaseWallet):
         """ Broadcasts the transaction to the Bitcoin network.
 
         Args:
-            tx (str): Hex string serialization of the transaction to
-               be broadcasted to the Bitcoin network..
+            tx (str or bytes or Transaction): Transaction to be
+               broadcasted to the Bitcoin network.
         Returns:
             str: The name of the transaction that was broadcasted.
         """
         res = ""
+        _txn = None
+        if isinstance(tx, str):
+            _txn = WalletTransaction.from_hex(tx)
+        elif isinstance(tx, bytes):
+            _txn, _ = WalletTransaction.from_bytes(tx)
+        elif isinstance(tx, Transaction):
+            _txn = WalletTransaction.from_transaction(tx)
+        else:
+            raise TypeError("tx must be one of: bytes, str, Transaction.")
+
         try:
             txid = self.data_provider.broadcast_transaction(tx)
             res = txid
+            # Insert the transaction into the cache as a provisional txn.
+            self._cache_manager.insert_txn(_txn, mark_provisional=True)
         except exceptions.WalletError as e:
             self.logger.critical(
                 "Problem sending transaction to network: %s" % e)
@@ -998,7 +1019,10 @@ class Two1Wallet(BaseWallet):
         return res
 
     def build_signed_transaction(self, addresses_and_amounts,
-                                 use_unconfirmed=False, fees=None, accounts=[]):
+                                 use_unconfirmed=False,
+                                 insert_into_cache=False,
+                                 fees=None,
+                                 accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
             In the future, this function may create multiple transactions
@@ -1009,13 +1033,15 @@ class Two1Wallet(BaseWallet):
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            insert_into_cache (bool): Insert the transaction into the
+                wallet's cache and mark it as provisional.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
         Returns:
-            list(Transaction): A list of Transaction objects
+            list(WalletTransaction): A list of WalletTransaction objects
         """
         total_amount = sum([amt for amt in addresses_and_amounts.values()])
 
@@ -1038,13 +1064,8 @@ class Two1Wallet(BaseWallet):
 
         # Now get the unspents from all accounts and select which we
         # want to use
-        utxos_by_addr = self.get_utxos(accts)
-
-        if not use_unconfirmed:
-            # Filter out any UTXOs that are unconfirmed.
-            for addr, utxos_addr in utxos_by_addr.items():
-                utxos_by_addr[addr] = list(filter(lambda u: u.num_confirmations > 0,
-                                                  utxos_addr))
+        utxos_by_addr = self.get_utxos(include_unconfirmed=use_unconfirmed,
+                                       accounts=accts)
 
         selected_utxos, fees = self.utxo_selector(data_provider=self.data_provider,
                                                   utxos_by_addr=utxos_by_addr,
@@ -1059,9 +1080,9 @@ class Two1Wallet(BaseWallet):
                 "Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)." %
                 (balance, total_amount, fees))
 
-        if not selected_utxos and not use_unconfirmed:
+        if not selected_utxos:
             raise exceptions.WalletBalanceError(
-                "There are not enough confirmed UTXOs to complete this transaction.\n"
+                "There are not enough UTXOs to complete this transaction.\n"
                 "Use 'wallet spreadutxos' to split your balance into more UTXOs.")
 
         if use_unconfirmed and total_with_fees > c_balance:
@@ -1099,10 +1120,12 @@ class Two1Wallet(BaseWallet):
             outputs.append(TransactionOutput(value=change,
                                              script=Script.build_p2pkh(change_key_hash)))
 
-        txn = Transaction(version=Transaction.DEFAULT_TRANSACTION_VERSION,
-                          inputs=inputs,
-                          outputs=outputs,
-                          lock_time=0)
+        txn = WalletTransaction(version=Transaction.DEFAULT_TRANSACTION_VERSION,
+                                inputs=inputs,
+                                outputs=outputs,
+                                lock_time=0,
+                                value=total_amount,
+                                fees=fees)
 
         # Now sign all the inputs
         i = 0
@@ -1125,10 +1148,15 @@ class Two1Wallet(BaseWallet):
 
                 i += 1
 
+        if insert_into_cache:
+            self._cache_manager.insert_txn(txn, mark_provisional=True)
+
         return [txn]
 
     def make_signed_transaction_for(self, address, amount,
-                                    use_unconfirmed=False, fees=None,
+                                    use_unconfirmed=False,
+                                    insert_into_cache=False,
+                                    fees=None,
                                     accounts=[]):
         """ Makes a raw signed unbroadcasted transaction for the specified amount.
 
@@ -1136,6 +1164,8 @@ class Two1Wallet(BaseWallet):
             address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            insert_into_cache (bool): Insert the transaction(s) into
+                the wallet's cache and mark it as provisional.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
@@ -1146,13 +1176,17 @@ class Two1Wallet(BaseWallet):
                and raw transactions.  e.g.: [{"txid": txid0, "txn":
                txn_hex0}, ...]
         """
-        return self.make_signed_transaction_for_multiple({address: amount},
-                                                         use_unconfirmed=use_unconfirmed,
-                                                         fees=fees,
-                                                         accounts=accounts)
+        return self.make_signed_transaction_for_multiple(
+            {address: amount},
+            use_unconfirmed=use_unconfirmed,
+            insert_into_cache=insert_into_cache,
+            fees=fees,
+            accounts=accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
-                                             use_unconfirmed=False, fees=None,
+                                             use_unconfirmed=False,
+                                             insert_into_cache=False,
+                                             fees=None,
                                              accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
@@ -1164,6 +1198,8 @@ class Two1Wallet(BaseWallet):
                and corresponding values being the amount - *in satoshis* - to
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
+            insert_into_cache (bool): Insert the transaction(s) into
+                the wallet's cache and mark it as provisional.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
@@ -1175,12 +1211,13 @@ class Two1Wallet(BaseWallet):
                txn_hex0}, ...]
         """
 
-        txns = self.build_signed_transaction(addresses_and_amounts,
-                                             use_unconfirmed=use_unconfirmed,
-                                             fees=fees,
-                                             accounts=accounts)
-        return [{"txid": str(txn.hash), "txn": txn.to_hex()}
-                for txn in txns]
+        txns = self.build_signed_transaction(
+            addresses_and_amounts,
+            use_unconfirmed=use_unconfirmed,
+            insert_into_cache=insert_into_cache,
+            fees=fees,
+            accounts=accounts)
+        return [{"txid": str(txn.hash), "txn": txn} for txn in txns]
 
     def send_to_multiple(self, addresses_and_amounts,
                          use_unconfirmed=False, fees=None, accounts=[]):
@@ -1199,10 +1236,11 @@ class Two1Wallet(BaseWallet):
         Returns:
             str or None: A string containing the submitted TXID or None.
         """
-        txn_dict = self.make_signed_transaction_for_multiple(addresses_and_amounts,
-                                                             use_unconfirmed,
-                                                             fees,
-                                                             accounts)
+        txn_dict = self.make_signed_transaction_for_multiple(
+            addresses_and_amounts,
+            use_unconfirmed=use_unconfirmed,
+            fees=fees,
+            accounts=accounts)
 
         res = []
         for t in txn_dict:
@@ -1255,7 +1293,8 @@ class Two1Wallet(BaseWallet):
         else:
             accts = self._check_and_get_accounts(accounts)
 
-        utxos_by_addr = self.get_utxos(accts)
+        utxos_by_addr = self.get_utxos(include_unconfirmed=True,
+                                       accounts=accts)
         num_conf = 0
         for addr, utxos_addr in utxos_by_addr.items():
             conf = list(filter(lambda u: u.num_confirmations > 0,
@@ -1301,10 +1340,13 @@ class Two1Wallet(BaseWallet):
             accts = self._check_and_get_accounts(accounts)
 
         # Force address discovery
+        now = time.time()
         for a in accts:
-            a._discover_used_addresses(check_all=True)
+            if now - a._last_update > 10:
+                a._sync_txns(check_all=True)
 
-        utxos_by_addr = self.get_utxos(accts)
+        utxos_by_addr = self.get_utxos(include_unconfirmed=True,
+                                       accounts=accts)
         total_value, num_utxos = self._sum_utxos(utxos_by_addr)
 
         if total_value < self.DUST_LIMIT:
@@ -1367,7 +1409,7 @@ class Two1Wallet(BaseWallet):
             # We force address discovery here to make sure change
             # address generation doesn't end up violating the GAP
             # limit
-            acct._discover_used_addresses(check_all=True)
+            acct._sync_txns(check_all=True)
             change_addresses = [acct.get_address(True)
                                 for i in range(num_addresses)]
 
@@ -1578,17 +1620,36 @@ class Wallet(object):
 
         return not w.is_locked()
 
+    txn_list_deser = lambda rv: [dict(txid=t['txid'],
+                                      txn=WalletTransaction._deserialize(t['txn'])) for t in rv]
     serializers = dict(
-        get_private_for_public=dict(args=dict(public_key=_public_key_serializer),
-                                    return_value=HDPrivateKey.from_b58check),
-        get_change_public_key=dict(args=dict(),
-                                   return_value=HDPublicKey.from_b58check),
-        get_payout_public_key=dict(args=dict(),
-                                   return_value=HDPublicKey.from_b58check),
-        get_message_signing_public_key=dict(args=dict(),
-                                            return_value=PublicKey.from_base64),
-        build_signed_transaction=dict(args=dict(),
-                                      return_value=lambda rv: [Transaction.from_hex(t) for t in rv]))
+        get_private_for_public=dict(
+            args=dict(public_key=_public_key_serializer),
+            return_value=HDPrivateKey.from_b58check),
+        get_change_public_key=dict(
+            args=dict(),
+            return_value=HDPublicKey.from_b58check),
+        get_payout_public_key=dict(
+            args=dict(),
+            return_value=HDPublicKey.from_b58check),
+        get_message_signing_public_key=dict(
+            args=dict(),
+            return_value=PublicKey.from_base64),
+        make_signed_transaction_for=dict(
+            args=dict(),
+            return_value=txn_list_deser),
+        make_signed_transaction_for_multiple=dict(
+            args=dict(),
+            return_value=txn_list_deser),
+        send_to=dict(
+            args=dict(),
+            return_value=txn_list_deser),
+        send_to_multiple=dict(
+            args=dict(),
+            return_value=txn_list_deser),
+        build_signed_transaction=dict(
+            args=dict(),
+            return_value=lambda rv: [WalletTransaction._deserialize(t) for t in rv]))
 
     def __init__(self, wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
                  data_provider=None, passphrase=''):

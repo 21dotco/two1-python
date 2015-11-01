@@ -130,7 +130,6 @@ def test_import():
     assert len(wallet._accounts) == 4
     for i in range(4):
         assert wallet._accounts[i].has_txns()
-        assert len(wallet._accounts[i]._txn_cache.keys()) == 3
 
 
 def test_rest():
@@ -186,27 +185,20 @@ def test_rest():
     assert wallet.get_account_name(0) == "default"
 
     # Check the balance
-    assert wallet.balances == {'confirmed': 100000, 'total': 120000}
+    assert wallet.balances == {'confirmed': 10000, 'total': 20000}
 
     # Check that we can get a new payout address
     for i in range(3):
         m.set_num_used_addresses(0, i, 0)
         m.set_txn_side_effect_for_index(0, i, 0)
         ext_addr = wallet.get_payout_address("default")
-        assert ext_addr == ext_addrs[i + 1]
-        assert wallet.accounts[0].last_indices[0] == i + 1
+        assert ext_addr == ext_addrs[1]
+        assert wallet.accounts[0].last_indices[0] == 1
         assert wallet.accounts[0].current_payout_address == ext_addr
 
     # Check the balance again - should be the same
     m.set_num_used_addresses(0, 1, 0)
-    assert wallet.balances == {'confirmed': 100000, 'total': 120000}
-
-    # Check it after updating the mock, but since it'll be beneath
-    # the update threshold, we have to manually trigger a balance
-    # update
-    m.set_num_used_addresses(0, 4, 0)
-    wallet._update_account_balances()
-    assert wallet.balances == {'confirmed': 400000, 'total': 420000}
+    assert wallet.balances == {'confirmed': 10000, 'total': 20000}
 
     # Try sending more than we have and make sure it raises an exception
     with pytest.raises(exceptions.WalletBalanceError):
@@ -225,35 +217,19 @@ def test_rest():
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                        use_unconfirmed=False,
-                       amount=410000)
+                       amount=15000)
 
-    addr = '12T4xudaKCiGmZZZynpWBzz47tRYmtavLi'
-    _, hash160 = address_to_key_hash(addr)
-    utxo = UnspentTransactionOutput(transaction_hash=Hash('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52'),
-                                    outpoint_index=3,
-                                    value=15100,
-                                    scr=Script.build_p2pkh(hash160),
-                                    confirmations=300)
-    wallet.get_utxos = MagicMock(return_value=dict(addr=[utxo]))
-    
-    # Should get past checking balance but raise a signing error
-    with pytest.raises(exceptions.WalletSigningError):
+    # Should get past checking balance but raise a NotImplementedError
+    with pytest.raises(NotImplementedError):
         txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                               use_unconfirmed=False,
-                              amount=12700)
+                              amount=7700)
 
-    utxo = UnspentTransactionOutput(transaction_hash=Hash('8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52'),
-                                    outpoint_index=3,
-                                    value=420000,
-                                    scr=Script.build_p2pkh(hash160),
-                                    confirmations=0)
-    wallet.get_utxos = MagicMock(return_value=dict(addr=[utxo]))
-    
     # Should get past checking balance but raise a signing error
-    with pytest.raises(exceptions.WalletSigningError):
+    with pytest.raises(NotImplementedError):
         txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                               use_unconfirmed=True,
-                              amount=417600)
+                              amount=12581)
 
     # Finally check storing to a file
     params = {}
@@ -273,7 +249,7 @@ def test_rest():
         assert params['account_type'] == "BIP44BitcoinMainnet"
         assert params['account_map']['default'] == 0
         assert len(params['accounts']) == 1
-        assert params['accounts'][0]['last_payout_index'] == 3
+        assert params['accounts'][0]['last_payout_index'] == 1
         assert params['accounts'][0]['last_change_index'] == 1
         assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
 
@@ -293,5 +269,5 @@ def test_rest():
         assert not w2._testnet
 
         acct = w2.accounts[0]
-        assert acct.last_indices[0] == 3
+        assert acct.last_indices[0] == 0
         assert acct.last_indices[1] == 1

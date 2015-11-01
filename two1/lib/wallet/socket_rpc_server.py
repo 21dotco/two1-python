@@ -106,7 +106,7 @@ class UnixSocketServerProxy(Server):
         def attr_handler(*args, **kwargs):
             """Call self.request from here"""
             if kwargs.get('response', True):
-                return self.request(name, *args, **kwargs)
+                return self.request(name, [dict(args=args, kwargs=kwargs)])
             else:
                 return self.notify(name, *args, **kwargs)
         return attr_handler
