@@ -33,6 +33,10 @@ class TransactionBroadcastError(PaymentError):
     pass
 
 
+class PaymentBelowDustLimitError(PaymentError):
+    pass
+
+
 class ServerError(Exception):
     pass
 
@@ -100,6 +104,7 @@ class OnChain(PaymentBase):
     http_payment_data = 'Bitcoin-Transaction'
     http_402_price = 'Price'
     http_402_address = 'Bitcoin-Address'
+    DUST_LIMIT = 546  # dust limit in satoshi
 
     def __init__(self, wallet, db=None):
         """Initialize payment handling for on-chain payments."""
@@ -121,6 +126,12 @@ class OnChain(PaymentBase):
         """Validate the transaction and broadcast it to the blockchain."""
         raw_tx = request_headers[OnChain.http_payment_data]
         logger.debug('[BitServ] Receieved transaction: {}'.format(raw_tx))
+
+        # verify txn is above dust limit
+        if price < OnChain.DUST_LIMIT:
+            raise PaymentBelowDustLimitError(
+                'Payment amount is below dust limit ({} Satoshi)'.format(OnChain.DUST_LIMIT))
+
         try:
             payment_tx = Transaction.from_hex(raw_tx)
         except:
