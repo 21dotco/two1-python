@@ -84,16 +84,18 @@ $ {0}
 Show help for a command
 $ {0} COMMAND --help
 """
-    cfg = Config(config_file, config)
-    check_setup_twentyone_account(cfg)
-    # Disable the auto updater for now.
-    # Todo: This needs to be switched on for the prod channel only.
-    if cfg.auto_update:
-        update_data = update_two1_package(cfg)
-        if update_data["update_successful"]:
-            # TODO: This should exit the CLI and run the same command using the
-            # newly installed software
-            pass
+    not_is_help = ctx.invoked_subcommand != 'help'
+    cfg = Config(config_file, config, create_wallet=not_is_help)
+    if not_is_help:
+        check_setup_twentyone_account(cfg)
+        # Disable the auto updater for now.
+        # Todo: This needs to be switched on for the prod channel only.
+        if cfg.auto_update:
+            update_data = update_two1_package(cfg)
+            if update_data["update_successful"]:
+                # TODO: This should exit the CLI and run the same command using the
+                # newly installed software
+                pass
     ctx.obj = dict(config=cfg)
 
 main.add_command(buy)
