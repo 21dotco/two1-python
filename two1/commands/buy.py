@@ -3,7 +3,10 @@ import click
 import datetime
 import re
 
+from two1.commands.status import _get_balances
 from two1.commands.config import TWO1_MERCHANT_HOST
+from two1.commands.config import TWO1_HOST
+from two1.lib.server import rest_client
 from two1.commands.formatters import search_formatter
 from two1.commands.formatters import social_formatter
 from two1.commands.formatters import content_formatter
@@ -171,7 +174,7 @@ def _buy(config, resource, data, method, data_file, output_file,
     headers = {'Content-Type': 'application/json'}
 
     try:
-        # Find the corrent payment method
+        # Find the correct payment method
         if payment_method == 'bittransfer':
             bit_req = BitTransferRequests(config.machine_auth, config.username)
         elif payment_method == 'onchain':
@@ -203,6 +206,17 @@ def _buy(config, resource, data, method, data_file, output_file,
     else:
         # Write response to console
         config.log(res.text)
+
+    # Write the amount paid out
+    if not info_only:
+        client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                                 config.machine_auth,
+                                                 config.username)
+        twentyone_balance, balance_c, pending_transactions, flushed_earnings = \
+            _get_balances(config, client)
+        info = bit_req.get_402_info(target_url)
+        price = dict(info)['price']
+        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (price, twentyone_balance))
 
     # Record the transaction if it was a payable request
     if hasattr(res, 'paid_amount'):
