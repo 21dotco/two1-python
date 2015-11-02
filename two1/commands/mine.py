@@ -29,7 +29,7 @@ def mine(ctx, dashboard):
 \b
 Usage
 -----
-Invoke this with no arguments to set up a 21.co account and local wallet.
+Invoke this with no arguments to start mining.
 $ 21 mine
 
 \b
@@ -37,11 +37,11 @@ Then view your new balance.
 $ 21 status
 
 \b
-Invoke again and again, limited only by speed of your CPU/mining chip.
-$ 21 mine
+View aggregated logs to see your mining progress.
+$ 21 log
 
 \b
-See a mining dashboard (only works on a 21 Bitcoin Computer)
+See a mining dashboard for low-level mining details.
 $ 21 mine --dashboard
 """
     config = ctx.obj['config']
