@@ -56,12 +56,16 @@ class UxString:
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \
-        click.style("Hit q to exit.", bold=True)
-
-    mining_show_dashboard_context = "\nDo 21 mine --dashboard to see a mining dashboard.\n" + \
-        "Or just do 21 status to see your mining progress."
+        click.style("Hit q to exit the dashboard. ", bold=True)
+    
+    mining_show_dashboard_context = "\nDo " + click.style("21 mine --dashboard", bold=True) + \
+        " to see a mining dashboard.\n" + \
+        "Do " + click.style("21 log", bold=True) + " to see more aggregated stats.\n" + \
+        "Or just do " + click.style("21 status", bold=True) + " to see your mining progress."
         
-    mining_chip_start = "\n21 Bitcoin Chip is present, trying to (re)start miner..."
+    mining_chip_start = "21 Bitcoin Chip detected, trying to (re)start miner..."
+    mining_chip_running = "Your 21 Bitcoin Chip is already running!\n" + \
+        "You should now receive a steady stream of Satoshis."
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_dashboard_no_chip = "Without a 21 mining chip, we can't show you a mining dashboard.\n"\
