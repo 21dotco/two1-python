@@ -59,7 +59,7 @@ else:
 
 class Config(object):
 
-    def __init__(self, config_file=TWO1_CONFIG_FILE, config=None):
+    def __init__(self, config_file=TWO1_CONFIG_FILE, config=None, create_wallet=True):
         if not os.path.exists(TWO1_USER_FOLDER):
             os.makedirs(TWO1_USER_FOLDER)
         self.file = path(config_file).expand().abspath()
@@ -79,7 +79,7 @@ class Config(object):
         # add wallet object
         if self.defaults.get('testwallet', None) == 'y':
             self.wallet = test_wallet.TestWallet()
-        else:
+        elif create_wallet:
             dp = TwentyOneProvider(TWO1_HOST)
 
             wallet_path = self.defaults.get('wallet_path')
@@ -113,6 +113,9 @@ class Config(object):
             self.wallet = Wallet(wallet_path=wallet_path,
                                  data_provider=dp)
             self.machine_auth = MachineAuthWallet(self.wallet)
+        else:
+            # This branch is hit when '21 help' is invoked by itself
+            pass
 
     # pulls attributes from the self.defaults dict
     def __getattr__(self, name):
