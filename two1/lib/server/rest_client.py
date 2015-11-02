@@ -114,6 +114,13 @@ class TwentyOneRestClient(object):
         return self._request(sign_username=self.username,
                              path=path).json()
 
+    def get_mined_satoshis(self):
+        """Determine the total number of Satoshis mined locally.
+        """
+        logs = self.get_earning_logs()
+        amts = [xx['amount'] for xx in logs['logs'] if xx['reason'] == 'Shares']
+        return sum(amts)
+
     # POST /pool/{username}/earnings/?action=True
     def flush_earnings(self):
         path = "/pool/account/%s/earnings/?action=flush" % self.username
@@ -360,9 +367,9 @@ if __name__ == "__main__":
     from two1.commands.config import TWO1_HOST
     conf = Config()
     host = TWO1_HOST
-    for n in range(100):
+    for n in range(2):
         m = TwentyOneRestClient(host, conf.machine_auth, conf.username)
         try:
-            earn = m.get_earnings()
+            earn = m.get_mined_satoshis()
         except requests.exceptions.ConnectionError:
             print("Error: cannot connect to ", host)
