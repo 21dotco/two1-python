@@ -13,6 +13,7 @@ def status(ctx):
 
 
 """
+
     config = ctx.obj['config']
     _status(config)
 
@@ -54,7 +55,7 @@ def status_wallet(config, client):
                                                  config.username)
 
     """
-    total_balance, pending_transactions, flushed_earnings = \
+    twentyone_balance, onchain, pending_transactions, flushed_earnings = \
         _get_balances(config, client)
 
     try:
@@ -63,12 +64,12 @@ def status_wallet(config, client):
         bitcoin_address = "Not Set"
 
     status_wallet = UxString.status_wallet.format(balance=click.style("Balance", fg='magenta'),
-                                                  spendable=total_balance,
-                                                  pending=pending_transactions,
-                                                  flushed=flushed_earnings,
-                                                  address=bitcoin_address)
+                                                  twentyone_balance=twentyone_balance,
+                                                  onchain=onchain,
+                                                  flushing=flushed_earnings,
+                                                  )
     config.log(status_wallet)
-
+    total_balance = twentyone_balance + onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
     buyable_messages = int(total_balance / MESSAGE_UNIT_PRICE)
@@ -92,20 +93,20 @@ def status_wallet(config, client):
                    nl=False)
 
 
-def status_postmine_balance(config, client):
-    total_balance, pending_transactions, flushed_earnings = \
-        _get_balances(config, client)
-    try:
-        bitcoin_address = config.wallet.current_address
-    except AttributeError:
-        bitcoin_address = "Not Set"
-
-    config.log('''\nWallet''', fg='magenta')
-    config.log('''\
-    New Balance                 :   {} Satoshi
-    Current Bitcoin Address     :   {}'''
-               .format(total_balance, bitcoin_address)
-               )
+# def status_postmine_balance(config, client):
+#     twentyone_balance, total_balance, pending_transactions, flushed_earnings = \
+#         _get_balances(config, client)
+#     try:
+#         bitcoin_address = config.wallet.current_address
+#     except AttributeError:
+#         bitcoin_address = "Not Set"
+#
+#     config.log('''\nWallet''', fg='magenta')
+#     config.log('''\
+#     New Balance                 :   {} Satoshi
+#     Current Bitcoin Address     :   {}'''
+#                .format(total_balance, bitcoin_address)
+#                )
 
 
 def _get_balances(config, client):
@@ -114,11 +115,11 @@ def _get_balances(config, client):
     pending_transactions = balance_u - balance_c
 
     data = client.get_earnings()
-    total_earnings = data["total_earnings"]
+    twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flush_amount"]
 
-    total_balance = balance_c + total_earnings
-    return total_balance, pending_transactions, flushed_earnings
+    #total_balance = balance_c + total_earnings
+    return twentyone_balance, balance_c, pending_transactions, flushed_earnings
 
 
 def status_earnings(config, client):
