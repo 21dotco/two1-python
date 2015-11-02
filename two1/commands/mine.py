@@ -73,9 +73,9 @@ def start_minerd(config, show_dashboard=False):
             pid = int(f.read().rstrip())
 
         if pid is not None:
-            if check_pid(pid) and show_dashboard:
+            if check_pid(pid):
                 # Running, so fire up minertop...
-                click.echo("Mining chip is running.")
+                click.echo(UxString.mining_chip_running)
                 show_minertop(show_dashboard)
                 return
             else:
