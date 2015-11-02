@@ -33,9 +33,9 @@ class UxString:
     Your spendable balance on the Blockchain [2,3]            : {onchain} Satoshi
     Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshi
 
-    [1]: Available for Bittransfers (21.co/bittransfers)
-    [2]: Available for On chain (21.co/onchain) & Payment
-         Channels (21.co/payment-channels)
+    [1]: Available for bittransfers (21.co/bittransfers)
+    [2]: Available for on-chain (21.co/on-chain) & payment
+         channels (21.co/payment-channels)
     [3]: To see all wallet addresses, do 21 status --detail
     """
 
@@ -49,6 +49,7 @@ class UxString:
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
+    mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
 
     # updater
