@@ -97,3 +97,8 @@ class UxString:
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
         account_failed = "Could not create 21 account. Please check your email address."
+
+        # version errors
+        version_not_detected = "Could not properly detect your version of 21. \nTry"\
+            " reinstalling from the 21 Toolbelt instructions at 21.co/learn. \nIf problems"\
+            " persist, please contact support@21.co."
