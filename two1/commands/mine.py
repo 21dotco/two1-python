@@ -49,7 +49,6 @@ $ 21 mine --details
 
 @capture_usage
 def _mine(config, details):
-    print("--details flag on: {}".format(details))
     if has_bitcoinkit() and details:
         start_minerd(config)
     else:
@@ -129,6 +128,7 @@ def start_cpu_mining(config):
         UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="magenta")
 
+    click.echo(UxString.mining_status)
     status.status_wallet(config, client)
 
     click.echo(UxString.mining_finish.format(
