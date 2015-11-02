@@ -20,9 +20,9 @@ import two1.commands.config as app_config
 
 
 @click.command()
-@click.option('--details', default=False, is_flag=True, help="Dashboard with mining details")
+@click.option('--dashboard', default=False, is_flag=True, help="Dashboard with mining details")
 @click.pass_context
-def mine(ctx, details):
+def mine(ctx, dashboard):
     """Mine bitcoin at the command line.
 
 \b
@@ -41,16 +41,19 @@ $ 21 mine
 
 \b
 See a mining dashboard (only works on a 21 Bitcoin Computer)
-$ 21 mine --details
+$ 21 mine --dashboard
 """
     config = ctx.obj['config']
-    _mine(config, details=details)
+    _mine(config, dashboard=dashboard)
 
 
 @capture_usage
-def _mine(config, details):
-    if has_bitcoinkit() and details:
-        start_minerd(config)
+def _mine(config, dashboard):
+    if dashboard:
+        if has_bitcoinkit():
+            start_minerd(config)
+        else:
+            click.echo(UxString.mining_dashboard_no_chip)
     else:
         start_cpu_mining(config)
 

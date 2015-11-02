@@ -48,6 +48,8 @@ class UxString:
     # mining
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
+    mining_dashboard_no_chip = "Without a 21 mining chip, we can't show you a mining dashboard.\n"\
+        "If you want to see this dashboard, run this on a 21 Bitcoin Computer."
     mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
