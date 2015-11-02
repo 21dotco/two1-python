@@ -28,6 +28,12 @@ class UxString:
     status_account = "{account}\n"\
         "    Username        : {username}\n"\
 
+    status_mining = "{mining}\n"\
+       "    Status           : {is_mining}\n"\
+       "    Hashrate         : {hashrate}\n"\
+       "    Mined (all time) : {mined} Satoshi\n\n"\
+       "Type {minecmd} to see a detailed view. Hit q to exit.\n"
+
     status_wallet = """{balance}
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshi
     Your spendable balance on the Blockchain [2,3]            : {onchain} Satoshi
