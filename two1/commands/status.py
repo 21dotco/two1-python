@@ -5,6 +5,44 @@ from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
+def has_bitcoinkit():
+    """Quick check for presence of mining chip via file presence.
+
+    The full test is to actually try to boot the chip, but we
+    only try that if this file exists.
+
+    We keep this file in two1/commands/status to avoid a circular
+    import.
+    """
+    try:
+        with open("/proc/device-tree/hat/product", "r") as f:
+            bitcoinkit_present = f.read().startswith('21 Bitcoin')
+    except FileNotFoundError:
+        bitcoinkit_present = False
+    return bitcoinkit_present
+
+def get_hashrate():
+    """Return hashrate of mining chip on current system.
+    Replace with realtime current_event.statistics from minertop.
+    """
+    return "~50 GH/s"
+
+def status_mining(config, client):
+    has_chip = has_bitcoinkit()
+    if has_chip:
+        bk = "21 mining chip running (/run/minerd.pid)"
+        mined = client.get_mined_satoshis()
+        hashrate = get_hashrate()
+    else:
+        bk, mined, hashrate = None, None, None
+    data = dict(mining=click.style("Mining", fg='magenta'),
+                is_mining=bk,
+                hashrate=hashrate,
+                mined=mined,
+                minecmd=click.style("21 mine --dashboard", bold=True))
+    if has_chip:
+        out = UxString.status_mining.format(**data)
+        config.log(out)
 
 
 @click.command()
@@ -12,10 +50,7 @@ from two1.lib.util.uxstring import UxString
 @click.pass_context
 def status(ctx, json):
     """View your bitcoin balance and address.
-
-
-"""
-
+    """
     config = ctx.obj['config']
     _status(config)
 
@@ -25,8 +60,8 @@ def _status(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
-
     status_account(config)
+    status_mining(config, client)
     status_wallet(config, client)
 
     config.log("")

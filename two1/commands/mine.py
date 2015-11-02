@@ -13,6 +13,7 @@ from two1.lib.server import rest_client, message_factory, login
 from two1.lib.server.analytics import capture_usage
 import two1.commands.config as cmd_config
 from two1.commands import status
+from two1.commands.status import has_bitcoinkit
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
@@ -56,15 +57,6 @@ def _mine(config, dashboard):
             click.echo(UxString.mining_dashboard_no_chip)
     else:
         start_cpu_mining(config)
-
-
-def has_bitcoinkit():
-    try:
-        with open("/proc/device-tree/hat/product", "r") as f:
-            bitcoinkit_present = f.read().startswith('21 Bitcoin')
-    except FileNotFoundError:
-        bitcoinkit_present = False
-    return bitcoinkit_present
 
 
 def start_minerd(config):
