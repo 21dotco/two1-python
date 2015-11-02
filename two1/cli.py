@@ -57,32 +57,14 @@ def main(ctx, config_file, config):
 \b
 Usage
 -----
-Mine bitcoin at the command line
+Mine bitcoin, list your balance, and buy a search query without ads.
 $ {0} mine
-
-\b
-List your new balance
 $ {0} status
-
-\b
-Buy a search query with Bitcoin
 $ {0} buy search "Satoshi Nakamoto"
 
 \b
-View an ad-free article with Bitcoin
-$ {0} buy content http://on.wsj.com/1IV0HT5
-
-\b
-Message someone outside your social network for Bitcoin
-$ {0} buy social @balajis "Hi! I'm joe@example.com. My pitch deck: bit.ly/example"
-
-\b
-Show this help text
-$ {0}
-
-\b
-Show help for a command
-$ {0} COMMAND --help
+For further details on how you can use your mined bitcoin to buy digital
+goods both at the command line and programmatically, visit 21.co/learn
 """
     create_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update')
     cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
