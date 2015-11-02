@@ -114,7 +114,7 @@ class Config(object):
                                  data_provider=dp)
             self.machine_auth = MachineAuthWallet(self.wallet)
         else:
-            # This branch is hit when '21 help' is invoked by itself
+            # This branch is hit when '21 help' or '21 update' is invoked
             pass
 
     # pulls attributes from the self.defaults dict

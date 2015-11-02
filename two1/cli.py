@@ -84,9 +84,9 @@ $ {0}
 Show help for a command
 $ {0} COMMAND --help
 """
-    not_is_help = ctx.invoked_subcommand != 'help'
-    cfg = Config(config_file, config, create_wallet=not_is_help)
-    if not_is_help:
+    create_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update')
+    cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
+    if create_wallet_and_account:
         check_setup_twentyone_account(cfg)
         # Disable the auto updater for now.
         # Todo: This needs to be switched on for the prod channel only.
