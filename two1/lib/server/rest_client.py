@@ -355,14 +355,14 @@ class TwentyOneRestClient(object):
 
 
 if __name__ == "__main__":
-    host = "http://127.0.0.1:8000"
+    # host = "http://127.0.0.1:8000"
+    from two1.commands.config import Config
+    from two1.commands.config import TWO1_HOST
+    conf = Config()
+    host = TWO1_HOST
     for n in range(100):
-        pk = PrivateKey.from_random()
-        m = TwentyOneRestClient(pk, host)
+        m = TwentyOneRestClient(host, conf.machine_auth, conf.username)
         try:
-            m.account_post("testuser11210_" + str(n),
-                           "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5")
-            m.account_payout_address_post("testuser11210_" + str(n),
-                                          "1LuckyP83urTUEJE9YEaVG2ov3EDz3TgQw")
+            earn = m.get_earnings()
         except requests.exceptions.ConnectionError:
             print("Error: cannot connect to ", host)
