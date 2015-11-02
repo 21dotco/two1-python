@@ -82,6 +82,12 @@ def update_two1_package(config, version, force_update_check=False):
         set_update_check_date(config, date.today())
 
         installed_version = TWO1_VERSION
+
+        if installed_version == '':
+            # This has occured when local git commits have happened
+            click.echo("")
+            raise click.ClickException(UxString.Error.version_not_detected)
+        
         #try:
         latest_version = lookup_pypi_version(version)
         #except ServerRequestError as er:
