@@ -129,7 +129,7 @@ def start_cpu_mining(config):
         UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="magenta")
 
-    status.status_postmine_balance(config, client)
+    status.status_wallet(config, client)
 
     click.echo(UxString.mining_finish.format(
         click.style("21 status", bold=True), click.style("21 buy", bold=True)))
