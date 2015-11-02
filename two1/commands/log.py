@@ -7,16 +7,18 @@ from two1.lib.util.uxstring import UxString
 
 
 @click.command()
+@click.option('--debug', is_flag=True, default=False,
+              help='Include debug logs.')
 @click.pass_context
-def log(ctx):
+def log(ctx, debug):
     """Shows the log of all the 21 earnings"""
 
     config = ctx.obj['config']
-    _log(config)
+    _log(config, debug)
 
 
 @capture_usage
-def _log(config):
+def _log(config, debug):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -25,6 +27,8 @@ def _log(config):
 
     logs = response["logs"]
     prints = []
+    if not debug:
+        logs = filter_rollbacks(logs)
     for entry in logs:
 
         prints.append(get_headline(entry))
@@ -76,3 +80,20 @@ def get_txn_details(entry):
     txns = click.style(txns, fg="blue")
     text = paid + "\n" + txns
     return text
+
+
+def filter_rollbacks(logs):
+    # due to the payout schedule, it is guaranteed that a rollback debit is preceded by a
+    # payout credit. When we see a rollback, we need to both filter that rollback and
+    # its matching payout. We are bound to find the matching payout in the next iteration
+    result = []
+    unmatched_rollback = None
+    for entry in logs:
+        if entry["reason"] and entry["reason"] == 'PayoutRollback':
+            unmatched_rollback = entry
+        elif unmatched_rollback and unmatched_rollback["amount"] == -entry["amount"]:
+            unmatched_rollback = None
+        else:
+            result.append(entry)
+
+    return result
