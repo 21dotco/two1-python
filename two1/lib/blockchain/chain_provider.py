@@ -10,7 +10,6 @@ from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.bitcoin.utils import pack_var_str
-from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
 
 
@@ -229,8 +228,11 @@ class ChainProvider(BaseProvider):
             txn_data = r.json()
 
             for data in txn_data:
+                block_hash = None
+                if data['block_hash']:
+                    block_hash = Hash(data['block_hash'])
                 metadata = dict(block=data['block_height'],
-                                block_hash=Hash(data['block_hash']),
+                                block_hash=block_hash,
                                 confirmations=data['confirmations'])
 
                 txn, addr_keys = self.txn_from_json(data)
@@ -256,8 +258,11 @@ class ChainProvider(BaseProvider):
             data = r.json()
 
             if r.status_code == 200:
+                block_hash = None
+                if data['block_hash']:
+                    block_hash = Hash(data['block_hash'])
                 metadata = dict(block=data['block_height'],
-                                block_hash=Hash(data['block_hash']),
+                                block_hash=block_hash,
                                 confirmations=data['confirmations'])
                 txn, _ = self.txn_from_json(data)
                 assert str(txn.hash) == txid
