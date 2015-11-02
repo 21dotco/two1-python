@@ -6,9 +6,11 @@ from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
 
+
 @click.command()
+@click.option("--json/--no-json", default=False)
 @click.pass_context
-def status(ctx):
+def status(ctx, json):
     """View your bitcoin balance and address.
 
 
