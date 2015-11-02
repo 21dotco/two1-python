@@ -28,11 +28,15 @@ class UxString:
     status_account = "{account}\n"\
         "    Username        : {username}\n"\
 
-    status_wallet =  """{balance}
-    Spendable       : {spendable} Satoshi
-    Pending         : {pending} Satoshi
-    On Chain        : {flushed} Satoshi
-    Current Address : {address}
+    status_wallet = """{balance}
+    Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshi
+    Your spendable balance on the Blockchain [2,3]            : {onchain} Satoshi
+    Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshi
+
+    [1]: Available for Bittransfers (21.co/bittransfers)
+    [2]: Available for On chain (21.co/onchain) & Payment
+         Channels (21.co/payment-channels)
+    [3]: To see all wallet addresses, do 21 status --detail
     """
 
     status_buyable =     """{}
