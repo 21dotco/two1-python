@@ -1,3 +1,5 @@
+import click
+
 class UxString:
     # account creation
     creating_account = "Creating 21.co account. Username: %s."
@@ -52,6 +54,14 @@ class UxString:
     """
 
     # mining
+    mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
+        "Hit any key to launch the dashboard. " + \
+        click.style("Hit q to exit.", bold=True)
+
+    mining_show_dashboard_context = "\nDo 21 mine --dashboard to see a mining dashboard.\n" + \
+        "Or just do 21 status to see your mining progress."
+        
+    mining_chip_start = "\n21 Bitcoin Chip is present, trying to (re)start miner..."
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_dashboard_no_chip = "Without a 21 mining chip, we can't show you a mining dashboard.\n"\

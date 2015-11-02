@@ -49,20 +49,23 @@ $ 21 mine --dashboard
 
 
 @capture_usage
-def _mine(config, dashboard):
-    if dashboard:
-        if has_bitcoinkit():
-            start_minerd(config)
-        else:
-            click.echo(UxString.mining_dashboard_no_chip)
+def _mine(config, dashboard=False):
+    if has_bitcoinkit():
+        start_minerd(config, dashboard)
     else:
         start_cpu_mining(config)
 
+def show_minertop(show_dashboard):
+    if show_dashboard:
+        click.pause(UxString.mining_show_dashboard_prompt)
+        subprocess.call("minertop")
+    else:
+        click.echo(UxString.mining_show_dashboard_context)
 
-def start_minerd(config):
+def start_minerd(config, show_dashboard=False):
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
-    config.log("\nBitcoinkit is present, starting miner...")
+    config.log(UxString.mining_chip_start)
     # Read the PID and check if the process is running
     if os.path.isfile(minerd_pid_file):
         pid = None
@@ -70,9 +73,10 @@ def start_minerd(config):
             pid = int(f.read().rstrip())
 
         if pid is not None:
-            if check_pid(pid):
+            if check_pid(pid) and show_dashboard:
                 # Running, so fire up minertop...
-                subprocess.call("minertop")
+                click.echo("Mining chip is running.")
+                show_minertop(show_dashboard)
                 return
             else:
                 # Stale PID file, so delete it.
@@ -90,8 +94,8 @@ def start_minerd(config):
         config.log("\nError starting minerd: %r" % e)
 
     # Now call minertop after it's started
-    subprocess.call("minertop")
-
+    show_minertop(show_dashboard)
+        
 
 def start_cpu_mining(config):
     """Mine at the CPU.
