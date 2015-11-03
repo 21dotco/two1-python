@@ -43,7 +43,7 @@ def twitter(request):
     )
     if twitter_response.ok:
         return Response({
-                "success": twitter_response.json()["text"]
+                "success": twitter_response.json()
             })
     else:
         return Response({
