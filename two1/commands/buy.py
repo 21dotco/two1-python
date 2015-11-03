@@ -150,7 +150,7 @@ $ 21 buy text +19498132945 "the 21 BC rocks"
          None,
          None,
          ctx.obj["payment_method"],
-         ctx.obj["max_price"],
+         ctx.obj["maxprice"],
          ctx.obj["info_only"]
          )
 
