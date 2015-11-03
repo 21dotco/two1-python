@@ -2,6 +2,8 @@ import click
 import json
 import platform
 import traceback
+
+import os
 import requests
 from two1.commands import config as app_config
 from two1.lib.util.uxstring import UxString
@@ -42,6 +44,7 @@ def capture_usage(func):
             raise
 
         except Exception as e:
+            is_debug = str2bool(os.environ.get("TWO1_DEBUG", False))
             tb = traceback.format_exc()
             data = {
                 "channel": "cli",
@@ -52,11 +55,14 @@ def capture_usage(func):
                 "exception": tb}
             log_message(data)
             click.echo(UxString.Error.server_err)
-            if app_config.DEBUG_MODE:
+            if is_debug:
                 raise e
 
     return _capture_usage
 
+
+def str2bool(v):
+    return str(v).lower() == "true"
 
 def log_message(message):
     url = app_config.TWO1_LOGGER_SERVER + "/logs"
