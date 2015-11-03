@@ -1,13 +1,14 @@
 import json
-
 import requests
-from rest_framework.decorators import api_view, authentication_classes
+
+from django.conf import settings
+from twilio.rest import TwilioRestClient
 from rest_framework.response import Response
-from bitcoin_auth.authentication import BasicPaymentRequiredAuthentication
+from rest_framework.decorators import api_view
+from two1.examples.bitcoin_auth.pricing import api_price
 
 
 @api_view(['GET'])
-@authentication_classes([BasicPaymentRequiredAuthentication])
 def phone_lookup(request):
     """
     Reverse phone lookup
@@ -31,12 +32,15 @@ def phone_lookup(request):
     phone_number = request.query_params.get("phone", None)
     if not phone_number:
         return Response("Must provide value for Phone parameter", code=400)
-    response = requests.get("https://api.opencnam.com/v2/phone/{0}?format=json".format(phone_number))
+    response = requests.get(
+        "https://api.opencnam.com/v2/phone/{0}?format=json".format(
+          phone_number
+        ))
     return Response(json.loads(response.text))
 
 
+@api_price(1000)
 @api_view(['POST'])
-@authentication_classes([BasicPaymentRequiredAuthentication])
 def send_sms(request):
     """
     Send an SMS
@@ -61,12 +65,18 @@ def send_sms(request):
           type: string
           paramType: query
     """
-
+    client = TwilioRestClient(
+        settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
+      )
     phone_number = request.data.get("phone", None)
     if not phone_number:
         return Response("Must provide value for Phone parameter", code=400)
     text = request.data.get("text", None)
     if not text:
         return Response("Must provide value for Text parameter", code=400)
-    response = requests.post("http://textbelt.com/text", data={"number": phone_number, "message": text})
-    return Response(json.loads(response.text))
+    response = client.messages.create(
+        to=phone_number,
+        from_=settings.TWILIO_NUMBER,
+        body=text
+    )
+    return Response({"success": response.status})
