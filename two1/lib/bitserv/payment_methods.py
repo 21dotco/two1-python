@@ -135,22 +135,22 @@ class OnChain(PaymentBase):
         try:
             payment_tx = Transaction.from_hex(raw_tx)
         except:
-            raise InvalidPaymentParameterError('Error: Invalid tx hex.')
+            raise InvalidPaymentParameterError('Invalid transaction hex.')
 
         # Find the output with the merchant's address
         payment_index = payment_tx.output_index_for_address(kwargs.get('address', self.address))
         if payment_index is None:
-            raise InvalidPaymentParameterError('Error: Not paid to merchant.')
+            raise InvalidPaymentParameterError('Not paid to merchant.')
 
         # Verify that the payment is made for the correct amount
         if payment_tx.outputs[payment_index].value != price:
-            raise InsufficientPaymentError('Error: Incorrect payment amount.')
+            raise InsufficientPaymentError('Incorrect payment amount.')
 
         # Verify that we haven't seen this transaction before
         try:
             self.db.lookup(str(payment_tx.hash))
         except ModelNotFound:
-            raise DuplicatePaymentError('Error: Payment already used.')
+            raise DuplicatePaymentError('Payment already used.')
 
         # Broadcast payment to network
         try:
@@ -250,7 +250,7 @@ class BitTransfer(PaymentBase):
         # check amount in transfer
         resource_price = price
         if not json.loads(bittransfer)['amount'] == resource_price:
-            raise InsufficientPaymentError('Error: Incorrect payment amount.')
+            raise InsufficientPaymentError('Incorrect payment amount.')
 
         # now verify with 21.co server that transfer is valid
         try:
