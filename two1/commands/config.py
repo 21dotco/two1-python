@@ -1,11 +1,15 @@
 import sys
 import json
 
+from dotenv import load_dotenv
+from os.path import join, dirname
+
 import os
 import two1
 import click
 from codecs import open
 from path import path
+from pathlib import Path
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import daemonizer
 from two1.lib.wallet.two1_wallet import Two1Wallet
@@ -14,42 +18,31 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
 
-#TODO do not go to prod with these defaults
+# if there is a .env in the root directory, use the endpoints that are specified in there
+
+base_dir = str(Path(__file__).parents[2])
+dotenv_path = join(base_dir, '.env')
+
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+    click.secho("Reading endpoints from file: {}".format(dotenv_path),
+                fg="yellow")
+
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
-TWO1_API_HOST = "https://djangobitcoin-devel-e0ble.herokuapp.com"
-TWO1_PROD_HOST = "https://dotco-devel-pool2.herokuapp.com"
+TWO1_HOST = os.environ.get("TWO1_HOST", "https://dotco-prod-pool2.herokuapp.com")
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
-TWO1_LOGGER_SERVER = "http://52.21.57.141:8009"
-TWO1_POOL_URL = "swirl+tcp://grid.21-dev.co:21006"
-TWO1_MERCHANT_HOST = "https://api-2348.21.co"
+TWO1_LOGGER_SERVER = os.environ.get("TWO1_LOGGER_SERVER", "http://logger.21.co")
+TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21:21006")
+TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST",
+                                    "http://two1-merchant-server-prod-1287.herokuapp.com")
 TWO1_VERSION = two1.__version__
 
 try:
     TWO1_PATH = os.path.dirname(sys.argv[0])
 except:
     TWO1_PATH = None
-
-
-def str2bool(v):
-    return str(v).lower() in ("yes", "true", "t", "1", "on")
-
-# override variables based on environment settings
-# if TWO1_DEV is set, we will switch to DEV mode with the following changes
-# 1) set the TWO1_HOST to TWO1_DEV_HOST (127.0.0.1:8000) or TWO1_DEV_HOST
-#    from the environment
-# if TWO1_DEV is not set, use TWO1_PROD_HOST
-TWO1_DEV = str2bool(os.environ.get("TWO1_DEV", default="0"))
-if TWO1_DEV:
-    click.echo(click.style("Setting up developer environment.", fg="red"))
-    TWO1_HOST = os.environ.get("TWO1_DEV_HOST", default="http://127.0.0.1:8000")
-    # Handle hostname if there is a trailing slash
-    if TWO1_HOST[-1] == "/":
-        TWO1_HOST = TWO1_HOST[0:-1]
-    click.echo("Host: {}".format(TWO1_HOST))
-else:
-    TWO1_HOST = TWO1_PROD_HOST
 
 '''Primary use case for the following class is the singleton that holds
    all the state & config data required to run commands and subcommands
@@ -64,7 +57,8 @@ class Config(object):
             os.makedirs(TWO1_USER_FOLDER)
         self.file = path(config_file).expand().abspath()
         self.dir = self.file.parent
-        self.defaults = {} # TODO: Rename this var. Those are not the defaults but the actual config.
+        self.defaults = {}  # TODO: Rename this var. Those are not the defaults but the
+        #  actual config.
         self.load()
         # override config variables
         if config:
@@ -103,9 +97,9 @@ class Config(object):
             # 3. We're not in a virtualenv
             d = daemonizer.get_daemonizer()
             if Two1Wallet.is_configured() and \
-               wallet_path == Two1Wallet.DEFAULT_WALLET_PATH and \
-               not os.environ.get("VIRTUAL_ENV") and \
-               not d.started():
+                            wallet_path == Two1Wallet.DEFAULT_WALLET_PATH and \
+                    not os.environ.get("VIRTUAL_ENV") and \
+                    not d.started():
                 d.start()
                 if d.started():
                     click.echo(UxString.wallet_daemon_started)
@@ -214,6 +208,7 @@ class Config(object):
 
     def __repr__(self):
         return "<Config\n%s>" % self.fmt()
+
 
 # IMPORTANT: Suppose you want to invoke a command as a function
 # for the purpose of testing, eg:
