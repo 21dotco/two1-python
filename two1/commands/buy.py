@@ -116,7 +116,10 @@ $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
 """
     if message == "" and twitter_user == "@balajis":
         ctx.obj["info_only"] = True
-
+    else:
+        message += " from: {}".format(
+            ctx.obj['config'].username
+        )
     _buy(ctx.obj["config"],
          "social",
          dict(message=message),

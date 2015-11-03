@@ -33,8 +33,11 @@ def search_formatter(res, maxresults=10):
 
 def social_formatter(res):
     """custom formatter for social."""
-    message = res.json()["success"]
-    return "You just sent the direct message: {}".format(message)
+    data = res.json()["success"]
+    return 'The following Twitter DM was recieved by: @{}\n"{}"\n'.format(
+        data["recipient_screen_name"],
+        data["text"]
+    )
 
 
 def content_formatter(res):
