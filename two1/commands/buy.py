@@ -10,6 +10,7 @@ from two1.lib.server import rest_client
 from two1.commands.formatters import search_formatter
 from two1.commands.formatters import social_formatter
 from two1.commands.formatters import content_formatter
+from two1.commands.formatters import text_formatter
 from two1.lib.server.analytics import capture_usage
 from two1.lib.bitcurl.bitrequests import OnChainRequests
 from two1.lib.bitcurl.bitrequests import BitTransferRequests
@@ -27,7 +28,8 @@ URL_REGEXP = re.compile(
 DEMOS = {
     "search": {"path": "/search/bing", "formatter": search_formatter},
     "social": {"path": "/social/twitter", "formatter": social_formatter},
-    "content": {"path": "/content/wsj", "formatter": content_formatter}
+    "content": {"path": "/content/wsj", "formatter": content_formatter},
+    "text": {"path": "/phone/send-sms", "formatter": text_formatter}
 }
 
 @click.group()
@@ -86,7 +88,7 @@ $ 21 buy search "First Bitcoin Computer"
 """
     if query == "":
         ctx.obj["info_only"] = True
-    
+
     _buy(ctx.obj["config"],
          "search",
          dict(query=query),
@@ -113,10 +115,36 @@ $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
 """
     if message == "" and twitter_user == "@balajis":
         ctx.obj["info_only"] = True
-    
+
     _buy(ctx.obj["config"],
          "social",
          dict(message=message),
+         "POST",
+         None,
+         None,
+         ctx.obj["payment_method"],
+         ctx.obj["max_price"],
+         ctx.obj["info_only"]
+         )
+
+
+@click.argument('body', default="")
+@click.argument('phone_number', default="")
+@buy.command()
+@click.pass_context
+def text(ctx, phone_number, body):
+    """Send a a sms to a phone number.
+
+\b
+Example
+-------
+$ 21 buy text +19498132945 "the 21 BC rocks"
+"""
+    if phone_number == "" and body == "":
+        ctx.obj["info_only"] = True
+    _buy(ctx.obj["config"],
+         "text",
+         dict(phone=phone_number, text=body),
          "POST",
          None,
          None,
@@ -139,7 +167,7 @@ $ 21 buy content http://on.wsj.com/1IV0HT5
 """
     if url == "":
         ctx.obj["info_only"] = True
-    
+
     _buy(ctx.obj["config"],
          "content",
          dict(url=url),
@@ -150,7 +178,6 @@ $ 21 buy content http://on.wsj.com/1IV0HT5
          ctx.obj["max_price"],
          ctx.obj["info_only"]
          )
-
 
 
 @capture_usage

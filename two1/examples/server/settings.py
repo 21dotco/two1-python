@@ -205,6 +205,21 @@ TWITTER_OAUTH_TOKEN_SECRET = os.environ.get(
     "TWITTER_OAUTH_TOKEN_SECRET"
 )
 
+
+# Twilio related API credentials
+# docs on twilio API calls
+# https://www.twilio.com/docs/python/install
+TWILIO_ACCOUNT_SID = os.environ.get(
+    "TWILIO_ACCOUNT_SID"
+)
+TWILIO_AUTH_TOKEN = os.environ.get(
+    "TWILIO_AUTH_TOKEN"
+)
+TWILIO_NUMBER = os.environ.get(
+    "TWILIO_NUMBER",
+    "+14152126716"
+)
+
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

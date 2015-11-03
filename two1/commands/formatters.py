@@ -41,3 +41,10 @@ def content_formatter(res):
     """custom formatter for content."""
     url = res.json()["article"]
     return "You just purchased the article {}".format(url)
+
+
+def text_formatter(res):
+    """custom formatter for text messages."""
+    return "You just sent a text message, status: {}".format(
+        res.json()["success"]
+    )
