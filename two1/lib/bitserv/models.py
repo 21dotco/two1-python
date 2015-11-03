@@ -27,6 +27,19 @@ class InvalidPaymentError(ChannelError):
     pass
 
 
+class ChannelDataManager:
+
+    def __init__(self):
+        """Provides an interface to the two payment channel data models.
+
+        A ChannelDataManager should expose an attribute named `pc`, which is
+        an instance of a ChannelDatabase, as well as an attribute named `pmt`,
+        which is an instance of a PaymentDatabase. The PaymentServer relies on
+        the ChannelDataManager to maintain its state.
+        """
+        pass
+
+
 class ChannelDatabase:
 
     def __init__(self):
@@ -66,13 +79,13 @@ class PaymentDatabase:
 # *************************** Django Data ORM ****************************** #
 
 
-class DatabaseDjango:
+class DatabaseDjango(ChannelDataManager):
 
     """Payment channel data bindings for django models."""
 
     def __init__(self, Channel, Payment):
-        self.Channel = ChannelDjango(Channel)
-        self.Payment = PaymentDjango(Payment)
+        self.pc = ChannelDjango(Channel)
+        self.pmt = PaymentDjango(Payment)
 
 
 class ChannelDjango(ChannelDatabase):
@@ -87,9 +100,10 @@ class ChannelDjango(ChannelDatabase):
         now = time.time()
         expiry = refund_tx.lock_time
         mp = codecs.encode(merch_pubkey.compressed_bytes, 'hex_codec').decode()
-        self.Channel.create(deposit_txid=deposit_txid, state=state,
-                            refund_tx=refund_tx.to_hex(), merchant_pubkey=mp,
-                            expires_at=expiry)
+        ch = self.Channel(deposit_txid=deposit_txid, state=state,
+                          refund_tx=refund_tx.to_hex(), merchant_pubkey=mp,
+                          expires_at=expiry)
+        ch.save()
         return True
 
     def lookup(self, deposit_txid):
@@ -133,9 +147,10 @@ class PaymentDjango(ChannelDatabase):
 
     def create(self, deposit_txid, payment_tx, amount):
         """Create a payment entry."""
-        self.Payment.create(payment_txid=payment_txid, amount=amount,
-                            payment_tx=payment_tx.to_hex(),
-                            deposit_txid=deposit_txid)
+        pmt = self.Payment(payment_txid=payment_txid, amount=amount,
+                           payment_tx=payment_tx.to_hex(),
+                           deposit_txid=deposit_txid)
+        pmt.save()
         return True
 
     def lookup(self, payment_txid):
@@ -152,7 +167,10 @@ class PaymentDjango(ChannelDatabase):
         return True
 
 
-class DatabaseSQLite3:
+# *************************** Default SQLite3 ****************************** #
+
+
+class DatabaseSQLite3(ChannelDataManager):
 
     """Default payment channel data bindings when no data service is provided."""
 
@@ -162,8 +180,6 @@ class DatabaseSQLite3:
         self.pc = ChannelSQLite3(self)
         self.pmt = PaymentSQLite3(self)
 
-
-# *************************** Default SQLite3 ****************************** #
 
 class ChannelSQLite3(ChannelDatabase):
 
