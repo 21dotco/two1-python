@@ -34,7 +34,7 @@ def phone_lookup(request):
         return Response("Must provide value for Phone parameter", code=400)
     response = requests.get(
         "https://api.opencnam.com/v2/phone/{0}?format=json".format(
-          phone_number
+            phone_number
         ))
     return Response(json.loads(response.text))
 
@@ -67,7 +67,7 @@ def send_sms(request):
     """
     client = TwilioRestClient(
         settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
-      )
+    )
     phone_number = request.data.get("phone", None)
     if not phone_number:
         return Response("Must provide value for Phone parameter", code=400)
@@ -79,4 +79,9 @@ def send_sms(request):
         from_=settings.TWILIO_NUMBER,
         body=text
     )
-    return Response({"success": response.status})
+    return Response({
+        "status": response.status,
+        "body": response.body,
+        "to": response.to,
+        "from": response.from_
+    })

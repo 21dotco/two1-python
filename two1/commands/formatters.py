@@ -45,6 +45,9 @@ def content_formatter(res):
 
 def text_formatter(res):
     """custom formatter for text messages."""
-    return "You just sent a text message, status: {}".format(
-        res.json()["success"]
+    data = res.json()
+    return 'The following SMS is queued to be sent to: {} \n"{}" from: {}'.format(
+        data["to"],
+        data["body"],
+        data['from']
     )
