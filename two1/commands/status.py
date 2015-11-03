@@ -29,7 +29,7 @@ def get_hashrate():
     hashrate = None
     try:
         import socket
-        from minerdaemon.events import StatisticsEvent
+        import json
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect("/tmp/minerd.sock")
         buf = b""
@@ -46,10 +46,10 @@ def get_hashrate():
                 pos = buf.find(b"\n")
                 data = buf[0:pos].decode('utf-8')
                 buf = buf[pos+1:]
-                event = Event.from_json(data)
-                if isinstance(event, StatisticsEvent):
+                event = json.loads(data)
+                if (event['type'] == "StatisticsEvent"):
                     # 5min, 15min, 60min Hashrate
-                    hashrate = max(event.statistics['hashrate'][i] for i in ("5min", "15min", "60min"))
+                    hashrate = max( event['payload']['statistics']['hashrate'][i] for i in ("5min", "15min", "60min"))
                     break
             if hashrate:
                 break
