@@ -125,3 +125,4 @@ class UxString:
         version_not_detected = "Could not properly detect your version of 21. \nTry"\
             " reinstalling from the 21 Toolbelt instructions at 21.co/learn. \nIf problems"\
             " persist, please contact support@21.co."
+        resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
