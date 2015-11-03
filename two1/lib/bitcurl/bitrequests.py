@@ -123,6 +123,8 @@ class BitRequests(object):
         if paid_response.status_code == requests.codes.ok:
             logger.debug('[BitRequests] Successfully purchased resource.')
         else:
+            if 'detail' in paid_response.text:
+                raise ValueError(paid_response.json()["detail"])
             logger.debug('[BitRequests] Could not purchase resource.')
 
         # Add the amount that was paid as an attribute to the response object

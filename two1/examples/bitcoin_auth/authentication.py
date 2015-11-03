@@ -294,9 +294,9 @@ class BitTransferAuthentication(BaseAuthentication):
             if verification_response.ok:
                 return True
             else:
-                if "message" in verification_response.text:
+                if "error" in verification_response.text:
                     raise PaymentRequiredException(
-                        verification_response.json()["message"]
+                        verification_response.json()["error"]
                     )
                 else:
                     raise ServiceUnavailable
