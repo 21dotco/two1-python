@@ -14,7 +14,8 @@ from two1.commands.formatters import text_formatter
 from two1.lib.server.analytics import capture_usage
 from two1.lib.bitcurl.bitrequests import OnChainRequests
 from two1.lib.bitcurl.bitrequests import BitTransferRequests
-
+from two1.lib.bitcurl.bitrequests import ResourcePriceGreaterThanMaxPriceError
+from two1.lib.util.uxstring import UxString
 
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -34,10 +35,10 @@ DEMOS = {
 
 @click.group()
 @click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
-@click.option('--max-price', default=10000, help="Maximum amount to pay")
+@click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.pass_context
-def buy(ctx, payment_method, max_price, info_only):
+def buy(ctx, payment_method, maxprice, info_only):
     """Buy API calls with mined bitcoin.
 
 \b
@@ -71,7 +72,7 @@ Direct message someone outside your social network for bitcoin.
 $ 21 buy social @balajis "Hey nice to meet you, I'm @example. My startup is example.com"
 """
     ctx.obj["payment_method"] = payment_method
-    ctx.obj["max_price"] = max_price
+    ctx.obj["maxprice"] = maxprice
     ctx.obj["info_only"] = info_only
 
 
@@ -96,7 +97,7 @@ $ 21 buy search "First Bitcoin Computer"
          None,
          None,
          ctx.obj["payment_method"],
-         ctx.obj["max_price"],
+         ctx.obj["maxprice"],
          ctx.obj["info_only"]
          )
 
@@ -123,7 +124,7 @@ $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
          None,
          None,
          ctx.obj["payment_method"],
-         ctx.obj["max_price"],
+         ctx.obj["maxprice"],
          ctx.obj["info_only"]
          )
 
@@ -175,7 +176,7 @@ $ 21 buy content http://on.wsj.com/1IV0HT5
          None,
          None,
          ctx.obj["payment_method"],
-         ctx.obj["max_price"],
+         ctx.obj["maxprice"],
          ctx.obj["info_only"]
          )
 
@@ -216,6 +217,9 @@ def _buy(config, resource, data, method, data_file, output_file,
             res = bit_req.request(
                 method.lower(), target_url, max_price=max_price,
                 data=data or data_file, headers=headers)
+    except ResourcePriceGreaterThanMaxPriceError as e:
+        config.log(UxString.Error.resource_price_greater_than_max_price.format(e))
+        return
     except Exception as e:
         config.log(str(e), fg="red")
         return
