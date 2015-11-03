@@ -30,6 +30,10 @@ class BadTransactionError(PaymentServerError):
     pass
 
 
+class TransactionVerificationError(PaymentServerError):
+    pass
+
+
 class PaymentServer:
 
     """Payment channel handling.
@@ -91,7 +95,9 @@ class PaymentServer:
                 and modified directly.
         """
         # Verify that the transaction is build correctly
-        self._wallet.verify_half_signed_tx(refund_tx)
+        if not self._wallet.verify_half_signed_tx(refund_tx):
+            raise TransactionVerificationError(
+                'Half-signed transaction could not be verified.')
 
         # Verify that the lock time is an allowable amount in the future
         minimum_locktime = int(time.time()) + self.MIN_EXP_TIME
