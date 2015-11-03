@@ -9,7 +9,7 @@ from two1.lib.bitcurl.bitrequests import BitRequests
 
 
 class MockRequest:
-    pass
+    text = ""
 
 
 class MockWallet:
