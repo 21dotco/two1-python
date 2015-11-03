@@ -5,6 +5,7 @@ from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
 
+
 def has_bitcoinkit():
     """Quick check for presence of mining chip via file presence.
 
@@ -21,11 +22,46 @@ def has_bitcoinkit():
         bitcoinkit_present = False
     return bitcoinkit_present
 
+
 def get_hashrate():
     """Return hashrate of mining chip on current system.
-    Replace with realtime current_event.statistics from minertop.
     """
-    return "~50 GH/s"
+    hashrate = None
+    try:
+        import socket
+        from minerdaemon.events import StatisticsEvent
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect("/tmp/minerd.sock")
+        buf = b""
+        while True:
+            chunk = s.recv(4096)
+
+            # If server disconnected
+            if chunk == b"":
+                s.close()
+                break
+
+            buf += chunk
+            while b"\n" in buf:
+                pos = buf.find(b"\n")
+                data = buf[0:pos].decode('utf-8')
+                buf = buf[pos+1:]
+                event = Event.from_json(data)
+                if isinstance(event, StatisticsEvent):
+                    # 5min, 15min, 60min Hashrate
+                    hashrate = max(event.statistics['hashrate'][i] for i in ("5min", "15min", "60min"))
+                    break
+            if hashrate:
+                break
+    except:
+        pass
+    # non zero hashrate
+    if hashrate > 1.0:
+        ret = "~{0:.1f} GH/s".format(hashrate / 1e+9)
+    else:
+        ret = UxString.Error.data_unavailable
+    return ret
+
 
 def status_mining(config, client):
     has_chip = has_bitcoinkit()
