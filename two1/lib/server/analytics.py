@@ -9,7 +9,6 @@ from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
 
 
-
 def capture_usage(func):
     def _capture_usage(*args, **kw):
 

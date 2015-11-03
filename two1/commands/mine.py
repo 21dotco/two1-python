@@ -55,12 +55,14 @@ def _mine(config, dashboard=False):
     else:
         start_cpu_mining(config)
 
+
 def show_minertop(show_dashboard):
     if show_dashboard:
         click.pause(UxString.mining_show_dashboard_prompt)
         subprocess.call("minertop")
     else:
         click.echo(UxString.mining_show_dashboard_context)
+
 
 def start_minerd(config, show_dashboard=False):
     # Check if it's already up and running by checking pid file.

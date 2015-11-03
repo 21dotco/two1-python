@@ -84,13 +84,6 @@ MESSAGE_UNIT_PRICE = 8000
 
 def status_wallet(config, client):
     """Print wallet status to the command line.
-
-    >>> from two1.commands.config import Config
-    >>> config = Config()
-    >>> client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                                 config.machine_auth,
-                                                 config.username)
-
     """
     twentyone_balance, onchain, pending_transactions, flushed_earnings = \
         _get_balances(config, client)
@@ -130,22 +123,6 @@ def status_wallet(config, client):
                    nl=False)
 
 
-# def status_postmine_balance(config, client):
-#     twentyone_balance, total_balance, pending_transactions, flushed_earnings = \
-#         _get_balances(config, client)
-#     try:
-#         bitcoin_address = config.wallet.current_address
-#     except AttributeError:
-#         bitcoin_address = "Not Set"
-#
-#     config.log('''\nWallet''', fg='magenta')
-#     config.log('''\
-#     New Balance                 :   {} Satoshi
-#     Current Bitcoin Address     :   {}'''
-#                .format(total_balance, bitcoin_address)
-#                )
-
-
 def _get_balances(config, client):
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
@@ -155,7 +132,6 @@ def _get_balances(config, client):
     twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flush_amount"]
 
-    #total_balance = balance_c + total_earnings
     return twentyone_balance, balance_c, pending_transactions, flushed_earnings
 
 

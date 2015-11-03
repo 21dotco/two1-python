@@ -88,11 +88,8 @@ def update_two1_package(config, version, force_update_check=False):
             click.echo("")
             raise click.ClickException(UxString.Error.version_not_detected)
         
-        #try:
         latest_version = lookup_pypi_version(version)
-        #except ServerRequestError as er:
-        #    click.echo(str(er))
-        #    latest_version = "0.0.0"
+
         # Check if available version is more recent than the installed version.
         if (LooseVersion(latest_version) > LooseVersion(installed_version) or
                 version != 'latest'):

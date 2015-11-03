@@ -1,5 +1,6 @@
 import click
 
+
 class UxString:
     # account creation
     creating_account = "Creating 21.co account. Username: %s."
@@ -93,6 +94,7 @@ class UxString:
                "flush_payout": "Performed 21 flush to move unpaid earnings to the Blockchain",
                "earning_payout": "Periodic 21 payout of portion of the earnings to the Blockchain"
                }
+
     class Error:
         # network errors
         connection = "Error: Cannot connect to {}. Please check your Internet connection."
