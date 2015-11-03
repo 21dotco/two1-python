@@ -39,6 +39,10 @@ class UnsupportedPaymentMethodError(BitRequestsError):
     pass
 
 
+class ResourcePriceGreaterThanMaxPriceError(BitRequestsError):
+    pass
+
+
 class BitRequests(object):
 
     """Implements the HTTP 402 bitcoin payment protocol on the client side.
@@ -186,7 +190,7 @@ class BitTransferRequests(BitRequests):
         # Verify resource cost against our budget
         if max_price and price > max_price:
             max_price_err = 'Resource price ({}) exceeds max price ({}).'
-            raise ValueError(max_price_err.format(price, max_price))
+            raise ResourcePriceGreaterThanMaxPriceError(max_price_err.format(price, max_price))
 
         # Create and sign BitTranfer
         bittransfer = json.dumps({
