@@ -14,10 +14,6 @@ class NoMerchantPublicKeyError(WalletError):
     pass
 
 
-class TransactionVerificationError(WalletError):
-    pass
-
-
 class InvalidPaymentError(WalletError):
     pass
 
@@ -75,8 +71,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         # Verify partial signature in refund transaction
         script_pubkey = Script.build_p2sh(redeem_script.hash160())
         if not tx_from_user.verify_partial_multisig(0, script_pubkey):
-            raise TransactionVerificationError(
-                'Half-signed transaction could not be verified.')
+            return False
 
         return True
 
