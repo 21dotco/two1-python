@@ -1,4 +1,4 @@
-"""Tools for Payment Channels."""
+"""Server-side implementation of payment channels."""
 import time
 import codecs
 from two1.lib.bitcoin.crypto import PublicKey
@@ -35,7 +35,8 @@ class PaymentServer:
     """Payment channel handling.
 
     This class handles the server-side implementation of payment channels from
-    handshake to channel close. It also implements the ability for
+    handshake to channel close. It also implements the ability for an API
+    server to redeem micropayments made within the channel.
     """
 
     # Minimum transaction fee and total payment amount (dust limit)
@@ -50,10 +51,15 @@ class PaymentServer:
         Args:
             wallet (.wallet.Two1WalletWrapper): a two1 wallet wrapped with
                 payment server functionality.
+            db (.models.ChannelDataManager): a database wrapper to manage the
+                payment channel server's interface with a persistent store of
+                data.
             account (string): which account within the wallet to use (e.g.
                 'merchant', 'customer', 'default', etc).
             testnet (boolean): whether or not the server should broadcast and
                 verify transactions against the bitcoin testnet blockchain.
+            blockchain (two1.lib.blockchain.provider): a blockchain data
+                provider capable of broadcasting raw transactions.
         """
         self._wallet = Two1WalletWrapper(wallet, account)
         self._blockchain = blockchain
@@ -83,9 +89,6 @@ class PaymentServer:
             refund_tx (two1.lib.bitcoin.txn.Transaction): half-signed refund
                 Transaction from a customer. This object is passed by reference
                 and modified directly.
-
-        Returns:
-            (boolean): whether the handshake was successfully initialized.
         """
         # Verify that the transaction is build correctly
         self._wallet.verify_half_signed_tx(refund_tx)
@@ -112,8 +115,6 @@ class PaymentServer:
             raise BadTransactionError(
                 'That deposit has already been used to create a channel.')
 
-        return True
-
     def complete_handshake(self, deposit_txid, deposit_tx):
         """Complete the final step in the channel handshake.
 
@@ -128,9 +129,6 @@ class PaymentServer:
             deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
                 Transaction from a customer. This object is passed by reference
                 and modified directly.
-
-        Returns:
-            (boolean): whether the handshake was successfully completed.
         """
         try:
             channel = self._db.pc.lookup(deposit_txid)
@@ -158,8 +156,6 @@ class PaymentServer:
 
         self._db.pc.update_state(deposit_txid, 'confirming')
 
-        return True
-
     def receive_payment(self, deposit_txid, payment_tx):
         """Receive and process a payment within the channel.
 
@@ -175,9 +171,6 @@ class PaymentServer:
             deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
                 Transaction from a customer. This object is passed by reference
                 and modified directly.
-
-        Returns:
-            (boolean): whether the payment was sucessfully processed.
         """
         # Verify that the transaction is what we expect
         self._wallet.verify_half_signed_tx(payment_tx)
@@ -223,8 +216,6 @@ class PaymentServer:
         # Update the current payment transaction
         self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
         self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt-last_pmt_amt)
-
-        return True
 
     def status(self, deposit_txid):
         """Get a payment channel's current status.

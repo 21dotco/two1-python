@@ -70,8 +70,7 @@ def test_initialize_handshake():
     _, refund_tx, _ = _create_client_txs()
 
     # Initialize the handshake and ensure that it returns sucessfully
-    initialized = server.initialize_handshake(refund_tx)
-    assert initialized
+    server.initialize_handshake(refund_tx)
 
     # Test for handshake failure when using the same refund twice
     with pytest.raises(PaymentServerError):
@@ -91,8 +90,7 @@ def test_complete_handshake():
 
     # Test that handshake completion succeeds
     server.initialize_handshake(refund_tx)
-    completed = server.complete_handshake(deposit_txid, deposit_tx)
-    assert completed
+    server.complete_handshake(deposit_txid, deposit_tx)
 
     # Test that handshake completion fails with a duplicate deposit
     with pytest.raises(PaymentServerError):
@@ -112,8 +110,7 @@ def test_receive_payment():
     # Test that payment receipt succeeds
     server.initialize_handshake(refund_tx)
     server.complete_handshake(deposit_txid, deposit_tx)
-    paid = server.receive_payment(deposit_txid, payment_tx)
-    assert paid
+    server.receive_payment(deposit_txid, payment_tx)
 
     # Test that payment receipt fails with a duplicate payment
     with pytest.raises(PaymentServerError):
