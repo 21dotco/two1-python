@@ -92,13 +92,13 @@ class Two1WalletWrapper(WalletWrapperBase):
                 contains a transaction that has been signed by both the
                 customer and the merchant.
         """
+        # Verify that the deposit spend has only one input
+        if len(tx_from_user.inputs) != 1:
+            raise InvalidPaymentError('Transaction should have one input.')
+
         try:
             # Get the public keys associated with this transaction
             redeem_script = get_redeem_script(tx_from_user)
-
-            # Verify that the deposit spend has only one input
-            if len(tx_from_user.inputs) != 1:
-                raise InvalidPaymentError('Transaction should have one input.')
 
             # Sign the first (and only) input in the transaction
             private_key = self._wallet.get_private_for_public(merch_key)
