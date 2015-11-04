@@ -53,10 +53,10 @@ def get_hashrate():
                     break
             if hashrate:
                 break
-    except:
-        pass
+    except Exception as e:
+        print(str(e))
     # non zero hashrate
-    if hashrate > 1.0:
+    if (hashrate is not None) and (hashrate > 1.0):
         ret = "~{0:.1f} GH/s".format(hashrate / 1e+9)
     else:
         ret = UxString.Error.data_unavailable
