@@ -3,7 +3,7 @@ from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import hex_str_to_bytes
 from two1.lib.bitcoin.utils import key_hash_to_address
-from two1.commands.config import TWO1_HOST
+from two1.commands.config import TWO1_PROVIDER_HOST
 
 
 class BitcoinAuthProvider(object):
@@ -23,7 +23,7 @@ class BitcoinAuthProvider(object):
 
     def __init__(self):
         """Initalization of the Chain Provider."""
-        self.provider = TwentyOneProvider(TWO1_HOST)
+        self.provider = TwentyOneProvider(TWO1_PROVIDER_HOST)
 
     def validate_payment(self, tx, address, amount):
         """Ensure tx, reciepient & amount are valid.

@@ -18,7 +18,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 
 from two1.lib.wallet import Wallet, Two1Wallet
-from two1.commands.config import TWO1_HOST
+from two1.commands.config import TWO1_PROVIDER_HOST
 from two1.lib.bitserv import PaymentServer, DatabaseDjango
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderError
@@ -32,7 +32,7 @@ from .exceptions import PaymentRequiredException
 from .exceptions import ServiceUnavailable
 
 if settings.WALLET_MNEMONIC:
-    dp = TwentyOneProvider(TWO1_HOST)
+    dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
     wallet = Two1Wallet.import_from_mnemonic(dp, settings.WALLET_MNEMONIC)
 else:
     wallet = Wallet()
