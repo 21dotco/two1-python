@@ -176,7 +176,8 @@ def check_pid(pid):
 def get_work(config, client):
     work_msg = client.get_work()
     msg_factory = message_factory.SwirlMessageFactory()
-    work = msg_factory.read_object(work_msg.content)
+    msg = base64.decodebytes(work_msg.content)
+    work = msg_factory.read_object(msg)
     return work
 
 
