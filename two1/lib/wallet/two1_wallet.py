@@ -1410,6 +1410,20 @@ class Two1Wallet(BaseWallet):
 
         return balances
 
+    def balances_by_address(self, account_name_or_index):
+        """ Returns a dict of balances by address
+
+        Args:
+            account_name_or_index (str or int): The account to retrieve the
+               balances for.
+
+        Returns:
+            dict: key/value pairs of address and balance
+        """
+        acct = self._check_and_get_accounts([account_name_or_index])[0]
+
+        return acct.balances_by_address()
+
     def confirmed_balance(self, account_name_or_index=None):
         """ Gets the current confirmed balance of the wallet in Satoshi.
 
@@ -1467,7 +1481,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             list(str): All account names.
         """
-        return list(self._account_map.keys())
+        return [a.name for a in self._accounts]
 
     @property
     def account_map(self):

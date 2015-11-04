@@ -543,6 +543,12 @@ def addresses(accounts):
 
 
 @daemon_method
+def balances_by_address(account):
+    """ RPC method to return balances by address
+    """
+    return wallet['obj'].balances_by_address(account)
+
+@daemon_method
 def sweep(address, accounts=[]):
     """ RPC method to sweep balance to a single address
     """

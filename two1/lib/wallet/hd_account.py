@@ -145,10 +145,11 @@ class HDAccount(object):
             self.last_indices[change] = current_last
 
     def _update_balance(self):
-        address_balances = self.data_provider.get_balance(self.all_used_addresses)
+        self._address_balances = self.data_provider.get_balance(
+            self.all_used_addresses)
 
         balance = {'confirmed': 0, 'total': 0}
-        for k, v in address_balances.items():
+        for k, v in self._address_balances.items():
             balance['confirmed'] += v['confirmed']
             balance['total'] += v['total']
 
@@ -339,6 +340,15 @@ class HDAccount(object):
                 "last_payout_index": self.last_indices[self.PAYOUT_CHAIN],
                 "last_change_index": self.last_indices[self.CHANGE_CHAIN]}
 
+    def balances_by_address(self):
+        """ Returns a dict with balances for each used
+            address in the account
+
+        Returns:
+            dict: key/values are addresses and current balance
+        """
+        return self._address_balances
+        
     @property
     def balance(self):
         """ Returns balances, both confirmed and total, for this
