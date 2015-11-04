@@ -8,37 +8,6 @@ from rest_framework.decorators import api_view
 from two1.examples.bitcoin_auth.pricing import api_price
 
 
-@api_view(['GET'])
-def phone_lookup(request):
-    """
-    Reverse phone lookup
-    ---
-    type:
-      result:
-        type: string
-
-    parameters:
-        - name: phone
-          description: phone number to look up
-          required: true
-          type: string
-          paramType: query
-        - name: tx
-          description: Transaction Id  (proof of payment)
-          type: string
-          paramType: query
-    """
-
-    phone_number = request.query_params.get("phone", None)
-    if not phone_number:
-        return Response("Must provide value for Phone parameter", code=400)
-    response = requests.get(
-        "https://api.opencnam.com/v2/phone/{0}?format=json".format(
-            phone_number
-        ))
-    return Response(json.loads(response.text))
-
-
 @api_price(1000)
 @api_view(['POST'])
 def send_sms(request):
