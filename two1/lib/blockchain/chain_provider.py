@@ -110,14 +110,16 @@ class ChainProvider(BaseProvider):
                                            i["output_index"],
                                            script,
                                            i["sequence"]))
-            addr_keys.add(i["addresses"][0])
+            if "addresses" in i:
+                addr_keys.add(i["addresses"][0])
 
         for i in txn_json["outputs"]:
             script, _ = Script.from_bytes(
                 pack_var_str(bytes.fromhex(i["script_hex"])))
             outputs.append(TransactionOutput(i["value"],
                                              script))
-            addr_keys.add(i["addresses"][0])
+            if "addresses" in i:
+                addr_keys.add(i["addresses"][0])
 
         txn = Transaction(Transaction.DEFAULT_TRANSACTION_VERSION,
                           inputs,
