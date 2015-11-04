@@ -114,6 +114,7 @@ def status_account(config):
     config.log(status_account)
 
 SEARCH_UNIT_PRICE = 800
+SMS_UNIT_PRICE = 1735
 ARTICLE_UNIT_PRICE = 4000
 MESSAGE_UNIT_PRICE = 8000
 
@@ -137,16 +138,14 @@ def status_wallet(config, client):
     config.log(status_wallet)
     total_balance = twentyone_balance + onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
-    buyable_articles = int(total_balance / ARTICLE_UNIT_PRICE)
-    buyable_messages = int(total_balance / MESSAGE_UNIT_PRICE)
+    buyable_sms = int(total_balance / SMS_UNIT_PRICE)
     status_buyable = UxString.status_buyable.format(
         click.style("How many API calls can you buy?", fg='magenta'),
         buyable_searches,
         SEARCH_UNIT_PRICE,
-        buyable_articles,
-        ARTICLE_UNIT_PRICE,
-        buyable_messages,
-        MESSAGE_UNIT_PRICE)
+        buyable_sms,
+        SMS_UNIT_PRICE,
+    )
     config.log(status_buyable, nl=False)
 
     if total_balance == 0:

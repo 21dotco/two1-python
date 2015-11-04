@@ -50,8 +50,7 @@ class UxString:
 
     status_buyable =     """{}
     Search Queries        : {:<4} ({} Satoshis per search)
-    News Articles         : {:<4} ({} Satoshis per article)
-    Priority Twitter DMs  : {:<4} ({} Satoshis per message)
+    SMS Messages          : {:<4} ({} Satoshis per sms)
     """
 
     # mining
