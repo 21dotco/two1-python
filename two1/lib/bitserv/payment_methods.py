@@ -5,7 +5,7 @@ import logging
 
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
-from two1.commands.config import TWO1_HOST
+from two1.commands.config import TWO1_PROVIDER_HOST, TWO1_HOST
 from two1.commands.config import TWO1_CONFIG_FILE
 from .models import OnChainSQLite3
 from .payment_server import PaymentServer
@@ -110,7 +110,7 @@ class OnChain(PaymentBase):
         """Initialize payment handling for on-chain payments."""
         self.db = db or OnChainSQLite3()
         self.address = wallet.get_payout_address()
-        self.provider = TwentyOneProvider(TWO1_HOST)
+        self.provider = TwentyOneProvider(TWO1_PROVIDER_HOST)
 
     @property
     def payment_headers(self):

@@ -2,7 +2,7 @@
 import time
 import codecs
 from two1.lib.bitcoin.crypto import PublicKey
-from two1.commands.config import TWO1_HOST
+from two1.commands.config import TWO1_PROVIDER_HOST
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 
 from .wallet import Two1WalletWrapper
@@ -61,7 +61,7 @@ class PaymentServer:
         if db is None:
             self._db = DatabaseSQLite3()
         if blockchain is None:
-            self._blockchain = TwentyOneProvider(TWO1_HOST)
+            self._blockchain = TwentyOneProvider(TWO1_PROVIDER_HOST)
 
     def discovery(self):
         """Return the merchant's public key.

@@ -1,9 +1,7 @@
 import sys
 import json
-
 from dotenv import load_dotenv
 from os.path import join, dirname
-
 import os
 import two1
 import click
@@ -30,13 +28,13 @@ if os.path.exists(dotenv_path):
 
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
-TWO1_HOST = os.environ.get("TWO1_HOST", "https://dotco-prod-pool2.herokuapp.com")
+TWO1_HOST = os.environ.get("TWO1_HOST", "https://api.21.co")
+TWO1_PROVIDER_HOST = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co")
 TWO1_PYPI_HOST = "https://pypi-3844.21.co"
 TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = os.environ.get("TWO1_LOGGER_SERVER", "http://logger.21.co")
-TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21:21006")
-TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST",
-                                    "http://two1-merchant-server-prod-1287.herokuapp.com")
+TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21.co:21006")
+TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST", "http://market.21.co")
 TWO1_VERSION = two1.__version__
 
 try:
@@ -51,7 +49,6 @@ except:
 
 
 class Config(object):
-
     def __init__(self, config_file=TWO1_CONFIG_FILE, config=None, create_wallet=True):
         if not os.path.exists(TWO1_USER_FOLDER):
             os.makedirs(TWO1_USER_FOLDER)
@@ -74,7 +71,7 @@ class Config(object):
         if self.defaults.get('testwallet', None) == 'y':
             self.wallet = test_wallet.TestWallet()
         elif create_wallet:
-            dp = TwentyOneProvider(TWO1_HOST)
+            dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
 
             wallet_path = self.defaults.get('wallet_path')
 
