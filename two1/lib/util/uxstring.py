@@ -117,8 +117,7 @@ class UxString:
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
         version_not_found = "Did not find version {}."
-        invalid_username = "Invalid username. Username must start with an Alphabet. Further, it must" \
-                           " be atleast 5 characters and atmost 32 characters."
+        invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
         account_failed = "Could not create 21 account. Please check your email address."
