@@ -415,22 +415,39 @@ def balance(ctx, account):
 
 
 @click.command(name='listbalances')
+@click.option('--byaddress',
+              is_flag=True,
+              default=False,
+              help="List non-zero balances for each address")
 @click.pass_context
 @handle_exceptions
 @log_usage
-def list_balances(ctx):
+def list_balances(ctx, byaddress):
     """ Prints the current balances of each account.
     """
     w = ctx.obj['wallet']
     for a in w.account_names:
         ucb = w.unconfirmed_balance(a)
         cb = w.confirmed_balance(a)
-        click.echo("%s confirmed: %0.8f BTC, total: %0.8f BTC" %
+        click.echo("Account: %s\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
                    (a,
                     convert_to_btc(cb),
                     convert_to_btc(ucb)))
 
-    click.echo("\nTotal confirmed %0.8f BTC, total: %0.8f BTC" %
+        if byaddress:
+            by_addr = w.balances_by_address(a)
+            if by_addr:
+                click.echo("")
+            for addr, balances in by_addr.items():
+                if balances['confirmed'] > 0 or \
+                   balances['total'] > 0:
+                    click.echo("%35s: %0.8f (confirmed), %0.8f (total)" %
+                               (addr,
+                                convert_to_btc(balances['confirmed']),
+                                convert_to_btc(balances['total'])))
+        click.echo("")
+
+    click.echo("Account Totals\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
                (convert_to_btc(w.confirmed_balance()),
                 convert_to_btc(w.unconfirmed_balance())))
 
