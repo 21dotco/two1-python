@@ -1,6 +1,5 @@
 import sys
 import json
-from dotenv import load_dotenv
 from os.path import join, dirname
 import os
 import two1
@@ -22,6 +21,7 @@ base_dir = str(Path(__file__).parents[2])
 dotenv_path = join(base_dir, '.env')
 
 if os.path.exists(dotenv_path):
+    from dotenv import load_dotenv
     load_dotenv(dotenv_path)
     click.secho("Reading endpoints from file: {}".format(dotenv_path),
                 fg="yellow")
