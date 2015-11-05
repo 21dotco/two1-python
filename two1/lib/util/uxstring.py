@@ -18,8 +18,8 @@ class UxString:
     payout_address = "Setting mining payout address: %s."
 
     flush_success = "{}\n"\
-        "Your mined Satoshis will be sent to you on the"\
-        "blockchain in the next payout cycle.\n"\
+        "Your mined Satoshis will be sent to you on the "\
+        "Blockchain in the next payout cycle.\n"\
         "Estimated time of payout: ~20 minutes.\n"\
         "To check progress:  https://blockexplorer.com/address/{}\n"\
         "To get more liquid bitcoin, use {} to buy more API calls."
