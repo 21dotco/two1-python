@@ -12,9 +12,9 @@ from two1.commands.formatters import social_formatter
 from two1.commands.formatters import content_formatter
 from two1.commands.formatters import text_formatter
 from two1.lib.server.analytics import capture_usage
-from two1.lib.bitcurl.bitrequests import OnChainRequests
-from two1.lib.bitcurl.bitrequests import BitTransferRequests
-from two1.lib.bitcurl.bitrequests import ResourcePriceGreaterThanMaxPriceError
+from two1.lib.bitrequests import OnChainRequests
+from two1.lib.bitrequests import BitTransferRequests
+from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
 from two1.lib.util.uxstring import UxString
 
 URL_REGEXP = re.compile(

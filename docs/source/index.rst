@@ -6,7 +6,7 @@
 Welcome to two1's documentation!
 ================================
 
-The two1 package contains all the key modules that were built at 21 in order to teach & build real world applications of Bitcoin.  
+The two1 package contains all the key modules that were built at 21 in order to teach & build real world applications of Bitcoin.
 
 Contents:
 
@@ -14,9 +14,9 @@ Contents:
    :maxdepth: 5
 
    two1.lib.bitcoin
-   two1.lib.bitcurl
+   two1.lib.bitrequests
    two1.lib.blockchain
-   two1.lib.crypto   
+   two1.lib.crypto
    two1.lib.mining
    two1.lib.server
    two1.lib.util
@@ -28,4 +28,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
