@@ -53,6 +53,16 @@ class UxString:
     SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per sms)
     """
 
+    # doctor
+    doctor_start = click.style("21.co Doctor", fg='green') + "\n\n" + \
+        click.style("Checking health..", fg='magenta') + "\n"
+    doctor_general = click.style("Checking general settings..", fg='yellow')
+    doctor_dependencies = click.style("Checking dependencies..", fg='yellow')
+    doctor_demo_endpoints = click.style("Checking demo endpoints..", fg='yellow')
+    doctor_servers = click.style("Checking servers..", fg='yellow')
+    doctor_error = click.style("    Error: ", fg='red')
+    doctor_total = click.style("Summary", fg='yellow')
+
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \
