@@ -33,7 +33,6 @@ class Username(click.ParamType):
         self.fail(UxString.Error.invalid_username)
 
 
-
 def check_setup_twentyone_account(config):
     """ Checks for a working wallet and a 21 a/c.
     Sets up the a/c and configures a wallet if needed.
