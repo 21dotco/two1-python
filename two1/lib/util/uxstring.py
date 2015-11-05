@@ -88,11 +88,28 @@ class UxString:
 
     # log
 
-    reasons = {"CLI": "Performed 21 mine in a command line interface",
-               "Shares": "Submitted Shares through The 21 Bitcoin Computer",
-               "flush_payout": "Performed 21 flush to move unpaid earnings to the Blockchain",
-               "earning_payout": "Periodic 21 payout of portion of the earnings to the Blockchain"
-               }
+    reasons = {
+        "CLI": "You got an advance against your future work on the Bitcoin Computer",
+        "Shares": "You submitted work through the 21 Bitcoin Computer",
+        "flush_payout": "You performed 21 flush to move your earnings to the "
+                        "Blockchain",
+        "earning_payout": "This is a periodic payout of your mining earnings to "
+                          "the Blockchain.",
+        "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer."
+    }
+
+    empty_logs = "[No events yet]"
+
+    log_intro = "21 Bitcoin Computer Activity Log.\n\n"
+
+    debit_message = "{} : {:+d} Satoshis to your 21.co balance"
+    blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
+                                "{:+d} Satoshis to " \
+                                "your " \
+                                "Blockchain balance"
+    credit_message = "{} : {:+d} Satoshis from your 21.co balance"
+
+    buy_message = "You bought {} from {}"
 
     class Error:
         # network errors
