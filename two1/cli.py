@@ -26,6 +26,7 @@ from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.util.decorators import docstring_parameter
 # from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
+from two1.commands.doctor import doctor
 from two1.commands.mine import mine
 from two1.commands.log import log
 from two1.commands.help import help
@@ -81,6 +82,7 @@ goods both at the command line and programmatically, visit 21.co/learn
     ctx.obj = dict(config=cfg)
 
 main.add_command(buy)
+main.add_command(doctor)
 main.add_command(mine)
 main.add_command(status)
 main.add_command(update)
