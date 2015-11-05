@@ -82,22 +82,24 @@ def status_mining(config, client):
 
 
 @click.command("status")
+@click.option("--detail",
+              is_flag=True,
+              default=False,
+              help="List non-zero balances for each address")
 @json_output
-def status(config):
+@capture_usage
+def status(config, detail):
     """View your bitcoin balance and address.
     """
-    return _status(config)
-
-
-@capture_usage
-def _status(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
+
+
     status = {
         "account": status_account(config),
         "mining": status_mining(config, client),
-        "wallet": status_wallet(config, client)
+        "wallet": status_wallet(config, client, detail)
     }
 
     config.log("")
@@ -120,23 +122,32 @@ ARTICLE_UNIT_PRICE = 4000
 MESSAGE_UNIT_PRICE = 8000
 
 
-def status_wallet(config, client):
+def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
     twentyone_balance, onchain, pending_transactions, flushed_earnings = \
         _get_balances(config, client)
 
-    try:
-        bitcoin_address = config.wallet.current_address
-    except AttributeError:
-        bitcoin_address = "Not Set"
+    if detail:
+        account_name = config.wallet.account_names[0]  # use default account
+        address_balances = config.wallet.balances_by_address(account_name)
+        byaddress = ["Addresses:"]
+        for addr, balances in address_balances.items():
+            if balances['confirmed'] > 0 or balances['total'] > 0:
+                byaddress.append("{}: {} (confirmed), {} (total)".format(
+                    addr, balances['confirmed'], balances['total']))
+        byaddress = '\n      '.join(byaddress)
+    else:
+        byaddress = "To see all wallet addresses, do 21 status --detail"
 
     status_wallet = {
         "twentyone_balance": twentyone_balance,
         "onchain": onchain,
         "flushing": flushed_earnings,
+        "byaddress": byaddress
     }
     config.log(UxString.status_wallet.format(**status_wallet))
+
     total_balance = twentyone_balance + onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_sms = int(total_balance / SMS_UNIT_PRICE)

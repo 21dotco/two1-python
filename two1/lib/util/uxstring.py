@@ -39,12 +39,13 @@ class UxString:
 
     status_wallet = click.style("Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshi
-    Your spendable balance on the Blockchain [2,3]            : {onchain} Satoshi
+    Your spendable balance on the Blockchain [2]              : {onchain} Satoshi
     Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshi
 
     [1]: Available for bittransfers (21.co/micropayments)
     [2]: Available for on-chain (21.co/micropayments)
-    [3]: To see all wallet addresses, do 21 status --detail
+
+    {byaddress}
     """
 
     status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
@@ -56,12 +57,12 @@ class UxString:
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \
         click.style("Hit q to exit the dashboard. ", bold=True)
-    
+
     mining_show_dashboard_context = "\nDo " + click.style("21 mine --dashboard", bold=True) + \
         " to see a mining dashboard.\n" + \
         "Do " + click.style("21 log", bold=True) + " to see more aggregated stats.\n" + \
         "Or just do " + click.style("21 status", bold=True) + " to see your mining progress."
-        
+
     mining_chip_start = "21 Bitcoin Chip detected, trying to (re)start miner..."
     mining_chip_running = "Your 21 Bitcoin Chip is already running!\n" + \
         "You should now receive a steady stream of Satoshis."
