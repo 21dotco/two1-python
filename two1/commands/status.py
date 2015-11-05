@@ -130,7 +130,7 @@ def status_account(config):
     return status_account
 
 SEARCH_UNIT_PRICE = 800
-SMS_UNIT_PRICE = 1735
+SMS_UNIT_PRICE = 1000
 
 
 def status_wallet(config, client, detail=False):
