@@ -53,8 +53,8 @@ def get_hashrate():
                     break
             if hashrate:
                 break
-    except Exception as e:
-        print(str(e))
+    except:
+        pass
     # non zero hashrate
     if (hashrate is not None) and (hashrate > 1.0):
         ret = "~{0:.1f} GH/s".format(hashrate / 1e+9)
