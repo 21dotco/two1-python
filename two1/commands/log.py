@@ -26,9 +26,12 @@ def _log(config, debug):
     response = client.get_earning_logs()
 
     logs = response["logs"]
-    prints = []
+
+    prints = [UxString.log_intro]
+
     if not debug:
         logs = filter_rollbacks(logs)
+
     for entry in logs:
 
         prints.append(get_headline(entry))
@@ -42,6 +45,9 @@ def _log(config, debug):
             prints.append(get_txn_details(entry))
             prints.append("\n")
 
+    if len(prints) == 1:
+        prints.append(UxString.empty_logs)
+
     output = "\n".join(prints)
     click.echo_via_pager(output)
 
@@ -49,12 +55,15 @@ def _log(config, debug):
 def get_headline(entry):
     # headline
     local_date = datetime.fromtimestamp(entry["date"]).strftime("%Y-%m-%d %H:%M:%S")
-    headline = "{} : {} Satoshis".format(local_date, entry["amount"])
     if entry["amount"] > 0:
-        color = "green"
+        headline = UxString.debit_message.format(local_date, entry["amount"])
+    elif entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout":
+        headline = UxString.blockchain_credit_message.format(local_date, entry["amount"],
+                                                             -entry["amount"])
     else:
-        color = "red"
-    headline = click.style(headline, fg=color)
+        headline = UxString.credit_message.format(local_date, entry["amount"])
+
+    headline = click.style(headline, fg="blue")
     return headline
 
 
@@ -63,16 +72,16 @@ def get_description(entry):
 
     if "-" in entry["reason"]:
         buy_str = entry["reason"].split("-", 1)
-        reason = "Bought {} from {}".format(buy_str[1], buy_str[0])
+        reason = UxString.buy_message.format(buy_str[1], buy_str[0])
 
     description = "Description: {}".format(reason)
     return description
 
 
 def get_txn_details(entry):
-    paid = click.style("    Address paid to          : {}".format(entry["paid_to"]),
+    paid = click.style("    Address paid to            : {}".format(entry["paid_to"]),
                        fg="blue")
-    txns = "    Blockchain Transactions  : "
+    txns = "    Blockchain Transaction(s)  : "
 
     for txn in entry["txns"]:
         txns += txn + " "
