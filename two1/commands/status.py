@@ -125,8 +125,6 @@ def status_account(config):
 
 SEARCH_UNIT_PRICE = 800
 SMS_UNIT_PRICE = 1735
-ARTICLE_UNIT_PRICE = 4000
-MESSAGE_UNIT_PRICE = 8000
 
 
 def status_wallet(config, client, detail=False):

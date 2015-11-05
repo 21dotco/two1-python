@@ -31,21 +31,6 @@ def search_formatter(res, maxresults=4):
         )
 
 
-def social_formatter(res):
-    """custom formatter for social."""
-    data = res.json()["success"]
-    return 'The following Twitter DM was recieved by: @{}\n"{}"\n'.format(
-        data["recipient_screen_name"],
-        data["text"]
-    )
-
-
-def content_formatter(res):
-    """custom formatter for content."""
-    url = res.json()["article"]
-    return "You just purchased the article {}".format(url)
-
-
 def sms_formatter(res):
     """custom formatter for SMS messages."""
     data = res.json()
