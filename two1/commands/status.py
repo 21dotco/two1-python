@@ -27,17 +27,21 @@ def get_hashrate():
     """Return hashrate of mining chip on current system.
     """
     hashrate = None
+
     try:
         import socket
         import json
+
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect("/tmp/minerd.sock")
+
         buf = b""
+
         while True:
             chunk = s.recv(4096)
 
             # If server disconnected
-            if chunk == b"":
+            if not chunk:
                 s.close()
                 break
 
@@ -46,21 +50,24 @@ def get_hashrate():
                 pos = buf.find(b"\n")
                 data = buf[0:pos].decode('utf-8')
                 buf = buf[pos+1:]
+
                 event = json.loads(data)
-                if (event['type'] == "StatisticsEvent"):
-                    # 5min, 15min, 60min Hashrate
-                    hashrate = max( event['payload']['statistics']['hashrate'][i] for i in ("5min", "15min", "60min"))
+
+                if event['type'] == "StatisticsEvent":
+                    # Use 15min hashrate, if uptime is past 15min
+                    if event['payload']['statistics']['uptime'] > 15*60:
+                        hashrate = "{:.1f} GH/s".format(event['payload']['statistics']['hashrate']['15min']/1e9)
+                    else:
+                        hashrate = "~50 GH/s (warming up)"
+
                     break
+
             if hashrate:
                 break
     except:
         pass
-    # non zero hashrate
-    if (hashrate is not None) and (hashrate > 1.0):
-        ret = "~{0:.1f} GH/s".format(hashrate / 1e+9)
-    else:
-        ret = UxString.Error.data_unavailable
-    return ret
+
+    return hashrate or UxString.Error.data_unavailable
 
 
 def status_mining(config, client):
