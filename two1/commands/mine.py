@@ -21,7 +21,8 @@ import two1.commands.config as app_config
 
 
 @click.command()
-@click.option('--dashboard', default=False, is_flag=True, help="Dashboard with mining details")
+@click.option('--dashboard', default=False, is_flag=True,
+              help="Dashboard with mining details")
 @click.pass_context
 def mine(ctx, dashboard):
     """Mine bitcoin at the command line.
@@ -51,9 +52,28 @@ $ 21 mine --dashboard
 @capture_usage
 def _mine(config, dashboard=False):
     if has_bitcoinkit():
-        start_minerd(config, dashboard)
+        if not is_minerd_running():
+            start_minerd(config, dashboard)
+        elif dashboard:
+            show_minertop(dashboard)
+        # if minerd is running and we have not specified a dashboard flag
+        # do a cpu mine
+        else:
+            start_cpu_mining(config)
     else:
         start_cpu_mining(config)
+
+
+def is_minerd_running():
+    rc = True
+    import socket
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect("/tmp/minerd.sock")
+        s.close()
+    except Exception:
+        rc = False
+    return rc
 
 
 def show_minertop(show_dashboard):
@@ -84,7 +104,6 @@ def start_minerd(config, show_dashboard=False):
                 # Stale PID file, so delete it.
                 subprocess.call(["sudo", "minerd", "--stop"])
 
-
     # Not running, let's start it
     # TODO: make sure config exists in /etc
     # TODO: replace with sys-ctrl command
@@ -97,7 +116,7 @@ def start_minerd(config, show_dashboard=False):
 
     # Now call minertop after it's started
     show_minertop(show_dashboard)
-        
+
 
 def start_cpu_mining(config):
     """Mine at the CPU.
@@ -150,7 +169,8 @@ def set_payout_address(config, client):
     return enonce1, enonce2_size, reward
 
 
-# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
+# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a
+# -process-with-a-given-pid
 def check_pid(pid):
     if pid < 0:
         return False
