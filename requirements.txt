@@ -56,4 +56,3 @@ tabulate==0.7.5
 textblob==0.9.1
 tornado==4.2.1
 twilio==4.7.0
-python-dotenv==0.1.3

@@ -17,11 +17,30 @@ from two1.lib.util.uxstring import UxString
 
 # if there is a .env in the root directory, use the endpoints that are specified in there
 
+
+def parse_dotenv(dotenv_path):
+    with open(dotenv_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            v = v.strip("'").strip('"')
+            yield k, v
+
+
+def load_dotenv(dotenv_path):
+    """
+    Read a .env file and load into os.environ.
+    """
+    for k, v in parse_dotenv(dotenv_path):
+        os.environ.setdefault(k, v)
+    return True
+
 base_dir = str(Path(__file__).parents[2])
 dotenv_path = join(base_dir, '.env')
 
 if os.path.exists(dotenv_path):
-    from dotenv import load_dotenv
     load_dotenv(dotenv_path)
     click.secho("Reading endpoints from file: {}".format(dotenv_path),
                 fg="yellow")
