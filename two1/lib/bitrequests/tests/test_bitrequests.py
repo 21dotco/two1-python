@@ -30,6 +30,12 @@ class MockWallet:
         signed_tx = {'txid': MockWallet.TXID, 'txn': MockWallet.TXN}
         return [signed_tx]
 
+    def sign_message(self, message,
+                     account_name_or_index=None,
+                     key_index=0):
+        """Mock sign message for bittransfer."""
+        return "mock signed message"
+
 
 class MockBitRequests(BitRequests):
     def make_402_payment(self, response, max_price):
@@ -77,7 +83,7 @@ def test_onchain_request():
 
 def test_bittransfer_request():
     """Test that it handles bit-transfer requests."""
-    bit_req = BitTransferRequests(config.machine_auth, config.username)
+    bit_req = BitTransferRequests(wallet, config.username)
     test_max_price = 10000
     price = 1000
     address = 'test_bitserv_host_address'

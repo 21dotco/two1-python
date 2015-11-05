@@ -30,7 +30,6 @@ import logging
 
 logger = logging.getLogger('bitrequests')
 
-
 class BitRequestsError(Exception):
     pass
 
@@ -165,10 +164,10 @@ class BitTransferRequests(BitRequests):
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
     HTTP_BITCOIN_USERNAME = 'username'
 
-    def __init__(self, machine_auth, username):
-        """Initialize the bit-transfer wit and keyring machine auth."""
+    def __init__(self, wallet, username):
+        """Initialize the bittransfer with wallet and username."""
         super().__init__()
-        self.machine_auth = machine_auth
+        self.wallet = wallet
         self.username = username
 
     def make_402_payment(self, response, max_price):
@@ -201,7 +200,9 @@ class BitTransferRequests(BitRequests):
             'timestamp': time.time(),
             'description': response.url
         })
-        signature = self.machine_auth.sign_message(bittransfer)
+        if not isinstance(bittransfer, str):
+            raise TypeError("Serialized bittransfer must be a string")
+        signature = self.wallet.sign_message(bittransfer)
         logger.debug('[BitTransferRequests] Signature: {}'.format(signature))
         logger.debug('[BitTransferRequests] BitTransfer: {}'.format(bittransfer))
         return {
