@@ -3,8 +3,8 @@ from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
+from two1.lib.util.decorators import json_output
 from two1.lib.util.uxstring import UxString
-
 
 def has_bitcoinkit():
     """Quick check for presence of mining chip via file presence.
@@ -71,24 +71,22 @@ def status_mining(config, client):
         hashrate = get_hashrate()
     else:
         bk, mined, hashrate = None, None, None
-    data = dict(mining=click.style("Mining", fg='magenta'),
-                is_mining=bk,
+    data = dict(is_mining=bk,
                 hashrate=hashrate,
-                mined=mined,
-                minecmd=click.style("21 mine --dashboard", bold=True))
+                mined=mined)
     if has_chip:
         out = UxString.status_mining.format(**data)
         config.log(out)
 
+    return data
 
-@click.command()
-@click.option("--json/--no-json", default=False)
-@click.pass_context
-def status(ctx, json):
+
+@click.command("status")
+@json_output
+def status(config):
     """View your bitcoin balance and address.
     """
-    config = ctx.obj['config']
-    _status(config)
+    return _status(config)
 
 
 @capture_usage
@@ -96,22 +94,25 @@ def _status(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
-    status_account(config)
-    status_mining(config, client)
-    status_wallet(config, client)
+    status = {
+        "account": status_account(config),
+        "mining": status_mining(config, client),
+        "wallet": status_wallet(config, client)
+    }
 
     config.log("")
     # status_endpoints(config)
     # status_bought_endpoints(config)
 
+    return status
 
 def status_account(config):
-
-    status_account = UxString.status_account.format(
-        account=click.style("21.co Account", fg='magenta'),
-        username=config.username,
-        address=config.wallet.current_address)
-    config.log(status_account)
+    status_account = {
+        "username": config.username,
+        "address": config.wallet.current_address
+    }
+    config.log(UxString.status_account.format(**status_account))
+    return status_account
 
 SEARCH_UNIT_PRICE = 800
 SMS_UNIT_PRICE = 1735
@@ -130,23 +131,22 @@ def status_wallet(config, client):
     except AttributeError:
         bitcoin_address = "Not Set"
 
-    status_wallet = UxString.status_wallet.format(balance=click.style("Balance", fg='magenta'),
-                                                  twentyone_balance=twentyone_balance,
-                                                  onchain=onchain,
-                                                  flushing=flushed_earnings,
-                                                  )
-    config.log(status_wallet)
+    status_wallet = {
+        "twentyone_balance": twentyone_balance,
+        "onchain": onchain,
+        "flushing": flushed_earnings,
+    }
+    config.log(UxString.status_wallet.format(**status_wallet))
     total_balance = twentyone_balance + onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_sms = int(total_balance / SMS_UNIT_PRICE)
-    status_buyable = UxString.status_buyable.format(
-        click.style("How many API calls can you buy?", fg='magenta'),
-        buyable_searches,
-        SEARCH_UNIT_PRICE,
-        buyable_sms,
-        SMS_UNIT_PRICE,
-    )
-    config.log(status_buyable, nl=False)
+    status_buyable = {
+        "buyable_searches": buyable_searches,
+        "search_unit_price": SEARCH_UNIT_PRICE,
+        "buyable_sms": buyable_sms,
+        "sms_unit_price": SMS_UNIT_PRICE
+    }
+    config.log(UxString.status_buyable.format(**status_buyable), nl=False)
 
     if total_balance == 0:
         config.log(UxString.status_empty_wallet.format(click.style("21 mine",
@@ -156,6 +156,11 @@ def status_wallet(config, client):
         buy21help = click.style("21 buy --help", bold=True)
         config.log(UxString.status_exit_message.format(buy21, buy21help),
                    nl=False)
+
+    return {
+        "wallet" : status_wallet,
+        "buyable": status_buyable
+    }
 
 
 def _get_balances(config, client):

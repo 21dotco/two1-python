@@ -28,29 +28,28 @@ class UxString:
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
 
-    status_account = "{account}\n"\
+    status_account = click.style("21.co Account", fg='magenta') + "\n"\
         "    Username        : {username}\n"\
 
-    status_mining = "{mining}\n"\
+    status_mining = mining=click.style("Mining", fg='magenta') + "\n"\
        "    Status           : {is_mining}\n"\
        "    Hashrate         : {hashrate}\n"\
        "    Mined (all time) : {mined} Satoshi\n\n"\
-       "Type {minecmd} to see a detailed view. Hit q to exit.\n"
+       "Type " + click.style("21 mine --dashboard", bold=True) + " to see a detailed view. Hit q to exit.\n"
 
-    status_wallet = """{balance}
+    status_wallet = click.style("Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshi
     Your spendable balance on the Blockchain [2,3]            : {onchain} Satoshi
     Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshi
 
-    [1]: Available for bittransfers (21.co/bittransfers)
-    [2]: Available for on-chain (21.co/on-chain) & payment
-         channels (21.co/payment-channels)
+    [1]: Available for bittransfers (21.co/micropayments)
+    [2]: Available for on-chain (21.co/micropayments)
     [3]: To see all wallet addresses, do 21 status --detail
     """
 
-    status_buyable =     """{}
-    Search Queries        : {:<4} ({} Satoshis per search)
-    SMS Messages          : {:<4} ({} Satoshis per sms)
+    status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
+    Search Queries        : {buyable_searches:<4} ({search_unit_price} Satoshis per search)
+    SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per sms)
     """
 
     # mining

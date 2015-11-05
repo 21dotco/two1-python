@@ -3,18 +3,17 @@ import click
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
+from two1.lib.util.decorators import json_output
 from two1.lib.util.uxstring import UxString
 
 
 @click.command()
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
-@click.pass_context
-def log(ctx, debug):
+@json_output
+def log(config, debug):
     """Shows the log of all the 21 earnings"""
-
-    config = ctx.obj['config']
-    _log(config, debug)
+    return _log(config, debug)
 
 
 @capture_usage
@@ -49,7 +48,9 @@ def _log(config, debug):
         prints.append(UxString.empty_logs)
 
     output = "\n".join(prints)
-    click.echo_via_pager(output)
+    config.echo_via_pager(output)
+
+    return logs
 
 
 def get_headline(entry):
