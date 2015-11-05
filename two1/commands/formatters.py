@@ -5,7 +5,7 @@ from textwrap import wrap
 from tabulate import tabulate
 
 
-def search_formatter(res, maxresults=10):
+def search_formatter(res, maxresults=4):
     """custom formatter for search."""
     formatted_search_results = []
     headers = ("No.", "Result")
