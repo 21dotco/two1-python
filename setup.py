@@ -64,7 +64,7 @@ setup(
               'two1.lib.mining', 'two1.lib.server', 'two1.lib.wallet',
               'two1.lib.crypto', 'two1.lib.bitserv',
               'two1.lib.bitserv.django', 'two1.lib.bitserv.flask',
-              'two1.lib.blockchain', 'two1.lib.bitcurl', 'two1.lib.util',
+              'two1.lib.blockchain', 'two1.lib.bitrequests', 'two1.lib.util',
               'two1.examples.server',
               'two1.examples.bitcoin_auth', 'two1.examples.server.misc',
               'two1.examples.server.scipy_aas'],

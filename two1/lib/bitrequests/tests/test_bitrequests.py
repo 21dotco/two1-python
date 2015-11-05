@@ -2,10 +2,10 @@ import json
 import pytest
 import requests
 from two1.commands.config import Config
-from two1.lib.bitcurl.bitrequests import BitTransferRequests
-from two1.lib.bitcurl.bitrequests import OnChainRequests
-from two1.lib.bitcurl.bitrequests import BitRequestsError
-from two1.lib.bitcurl.bitrequests import BitRequests
+from two1.lib.bitrequests import BitTransferRequests
+from two1.lib.bitrequests import OnChainRequests
+from two1.lib.bitrequests import BitRequestsError
+from two1.lib.bitrequests import BitRequests
 
 
 class MockRequest:
