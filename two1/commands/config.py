@@ -74,6 +74,7 @@ class Config(object):
         self.file = path(config_file).expand().abspath()
         self.dir = self.file.parent
         self.defaults = {}  # TODO: Rename this var. Those are not the defaults but the
+        self.json_output = False # output in json
         #  actual config.
         self.load()
         # override config variables
@@ -192,7 +193,9 @@ class Config(object):
 
     # kwargs is styling parameters
     def log(self, msg, *args, nl=True, **kwargs):
-        """Logs a message to stderr."""
+        """Logs a message to stderr only if json is disabled."""
+        if self.json_output:
+            return
         if args:
             msg %= args
         if len(kwargs) > 0:
@@ -202,9 +205,15 @@ class Config(object):
         click.echo(out, file=sys.stderr, nl=nl)
 
     def vlog(self, msg, *args):
-        """Logs a message to stderr only if verbose is enabled."""
+        """Logs a message to stderr only if verbose is enabled and json is disabled."""
         if self.verbose:
             self.log(msg, *args)
+
+    def echo_via_pager(self, msg, color=None):
+        """Takes a text and shows it via an environment specific pager
+           on stdout only if json is disabled."""
+        if not self.json_output:
+            click.echo_via_pager(msg, color)
 
     def log_purchase(self, **kwargs):
         # simple logging to file
@@ -214,6 +223,9 @@ class Config(object):
     def get_purchases(self):
         # read all right now. TODO: read the most recent ones only
         return []
+
+    def set_json_output(self, value):
+        self.json_output = value
 
     def fmt(self):
         pairs = []
