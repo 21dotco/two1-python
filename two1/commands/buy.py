@@ -8,9 +8,7 @@ from two1.commands.config import TWO1_MERCHANT_HOST
 from two1.commands.config import TWO1_HOST
 from two1.lib.server import rest_client
 from two1.commands.formatters import search_formatter
-from two1.commands.formatters import social_formatter
-from two1.commands.formatters import content_formatter
-from two1.commands.formatters import sms_formatter
+from two1.commands.formatters import text_formatter
 from two1.lib.server.analytics import capture_usage
 from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitTransferRequests
@@ -28,9 +26,7 @@ URL_REGEXP = re.compile(
 
 DEMOS = {
     "search": {"path": "/search/bing", "formatter": search_formatter},
-    "social": {"path": "/social/twitter", "formatter": social_formatter},
-    "content": {"path": "/content/wsj", "formatter": content_formatter},
-    "sms": {"path": "/phone/send-sms", "formatter": sms_formatter}
+    "text": {"path": "/phone/send-sms", "formatter": text_formatter}
 }
 
 @click.group()
@@ -54,22 +50,6 @@ $ 21 buy --info search
 \b
 See the help for search.
 $ 21 buy search -h
-
-\b
-See the price in Satoshis of one bitcoin-payable article.
-$ 21 buy --info content http://on.wsj.com/1IV0HT5
-
-\b
-Buy an article with bitcoin.
-$ 21 buy content http://on.wsj.com/1IV0HT5
-
-\b
-See the price of a bitcoin-payable priority message.
-$ 21 buy --info social @balajis
-
-\b
-Direct message someone outside your social network for bitcoin.
-$ 21 buy social @balajis "Hey nice to meet you, I'm @example. My startup is example.com"
 """
     ctx.obj["payment_method"] = payment_method
     ctx.obj["maxprice"] = maxprice
@@ -102,36 +82,6 @@ $ 21 buy search "First Bitcoin Computer"
          )
 
 
-@click.argument('message', default="")
-@click.argument('twitter_user', default="@balajis")
-@buy.command()
-@click.pass_context
-def social(ctx, message, twitter_user):
-    """Send a paid message to someone outside your social network.
-
-\b
-Example
--------
-$ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
-"""
-    if message == "" and twitter_user == "@balajis":
-        ctx.obj["info_only"] = True
-    else:
-        message += " from: {}".format(
-            ctx.obj['config'].username
-        )
-    _buy(ctx.obj["config"],
-         "social",
-         dict(message=message),
-         "POST",
-         None,
-         None,
-         ctx.obj["payment_method"],
-         ctx.obj["maxprice"],
-         ctx.obj["info_only"]
-         )
-
-
 @click.argument('body', default="")
 @click.argument('phone_number', default="")
 @buy.command()
@@ -150,32 +100,6 @@ $ 21 buy sms +19498132945 "I just paid for this SMS with BTC!"
          "sms",
          dict(phone=phone_number, sms=body),
          "POST",
-         None,
-         None,
-         ctx.obj["payment_method"],
-         ctx.obj["maxprice"],
-         ctx.obj["info_only"]
-         )
-
-
-@click.argument('url', default="")
-@buy.command()
-@click.pass_context
-def content(ctx, url):
-    """Purchase online content without ads or login.
-
-\b
-Example
--------
-$ 21 buy content http://on.wsj.com/1IV0HT5
-"""
-    if url == "":
-        ctx.obj["info_only"] = True
-
-    _buy(ctx.obj["config"],
-         "content",
-         dict(url=url),
-         "GET",
          None,
          None,
          ctx.obj["payment_method"],
