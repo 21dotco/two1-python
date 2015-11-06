@@ -1,5 +1,6 @@
 from django.conf import settings
 from two1.examples.bitcoin_auth.pricing import api_price
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
@@ -26,6 +27,9 @@ def bing(request):
           type: string
           paramType: query
     """
+    if 'query' not in request.data:
+        return Response({"reason": "Must provide a 'query' parameter."},
+                        status=status.HTTP_400_BAD_REQUEST)
     api = BingSearchAPI(settings.AZURE_MARKETPLACE_KEY)
     result = api.search_web(
         request.data['query'],
@@ -34,4 +38,5 @@ def bing(request):
     if result.ok:
         return Response({"results": result.text})
     else:
-        return Response({"Error": result.text})
+        return Response({"error": result.text},
+                        status=status.HTTP_400_BAD_REQUEST)
