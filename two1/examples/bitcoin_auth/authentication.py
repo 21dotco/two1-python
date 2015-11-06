@@ -115,7 +115,6 @@ class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
         # allow debug transactions
         if settings.BITSERV_DEBUG and tx == "paid":
             return True
-
         try:
             self.bitcoin_provider_helper.validate_payment(
                 tx,
@@ -162,6 +161,9 @@ class BasicPaymentRequiredAuthentication(BaseBitcoinAuthentication):
                     # should be uniuqe per endpoint use.
                     raise PaymentRequiredException("Double Spend Detected")
                 return (sso_user, transaction.outputs[0].value)
+            else:
+                debug_user, created = get_user_model().objects.get_or_create(username='debug_user')
+                return (debug_user, None)
 
 
 class SessionPaymentRequiredAuthentication(BaseBitcoinAuthentication):
