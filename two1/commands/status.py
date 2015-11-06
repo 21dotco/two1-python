@@ -129,8 +129,8 @@ def status_wallet(config, client, detail=False):
         _get_balances(config, client)
 
     if detail:
-        account_name = config.wallet.account_names[0]  # use default account
-        address_balances = config.wallet.balances_by_address(account_name)
+        # show balances by address for default wallet
+        address_balances = config.wallet.balances_by_address(0)
         byaddress = ["Addresses:"]
         for addr, balances in address_balances.items():
             if balances['confirmed'] > 0 or balances['total'] > 0:
