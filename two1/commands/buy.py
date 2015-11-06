@@ -92,13 +92,13 @@ def sms(ctx, phone_number, body):
 \b
 Example
 -------
-$ 21 buy sms +19498132945 "I just paid for this SMS with BTC!"
+$ 21 buy sms +19498132945 "I just paid for this SMS with BTC"
 """
     if phone_number == "" and body == "":
         ctx.obj["info_only"] = True
     _buy(ctx.obj["config"],
          "sms",
-         dict(phone=phone_number, sms=body),
+         dict(phone=phone_number, text=body),
          "POST",
          None,
          None,
