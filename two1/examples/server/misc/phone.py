@@ -3,6 +3,7 @@ import requests
 
 from django.conf import settings
 from twilio.rest import TwilioRestClient
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from two1.examples.bitcoin_auth.pricing import api_price
@@ -29,20 +30,18 @@ def send_sms(request):
           required: true
           type: string
           paramType: form
-        - name: tx
-          description: Transaction Id  (proof of payment)
-          type: string
-          paramType: query
     """
     client = TwilioRestClient(
         settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
     )
     phone_number = request.data.get("phone", None)
     if not phone_number:
-        return Response("Must provide value for Phone parameter", code=400)
+        return Response({"error": "Must provide value for 'phone' parameter"},
+                        status=status.HTTP_400_BAD_REQUEST)
     text = request.data.get("text", None)
     if not text:
-        return Response("Must provide value for Text parameter", code=400)
+        return Response({"error": "Must provide value for 'text' parameter"},
+                        status=status.HTTP_400_BAD_REQUEST)
     response = client.messages.create(
         to=phone_number,
         from_=settings.TWILIO_NUMBER,
