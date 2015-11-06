@@ -190,7 +190,7 @@ def _get_balances(config, client):
 
     data = client.get_earnings()
     twentyone_balance = data["total_earnings"]
-    flushed_earnings = data["flush_amount"]
+    flushed_earnings = data["recent_flushes"]
 
     return twentyone_balance, balance_c, pending_transactions, flushed_earnings
 

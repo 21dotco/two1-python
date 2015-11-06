@@ -83,11 +83,12 @@ class UxString:
     flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
                    "in your wallet balance as soon as they appear on the Blockchain."
 
+    flush_insufficient_earnigns = "You must have a minimum of 20000 Satoshis to " \
+                                  "be able to flush your earnings to the Blockchain"
     # ad
     buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
 
     # log
-
     reasons = {
         "CLI": "You got an advance against your future work on the Bitcoin Computer",
         "Shares": "You submitted work through the 21 Bitcoin Computer",
@@ -110,6 +111,7 @@ class UxString:
     credit_message = "{} : {:+d} Satoshis from your 21.co balance"
 
     buy_message = "You bought {} from {}"
+    sell_message = "You sold {} to {}"
 
     class Error:
         # network errors
