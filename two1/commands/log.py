@@ -65,7 +65,7 @@ def get_headline(entry):
     else:
         headline = UxString.credit_message.format(local_date, entry["amount"])
 
-    headline = click.style(headline, fg="blue")
+    headline = click.style(headline, fg="cyan")
     return headline
 
 
@@ -74,7 +74,11 @@ def get_description(entry):
 
     if "-" in entry["reason"]:
         buy_str = entry["reason"].split("-", 1)
-        reason = UxString.buy_message.format(buy_str[1], buy_str[0])
+        if entry["amount"] < 0 :
+            reason = UxString.buy_message.format(buy_str[1], buy_str[0])
+        else:
+            reason = UxString.sell_message.format(buy_str[1], buy_str[0])
+
 
     description = "Description: {}".format(reason)
     return description
@@ -82,13 +86,13 @@ def get_description(entry):
 
 def get_txn_details(entry):
     paid = click.style("    Address paid to            : {}".format(entry["paid_to"]),
-                       fg="blue")
+                       fg="cyan")
     txns = "    Blockchain Transaction(s)  : "
 
     for txn in entry["txns"]:
         txns += txn + " "
 
-    txns = click.style(txns, fg="blue")
+    txns = click.style(txns, fg="cyan")
     text = paid + "\n" + txns
     return text
 
