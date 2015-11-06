@@ -157,8 +157,8 @@ def _buy(config, resource, data, method, data_file, output_file,
         output_file.write(res.content)
     elif info_only:
         # Print headers that are related to 402 payment required
-        for r in res:
-            config.log('{}: {}'.format(r[0], r[1]))
+        for key, val in res.items():
+            config.log('{}: {}'.format(key, val))
     elif resource in DEMOS:
         config.log(DEMOS[resource]["formatter"](res))
     else:
@@ -172,9 +172,7 @@ def _buy(config, resource, data, method, data_file, output_file,
                                                  config.username)
         twentyone_balance, balance_c, pending_transactions, flushed_earnings = \
             _get_balances(config, client)
-        info = bit_req.get_402_info(target_url)
-        price = dict(info)['price']
-        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (price, twentyone_balance))
+        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (res.amount_paid, twentyone_balance))
 
     # Record the transaction if it was a payable request
     if hasattr(res, 'paid_amount'):
