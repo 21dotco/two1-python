@@ -10,7 +10,7 @@ from two1.lib.server import rest_client
 from two1.commands.formatters import search_formatter
 from two1.commands.formatters import social_formatter
 from two1.commands.formatters import content_formatter
-from two1.commands.formatters import text_formatter
+from two1.commands.formatters import sms_formatter
 from two1.lib.server.analytics import capture_usage
 from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitTransferRequests
@@ -30,7 +30,7 @@ DEMOS = {
     "search": {"path": "/search/bing", "formatter": search_formatter},
     "social": {"path": "/social/twitter", "formatter": social_formatter},
     "content": {"path": "/content/wsj", "formatter": content_formatter},
-    "text": {"path": "/phone/send-sms", "formatter": text_formatter}
+    "sms": {"path": "/phone/send-sms", "formatter": sms_formatter}
 }
 
 @click.group()
@@ -136,19 +136,19 @@ $ 21 buy social @balajis "Hey nice to meet you, i'm @syassami"
 @click.argument('phone_number', default="")
 @buy.command()
 @click.pass_context
-def text(ctx, phone_number, body):
-    """Send a a sms to a phone number.
+def sms(ctx, phone_number, body):
+    """Send an SMS to a phone number.
 
 \b
 Example
 -------
-$ 21 buy text +19498132945 "the 21 BC rocks"
+$ 21 buy sms +19498132945 "I just paid for this SMS with BTC!"
 """
     if phone_number == "" and body == "":
         ctx.obj["info_only"] = True
     _buy(ctx.obj["config"],
-         "text",
-         dict(phone=phone_number, text=body),
+         "sms",
+         dict(phone=phone_number, sms=body),
          "POST",
          None,
          None,
