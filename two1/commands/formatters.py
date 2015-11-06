@@ -46,8 +46,8 @@ def content_formatter(res):
     return "You just purchased the article {}".format(url)
 
 
-def text_formatter(res):
-    """custom formatter for text messages."""
+def sms_formatter(res):
+    """custom formatter for SMS messages."""
     data = res.json()
     return 'The following SMS is queued to be sent to: {} \n"{}" from: {}\n'.format(
         data["to"],
