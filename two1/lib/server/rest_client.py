@@ -6,6 +6,7 @@ from collections import namedtuple
 import urllib.parse
 import datetime
 import requests
+from two1.commands.config import TWO1_VERSION
 from two1.lib.bitcoin.crypto import PrivateKey
 
 
@@ -52,6 +53,8 @@ class TwentyOneRestClient(object):
             headers["Authorization"] = "21 {} {} {}".format(timestamp,
                                                             sign_username,
                                                             sig)
+        # Change the user agent to contain the 21 CLI and version
+        headers["User-Agent"] = "21/{}".format(TWO1_VERSION)
 
         try:
             result = self._session.request(method, url, headers=headers, **kwargs)
