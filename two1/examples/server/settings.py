@@ -209,10 +209,10 @@ TWITTER_OAUTH_TOKEN_SECRET = os.environ.get(
 # docs on twilio API calls
 # https://www.twilio.com/docs/python/install
 TWILIO_ACCOUNT_SID = os.environ.get(
-    "TWILIO_ACCOUNT_SID"
+    "TWILIO_ACCOUNT_SID", 'default'
 )
 TWILIO_AUTH_TOKEN = os.environ.get(
-    "TWILIO_AUTH_TOKEN"
+    "TWILIO_AUTH_TOKEN", 'default'
 )
 TWILIO_NUMBER = os.environ.get(
     "TWILIO_NUMBER",

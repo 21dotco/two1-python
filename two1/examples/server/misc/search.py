@@ -28,7 +28,7 @@ def bing(request):
           paramType: query
     """
     if 'query' not in request.data:
-        return Response({"reason": "Must provide a 'query' parameter."},
+        return Response({"error": "Must provide a 'query' parameter."},
                         status=status.HTTP_400_BAD_REQUEST)
     api = BingSearchAPI(settings.AZURE_MARKETPLACE_KEY)
     result = api.search_web(
