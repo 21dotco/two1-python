@@ -19,7 +19,7 @@ from two1.lib.util.uxstring import UxString
 
 
 def parse_dotenv(dotenv_path):
-    with open(dotenv_path) as f:
+    with open(dotenv_path, "rt") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith('#') or '=' not in line:
