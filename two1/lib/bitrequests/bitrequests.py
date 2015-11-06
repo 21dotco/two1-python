@@ -74,9 +74,8 @@ class BitRequests(object):
             url (string): URL of the requested resource.
 
         Returns:
-            headers (tuple): tuple of length-2 tuples with the header data
-                from the resource.
-                Example: (('price', '5000'), ('username', 'some_merchant'))
+            headers (dict): dict of headers from the resource.
+                Example: {'price': 5000, 'username': 'some_merchant'}
         """
         raise NotImplementedError()
 
@@ -216,9 +215,9 @@ class BitTransferRequests(BitRequests):
         price = headers.get(BitTransferRequests.HTTP_BITCOIN_PRICE)
         payee_address = headers.get(BitTransferRequests.HTTP_BITCOIN_ADDRESS)
         payee_username = headers.get(BitTransferRequests.HTTP_BITCOIN_USERNAME)
-        return ((BitTransferRequests.HTTP_BITCOIN_PRICE, price),
-                (BitTransferRequests.HTTP_BITCOIN_ADDRESS, payee_address),
-                (BitTransferRequests.HTTP_BITCOIN_USERNAME, payee_username))
+        return {BitTransferRequests.HTTP_BITCOIN_PRICE: int(price),
+                BitTransferRequests.HTTP_BITCOIN_ADDRESS: payee_address,
+                BitTransferRequests.HTTP_BITCOIN_USERNAME: payee_username}
 
 
 class OnChainRequests(BitRequests):
@@ -270,5 +269,5 @@ class OnChainRequests(BitRequests):
         headers = requests.get(url).headers
         price = headers.get(OnChainRequests.HTTP_BITCOIN_PRICE)
         payee_address = headers.get(OnChainRequests.HTTP_BITCOIN_ADDRESS)
-        return ((OnChainRequests.HTTP_BITCOIN_PRICE, price),
-                (OnChainRequests.HTTP_BITCOIN_ADDRESS, payee_address))
+        return {OnChainRequests.HTTP_BITCOIN_PRICE: int(price),
+                OnChainRequests.HTTP_BITCOIN_ADDRESS: payee_address}

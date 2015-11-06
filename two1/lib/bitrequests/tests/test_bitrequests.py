@@ -44,8 +44,9 @@ class MockBitRequests(BitRequests):
 
 def mockrequest(*args, **kwargs):
     mock_request = MockRequest()
+    mock_headers = {'price': '1337', 'bitcoin-address': '1THISISANADDRESS'}
     setattr(mock_request, 'status_code', 402)
-    setattr(mock_request, 'headers', {'price': '1337'})
+    setattr(mock_request, 'headers', mock_headers)
     setattr(mock_request, 'response_method', args[0])
     return mock_request
 
@@ -169,3 +170,29 @@ def test_bitrequest_methods(monkeypatch):
     assert res.response_method == 'delete'
     res = bit_req.head('fakeurl')
     assert res.response_method == 'head'
+
+
+def test_get_402_info(monkeypatch):
+    # Patch requests from making actual http requests
+    monkeypatch.setattr(requests, 'get', mockrequest)
+
+    # Test that OnChainRequests 402 info returns a dict of headers
+    bit_req = OnChainRequests(wallet)
+    headers = bit_req.get_402_info('fakeurl')
+    assert type(headers) == dict
+    assert headers['price'] == 1337
+    assert headers['bitcoin-address'] == '1THISISANADDRESS'
+
+    # Test that BitTransferRequests 402 info returns a dict of headers
+    def mock_bittransfer_request(*args, **kwargs):
+        mock_req = mockrequest(*args, **kwargs)
+        mock_req.headers['username'] = 'long john silver'
+        mock_req.headers['bitcoin-address'] = '3NEWADDRESS'
+        return mock_req
+    monkeypatch.setattr(requests, 'get', mock_bittransfer_request)
+    bit_req = BitTransferRequests(wallet, config.username)
+    headers = bit_req.get_402_info('fakeurl')
+    assert type(headers) == dict
+    assert headers['price'] == 1337
+    assert headers['bitcoin-address'] == '3NEWADDRESS'
+    assert headers['username'] == 'long john silver'
