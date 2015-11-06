@@ -61,6 +61,7 @@ def _mine(config, dashboard=False):
         else:
             start_cpu_mining(config)
     else:
+        config.log(UxString.buy_ad, fg="magenta")
         start_cpu_mining(config)
 
 
@@ -124,7 +125,7 @@ def start_cpu_mining(config):
     >>> config = Config()
     >>> start_cpu_mining(config)
     """
-    click.secho(UxString.buy_ad, fg="magenta")
+
 
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
                                              config.machine_auth,
