@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import date, datetime
 import click
 from two1.lib.server import rest_client
@@ -96,13 +97,15 @@ def filter_rollbacks(logs):
     # due to the payout schedule, it is guaranteed that a rollback debit is preceded by a
     # payout credit. When we see a rollback, we need to both filter that rollback and
     # its matching payout. We are bound to find the matching payout in the next iteration
+    rollbacks = {}
     result = []
-    unmatched_rollback = None
     for entry in logs:
         if entry["reason"] and entry["reason"] == 'PayoutRollback':
-            unmatched_rollback = entry
-        elif unmatched_rollback and unmatched_rollback["amount"] == -entry["amount"]:
-            unmatched_rollback = None
+            count_for_amount = rollbacks.get(entry["amount"], 0)
+            rollbacks[-entry["amount"]] = count_for_amount + 1
+        elif (entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout") \
+                and (entry["amount"] in rollbacks and rollbacks[entry["amount"]] > 0):
+            rollbacks[entry["amount"]] -= 1
         else:
             result.append(entry)
 
