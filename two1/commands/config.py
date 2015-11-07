@@ -9,6 +9,7 @@ from path import path
 from pathlib import Path
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import daemonizer
+from two1.lib.wallet.exceptions import DaemonizerError
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
@@ -112,14 +113,18 @@ class Config(object):
             # 1. It's not already started
             # 2. It's using the default wallet path
             # 3. We're not in a virtualenv
-            d = daemonizer.get_daemonizer()
-            if Two1Wallet.is_configured() and \
-                            wallet_path == Two1Wallet.DEFAULT_WALLET_PATH and \
-                    not os.environ.get("VIRTUAL_ENV") and \
-                    not d.started():
-                d.start()
-                if d.started():
-                    click.echo(UxString.wallet_daemon_started)
+            try:
+                d = daemonizer.get_daemonizer()
+
+                if Two1Wallet.is_configured() and \
+                   wallet_path == Two1Wallet.DEFAULT_WALLET_PATH and \
+                   not os.environ.get("VIRTUAL_ENV") and \
+                   not d.started():
+                    d.start()
+                    if d.started():
+                        click.echo(UxString.wallet_daemon_started)
+            except (OSError, DaemonizerError):
+                pass
 
             self.wallet = Wallet(wallet_path=wallet_path,
                                  data_provider=dp)

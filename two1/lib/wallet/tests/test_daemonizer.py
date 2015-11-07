@@ -1,3 +1,4 @@
+import pytest
 import subprocess
 import sys
 from unittest.mock import MagicMock
@@ -20,14 +21,12 @@ def test_get_daemonizer():
     assert d == Systemd
 
     Systemd.check_systemd = MagicMock(return_value=False)
-    d = get_daemonizer()
-
-    assert d is None
+    with pytest.raises(OSError):
+        d = get_daemonizer()
 
     sys.platform = 'win'
-    d = get_daemonizer()
-
-    assert d is None
+    with pytest.raises(OSError):
+        d = get_daemonizer()
 
 
 def test_systemd():
