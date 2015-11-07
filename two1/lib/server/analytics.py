@@ -5,18 +5,17 @@ import traceback
 
 import os
 import requests
+from functools import update_wrapper
 from two1.commands import config as app_config
 from two1.lib.util.uxstring import UxString
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
 
-
 def capture_usage(func):
-    def _capture_usage(*args, **kw):
+    def _capture_usage(config, *args, **kw):
 
         try:
             func_name = func.__name__[1:]
-            config = args[0]
             username = config.username
             user_platform = platform.system() + platform.release()
             # TODO we should add a version field to two1.json and log it here, that way
@@ -30,7 +29,7 @@ def capture_usage(func):
             }
             log_message(data)
 
-            res = func(*args, **kw)
+            res = func(config, *args, **kw)
 
             return res
 
@@ -58,7 +57,7 @@ def capture_usage(func):
             if is_debug:
                 raise e
 
-    return _capture_usage
+    return update_wrapper(_capture_usage, func)
 
 
 def str2bool(v):

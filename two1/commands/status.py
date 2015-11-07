@@ -94,10 +94,14 @@ def status_mining(config, client):
               default=False,
               help="List non-zero balances for each address")
 @json_output
-@capture_usage
 def status(config, detail):
     """View your bitcoin balance and address.
     """
+    return _status(config, detail)
+
+
+@capture_usage
+def _status(config, detail):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
