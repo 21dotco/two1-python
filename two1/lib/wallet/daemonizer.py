@@ -7,6 +7,7 @@ import re
 import shutil
 import tempfile
 from path import Path
+from two1.lib.wallet.exceptions import DaemonizerError
 from two1.lib.wallet.exceptions import WalletError
 
 
@@ -25,9 +26,9 @@ def get_daemonizer():
         if Systemd.check_systemd():
             rv = Systemd
         else:
-            print("Currently the only supported linux init system is systemd.")
+            raise OSError("Currently the only supported linux init system is systemd.")
     else:
-        print("Currently only Mac OS X (launchd) and linux (systemd) system daemons are supported.")
+        raise OSError("Currently only Mac OS X (launchd) and linux (systemd) system daemons are supported.")
 
     return rv
 
@@ -234,8 +235,8 @@ WantedBy=default.target
 
                 rv = cls.ENV_FILE_PATH.exists()
             except subprocess.CalledProcessError as e:
-                print("Error creating environment file: %s" % (e))
-                rv = False
+                raise DaemonizerError("Couldn't create environment file: %s" %
+                                      (e))
 
         return rv
 
@@ -268,8 +269,7 @@ WantedBy=default.target
 
                 rv = cls.SERVICE_FILE_PATH.exists()
             except subprocess.CalledProcessError as e:
-                print("Error creating service file: %s" % (e))
-                rv = False
+                raise DaemonizerError("Couldn't create service file: %s" % (e))
 
         return rv
 
@@ -304,21 +304,18 @@ WantedBy=default.target
         else:
             # Make sure systemd is installed
             if cls.check_systemd():
-                try:
-                    text = "\n"
-                    if data_provider_options.get('provider', None) == 'chain':
-                        # Create an environment file
-                        text = "CHAIN_API_KEY_ID='%s'\n" % data_provider_options['api_key_id']
-                        text += "CHAIN_API_KEY_SECRET='%s'\n" % data_provider_options['api_key_secret']
+                text = "\n"
+                if data_provider_options.get('provider', None) == 'chain':
+                    # Create an environment file
+                    text = "CHAIN_API_KEY_ID='%s'\n" % data_provider_options['api_key_id']
+                    text += "CHAIN_API_KEY_SECRET='%s'\n" % data_provider_options['api_key_secret']
 
-                    # Create ENV file (even if empty)
-                    cls._write_env_file(text)
+                # Create ENV file (even if empty)
+                cls._write_env_file(text)
 
-                    # Create service file
-                    cls._write_service_file(cls.SERVICE_FILE)
-                    rv = cls.installed()
-                except PermissionError:
-                    print("Please re-run this script with sudo.")
+                # Create service file
+                cls._write_service_file(cls.SERVICE_FILE)
+                rv = cls.installed()
 
         return rv
 
@@ -367,7 +364,7 @@ WantedBy=default.target
                                              stderr=subprocess.STDOUT)
                 rv = cls.enabled()
             except subprocess.CalledProcessError as e:
-                print("Error enabling service: %s" % e)
+                raise DaemonizerError("Couldn't enable service: %s" % e)
                 rv = False
 
         return rv
@@ -389,8 +386,7 @@ WantedBy=default.target
                                     stderr=subprocess.STDOUT)
             rv = not cls.enabled()
         except subprocess.CalledProcessError as e:
-            print("Error disabling service: %s" % e)
-            rv = False
+            raise DaemonizerError("Couldn't disable service: %s" % e)
 
         return rv
 
@@ -426,8 +422,7 @@ WantedBy=default.target
                                         stderr=subprocess.STDOUT)
                 rv = cls.started()
             except subprocess.CalledProcessError as e:
-                print("Error starting service: %s" % e)
-                rv = False
+                raise DaemonizerError("Couldn't start service: %s" % e)
 
         return rv
 
@@ -449,8 +444,7 @@ WantedBy=default.target
                                          cls.SERVICE_NAME])
                 rv = not cls.started()
             except subprocess.CalledProcessError as e:
-                print("Error stopping service: %s" % e)
-                rv = False
+                raise DaemonizerError("Couldn't stop service: %s" % e)
 
         return rv
 
@@ -598,8 +592,7 @@ class Launchd(Daemonizer):
                 cls._create_plist_file(env_vars)
                 rv = cls.installed()
             except WalletError as e:
-                print("Couldn't install launchd agent: %s" % e)
-                rv = False
+                raise DaemonizerError("Couldn't install launchd agent: %s" % e)
 
         return rv
 
@@ -695,8 +688,7 @@ class Launchd(Daemonizer):
                                         stderr=subprocess.STDOUT)
                 rv = cls.started()
             except subprocess.CalledProcessError as e:
-                print("Couldn't enable daemon using launchctl: %s" % e)
-                rv = False
+                raise DaemonizerError("Couldn't enable daemon using launchctl: %s" % e)
 
         return rv
 
@@ -717,7 +709,6 @@ class Launchd(Daemonizer):
                                          cls.PLIST_FILE_PATH],
                                         stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
-                print("Couldn't disable daemon using launchctl: %s" % e)
-                rv = False
+                raise DaemonizerError("Couldn't disable daemon using launchctl: %s" % e)
 
         return rv

@@ -47,3 +47,7 @@ class UndefinedMethodError(WalletError):
 
 class AccountCreationError(WalletError):
     pass
+
+
+class DaemonizerError(WalletError):
+    pass

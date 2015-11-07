@@ -238,8 +238,11 @@ def startdaemon(ctx):
         click.echo("Not starting daemon while inside a virtualenv. It can be manually started by doing 'walletd' and backgrounding the process.")
         return
 
-    d = get_daemonizer()
-    if d is None:
+    try:
+        d = get_daemonizer()
+    except OSError as e:
+        logger.debug(str(e))
+        click.echo("Error: %s" % e)
         return
 
     if d.started():
@@ -255,12 +258,24 @@ def startdaemon(ctx):
                        api_key_id=dp_params['chain_api_key_id'],
                        api_key_secret=dp_params['chain_api_key_secret'])
 
-        d.install(dpo)
+        try:
+            d.install(dpo)
+        except exceptions.DaemonizerError as e:
+            logger.debug(str(e))
+            click.echo("Error: %s" % e)
+            return
 
-    if d.start():
-        msg = "walletd successfully started."
-        logger.debug(msg)
-        click.echo(msg)
+    msg = ""
+    try:
+        if d.start():
+            msg = "walletd successfully started."
+        else:
+            msg = "walletd not started."
+    except exceptions.DaemonizerError as e:
+        msg = "Error: %s" % e
+
+    logger.debug(msg)
+    click.echo(msg)
 
 
 @click.command()
@@ -273,14 +288,24 @@ def stopdaemon(ctx):
         click.echo("Not stopping any daemons from within a virtualenv.")
         return
 
-    d = get_daemonizer()
-    if d is None:
+    try:
+        d = get_daemonizer()
+    except OSError as e:
+        logger.debug(str(e))
+        click.echo("Error: %s" % e)
         return
 
-    if d.stop():
-        msg = "walletd successfully stopped."
-        logger.debug(msg)
-        click.echo(msg)
+    msg = ""
+    try:
+        if d.stop():
+            msg = "walletd successfully stopped."
+        else:
+            msg = "walletd not stopped."
+    except exceptions.DaemonizerError as e:
+        msg = "Error: %s" % e
+
+    logger.debug(msg)
+    click.echo(msg)
 
 
 @click.command()
@@ -288,21 +313,26 @@ def stopdaemon(ctx):
 def uninstalldaemon(ctx):
     """ Uninstalls the daemon from the init system
     """
-    d = get_daemonizer()
-    if d is None:
+    try:
+        d = get_daemonizer()
+    except OSError as e:
+        logger.debug(str(e))
+        click.echo("Error: %s" % e)
         return
 
-    d.stop()
-    if d.installed():
-        rv = d.uninstall()
-        if rv:
-            msg = "walletd successfully uninstalled from init system."
-            logger.debug(msg)
-            click.echo(msg)
-    else:
-        msg = "Unable to uninstall walletd!"
-        logger.debug(msg)
-        click.echo(msg)
+    try:
+        d.stop()
+        if d.installed():
+            rv = d.uninstall()
+            if rv:
+                msg = "walletd successfully uninstalled from init system."
+        else:
+            msg = "Unable to uninstall walletd!"
+    except exceptions.DaemonizerError as e:
+        msg = "Error: %s" % e
+
+    logger.debug(msg)
+    click.echo(msg)
 
 
 @click.command(name="create")
