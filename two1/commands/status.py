@@ -188,11 +188,13 @@ def _get_balances(config, client):
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
 
+    spendable_balance = min(balance_c, balance_u)
+
     data = client.get_earnings()
     twentyone_balance = data["total_earnings"]
-    flushed_earnings = data["recent_flushes"]
+    flushed_earnings = data["flushed_amount"]
 
-    return twentyone_balance, balance_c, pending_transactions, flushed_earnings
+    return twentyone_balance, spendable_balance, pending_transactions, flushed_earnings
 
 
 def status_earnings(config, client):
