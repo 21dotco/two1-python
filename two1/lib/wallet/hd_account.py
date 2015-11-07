@@ -37,7 +37,7 @@ class HDAccount(object):
     MAX_BALANCE_UPDATE_THRESHOLD = 30  # seconds
 
     def __init__(self, hd_key, name, index, data_provider,
-                 testnet=False, last_state=None):
+                 testnet=False, last_state=None, skip_discovery=False):
         # Take in either public or private key for this account as we
         # can derive everything from it.
         if not isinstance(hd_key, HDKey):
@@ -82,8 +82,9 @@ class HDAccount(object):
             else:
                 self._chain_pub_keys[change] = HDPublicKey.from_parent(self.key, change)
 
-        self._discover_used_addresses()
-        self._update_balance()
+        if not skip_discovery:
+            self._discover_used_addresses()
+            self._update_balance()
 
     def _discover_used_addresses(self, max_index=0, check_all=False):
         for change in [0, 1]:
@@ -155,7 +156,7 @@ class HDAccount(object):
 
         self._balance_cache = balance
         self._last_balance_update = time.time()
-        
+
     def has_txns(self):
         """ Returns whether or not there are any discovered transactions
             associated with any address in the account.
