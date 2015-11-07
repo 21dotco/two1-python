@@ -76,6 +76,8 @@ class Two1Wallet(BaseWallet):
         passphrase (str): Passphrase to unlock wallet key if it is locked.
         utxo_selector (function): A filtering function with the
            prototype documented above.
+        skip_discovery (bool): If True, skips account and address discovery.
+           This should only be set to True on account creation!
 
     Returns:
         Two1Wallet: The wallet instance.
@@ -207,7 +209,6 @@ class Two1Wallet(BaseWallet):
                                           account_type=account_type,
                                           testnet=testnet)
 
-            wallet.discover_accounts()
             wallet.to_file(wallet_path)
 
             rv = os.path.exists(wallet_path)
@@ -298,7 +299,11 @@ class Two1Wallet(BaseWallet):
                   "key_salt": utils.bytes_to_str(key_salt),
                   "locked": bool(passphrase),
                   "account_type": account_type}
-        wallet = Two1Wallet(config, data_provider, passphrase, utxo_selector)
+        wallet = Two1Wallet(params_or_file=config,
+                            data_provider=data_provider,
+                            passphrase=passphrase,
+                            utxo_selector=utxo_selector,
+                            skip_discovery=True)
 
         return (wallet, mnemonic)
 
@@ -356,7 +361,8 @@ class Two1Wallet(BaseWallet):
 
     def __init__(self, params_or_file, data_provider,
                  passphrase='',
-                 utxo_selector=utxo_selector_smallest_first):
+                 utxo_selector=utxo_selector_smallest_first,
+                 skip_discovery=False):
         self.data_provider = data_provider
         self.utxo_selector = utxo_selector
         self._testnet = False
@@ -415,7 +421,7 @@ class Two1Wallet(BaseWallet):
         cache_file = params.get("cache_file", None)
         if account_params is None:
             # Create default account
-            self._init_account(0, "default")
+            self._init_account(0, "default", skip_discovery=skip_discovery)
         else:
             # Setup the account map first
             self._account_map = params.get("account_map", {})
@@ -500,7 +506,8 @@ class Two1Wallet(BaseWallet):
 
         return rv
 
-    def _init_account(self, index, name="", account_state=None):
+    def _init_account(self, index,
+                      name="", account_state=None, skip_discovery=False):
         # Account keys use hardened deriviation, so make sure the MSB is set
         acct_index = index | 0x80000000
 
@@ -511,7 +518,8 @@ class Two1Wallet(BaseWallet):
                          index=acct_index,
                          data_provider=self.data_provider,
                          testnet=self._testnet,
-                         last_state=account_state)
+                         last_state=account_state,
+                         skip_discovery=skip_discovery)
         self._accounts.insert(index, acct)
         self._account_map[name] = index
 
