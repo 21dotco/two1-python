@@ -34,13 +34,13 @@ class UxString:
     status_mining = mining=click.style("Mining", fg='magenta') + "\n"\
        "    Status           : {is_mining}\n"\
        "    Hashrate         : {hashrate}\n"\
-       "    Mined (all time) : {mined} Satoshi\n\n"\
+       "    Mined (all time) : {mined} Satoshis\n\n"\
        "Type " + click.style("21 mine --dashboard", bold=True) + " to see a detailed view. Hit q to exit.\n"
 
     status_wallet = click.style("Balance", fg='magenta') + """
-    Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshi
-    Your spendable balance on the Blockchain [2]              : {onchain} Satoshi
-    Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshi
+    Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
+    Your spendable balance on the Blockchain [2]              : {onchain} Satoshis
+    Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshis
 
     [1]: Available for bittransfers (21.co/micropayments)
     [2]: Available for on-chain (21.co/micropayments)
