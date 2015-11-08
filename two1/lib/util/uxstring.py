@@ -22,7 +22,7 @@ class UxString:
         "Blockchain in the next payout cycle.\n"\
         "Estimated time of payout: ~20 minutes.\n"\
         "To check progress:  https://blockexplorer.com/address/{}\n"\
-        "To get more liquid bitcoin, use {} to buy more API calls."
+        "To get more bitcoin, use {}."
 
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
