@@ -33,6 +33,7 @@ from two1.commands.help import help
 from two1.commands.status import status
 from two1.commands.update import update
 from two1.commands.flush import flush
+from two1.commands.send import send
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -89,6 +90,7 @@ main.add_command(update)
 main.add_command(flush)
 main.add_command(log)
 main.add_command(help)
+main.add_command(send)
 
 
 if __name__ == "__main__":
