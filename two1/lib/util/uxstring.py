@@ -93,7 +93,7 @@ class UxString:
     flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
                    "in your wallet balance as soon as they appear on the Blockchain."
 
-    flush_insufficient_earnigns = "You must have a minimum of 20000 Satoshis to " \
+    flush_insufficient_earnings = "You must have a minimum of 20000 Satoshis to " \
                                   "be able to flush your earnings to the Blockchain"
     # ad
     buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
