@@ -6,11 +6,9 @@ from two1.examples.server import settings
 from django.conf.urls import url, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 import os
-from . import views
+
 
 urlpatterns = [
-    url(r'^$', views.default),
-    url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^bitcoin_auth/', include('bitcoin_auth.urls'))
 ]
 
