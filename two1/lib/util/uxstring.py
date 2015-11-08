@@ -50,7 +50,7 @@ class UxString:
 
     status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
     Search Queries        : {buyable_searches:<4} ({search_unit_price} Satoshis per search)
-    SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per sms)
+    SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per SMS)
     """
 
     # doctor
