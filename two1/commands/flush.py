@@ -39,5 +39,5 @@ def flush_earnings(config, client):
             config.log(success_msg, nl=False)
     except ServerRequestError as e:
         if e.status_code == 401:
-            click.echo(UxString.flush_insufficient_earnigns)
+            click.echo(UxString.flush_insufficient_earnings)
 
