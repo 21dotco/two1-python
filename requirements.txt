@@ -9,7 +9,6 @@ cssselect==0.9.1
 dj-database-url==0.3.0
 Django==1.8.3
 django-filter==0.10.0
-django-rest-swagger==0.3.4
 djangorestframework==3.2.1
 execnet==1.4.1
 funcsigs==0.4

@@ -56,7 +56,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_swagger',
     'bitcoin_auth'
 )
 
@@ -237,25 +236,4 @@ REST_FRAMEWORK = {
     ),
     # Set the exeption handler so we can send 402 requests.
     'EXCEPTION_HANDLER': 'bitcoin_auth.exceptions.payment_required_exception_handler'
-}
-
-
-SWAGGER_SETTINGS = {
-    'exclude_namespaces': [],
-    'api_version': '0.1',
-    'enabled_methods': [
-        'get',
-        'post',
-        'put',
-        'patch',
-        'delete'
-    ],
-    'is_authenticated': False,
-    'is_superuser': False,
-    'permission_denied_handler': None,
-    'info': {
-        'description': 'This is a sample bit-server. ',
-        'title': 'API Endpoints',
-    },
-    'doc_expansion': 'list',
 }
