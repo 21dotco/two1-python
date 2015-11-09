@@ -124,6 +124,43 @@ class UxString:
     buy_message = "You bought {} from {}"
     sell_message = "You sold {} to {}"
 
+    # publish
+    coming_soon = click.style("Coming soon", bold=True)
+    slack_21_co = click.style("slack.21.co", bold=True)
+    support_21_co = click.style("support@21.co", bold=True)
+    publish_stub = """%s
+- Publish functionality will be available in a forthcoming 21 update
+- In the meantime, please visit the 21 Developer Community at %s
+- There, you can find other 21 developers to buy your machine-payable endpoints
+For further information, please contact %s""" % \
+  (coming_soon, slack_21_co, support_21_co)
+
+    # sell
+    sell_stub = """%s
+- Full sell functionality will be available in a forthcoming 21 update
+- To get started, please see 21.co/learn/sell-or-license-any-file-for-bitcoin
+- Then visit the 21 Developer Community at %s
+- There, you can find other 21 developers to buy your machine-payable endpoints
+For further information, please contact %s""" % \
+  (coming_soon, slack_21_co, support_21_co)
+
+    # search
+    search_stub = """%s
+- Full search functionality will be available in a forthcoming 21 update
+- In the meantime, please visit the 21 Developer Community at %s
+- There, you can find machine-payable endpoints to buy from other 21 developers
+For further information, please contact %s""" % \
+  (coming_soon, slack_21_co, support_21_co)
+
+    # rate
+    rate_stub = """%s
+- Rating functionality will be available in a forthcoming 21 update
+- In the meantime, please visit the 21 Developer Community at %s
+- There, you can find machine-payable endpoints to buy from other 21 developers
+For further information, please contact %s""" % \
+  (coming_soon, slack_21_co, support_21_co)
+
+
     class Error:
         # network errors
         connection = "Error: Cannot connect to {}. Please check your Internet connection."

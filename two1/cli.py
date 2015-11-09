@@ -34,6 +34,10 @@ from two1.commands.status import status
 from two1.commands.update import update
 from two1.commands.flush import flush
 from two1.commands.send import send
+from two1.commands.search import search
+from two1.commands.rate import rate
+from two1.commands.sell import sell
+from two1.commands.publish import publish
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -54,7 +58,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.pass_context
 @docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config):
-    """Buy APIs on the internet for Bitcoin.
+    """Mine bitcoin and use it to buy and sell digital goods.
 
 \b
 Usage
@@ -68,7 +72,8 @@ $ {0} buy search "Satoshi Nakamoto"
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    create_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update')
+    create_wallet_and_account = ctx.invoked_subcommand not in \
+        ('help', 'update', 'publish', 'sell', 'rate', 'search')
     cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
     if create_wallet_and_account:
         check_setup_twentyone_account(cfg)
@@ -91,7 +96,10 @@ main.add_command(flush)
 main.add_command(log)
 main.add_command(help)
 main.add_command(send)
-
+main.add_command(search)
+main.add_command(rate)
+main.add_command(sell)
+main.add_command(publish)
 
 if __name__ == "__main__":
     if platform.system() == 'Windows':
