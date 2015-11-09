@@ -149,7 +149,11 @@ class OnChain(PaymentBase):
         # Verify that we haven't seen this transaction before
         try:
             self.db.lookup(str(payment_tx.hash))
+            payment_already_used = True
         except ModelNotFound:
+            payment_already_used = False
+
+        if payment_already_used:
             raise DuplicatePaymentError('Payment already used.')
 
         # Broadcast payment to network
