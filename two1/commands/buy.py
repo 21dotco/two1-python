@@ -126,7 +126,7 @@ $ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"9498132945","
     _buy(ctx.obj["config"],
          resource,
          data,
-         "GET",
+         method,
          data_file,
          output_file,
          ctx.obj["payment_method"],
