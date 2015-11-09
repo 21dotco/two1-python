@@ -16,7 +16,10 @@ The library is organized as follows:
 
 Serialization and deserialization is consistent amongst all classes. Serialization is achieved via the `bytes()` method and deserialization is achieved via the `from_bytes()` static method of each class.
 
-Transactions are the most likely starting place for the library. A transaction can be deserialized from a hex string. For example, this `transaction <https://blockchain.info/tx/039fc554371f9381376b3ea7a3f22009709f05a993fa90a919ac73c1713bba3b>`_ can be serialized as follows::
+Parsing a transaction
+---------------------
+
+Transactions are the most likely starting place for the library. A transaction can be deserialized from a hex string. For example, this `transaction <https://blockchain.info/tx/039fc554371f9381376b3ea7a3f22009709f05a993fa90a919ac73c1713bba3b>`_ can be deserialized as follows::
 
   import requests
 
@@ -77,6 +80,10 @@ The transaction can be serialized to either hex or bytes::
   print(txn.to_hex())
   txn_bytes = bytes(txn)
 
+
+Creating a transaction
+----------------------
+
 A transaction can be created from scratch by creating and inserting inputs and outputs. As outputs don't require any signing, let's start by creating the first output in the above transacion::
 
   from two1.lib.bitcoin.txn import TransactionOutput
@@ -123,6 +130,9 @@ An output by itself is relatively useless without an input as the input provides
 Results (this will be different for everyone as we are generating a random key)::
 
   Address: 13wBf3z3rshFGWDpMCyBowzCGxWNVnXXyL
+
+Complete example: transaction creation
+--------------------------------------
 
 Let's put it all together::
 
