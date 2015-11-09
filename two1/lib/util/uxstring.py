@@ -169,6 +169,7 @@ For further information, please contact %s""" % \
     class Error:
         # network errors
         connection = "Error: Cannot connect to {}. Please check your Internet connection."
+        connection_cli = "An internet connection is required to run this command."
         timeout = "Error: Connection to %s timed out."
         # 500 unknown error
         server_err = "Error: You have experienced a Technical Error. "\
