@@ -1061,7 +1061,8 @@ class Two1Wallet(BaseWallet):
 
         if not selected_utxos and not use_unconfirmed:
             raise exceptions.WalletBalanceError(
-                "There are not enough confirmed UTXOs to complete this transaction.")
+                "There are not enough confirmed UTXOs to complete this transaction.\n"
+                "Use 'wallet spreadutxos' to split your balance into more UTXOs.")
 
         if use_unconfirmed and total_with_fees > c_balance:
             self.logger.warning(
