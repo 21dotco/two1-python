@@ -198,7 +198,7 @@ class Config(object):
 
     # kwargs is styling parameters
     def log(self, msg, *args, nl=True, **kwargs):
-        """Logs a message to stderr only if json is disabled."""
+        """Logs a message to stdout only if json is disabled."""
         if self.json_output:
             return
         if args:
@@ -207,10 +207,10 @@ class Config(object):
             out = click.style(msg, **kwargs)
         else:
             out = msg
-        click.echo(out, file=sys.stderr, nl=nl)
+        click.echo(out, nl=nl)
 
     def vlog(self, msg, *args):
-        """Logs a message to stderr only if verbose is enabled and json is disabled."""
+        """Logs a message to stdout only if verbose is enabled and json is disabled."""
         if self.verbose:
             self.log(msg, *args)
 
