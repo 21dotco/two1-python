@@ -108,6 +108,33 @@ $ 21 buy sms +19498132945 "I just paid for this SMS with BTC"
          )
 
 
+@click.argument('resource', nargs=1)
+@click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
+@click.option('-d', '--data', default=None, help="Data to send in HTTP body")
+@click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
+@click.option('-o', '--output', 'output_file', type=click.File('wb'), help="Output file")
+@buy.command()
+@click.pass_context
+def url(ctx, resource, data, method, data_file, output_file):
+    """Buy any machine payable endpoint.
+
+\b
+Example
+-------
+$ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"9498132945","text":"hi"}'
+"""
+    _buy(ctx.obj["config"],
+         resource,
+         data,
+         "GET",
+         data_file,
+         output_file,
+         ctx.obj["payment_method"],
+         ctx.obj["maxprice"],
+         ctx.obj["info_only"]
+         )
+
+
 @capture_usage
 def _buy(config, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only):
