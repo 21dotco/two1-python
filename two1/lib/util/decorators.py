@@ -1,6 +1,7 @@
 import click
 import json as jsonlib
 from functools import update_wrapper
+from two1.lib.util.exceptions import TwoOneError
 
 def docstring_parameter(*args, **kwargs):
     def dec(obj):
@@ -19,10 +20,17 @@ def json_output(f):
     def wrapper(ctx, json, *args, **kwargs):
         config = ctx.obj['config']
         config.set_json_output(json)
-        result = f(config, *args, **kwargs)
-
-        if (json):
-          click.echo(jsonlib.dumps(result, indent=4, separators=(',', ': ')))
+        try:
+          result = f(config, *args, **kwargs)
+        except TwoOneError as e:
+            if (json):
+                err_json = e._json
+                err_json["error"] = e._msg
+                click.echo(jsonlib.dumps(err_json, indent=4, separators=(',', ': ')))
+            raise e
+        else:
+            if (json):
+                click.echo(jsonlib.dumps(result, indent=4, separators=(',', ': ')))
 
         return result
 

@@ -22,8 +22,11 @@ from path import path
 from two1.commands.config import Config
 from two1.commands.config import TWO1_CONFIG_FILE
 from two1.commands.config import TWO1_VERSION
+from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.util.decorators import docstring_parameter
+from two1.lib.util.exceptions import TwoOneError
+from two1.lib.util.uxstring import UxString
 # from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.doctor import doctor
@@ -74,7 +77,10 @@ goods both at the command line and programmatically, visit 21.co/learn
 """
     create_wallet_and_account = ctx.invoked_subcommand not in \
         ('help', 'update', 'publish', 'sell', 'rate', 'search')
-    cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
+    try:
+      cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
+    except DataProviderUnavailableError as e:
+      raise TwoOneError(UxString.Error.connection_cli)
     if create_wallet_and_account:
         check_setup_twentyone_account(cfg)
         # Disable the auto updater for now.
