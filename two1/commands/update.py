@@ -106,6 +106,9 @@ def update_two1_package(config, version, force_update_check=False):
             else:
                 ret["update_successful"] = perform_pip_based_update(
                     latest_version)
+        else:
+            # Alert the user if there is no newer version available
+            click.echo(UxString.update_not_needed)
 
     return ret
 
