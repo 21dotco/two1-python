@@ -156,3 +156,7 @@ class UxString:
             " reinstalling from the 21 Toolbelt instructions at 21.co/learn. \nIf problems"\
             " persist, please contact support@21.co."
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
+        insufficient_funds_mine_more = "Insufficient satoshis for off-chain (zero-fee) transaction. "\
+            "Type 21 mine to get more.*\n\n"\
+            "You may also use your on-chain balance for this transaction. It will include a 800 satoshi tx fee."\
+            "To use on-chain balance add —onchain to your buy command*"

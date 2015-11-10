@@ -175,7 +175,10 @@ def _buy(config, resource, data, method, data_file, output_file,
         config.log(UxString.Error.resource_price_greater_than_max_price.format(e))
         return
     except Exception as e:
-        config.log(str(e), fg="red")
+        if 'Insufficient funds.' in str(e):
+            config.log(UxString.Error.insufficient_funds_mine_more)
+        else:
+            config.log(str(e), fg="red")
         return
 
     # Output results to user
