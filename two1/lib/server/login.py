@@ -14,7 +14,7 @@ class EmailAddress(click.ParamType):
         click.ParamType.__init__(self)
 
     def convert(self, value, param, ctx):
-        if re.match(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
+        if re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$",
                     value):
             return value
         self.fail(UxString.Error.invalid_email)
@@ -92,15 +92,18 @@ def create_username(config, username=None):
     # use the same key for the payout address as well.
     # this will come from the wallet
     bitcoin_payout_address = config.wallet.current_address
-
+    click.echo("")
+    email = click.prompt(UxString.enter_email, type=EmailAddress())
     while True:
         if username == "" or username is None:
+            click.echo("")
             username = click.prompt(UxString.enter_username, type=Username())
+            click.echo("")
             click.echo(UxString.creating_account % username)
 
         rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, username)
         try:
-            r = rest_client.account_post(bitcoin_payout_address)
+            r = rest_client.account_post(bitcoin_payout_address, email)
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
