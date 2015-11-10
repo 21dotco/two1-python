@@ -75,10 +75,11 @@ class TwentyOneRestClient(object):
         return result
 
     # POST /pool/account
-    def account_post(self, payout_address):
+    def account_post(self, payout_address, email):
         path = "/pool/account/%s/" % self.username
         cb = self.auth.public_key.compressed_bytes
         body = {
+            "email": email,
             "payout_address": payout_address,
             "public_key": base64.b64encode(cb).decode(),
         }
