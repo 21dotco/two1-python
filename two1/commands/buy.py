@@ -14,6 +14,12 @@ from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitTransferRequests
 from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
 from two1.lib.util.uxstring import UxString
+from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
+from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
+
+
+# Two UTXO with one Output
+DEFAULT_ONCHAIN_BUY_FEE = (DEFAULT_INPUT_FEE * 2) + DEFAULT_OUTPUT_FEE
 
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -176,7 +182,9 @@ def _buy(config, resource, data, method, data_file, output_file,
         return
     except Exception as e:
         if 'Insufficient funds.' in str(e):
-            config.log(UxString.Error.insufficient_funds_mine_more)
+            config.log(UxString.Error.insufficient_funds_mine_more.format(
+                DEFAULT_ONCHAIN_BUY_FEE
+            ))
         else:
             config.log(str(e), fg="red")
         return
