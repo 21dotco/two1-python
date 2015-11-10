@@ -125,7 +125,7 @@ class CoinbaseInput(TransactionInput):
         if block_version == 1:
             scr = raw_script
         else:
-            scr = pack_var_str(Script.build_push_int(self.height)) + raw_script
+            scr = Script.build_push_int(self.height) + raw_script
 
         # Coinbase scripts are basically whatever, so we don't
         # try to create a script object from them.
