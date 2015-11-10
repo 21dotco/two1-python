@@ -85,9 +85,10 @@ class UxString:
     mining_finish = "\nView your balance with {}, or spend with {}."
 
     # updater
-    update_check = "Checking for application update..."
+    update_check = "Checking for application updates..."
     update_package = "Updating to version %s..."
     update_superuser = "You might need to enter superuser password."
+    update_not_needed = "Already up to date!"
 
     # flush
     flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
