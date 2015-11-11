@@ -2,6 +2,7 @@
 from functools import wraps
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ParseError
 import two1.lib.bitserv as bitserv
 
 
@@ -85,6 +86,6 @@ class Payment:
                 try:
                     v = method.redeem_payment(price, request_headers, **kwargs)
                 except Exception as e:
-                    raise BadRequest(str(e))
+                    raise ParseError(str(e))
                 return v
         return False
