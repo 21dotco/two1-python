@@ -3,14 +3,14 @@ from urllib.parse import urlparse
 from functools import wraps
 from flask import jsonify, request
 from flask.views import MethodView
-from werkzeug.exceptions import HTTPException, BadRequest
+from werkzeug.exceptions import HTTPException, BadRequest, NotFound
 
 from two1.lib.wallet import Wallet
 from two1.lib.bitcoin import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str
 
 from ..payment_methods import OnChain, PaymentChannel, BitTransfer
-from ..payment_server import PaymentServer
+from ..payment_server import PaymentServer, PaymentChannelNotFoundError
 
 
 class PaymentRequiredException(HTTPException):
@@ -119,6 +119,8 @@ class Channel(MethodView):
         else:
             try:
                 return jsonify(self.server.status(deposit_txid))
+            except PaymentChannelNotFoundError as e:
+                raise NotFound(str(e))
             except Exception as e:
                 raise BadRequest(str(e))
 
@@ -144,6 +146,8 @@ class Channel(MethodView):
             # Respond with the fully-signed refund transaction
             success = {'refund_tx': bytes_to_str(bytes(refund_tx))}
             return jsonify(success)
+        except PaymentChannelNotFoundError as e:
+            raise NotFound(str(e))
         except Exception as e:
             # Catch payment exceptions and send error response to client
             raise BadRequest(str(e))
@@ -172,6 +176,8 @@ class Channel(MethodView):
                 return jsonify({'payment_txid': str(payment_tx.hash)})
             else:
                 raise KeyError('No deposit or payment received.')
+        except PaymentChannelNotFoundError as e:
+            raise NotFound(str(e))
         except Exception as e:
             raise BadRequest(str(e))
 
@@ -187,5 +193,7 @@ class Channel(MethodView):
         try:
             payment_txid = self.server.close(deposit_txid)
             return jsonify({'payment_txid': payment_txid})
+        except PaymentChannelNotFoundError as e:
+            raise NotFound(str(e))
         except Exception as e:
             raise BadRequest(str(e))
