@@ -6,6 +6,7 @@ import pytest
 from two1.lib.bitcoin import Script
 from two1.lib.bitserv.wallet import Two1WalletWrapper, MockTwo1Wallet
 from two1.lib.bitserv.payment_server import PaymentServer, PaymentServerError
+from two1.lib.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.lib.bitserv.models import DatabaseSQLite3
 
 
@@ -85,7 +86,7 @@ def test_complete_handshake():
     deposit_txid = str(deposit_tx.hash)
 
     # Test that handshake completion fails when no channel exists
-    with pytest.raises(PaymentServerError):
+    with pytest.raises(PaymentChannelNotFoundError):
         server.complete_handshake(deposit_txid, deposit_tx)
 
     # Test that handshake completion succeeds
@@ -104,7 +105,7 @@ def test_receive_payment():
     deposit_txid = str(deposit_tx.hash)
 
     # Test that payment receipt fails when no channel exists
-    with pytest.raises(PaymentServerError):
+    with pytest.raises(PaymentChannelNotFoundError):
         server.receive_payment(deposit_txid, payment_tx)
 
     # Test that payment receipt succeeds
@@ -125,7 +126,7 @@ def test_redeem_payment():
     payment_txid = str(payment_tx.hash)
 
     # Test that payment redeem fails when no channel exists
-    with pytest.raises(PaymentServerError):
+    with pytest.raises(PaymentChannelNotFoundError):
         server.redeem(payment_txid)
 
     # Test that payment redeem succeeds
@@ -148,7 +149,7 @@ def test_status_close_channel():
     deposit_txid = str(deposit_tx.hash)
 
     # Test that channel close fails when no channel exists
-    with pytest.raises(PaymentServerError):
+    with pytest.raises(PaymentChannelNotFoundError):
         server.close(deposit_txid)
 
     # Test that channel close succeeds

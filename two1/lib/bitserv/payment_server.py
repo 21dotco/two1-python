@@ -22,7 +22,7 @@ class ChannelClosedError(PaymentServerError):
     pass
 
 
-class PaymentServerNotFoundError(PaymentServerError):
+class PaymentChannelNotFoundError(PaymentServerError):
     pass
 
 
@@ -139,7 +139,7 @@ class PaymentServer:
         try:
             channel = self._db.pc.lookup(deposit_txid)
         except:
-            raise PaymentServerNotFoundError('Related channel not found.')
+            raise PaymentChannelNotFoundError('Related channel not found.')
 
         # Get the refund spend address
         refund_tx = channel['refund_tx']
@@ -185,7 +185,7 @@ class PaymentServer:
         try:
             channel = self._db.pc.lookup(deposit_txid)
         except:
-            raise PaymentServerNotFoundError('Related channel not found.')
+            raise PaymentChannelNotFoundError('Related channel not found.')
 
         # Get merchant public key information from payment channel
         last_pmt_amt = channel['last_payment_amount']
@@ -233,7 +233,7 @@ class PaymentServer:
         try:
             channel = self._db.pc.lookup(deposit_txid)
         except:
-            raise PaymentServerNotFoundError('Related channel not found.')
+            raise PaymentChannelNotFoundError('Related channel not found.')
 
         return {'status': channel['state'],
                 'balance': channel['last_payment_amount'],
@@ -251,7 +251,7 @@ class PaymentServer:
         try:
             channel = self._db.pc.lookup(deposit_txid)
         except:
-            raise PaymentServerNotFoundError('Related channel not found.')
+            raise PaymentChannelNotFoundError('Related channel not found.')
 
         # Verify that there is a valid payment to close
         if not channel['payment_tx']:
@@ -282,13 +282,13 @@ class PaymentServer:
         try:
             payment = self._db.pmt.lookup(payment_txid)
         except:
-            raise PaymentServerNotFoundError('Payment not found.')
+            raise PaymentChannelNotFoundError('Payment not found.')
 
         # Verify that this payment exists within a channel (do we need this?)
         try:
             channel = self._db.pc.lookup(payment['deposit_txid'])
         except:
-            raise PaymentServerNotFoundError('Channel not found.')
+            raise PaymentChannelNotFoundError('Channel not found.')
 
         # Verify that the payment channel is still open
         if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
