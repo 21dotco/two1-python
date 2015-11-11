@@ -56,6 +56,18 @@ $ 21 buy --info search
 \b
 See the help for search.
 $ 21 buy search -h
+
+\b
+Send an SMS to a phone number.
+$ 21 buy sms +15005550002 "I just paid for this SMS with BTC"
+
+\b
+See the price in Satoshis of one bitcoin-payable sms.
+$ 21 buy --info sms
+
+\b
+See the help for sms.
+$ 21 buy sms -h
 """
     ctx.obj["payment_method"] = payment_method
     ctx.obj["maxprice"] = maxprice
@@ -98,7 +110,7 @@ def sms(ctx, phone_number, body):
 \b
 Example
 -------
-$ 21 buy sms +19498132945 "I just paid for this SMS with BTC"
+$ 21 buy sms +15005550002 "I just paid for this SMS with BTC"
 """
     if phone_number == "" and body == "":
         ctx.obj["info_only"] = True
@@ -127,7 +139,7 @@ def url(ctx, resource, data, method, data_file, output_file):
 \b
 Example
 -------
-$ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"9498132945","text":"hi"}'
+$ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"+15005550002","text":"hi"}'
 """
     _buy(ctx.obj["config"],
          resource,
