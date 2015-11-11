@@ -9,7 +9,7 @@ class BlockchainTransaction(models.Model):
     amount = models.IntegerField()
 
     class Meta:
-        app_label = 'django_bitcoin_auth'
+        app_label = 'django'
 
 
 class PaymentChannel(models.Model):
@@ -35,7 +35,7 @@ class PaymentChannel(models.Model):
                     self.expires_at, self.last_payment_amount))
 
     class Meta:
-        app_label = 'django_bitcoin_auth'
+        app_label = 'django'
 
 
 class PaymentChannelSpend(models.Model):
@@ -55,4 +55,4 @@ class PaymentChannelSpend(models.Model):
                     self.deposit_txid))
 
     class Meta:
-        app_label = 'django_bitcoin_auth'
+        app_label = 'django'

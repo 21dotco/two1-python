@@ -308,15 +308,16 @@ class OnChainDjango(OnChainDatabase):
 
     def create(self, txid, amount):
         """Create a transaction entry."""
-        self.BlockchainTransaction.create(txid=txid, amount=amount)
+        bt = self.BlockchainTransaction(txid=txid, amount=amount)
+        bt.save()
         return True
 
     def lookup(self, txid):
         """Look up a transaction entry."""
         try:
             rv = self.BlockchainTransaction.objects.get(txid=txid)
-            return {'txid': rv[0], 'amount': rv[1]}
-        except BlockchainTransaction.DoesNotExist:
+            return {'txid': rv.txid, 'amount': rv.amount}
+        except self.BlockchainTransaction.DoesNotExist:
             return None
 
 # *************************** Default SQLite3 ****************************** #
