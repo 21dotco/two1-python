@@ -107,7 +107,14 @@ class Config(object):
 
                 if not Two1Wallet.configure(wallet_options):
                     raise click.ClickException(UxString.Error.create_wallet_failed)
-                click.pause(UxString.create_wallet_done)
+
+                # Display the wallet mnemonic and tell user to back it up.
+                # Read the wallet JSON file and extract it.
+                with open(wallet_path, 'r') as f:
+                    wallet_config = json.load(f)
+                    mnemonic = wallet_config['master_seed']
+
+                click.pause(UxString.create_wallet_done % (mnemonic))
 
             # Start the daemon, if:
             # 1. It's not already started
