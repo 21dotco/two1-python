@@ -76,6 +76,8 @@ def status_mining(config, client):
         bk = "21 mining chip running (/run/minerd.pid)"
         mined = client.get_mined_satoshis()
         hashrate = get_hashrate()
+        if hashrate == UxString.Error.data_unavailable:
+            bk = "Run {} to start mining".format(click.style("21 mine", bold=True))
     else:
         bk, mined, hashrate = None, None, None
     data = dict(is_mining=bk,
