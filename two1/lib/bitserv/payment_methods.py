@@ -7,7 +7,7 @@ from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.commands.config import TWO1_PROVIDER_HOST, TWO1_HOST
 from two1.commands.config import TWO1_CONFIG_FILE
-from .models import OnChainSQLite3, ModelNotFound
+from .models import OnChainSQLite3
 from .payment_server import PaymentServer
 
 logger = logging.getLogger('bitserv')
@@ -147,13 +147,7 @@ class OnChain(PaymentBase):
             raise InsufficientPaymentError('Incorrect payment amount.')
 
         # Verify that we haven't seen this transaction before
-        try:
-            self.db.lookup(str(payment_tx.hash))
-            payment_already_used = True
-        except ModelNotFound:
-            payment_already_used = False
-
-        if payment_already_used:
+        if self.db.lookup(str(payment_tx.hash)):
             raise DuplicatePaymentError('Payment already used.')
 
         # Broadcast payment to network
@@ -164,7 +158,8 @@ class OnChain(PaymentBase):
             raise TransactionBroadcastError(str(e))
 
         # Store the payment for future double-spend prevention
-        self.db.create(str(payment_tx.hash), price)
+        if not self.db.lookup(str(payment_tx.hash)):
+            self.db.create(str(payment_tx.hash), price)
 
         return True
 
