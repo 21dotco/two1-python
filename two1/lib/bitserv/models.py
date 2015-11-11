@@ -287,10 +287,6 @@ class OnChainError(Exception):
     pass
 
 
-class ModelNotFound(OnChainError):
-    pass
-
-
 class OnChainDatabase:
 
     def __init__(self):
@@ -317,13 +313,11 @@ class OnChainDjango(OnChainDatabase):
 
     def lookup(self, txid):
         """Look up a transaction entry."""
-        rv = self.BlockchainTransaction.objects.get(txid=txid)
-        return {'txid': rv[0], 'amount': rv[1]}
-
-    def get_or_create(self, txid, amount):
-        """Attempt a lookup and create the record if it doesn't exist."""
-        return self.BlockchainTransaction.objects.get_or_create(
-            txid=txid, defaults={'amount': amount})
+        try:
+            rv = self.BlockchainTransaction.objects.get(txid=txid)
+            return {'txid': rv[0], 'amount': rv[1]}
+        except BlockchainTransaction.DoesNotExist:
+            return None
 
 # *************************** Default SQLite3 ****************************** #
 
@@ -349,12 +343,5 @@ class OnChainSQLite3(OnChainDatabase):
         self.c.execute(select, (txid,))
         rv = self.c.fetchone()
         if rv is None:
-            raise ModelNotFound()
+            return rv
         return {'txid': rv[0], 'amount': rv[1]}
-
-    def get_or_create(self, txid, amount):
-        """Attempt a lookup and create the record if it doesn't exist."""
-        try:
-            return self.lookup(txid), False
-        except ModelNotFound as e:
-            return self.create(txid, amount), True
