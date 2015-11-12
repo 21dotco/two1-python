@@ -180,6 +180,8 @@ def main(ctx, wallet_path, passphrase,
         '%(levelname)s: %(message)s')
     ch.setFormatter(ch_formatter)
 
+    if not os.path.exists(wp.dirname()):
+        os.makedirs(wp.dirname())
     fh = logging.handlers.TimedRotatingFileHandler(wp.dirname().joinpath("wallet_cli.log"),
                                                    when='midnight',
                                                    backupCount=5)
