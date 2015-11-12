@@ -1,7 +1,8 @@
 """Allowed payment methods."""
 import json
-import requests
 import logging
+import requests
+import threading
 
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
@@ -101,6 +102,7 @@ class OnChain(PaymentBase):
 
     """Making a payment on the bitcoin blockchain."""
 
+    lock = threading.Lock()
     http_payment_data = 'Bitcoin-Transaction'
     http_402_price = 'Price'
     http_402_address = 'Bitcoin-Address'
@@ -146,19 +148,20 @@ class OnChain(PaymentBase):
         if payment_tx.outputs[payment_index].value != price:
             raise InsufficientPaymentError('Incorrect payment amount.')
 
-        # Verify that we haven't seen this transaction before
-        if self.db.lookup(str(payment_tx.hash)):
-            raise DuplicatePaymentError('Payment already used.')
+        # Synchronize the next block of code to manage its atomicity
+        with self.lock:
+            # Verify that we haven't seen this transaction before
+            if self.db.lookup(str(payment_tx.hash)):
+                raise DuplicatePaymentError('Payment already used.')
 
-        # Broadcast payment to network
-        try:
-            txid = self.provider.broadcast_transaction(raw_tx)
-            logger.debug('[BitServ] Broadcasted: ' + txid)
-        except Exception as e:
-            raise TransactionBroadcastError(str(e))
+            # Broadcast payment to network
+            try:
+                txid = self.provider.broadcast_transaction(raw_tx)
+                logger.debug('[BitServ] Broadcasted: ' + txid)
+            except Exception as e:
+                raise TransactionBroadcastError(str(e))
 
-        # Store the payment for future double-spend prevention
-        if not self.db.lookup(str(payment_tx.hash)):
+            # Store the payment for future double-spend prevention
             self.db.create(str(payment_tx.hash), price)
 
         return True
