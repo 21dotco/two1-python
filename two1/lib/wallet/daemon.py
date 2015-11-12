@@ -609,6 +609,10 @@ def main(ctx, wallet_path, blockchain_data_provider,
     global wallet
 
     wallet['path'] = wallet_path
+    if not Two1Wallet.check_wallet_file(wallet['path']):
+        logger.critical("Wallet file does not exist or have the right parameters.")
+        sys.exit(-1)
+
     wallet['data_provider'] = ctx.obj['data_provider']
     if data_update_interval is not None:
         DEF_WALLET_UPDATE_INTERVAL = data_update_interval
@@ -632,6 +636,8 @@ def main(ctx, wallet_path, blockchain_data_provider,
             logger.info("... loading complete.")
         except WalletNotLoadedError as e:
             logger.error(str(e))
+            logger.info("Terminating.")
+            sys.exit(-1)
 
     # Setup a signal handler
     signal.signal(signal.SIGINT, sig_handler)
