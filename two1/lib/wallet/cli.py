@@ -6,6 +6,7 @@ import os
 import traceback
 
 import click
+from mnemonic import Mnemonic
 from jsonrpcclient.exceptions import ReceivedErrorResponse
 from path import Path
 from two1.lib.blockchain.chain_provider import ChainProvider
@@ -204,7 +205,9 @@ def main(ctx, wallet_path, passphrase,
     ctx.obj['wallet_path'] = wallet_path
     ctx.obj['passphrase'] = passphrase
 
-    if ctx.invoked_subcommand not in ['create', 'startdaemon', 'stopdaemon']:
+    if ctx.invoked_subcommand not in ['create', 'restore',
+                                      'startdaemon', 'stopdaemon',
+                                      'uninstalldaemon']:
         # Check that the wallet path exists
         if not Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
             click.echo("ERROR: Wallet file does not exist or is corrupt.")
@@ -405,6 +408,62 @@ def create(ctx, account_type, testnet):
             ctx.exit(code=3)
     else:
         ctx.fail("Wallet was not created.")
+
+
+@click.command(name="restore")
+@click.pass_context
+def restore(ctx):
+    """ Restore a wallet from a mnemonic
+    """
+    # Stop daemon if it's running.
+    d = None
+    try:
+        d = get_daemonizer()
+    except OSError as e:
+        pass
+
+    if d:
+        try:
+            d.stop()
+        except exceptions.DaemonizerError as e:
+            click.echo("ERROR: Couldn't stop daemon: %s" % e)
+            ctx.exit(code=4)
+
+    # Check to see if the current wallet path exists
+    if os.path.exists(ctx.obj['wallet_path']):
+        if click.confirm("Wallet file already exists and may have a balance. Do you want to delete it?"):
+            os.remove(ctx.obj['wallet_path'])
+        else:
+            click.echo("Not continuing.")
+            ctx.exit(code=4)
+
+    # Ask for mnemonic
+    mnemonic = click.prompt("Please enter the wallet's 12 word mnemonic")
+
+    # Sanity check the mnemonic
+    m = Mnemonic(language='english')
+    if not m.check(mnemonic):
+        click.echo("ERROR: Invalid mnemonic.")
+        ctx.exit(code=5)
+
+    if click.confirm("Did the wallet have a passphrase?"):
+        passphrase = get_passphrase()
+    else:
+        passphrase = ''
+
+    # Try creating the wallet
+    click.echo("\nRestoring...")
+    wallet = Two1Wallet.import_from_mnemonic(
+        data_provider=ctx.obj['data_provider'],
+        mnemonic=mnemonic,
+        passphrase=passphrase)
+
+    wallet.to_file(ctx.obj['wallet_path'])
+    if Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
+        click.echo("Wallet successfully restored.")
+    else:
+        click.echo("Wallet not restored.")
+        ctx.exit(code=6)
 
 
 @click.command(name="payoutaddress")
@@ -699,6 +758,7 @@ main.add_command(startdaemon)
 main.add_command(stopdaemon)
 main.add_command(uninstalldaemon)
 main.add_command(create)
+main.add_command(restore)
 main.add_command(payout_address)
 main.add_command(confirmed_balance)
 main.add_command(balance)
