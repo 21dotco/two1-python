@@ -140,19 +140,19 @@ class Two1Wallet(BaseWallet):
                 False otherwise.
 
         """
-        if os.path.exists(wallet_path):
-            # Check if the config is actually good
-            params = {}
+        # Check if the config is actually good
+        params = {}
+        try:
             with open(wallet_path, 'r') as f:
                 params = json.load(f)
-
-            for rp in Two1Wallet.required_params:
-                if rp not in params:
-                    return False
-
-            return True
-        else:
+        except:
             return False
+
+        for rp in Two1Wallet.required_params:
+            if rp not in params:
+                return False
+
+        return True
 
     @staticmethod
     def is_configured():

@@ -205,6 +205,11 @@ def main(ctx, wallet_path, passphrase,
     ctx.obj['passphrase'] = passphrase
 
     if ctx.invoked_subcommand not in ['create', 'startdaemon', 'stopdaemon']:
+        # Check that the wallet path exists
+        if not Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
+            click.echo("ERROR: Wallet file does not exist or is corrupt.")
+            ctx.exit(code=7)
+
         p = get_passphrase() if passphrase else ''
 
         try:
@@ -239,6 +244,11 @@ def startdaemon(ctx):
     if os.environ.get("VIRTUAL_ENV"):
         click.echo("Not starting daemon while inside a virtualenv. It can be manually started by doing 'walletd' and backgrounding the process.")
         return
+
+    # Check if the wallet path exists
+    if not Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
+        click.echo("ERROR: Wallet does not exist! Not starting daemon.")
+        ctx.exit(code=7)
 
     try:
         d = get_daemonizer()
