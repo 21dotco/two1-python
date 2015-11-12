@@ -298,6 +298,9 @@ class OnChainDatabase:
     def lookup(txid):
         pass
 
+    def delete(txid):
+        pass
+
 # *************************** Django Data ORM ****************************** #
 
 
@@ -317,6 +320,14 @@ class OnChainDjango(OnChainDatabase):
         try:
             rv = self.BlockchainTransaction.objects.get(txid=txid)
             return {'txid': rv.txid, 'amount': rv.amount}
+        except self.BlockchainTransaction.DoesNotExist:
+            return None
+
+    def delete(self, txid):
+        """Delete a transaction entry."""
+        try:
+            txn = self.BlockchainTransaction.objects.get(txid=txid)
+            txn.delete()
         except self.BlockchainTransaction.DoesNotExist:
             return None
 
@@ -346,3 +357,9 @@ class OnChainSQLite3(OnChainDatabase):
         if rv is None:
             return rv
         return {'txid': rv[0], 'amount': rv[1]}
+
+    def delete(self, txid):
+        """Delete a transaction entry."""
+        delete = 'DELETE FROM payment_onchain WHERE txid=?'
+        self.c.execute(delete, (txid,))
+        self.connection.commit()

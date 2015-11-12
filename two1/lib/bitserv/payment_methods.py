@@ -153,16 +153,17 @@ class OnChain(PaymentBase):
             # Verify that we haven't seen this transaction before
             if self.db.lookup(str(payment_tx.hash)):
                 raise DuplicatePaymentError('Payment already used.')
+            else:
+                self.db.create(str(payment_tx.hash), price)
 
-            # Broadcast payment to network
             try:
+                # Broadcast payment to network
                 txid = self.provider.broadcast_transaction(raw_tx)
                 logger.debug('[BitServ] Broadcasted: ' + txid)
             except Exception as e:
+                # Roll back the database entry if the broadcast fails
+                self.db.delete(str(payment_tx.hash))
                 raise TransactionBroadcastError(str(e))
-
-            # Store the payment for future double-spend prevention
-            self.db.create(str(payment_tx.hash), price)
 
         return True
 

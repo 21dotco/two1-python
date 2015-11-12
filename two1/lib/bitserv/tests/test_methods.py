@@ -112,6 +112,10 @@ def test_on_chain_payment_method_redeem_broadcast(monkeypatch):
         txn = _build_void_transaction(test_price, test_wallet.get_payout_address())
         requests.redeem_payment(test_price, {'Bitcoin-Transaction': txn.to_hex()})
 
+    # Test that the failed transaction doesn't persist in the database
+    db_txn = test_db.lookup(str(txn.hash))
+    assert db_txn is None
+
     # Test that we can still use the same payment even after a broadcast error
     monkeypatch.setattr(requests.provider, 'broadcast_transaction', _mock_broadcast_success)
     requests.redeem_payment(test_price, {'Bitcoin-Transaction': txn.to_hex()})
