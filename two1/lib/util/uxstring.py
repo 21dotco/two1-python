@@ -48,7 +48,7 @@ class UxString:
     Your spendable balance on the Blockchain [2]              : {onchain} Satoshis
     Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshis
 
-    [1]: Available for bittransfers (21.co/micropayments)
+    [1]: Available for off-chain (21.co/micropayments)
     [2]: Available for on-chain (21.co/micropayments)
 
     {byaddress}
@@ -201,6 +201,8 @@ For further information, please contact %s""" % \
             " persist, please contact support@21.co."
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
         insufficient_funds_mine_more = "Insufficient satoshis for off-chain (zero-fee) transaction. "\
-            "Type `21 mine` to get more.*\n\n"\
+            "Type {} to get more.*\n\n"\
             "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee."\
-            "To use on-chain balance add `-p onchain` to your buy command*"
+            "To use on-chain balance add {} to your buy command*".format(
+                    click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True)
+                )

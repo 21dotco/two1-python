@@ -36,7 +36,7 @@ DEMOS = {
 }
 
 @click.group()
-@click.option('-p', '--payment-method', default='bittransfer', type=click.Choice(['bittransfer', 'onchain', 'channel']))
+@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.pass_context
@@ -175,7 +175,7 @@ def _buy(config, resource, data, method, data_file, output_file,
 
     try:
         # Find the correct payment method
-        if payment_method == 'bittransfer':
+        if payment_method == 'offchain':
             bit_req = BitTransferRequests(config.machine_auth, config.username)
         elif payment_method == 'onchain':
             bit_req = OnChainRequests(config.wallet)
