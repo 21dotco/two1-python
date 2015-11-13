@@ -166,7 +166,6 @@ For further information, please contact %s""" % \
 For further information, please contact %s""" % \
   (coming_soon, slack_21_co, support_21_co)
 
-
     class Error:
         # network errors
         connection = "Error: Cannot connect to {}. Please check your Internet connection."
