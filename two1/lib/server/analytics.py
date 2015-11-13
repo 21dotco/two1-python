@@ -16,19 +16,21 @@ def capture_usage(func):
     def _capture_usage(config, *args, **kw):
 
         try:
-            func_name = func.__name__[1:]
-            username = config.username
-            user_platform = platform.system() + platform.release()
-            # TODO we should add a version field to two1.json and log it here, that way
-            # we can separate between updates
-            data = {
-                "channel": "cli",
-                "level": "info",
-                "username": username,
-                "command": func_name,
-                "platform": user_platform
-            }
-            log_message(data)
+            if config.collect_analytics:
+                func_name = func.__name__[1:]
+                username = config.username
+                user_platform = platform.system() + platform.release()
+                # we can separate between updates
+                version = app_config.TWO1_VERSION
+                data = {
+                    "channel": "cli",
+                    "level": "info",
+                    "username": username,
+                    "command": func_name,
+                    "platform": user_platform,
+                    "version" : version
+                }
+                log_message(data)
 
             res = func(config, *args, **kw)
 
