@@ -75,7 +75,7 @@ class TwentyOneRestClient(object):
         return result
 
     # POST /pool/account
-    def account_post(self, payout_address, email):
+    def account_post(self, payout_address, email, device_uuid=None):
         path = "/pool/account/%s/" % self.username
         cb = self.auth.public_key.compressed_bytes
         body = {
@@ -83,18 +83,21 @@ class TwentyOneRestClient(object):
             "payout_address": payout_address,
             "public_key": base64.b64encode(cb).decode(),
         }
+        if device_uuid:
+            body["device_uuid"] = device_uuid
+
         data = json.dumps(body)
         ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
         return ret
 
-    # GET /pool/work/{username}
-    def get_work(self):
-        path = "/pool/work/%s/" % self.username
+    # GET /pool/work/{username}/?device_id=True
+    def get_work(self, device_id):
+        path = "/pool/work/{}/?device_id={}".format(self.username, device_id)
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # POST /pool/work/{username}
-    def send_work(self, data):
-        path = "/pool/work/%s/" % self.username
+    # POST /pool/work/{username}/?device_id=True
+    def send_work(self, data, device_id):
+        path = "/pool/work/{}/?device_id={}".format(self.username, device_id)
         return self._request(sign_username=None, method="POST", path=path, data=data)
 
     # POST /pool/account/{username}/payoutaddress
