@@ -205,6 +205,9 @@ def get_work(config, client):
         if e.status_code == 404:
             click.echo(UxString.mining_advance_not_possible)
             raise MiningDisabledError(UxString.mining_advance_not_possible)
+        elif e.status_code == 403:
+            click.echo(UxString.mining_limit_reached)
+            raise MiningDisabledError(UxString.mining_limit_reached)
         else:
             raise e
 

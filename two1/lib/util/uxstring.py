@@ -96,6 +96,10 @@ class UxString:
     mining_advance_not_possible = "\nFurther advances against your Bitcoin Computer " \
                                   "work are not possible at this time. Please try again " \
                                   "in a few of hours."
+    mining_limit_reached = "\nYou have reached the daily limit for getting advances " \
+                           "against your Bitcoin Computer work. Please try again in a " \
+                           "few of hours"
+
     # updater
     update_check = "Checking for application updates..."
     update_package = "Updating to version %s..."
