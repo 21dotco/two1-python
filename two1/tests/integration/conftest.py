@@ -99,6 +99,8 @@ class CLI21():
         child.send('\n')
 
         self.username = "pytest_" + random_str(12)
+        child.expect("Enter your email address:", timeout=30)
+        child.sendline("corentin+pytest@21.co")
         child.expect("Enter a username for your 21.co account:", timeout=30)
         child.sendline(self.username)
         child.expect(pexpect.EOF)
