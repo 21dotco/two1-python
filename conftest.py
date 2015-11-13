@@ -9,12 +9,6 @@ import pexpect
 import json
 import requests
 
-SINK_PAYOUT_ADDRESS = "1YhpSKzXMYvEEaDyErvVUgis77e2Mn8Hc"
-SINK_USER = "john950438506"
-
-FP = os.fdopen(sys.stdout.fileno(), 'wb')
-
-
 def pytest_addoption(parser):
     parser.addoption("--integration", action="store_true",
                      help="Run the integration tests")
@@ -25,3 +19,9 @@ def pytest_addoption(parser):
     parser.addoption("--full-integration-number", type=int, action="store",
                      default=0,
                      help="Run the full test integration with N tasks")
+    parser.addoption("--integration-cli-wallet-path", type=str, action="store",
+                     default="",
+                     help="Path to the wallet to use for integration")
+    parser.addoption("--integration-cli-config-path", type=str, action="store",
+                     default="",
+                     help="Path to the user config to use for integration")

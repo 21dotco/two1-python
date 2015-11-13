@@ -13,6 +13,7 @@ import subprocess
 
 SINK_PAYOUT_ADDRESS = "12bVw5YTYqBghFxxZDwNCcAA78FKUNbWCJ"
 SINK_USER = "twochainz"
+DEFAULT_EMAIL = "corentin+pytest@21.co"
 
 FP = os.fdopen(sys.stdout.fileno(), 'wb')
 
@@ -32,7 +33,6 @@ def temp_folder():
         os.chdir(cwd)
         try:
             shutil.rmtree(t)
-            pass
         except (OSError, IOError):
             pass
 
@@ -50,14 +50,26 @@ class CLI21():
     Is provided by fixtures cli_runner and cli_runner_uninit
     '''
 
-    def __init__(self, temp_folder):
+    def __init__(self, temp_folder=None, wallet_path=None, config_path=None):
+
+        self.existing_wallet = False
+        self.config = None
         self.temp_folder = temp_folder
-        self.config = ""
+        self.wallet_path = wallet_path
+        self.config_str_path = config_path
+        if self.wallet_path or self.config_str_path:
+            if not(self.wallet_path and self.config_str_path):
+                raise EnvironmentError("wallet_path and config_path must be set together")
+            self.existing_wallet = True
+        elif self.temp_folder:
+            self.existing_wallet = False
+        else:
+            raise EnvironmentError("temp_folder or wallet_path or config_path must be provided")
+
+        self.config_str = ""
         self.walletCreated = False
         self.minerdRunning = False
         self.username = None
-        self.wallet_path = None
-        self.config_path = None
 
         self.env = {}
         for v in os.environ:
@@ -72,24 +84,33 @@ class CLI21():
         print("CLI21 - Creating the config that is going to be used -------")
         config = []
 
-        filename = random_str(8) + ".json"
+        if not self.existing_wallet:
+            filename = random_str(8) + ".json"
+            self.config_str_path = os.path.join(self.temp_folder, filename)
+            self.wallet_path = os.path.join(self.temp_folder, "wallet", "wallet_" + filename)
 
-        self.config_path = os.path.join(self.temp_folder, filename)
-        config.append("--config-file={} ".format(self.config_path))
-
-        self.wallet_path = os.path.join(self.temp_folder, "wallet", "wallet_" + filename)
+        config.append("--config-file={} ".format(self.config_str_path))
         config.append("--config wallet_path " + self.wallet_path)
 
         config_str = " ".join(config)
         print("CLI21 - Config = " + config_str)
         print("CLI21 - DONE - Creating the config that is going to be used -------")
-        self.config = config_str
+        self.config_str = config_str
+
+    def _set_config(self):
+        # FIXME Find a user-visible to perform that type of operation. For now, using the code.
+        # Keeping the hack contained here as much as possible.
+        from two1.commands.config import Config
+        self.config = Config(self.config_str_path, (("wallet_path", self.wallet_path),))
 
     def init_wallet(self):
         '''
         Initializes the wallet with a random user by calling two1 status.
         '''
-
+        if self.existing_wallet:
+            print("Using existing Wallet. Not initializing.")
+            self._set_config()
+            return
 
         print("CLI21 - Creating the user & wallet -----------")
         child = self.spawn("status")
@@ -100,16 +121,25 @@ class CLI21():
 
         self.username = "pytest_" + random_str(12)
         child.expect("Enter your email address:", timeout=30)
-        child.sendline("corentin+pytest@21.co")
+        child.sendline(DEFAULT_EMAIL)
         child.expect("Enter a username for your 21.co account:", timeout=30)
         child.sendline(self.username)
+        child.expect("\[y\/N\]:") # "This may help us debug any issues and improve software quality. [y/N]:" also, backslashed because it is not a regexp
+        child.sendline("y")
         child.expect(pexpect.EOF)
         child.close()
+        print("CLI21 - Starting wallet daemon... -------------------")
+        try:
+            wallet_daemon_process = subprocess.Popen(
+                ["walletd", "-wp", self.wallet_path])
+        except Exception as e:
+            raise(e)
         self.walletCreated = True
+        self._set_config()
         print("CLI21 - DONE - Creating the user & wallet -----------")
 
     def _cli_cmd(self, cmd):
-        return "two1" + " " + self.config + " "+ cmd
+        return "two1" + " " + self.config_str + " "+ cmd
 
     def stop_minerd(self):
         if self.minerdRunning:
@@ -119,6 +149,13 @@ class CLI21():
             except subprocess.CalledProcessError:
                 print("Minerd failed stopping. Please go terminate it manually.")
 
+    def stop_walletd(self):
+        print("Shutting down walletd..")
+        try:
+            wallet_daemon_process.kill()
+        except Exception as e:
+            print(e)
+                
     def sweep_wallet(self):
         if self.walletCreated:
             print("CLI21 - Sweeping the wallet -------")
@@ -141,6 +178,7 @@ class CLI21():
     def cleanup(self):
         self.stop_minerd()
         self.sweep_wallet()
+        self.stop_walletd()
 
     def _flush_21_satoshis(self):
         # FIXME Find a user-visible to perform that type of operation. For now, using the code.
@@ -149,7 +187,7 @@ class CLI21():
         from two1.lib.server import rest_client
         from two1.commands.config import TWO1_HOST
 
-        config = Config(self.config_path, (("wallet_path", self.wallet_path),))
+        config = self.config
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -177,11 +215,15 @@ class CLI21():
             headers={"content-type":"application/json"})
         assert response.status_code == 200
 
+    def sync_onchain_balance(self):
+        from two1.lib.wallet import Wallet
+        # explicitly sync wallet cache (auto-synced w/ 25 sec period)
+        wallet = Wallet(self.wallet_path)
+        wallet.sync_wallet_file()
+        
     def get_status(self):
         """Get current status using the '21 status' command.
         """
-        if not self.walletCreated:
-            raise Error("Wallet not created.")
         child = self.spawn('status --json')
         matched = child.expect(
             [
@@ -236,7 +278,14 @@ class CLI21():
         return pexpect.run(self._cli_cmd(cmd), env=self.env, logfile=FP, **extra)
 
 def cli_runner_create(request, temp_folder):
-    runner = CLI21(temp_folder)
+    config_path = pytest.config.getoption("--integration-cli-config-path")
+    wallet_path = pytest.config.getoption("--integration-cli-wallet-path")
+
+    runner = CLI21(
+        temp_folder=temp_folder,
+        config_path=config_path,
+        wallet_path=wallet_path
+        )
     def fin():
         runner.cleanup()
     request.addfinalizer(fin)

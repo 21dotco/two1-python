@@ -15,7 +15,7 @@ def verify_balances(balance_delta=0, onchain_delta=0, onchain_transactions=0):
           prev_wallet = cli_runner.get_status()["wallet"]["wallet"]
           prev_balance = int(prev_wallet["twentyone_balance"])
           prev_onchain = int(prev_wallet["onchain"])
-          
+
           result = f(cli_runner, *args, **kwargs)
 
           cur_wallet = cli_runner.get_status()["wallet"]["wallet"]
