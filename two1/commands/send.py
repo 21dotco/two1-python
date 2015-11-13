@@ -38,18 +38,18 @@ $ 21 send 1BtjAzWGLyAavUkbw3QsyzzNDKdtPXk95D 1000
                    "https://blockexplorer.com/tx/%s\n"
                    % (satoshis, address, txid, tx, txid))
     except WalletBalanceError:
-        click.exception("Insufficient Blockchain balance of %s satoshis.\n"
-                        "Cannot send %s satoshis to %s.\n"
-                        "Do %s, then %s to increase your Blockchain balance." %
-                        (balance, satoshis, address,
-                         click.style("21 mine", bold=True),
-                         click.style("21 flush", bold=True)))
+        raise click.ClickException("Insufficient Blockchain balance of %s satoshis.\n"
+                                   "Cannot send %s satoshis to %s.\n"
+                                   "Do %s, then %s to increase your Blockchain balance." %
+                                   (balance, satoshis, address,
+                                    click.style("21 mine", bold=True),
+                                    click.style("21 flush", bold=True)))
         txids = []
     except DataProviderError as e:
         if "rejected" in str(e):
-            click.exception("Transaction rejected.\n"
-                            "You may have to wait for other transactions to confirm.\n")
+            raise click.ClickException("Transaction rejected.\n"
+                                       "You may have to wait for other transactions to confirm.\n")
             txids = []
         else:
-            click.exception(str(e))
+            raise click.ClickException(str(e))
     return txids
