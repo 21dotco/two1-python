@@ -127,6 +127,26 @@ def _do_update(version):
     return rv
 
 
+def stop_walletd():
+    """Stops the walletd process if it is running.
+    """
+
+    from two1.lib.wallet import daemonizer
+    from two1.lib.wallet.exceptions import DaemonizerError
+    failed = False
+    try:
+        d = daemonizer.get_daemonizer()
+        if d.started():
+            if not d.stop():
+                failed = True
+    except OSError:
+        pass
+    except DaemonizerError:
+        failed = True
+
+    return not failed
+
+
 def lookup_pypi_version(version='latest'):
     """Get the latest version of the software from the PyPi service.
 
@@ -232,6 +252,9 @@ def perform_pip_based_update(version):
                        "-I",
                        "{}=={}".format(TWO1_PACKAGE_NAME, version)]
 
+    if not stop_walletd():
+        raise click.ClickException(UxString.Error.retry_update_after_reboot)
+
     try:
         # Inside a virtualenv, sys.prefix points to the virtualenv directory,
         # and sys.real_prefix points to the "real" prefix of the system Python
@@ -254,6 +277,9 @@ def perform_pip_based_update(version):
 def perform_apt_based_update():
     """ This will perform an apt-get based update.
     """
+
+    if not stop_walletd():
+        raise click.ClickException(UxString.Error.retry_update_after_reboot)
 
     update_command = ["sudo",
                       "apt-get",
