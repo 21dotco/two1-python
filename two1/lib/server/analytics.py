@@ -11,6 +11,7 @@ from two1.lib.util.uxstring import UxString
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
 
+
 def capture_usage(func):
     def _capture_usage(config, *args, **kw):
 
@@ -62,6 +63,7 @@ def capture_usage(func):
 
 def str2bool(v):
     return str(v).lower() == "true"
+
 
 def log_message(message):
     url = app_config.TWO1_LOGGER_SERVER + "/logs"
