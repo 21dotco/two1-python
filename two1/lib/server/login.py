@@ -108,6 +108,8 @@ def create_username(config, username=None):
             config.update_key("username", username)
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
             config.save()
+            # Ask for opt-in to analytics
+            analytics_optin(config)
             break
         except ServerRequestError as e:
             if e.status_code == 400:
@@ -118,3 +120,14 @@ def create_username(config, username=None):
                 click.echo(UxString.Error.account_failed)
             username = None
     return username
+
+
+def analytics_optin(config):
+    """ Set the collect_analytics flag to enable analytics collection.
+    Args:
+        config: Config object from the cli context.
+    """
+    if click.confirm(UxString.analytics_optin):
+        config.update_key("collect_analytics", True)
+        config.save()
+        click.echo(UxString.analytics_thankyou)
