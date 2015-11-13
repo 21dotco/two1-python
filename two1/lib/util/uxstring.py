@@ -221,6 +221,8 @@ For further information, please contact %s""" % \
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
         version_not_found = "Did not find version {}."
+        retry_update_after_reboot = "Could not stop Wallet Daemon. Please reboot your system and retry 21 update."
+
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
@@ -237,3 +239,6 @@ For further information, please contact %s""" % \
             "To use on-chain balance add {} to your buy command*".format(
                     click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True)
                 )
+
+        # wallet daemon
+        daemon_stop = "Could not stop Wallet Daemon. Please consider rebooting your system."
