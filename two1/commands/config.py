@@ -184,6 +184,7 @@ class Config(object):
                         mining_auth_pubkey=None,
                         auto_update=False,
                         wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
+                        collect_analytics=False,
                         )
 
         save_config = False
