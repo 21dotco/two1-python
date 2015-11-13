@@ -131,3 +131,5 @@ def analytics_optin(config):
         config.update_key("collect_analytics", True)
         config.save()
         click.echo(UxString.analytics_thankyou)
+    else:
+        click.echo("")
