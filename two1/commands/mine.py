@@ -140,11 +140,13 @@ def start_cpu_mining(config):
     start_time = time.time()
     config.log(UxString.mining_start.format(config.username, reward))
 
-    work = get_work(config, client)
+    device_uuid = config.device_uuid or "local"
+
+    work = get_work(config, client, device_uuid)
 
     found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
-    paid_satoshis = save_work(client, found_share, config.username)
+    paid_satoshis = save_work(client, found_share, config.username, device_uuid)
 
     end_time = time.time()
     duration = end_time - start_time
@@ -198,9 +200,9 @@ def check_pid(pid):
     return True
 
 
-def get_work(config, client):
+def get_work(config, client, device_uuid):
     try:
-        work_msg = client.get_work()
+        work_msg = client.get_work(device_id=device_uuid)
     except ServerRequestError as e:
         if e.status_code == 404:
             click.echo(UxString.mining_advance_not_possible)
@@ -261,7 +263,7 @@ def mine_work(work_msg, enonce1, enonce2_size):
         click.echo("Exhausted enonce1 space. Changing enonce2")
 
 
-def save_work(client, share, username):
+def save_work(client, share, username, device_uuid):
     message_id = random.randint(1, 1e5)
     msg_factory = message_factory.SwirlMessageFactory()
     req_msg = msg_factory.create_submit_share_request(message_id=message_id,
@@ -270,7 +272,7 @@ def save_work(client, share, username):
                                                       otime=share.otime,
                                                       nonce=share.nonce)
 
-    payment_result = client.send_work(data=req_msg)
+    payment_result = client.send_work(data=req_msg, device_id=device_uuid)
     payment_details = json.loads(payment_result.text)
     amount = payment_details["amount"]
     return amount
