@@ -13,7 +13,7 @@ PREVIOUS_MINE_TIMEDOUT = False
 MAX_FEE = 10000
 COST_PER_SMS = 1000
 COST_PER_SEARCH = 800
-REWARD_PER_MINE = 100000
+REWARD_PER_MINE = 20000
 
 @verify_balances()
 @test_utils.integration
@@ -42,13 +42,23 @@ def test_21_status(cli_runner, **kwargs):
     assert len(status['account']['address']) <= 35 and \
         len(status['account']['address']) >= 26
     assert status['account']['address'].startswith("1")
-    assert status['account']['username'].startswith("pytest_")
+    if not cli_runner.existing_wallet:
+        assert status['account']['username'].startswith("pytest_")
 
     return status
 
 @verify_balances(balance_delta=+REWARD_PER_MINE)
 @test_utils.integration
 def test_21_mine(cli_runner, **kwargs):
+
+    # Mining is only available on PI.
+    if not cli_runner.config.device_uuid:
+        # TODO: verify that the mining fails as expected on ubuntu/osx
+        # FIXME: I am not sure there is a better way to check that we are on a BC
+        # FIXME (cont.) see conftest.py
+        pytest.skip("21 mine must run on a PI")
+        return
+
     global PREVIOUS_MINE_TIMEDOUT
     if PREVIOUS_MINE_TIMEDOUT:
         # If a previous mine timedout... there is no need to run it
@@ -246,7 +256,8 @@ def test_21_buy_search_onchain(cli_runner, **kwargs):
     child = cli_runner.spawn('buy -p onchain search "'+ searches[i] +'"')
     child.expect(pexpect.EOF)
     child.close()
-
+    cli_runner.sync_onchain_balance()
+    
     #Running log to catch some errors
     test_21_log_raw(cli_runner)
 
@@ -299,6 +310,8 @@ def test_21_buy_sms_onchain(cli_runner, **kwargs):
     child = cli_runner.spawn('buy -p onchain sms "'+ SUCCESS_TWILIO +'" "Hello World from Integration"')
     child.expect(pexpect.EOF)
     child.close()
+
+    cli_runner.sync_onchain_balance()
 
     #Running log to catch some errors
     test_21_log_raw(cli_runner)

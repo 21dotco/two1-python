@@ -279,7 +279,7 @@ class HDAccount(object):
             need_new = True
 
         if need_new:
-            ret = self.get_public_key(change) if key else self.get_address(change)
+            ret = self.get_public_key(change) if key else self.get_address(change, last_index + 1)
         else:
             ret = self.get_public_key(change, last_index) if key else current_addr
 
@@ -393,4 +393,5 @@ class HDAccount(object):
             str: Base58Check-encoded string containing the current
                payout address.
         """
+        print(self.last_indices)
         return self.get_address(False, self.last_indices[self.PAYOUT_CHAIN])

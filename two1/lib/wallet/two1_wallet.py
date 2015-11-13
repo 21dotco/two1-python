@@ -522,8 +522,7 @@ class Two1Wallet(BaseWallet):
         if name not in self._account_map:
             if self._accounts[last_index].has_txns():
                 self._init_account(index=last_index + 1,
-                                   name=name,
-                                   cache_manager=self._cache_manager)
+                                   name=name)
                 rv = name in self._account_map
             else:
                 raise exceptions.AccountCreationError(
