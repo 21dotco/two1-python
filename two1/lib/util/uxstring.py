@@ -22,7 +22,7 @@ class UxString:
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
-    analytics_optin = "\nWould you like 21.co to collect usage analytics? "\
+    analytics_optin = "\nWould you like 21.co to collect usage analytics?\n"\
         "This may help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
 
