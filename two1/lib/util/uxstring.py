@@ -22,6 +22,9 @@ class UxString:
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
+    analytics_optin = "\nWould you like 21.co to collect usage analytics? "\
+        "This may help us debug any issues and improve software quality."
+    analytics_thankyou = "Thank you!\n"
 
     flush_success = "{}\n"\
         "Your mined Satoshis will be sent to you on the "\
