@@ -1,6 +1,9 @@
 import json
 import subprocess
 import time
+
+import sys
+
 import base64
 import click
 import os
@@ -15,6 +18,8 @@ import two1.commands.config as cmd_config
 from two1.commands import status
 from two1.commands.status import has_bitcoinkit
 from two1.lib.bitcoin.hash import Hash
+from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.util.exceptions import MiningDisabledError
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
 import two1.commands.config as app_config
@@ -126,7 +131,6 @@ def start_cpu_mining(config):
     >>> start_cpu_mining(config)
     """
 
-
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -195,7 +199,15 @@ def check_pid(pid):
 
 
 def get_work(config, client):
-    work_msg = client.get_work()
+    try:
+        work_msg = client.get_work()
+    except ServerRequestError as e:
+        if e.status_code == 404:
+            click.echo(UxString.mining_advance_not_possible)
+            raise MiningDisabledError(UxString.mining_advance_not_possible)
+        else:
+            raise e
+
     msg_factory = message_factory.SwirlMessageFactory()
     msg = base64.decodebytes(work_msg.content)
     work = msg_factory.read_object(msg)

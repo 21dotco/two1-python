@@ -2,11 +2,11 @@ import click
 import json
 import platform
 import traceback
-
 import os
 import requests
 from functools import update_wrapper
 from two1.commands import config as app_config
+from two1.lib.util.exceptions import UnloggedException
 from two1.lib.util.uxstring import UxString
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
@@ -42,8 +42,12 @@ def capture_usage(func):
         except ServerConnectionError:
             click.echo(UxString.Error.connection.format("21 Servers"))
 
+        # don't log UnloggedExceptions
+        except UnloggedException:
+            return
         except click.ClickException:
             raise
+
 
         except Exception as e:
             is_debug = str2bool(os.environ.get("TWO1_DEBUG", False))
