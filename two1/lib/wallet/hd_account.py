@@ -160,8 +160,6 @@ class HDAccount(object):
             self._last_full_update = self._last_update
 
     def _update_balance(self):
-        #address_balances = self.data_provider.get_balance(self.all_used_addresses)
-
         balance = {'confirmed': 0, 'total': 0}
         self._address_balances = {}
         for unconfirmed in [True, False]:
@@ -356,7 +354,7 @@ class HDAccount(object):
             dict: key/values are addresses and current balance
         """
         return self._address_balances
-        
+
     @property
     def balance(self):
         """ Returns balances, both confirmed and total, for this
@@ -367,9 +365,7 @@ class HDAccount(object):
                 satoshis for each. The total balance includes
                 unconfirmed transactions.
         """
-        if time.time() - self._last_update > self.MAX_UPDATE_THRESHOLD:
-            self._sync_txns()
-            self._update_balance()
+        self._update_balance()
         return self._balance_cache
 
     @property
