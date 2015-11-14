@@ -202,7 +202,7 @@ For further information, please contact %s""" % \
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
-        account_failed = "Could not create 21 account. Please check your email address."
+        account_failed = "Could not create a 21 account. Please check the username."
 
         # version errors
         version_not_detected = "Could not properly detect your version of 21. \nTry"\
