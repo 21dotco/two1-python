@@ -87,8 +87,14 @@ def update_two1_package(config, version, force_update_check=False):
             # This has occured when local git commits have happened
             click.echo("")
             raise click.ClickException(UxString.Error.version_not_detected)
-        
-        latest_version = lookup_pypi_version(version)
+
+        try:
+            latest_version = lookup_pypi_version(version)
+        except click.ClickException:
+            raise
+        except Exception:
+            ret['update_successful'] = _do_update('latest')
+            return ret
 
         # Check if available version is more recent than the installed version.
         if (LooseVersion(latest_version) > LooseVersion(installed_version) or
@@ -101,16 +107,24 @@ def update_two1_package(config, version, force_update_check=False):
             click.echo(UxString.update_package % latest_version)
             # Detect if the package was installed using apt-get
             # This detection only works for deb based linux systems
-            if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
-                ret["update_successful"] = perform_apt_based_update()
-            else:
-                ret["update_successful"] = perform_pip_based_update(
-                    latest_version)
+            ret['update_successful'] = _do_update(latest_version)
         else:
             # Alert the user if there is no newer version available
             click.echo(UxString.update_not_needed)
 
     return ret
+
+
+def _do_update(version):
+    """ Actually does the update
+    """
+    rv = False
+    if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
+        rv = perform_apt_based_update()
+    else:
+        rv = perform_pip_based_update(version)
+
+    return rv
 
 
 def lookup_pypi_version(version='latest'):
@@ -247,9 +261,11 @@ def perform_apt_based_update():
                       ]
     upgrade_command = ["sudo",
                        "apt-get",
+                       "-y",
                        "install",
                        "--only-upgrade",
-                       TWO1_PACKAGE_NAME
+                       TWO1_PACKAGE_NAME,
+                       "minerd"
                        ]
     ret = False
     try:
