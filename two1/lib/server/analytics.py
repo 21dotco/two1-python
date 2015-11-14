@@ -48,7 +48,6 @@ def capture_usage(func):
         except click.ClickException:
             raise
 
-
         except Exception as e:
             is_debug = str2bool(os.environ.get("TWO1_DEBUG", False))
             tb = traceback.format_exc()
@@ -59,7 +58,8 @@ def capture_usage(func):
                 "command": func_name,
                 "platform": user_platform,
                 "exception": tb}
-            log_message(data)
+            if config.collect_analytics:
+                log_message(data)
             click.echo(UxString.Error.server_err)
             if is_debug:
                 raise e
