@@ -93,12 +93,8 @@ class UxString:
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
 
-    mining_advance_not_possible = "\nFurther advances against your Bitcoin Computer " \
-                                  "work are not possible at this time. Please try again " \
-                                  "in a few of hours."
-    mining_limit_reached = "\nYou have reached the daily limit for getting advances " \
-                           "against your Bitcoin Computer work. Please try again in a " \
-                           "few of hours"
+    mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
+                           "Please try again in a few hours"
 
     # updater
     update_check = "Checking for application updates..."
