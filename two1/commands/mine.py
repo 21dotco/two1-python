@@ -204,10 +204,7 @@ def get_work(config, client, device_uuid):
     try:
         work_msg = client.get_work(device_id=device_uuid)
     except ServerRequestError as e:
-        if e.status_code == 404:
-            click.echo(UxString.mining_advance_not_possible)
-            raise MiningDisabledError(UxString.mining_advance_not_possible)
-        elif e.status_code == 403:
+        if e.status_code == 404 or e.status_code == 403:
             click.echo(UxString.mining_limit_reached)
             raise MiningDisabledError(UxString.mining_limit_reached)
         else:
