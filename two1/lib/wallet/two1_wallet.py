@@ -190,7 +190,7 @@ class Two1Wallet(BaseWallet):
         wallet_path = os.path.abspath(os.path.expanduser(wallet_path))
         wallet_dirname = os.path.dirname(wallet_path)
         if not os.path.exists(wallet_dirname):
-            os.makedirs(wallet_dirname)
+            os.makedirs(wallet_dirname, mode=0o700)
         else:
             if os.path.exists(wallet_path):
                 Two1Wallet.logger.error(
@@ -756,12 +756,15 @@ class Two1Wallet(BaseWallet):
         dirname = ""
         if isinstance(file_or_filename, str):
             dirname = os.path.dirname(file_or_filename)
-            with open(file_or_filename, 'wb') as f:
+            flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+            with os.fdopen(os.open(file_or_filename, flags=flags,
+                                   mode=0o700), 'wb') as f:
                 f.write(d)
             self._filename = file_or_filename
         else:
             # Assume it's file-like
             dirname = os.path.dirname(file_or_filename.name)
+            self._filename = file_or_filename.name
             file_or_filename.write(d)
 
         self._cache_manager.to_file(cache_file, force_cache_write)
