@@ -34,8 +34,8 @@ def search_formatter(res, maxresults=4):
 def sms_formatter(res):
     """custom formatter for SMS messages."""
     data = res.json()
-    return 'The following SMS is queued to be sent to: {} \n"{}" from: {}\n'.format(
+    return 'The following SMS is queued to be sent to: {} \nMessage: "{}"\n'.format(
         data["to"],
         data["body"],
-        data['from']
+        data["from"]
     )
