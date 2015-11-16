@@ -9,7 +9,6 @@ documentation dynamically updates based on this name.
 """
 import sys
 import platform
-
 import locale
 import os
 import sys
@@ -23,6 +22,7 @@ from two1.commands.config import Config
 from two1.commands.config import TWO1_CONFIG_FILE
 from two1.commands.config import TWO1_VERSION
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
+from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.util.decorators import docstring_parameter
 from two1.lib.util.exceptions import TwoOneError
@@ -76,11 +76,14 @@ For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
     create_wallet_and_account = ctx.invoked_subcommand not in \
-        ('help', 'update', 'publish', 'sell', 'rate', 'search')
+                                ('help', 'update', 'publish', 'sell', 'rate', 'search')
     try:
-      cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
-    except DataProviderUnavailableError as e:
-      raise TwoOneError(UxString.Error.connection_cli)
+        cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
+    except DataProviderUnavailableError:
+        raise TwoOneError(UxString.Error.connection_cli)
+    except DataProviderError:
+        raise TwoOneError(UxString.Error.server_err)
+
     if create_wallet_and_account:
         check_setup_twentyone_account(cfg)
         # Disable the auto updater for now.
@@ -92,6 +95,7 @@ goods both at the command line and programmatically, visit 21.co/learn
                 # newly installed software
                 pass
     ctx.obj = dict(config=cfg)
+
 
 main.add_command(buy)
 main.add_command(doctor)
