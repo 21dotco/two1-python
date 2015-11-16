@@ -86,14 +86,7 @@ goods both at the command line and programmatically, visit 21.co/learn
 
     if create_wallet_and_account:
         check_setup_twentyone_account(cfg)
-        # Disable the auto updater for now.
-        # Todo: This needs to be switched on for the prod channel only.
-        if cfg.auto_update:
-            update_data = update_two1_package(cfg)
-            if update_data["update_successful"]:
-                # TODO: This should exit the CLI and run the same command using the
-                # newly installed software
-                pass
+
     ctx.obj = dict(config=cfg)
 
 
