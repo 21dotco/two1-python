@@ -1,5 +1,5 @@
 import json
-import os.path
+import os
 import time
 
 from two1.lib.bitcoin.hash import Hash
@@ -103,7 +103,8 @@ class CacheManager(object):
 
         p = os.path.abspath(filename)
 
-        with open(p, "wb") as fp:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+        with os.fdopen(os.open(p, flags=flags, mode=0o700), 'wb') as fp:
             fp.write(d)
 
         self._dirty = False
