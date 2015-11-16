@@ -170,6 +170,8 @@ class ChainProvider(BaseProvider):
                 raise exceptions.DataProviderError(result.text)
             else:
                 raise
+        except Exception as e:
+            raise exceptions.DataProviderError(e)
 
     def get_balance(self, address_list):
         """ Provides the balance for each address.
