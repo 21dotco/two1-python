@@ -8,8 +8,13 @@ from two1.lib.util.decorators import json_output
 @click.command("send")
 @click.argument('address', type=click.STRING)
 @click.argument('satoshis', type=click.INT)
+@click.option('--confirmed-only', '-c',
+              is_flag=True,
+              default=False,
+              show_default=True,
+              help="Use only confirmed transactions/UTXOs")
 @json_output
-def send(config, address, satoshis):
+def send(config, address, satoshis, confirmed_only):
     """Send the specified address some satoshis.
 
 \b
@@ -21,13 +26,18 @@ $ 21 mine
 $ 21 flush
 # Wait ~10-20 minutes for flush to complete and block to mine
 $ 21 send 1BtjAzWGLyAavUkbw3QsyzzNDKdtPXk95D 1000
+
+By default, this command may make use of unconfirmed transactions and
+UTXOs to send coins. To use only confirmed transactions, use the
+--confirmed-only flag.
 """
     w = config.wallet
     balance = min(w.confirmed_balance(),
                   w.unconfirmed_balance())
     try:
         txids = w.send_to(address=address,
-                          amount=satoshis)
+                          amount=satoshis,
+                          use_unconfirmed=not confirmed_only)
         # For now there is only a single txn created, so assume it's 0
         txid = txids[0]["txid"]
         tx = txids[0]["txn"]
