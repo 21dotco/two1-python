@@ -5,6 +5,8 @@ import logging.handlers
 import os
 import traceback
 
+from functools import wraps
+
 import click
 from mnemonic import Mnemonic
 from jsonrpcclient.exceptions import ReceivedErrorResponse
@@ -40,6 +42,7 @@ def handle_exceptions(f, custom_msg=""):
     Returns:
         function: A wrapper function that handles exceptions in f.
     """
+    @wraps(f)
     def wrapper(*args, **kwargs):
         try:
             rv = f(*args, **kwargs)
@@ -74,6 +77,7 @@ def log_usage(f):
     Returns:
         function: A wrapper function that logs usage information
     """
+    @wraps(f)
     def wrapper(*args, **kwargs):
         logger.info("%s(args=%r, kwargs=%r)" % (f.__name__, args[1:], kwargs))
         return f(*args, **kwargs)
@@ -414,6 +418,12 @@ def create(ctx, account_type, testnet):
 @click.pass_context
 def restore(ctx):
     """ Restore a wallet from a mnemonic
+
+    \b
+    If you accidently deleted your wallet file or the file
+    became corrupted, use this command to restore your wallet. You
+    must have your 12 word phrase (mnemonic) that was displayed
+    when you created your wallet.
     """
     # Stop daemon if it's running.
     d = None
@@ -476,6 +486,10 @@ def restore(ctx):
 @log_usage
 def payout_address(ctx, account):
     """ Prints the current payout address
+
+    \b
+    A payout address is an address you can give to someone to
+    send you bitcoin.
     """
     w = ctx.obj['wallet']
     click.echo(w.get_payout_address(account))
@@ -507,7 +521,12 @@ def confirmed_balance(ctx, account):
 @handle_exceptions
 @log_usage
 def balance(ctx, account):
-    """ Prints the current total balance.
+    """ Prints the current balance.
+
+    \b
+    The balance displayed by this command includes both confirmed and
+    unconfirmed transactions. To get only your confirmed balance, use
+    'wallet confirmedbalance'.
     """
     w = ctx.obj['wallet']
     ucb = w.unconfirmed_balance(account)
@@ -557,7 +576,8 @@ def list_balances(ctx, byaddress):
 @click.argument('address',
                 type=click.STRING)
 @click.argument('amount',
-                type=click.STRING)
+                type=click.STRING,
+                metavar="BTC")
 @click.option('--use-unconfirmed', '-uu',
               is_flag=True,
               default=False,
@@ -577,6 +597,9 @@ def list_balances(ctx, byaddress):
 @log_usage
 def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
+
+    \b
+    IMPORTANT: The amount you specify should be in bitcoin, not satoshi!
     """
     w = ctx.obj['wallet']
 
@@ -606,7 +629,8 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 @click.argument('num_addresses',
                 type=click.IntRange(min=2, max=100))
 @click.argument('threshold',
-                type=click.STRING)
+                type=click.STRING,
+                metavar="BTC_THRESHOLD")
 @click.option('--account',
               type=click.STRING,
               multiple=True,
@@ -615,8 +639,19 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 @handle_exceptions
 @log_usage
 def spread_utxos(ctx, num_addresses, threshold, account):
-    """ Spreads out all UTXOs with value > threshold into
-        multiple change addresses.
+    """ Spreads out all UTXOs with value > threshold
+
+    \b
+    This command is useful when you have a few large UTXOs which
+    hold the majority (or all) of your balance. When you send BTC,
+    these UTXOs can tie up your balance in unconfirmed transactions.
+    In such a situation, you can use this command to split the balance
+    into more UTXOs with smaller individual balances.
+
+    Example spreading all UTXOs with 0.001 BTC or larger into
+    20 addresses:
+
+    wallet spreadutxos 0.001 20
     """
     w = ctx.obj['wallet']
     try:
@@ -691,16 +726,20 @@ def list_addresses(ctx, account):
 
 @click.command(name="sweep")
 @click.argument('address',
-                metavar="STRING")
+                metavar="ADDRESS")
 @click.option('--account',
-              metavar="STRING",
+              metavar="ACCOUNT",
               multiple=True,
               help="List of accounts to sweep")
 @click.pass_context
 @handle_exceptions
 @log_usage
 def sweep(ctx, address, account):
-    """ Lists all accounts in the wallet
+    """ Sweeps the entire wallet balance to a single address
+
+    \b
+    If an account(s) is specified, only the account balance
+    is swept, not the entire wallet balance.
     """
     w = ctx.obj['wallet']
 
@@ -716,14 +755,20 @@ def sweep(ctx, address, account):
 
 @click.command(name="signmessage")
 @click.argument('message',
-                metavar="STRING")
+                metavar="MESSAGE")
 @click.argument('address',
-                metavar="STRING")
+                metavar="ADDRESS")
 @click.pass_context
 @handle_exceptions
 @log_usage
 def sign_bitcoin_message(ctx, message, address):
     """ Signs an arbitrary message
+
+    \n
+    The address provided should be one that belongs to the
+    wallet. Wallet addresses can be displayed using:
+
+    wallet listaddresses
     """
     w = ctx.obj['wallet']
     sig = w.sign_bitcoin_message(message=message, address=address)
@@ -732,11 +777,11 @@ def sign_bitcoin_message(ctx, message, address):
 
 @click.command(name='verifymessage')
 @click.argument('message',
-                metavar="STRING")
+                metavar="MESSAGE")
 @click.argument('signature',
-                metavar="STRING")
+                metavar="SIG")
 @click.argument('address',
-                metavar="STRING")
+                metavar="ADDRESS")
 @click.pass_context
 @handle_exceptions
 @log_usage
