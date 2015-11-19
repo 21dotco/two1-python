@@ -1650,6 +1650,9 @@ class Wallet(object):
         send_to_multiple=dict(
             args=dict(),
             return_value=txn_list_deser),
+        spread_utxos=dict(
+            args=dict(),
+            return_value=txn_list_deser),
         build_signed_transaction=dict(
             args=dict(),
             return_value=lambda rv: [WalletTransaction._deserialize(t) for t in rv]))
