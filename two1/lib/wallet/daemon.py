@@ -60,7 +60,7 @@ def track_connections_cb(data):
             logger.info("Resetting update interval to %ds" %
                         DEF_WALLET_UPDATE_INTERVAL)
             wallet['update_info']['interval'] = DEF_WALLET_UPDATE_INTERVAL
-        wallet_dict_lock.release()
+            wallet_dict_lock.release()
 
 
 def sig_handler(sig_num, stack_frame):
@@ -74,6 +74,7 @@ def sig_handler(sig_num, stack_frame):
         stack_frame (str): Current stack frame.
     """
     logger.info("Shutting down...")
+    rpc_server.STOP_EVENT.set()
     rpc_server.shutdown()
 
 
@@ -562,11 +563,25 @@ def balances_by_address(account):
     """
     return wallet['obj'].balances_by_address(account)
 
+
 @daemon_method
 def sweep(address, accounts=[]):
     """ RPC method to sweep balance to a single address
     """
     return wallet['obj'].sweep(address, accounts)
+
+
+@daemon_method
+def spread_utxos(num_addresses, threshold, accounts=[]):
+    """ RPC method to spread utxos to multiple change addresses
+    """
+    txns = wallet['obj'].spread_utxos(num_addresses=num_addresses,
+                                      threshold=threshold,
+                                      accounts=accounts)
+    txns_ser = [dict(txid=t["txid"],
+                     txn=t["txn"]._serialize()) for t in txns]
+
+    return txns_ser
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)

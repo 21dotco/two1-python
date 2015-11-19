@@ -651,7 +651,7 @@ def spread_utxos(ctx, num_addresses, threshold, account):
     Example spreading all UTXOs with 0.001 BTC or larger into
     20 addresses:
 
-    wallet spreadutxos 0.001 20
+    wallet spreadutxos 20 0.001
     """
     w = ctx.obj['wallet']
     try:
