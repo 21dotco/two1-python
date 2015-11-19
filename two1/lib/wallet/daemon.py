@@ -584,6 +584,13 @@ def spread_utxos(num_addresses, threshold, accounts=[]):
     return txns_ser
 
 
+@daemon_method
+def transaction_history(accounts=[]):
+    """ RPC method to get dict containing transaction history
+    """
+    return wallet['obj'].transaction_history(accounts)
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--wallet-path', '-wp',
               default=Two1Wallet.DEFAULT_WALLET_PATH,

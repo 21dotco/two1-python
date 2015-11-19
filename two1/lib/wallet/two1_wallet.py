@@ -1519,6 +1519,109 @@ class Two1Wallet(BaseWallet):
 
         return rv
 
+    def _create_txn_history_record(self, txid, acct_addrs):
+        txc = self._cache_manager._txn_cache
+        include = False
+        wt = txc[txid]
+        wt_addrs = wt.get_addresses(self._testnet)
+
+        values = dict(inputs=0, outputs=0,
+                      internal_inputs=0, internal_outputs=0)
+        txid_dict = dict(txid=txid,
+                         time=wt.network_time,
+                         block=wt.block,
+                         block_hash=str(wt.block_hash),
+                         deposits=[],
+                         spends=[])
+        for i, inp_addrs in enumerate(wt_addrs['inputs']):
+            for in_addr in inp_addrs:
+                if in_addr in acct_addrs:
+                    acct = acct_addrs[in_addr][0].name
+                    addr_type = 'change' if acct_addrs[in_addr][1] == 1 else 'payout'
+                    # Lookup the value for the corresponding output
+                    o = wt.inputs[i].outpoint
+                    o_index = wt.inputs[i].outpoint_index
+                    value = self._cache_manager._outputs_cache[str(o)][o_index]['output'].value
+                    values["inputs"] += value
+
+                    txid_dict['spends'].append(
+                        dict(address=in_addr,
+                             value=value,
+                             acct=acct,
+                             addr_type=addr_type))
+                    include = True
+                    values["internal_inputs"] += value
+
+        for o, out_addrs in enumerate(wt_addrs['outputs']):
+            for out_addr in out_addrs:
+                values["outputs"] += wt.outputs[o].value
+                if out_addr in acct_addrs:
+                    acct = acct_addrs[out_addr][0].name
+                    addr_type = 'change' if acct_addrs[out_addr][1] == 1 else 'payout'
+
+                    txid_dict['deposits'].append(
+                        dict(address=out_addr,
+                             value=wt.outputs[o].value,
+                             acct=acct,
+                             addr_type=addr_type))
+                    include = True
+                    values["internal_outputs"] += wt.outputs[o].value
+                else:
+                    if len(txid_dict['spends']):
+                        txid_dict['deposits'].append(
+                            dict(address=out_addr,
+                                 value=wt.outputs[o].value,
+                                 acct=None,
+                                 addr_type='external'))
+
+        rv = None
+        if include:
+            rv = self._finalize_txn_history_record(txid_dict, values)
+
+        return rv
+
+    def _finalize_txn_history_record(self, record, values):
+        if len(record['spends']):
+            record["fees"] = values['inputs'] - values['outputs']
+            record["external_value"] = values['internal_inputs'] - \
+                                          values['internal_outputs'] - \
+                                          record['fees']
+            if record["external_value"] == 0:
+                record["classification"] = "internal_transfer"
+            else:
+                record["classification"] = "spend"
+        else:
+            record["fees"] = None
+            record["classification"] = "deposit"
+
+        return record
+
+    def transaction_history(self, accounts=[]):
+        """ Returns a list containing all transactions associated with
+            this wallet. Transactions are ordered from oldest to most
+            recent.
+        """
+        # First get address to account/chain mapping
+        accts = self._check_and_get_accounts(accounts)
+
+        acct_addrs = {}
+        for a in accts:
+            for i in [0, 1]:
+                ia = self._cache_manager.get_addresses_for_chain(
+                    acct_index=a.index, chain=i)
+                for addr in ia:
+                    acct_addrs[addr] = (a, i)
+
+        history = []
+        txc = self._cache_manager._txn_cache
+        ordered_txids = sorted(list(txc.keys()),
+                               key=lambda txid: txc[txid].network_time)
+        for txid in ordered_txids:
+            record = self._create_txn_history_record(txid, acct_addrs)
+            if record is not None:
+                history.append(record)
+        return history
+
     @property
     def accounts(self):
         """ All accounts in the wallet.
