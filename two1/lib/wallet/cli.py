@@ -1,5 +1,7 @@
+import datetime
 import decimal
 import getpass
+import json
 import logging
 import logging.handlers
 import os
@@ -724,6 +726,79 @@ def list_addresses(ctx, account):
         click.echo("")
 
 
+@click.command(name="history")
+@click.option('-n',
+              type=click.IntRange(0, 10000),
+              default=0,
+              metavar="NUMBER",
+              help="Limit display to n transactions")
+@click.option('-r', '--reverse',
+              is_flag=True,
+              help="Display most recent first")
+@click.option('-j', '--json-output',
+              is_flag=True,
+              help="Return JSON output")
+@click.option('--account',
+              metavar="ACCOUNT",
+              multiple=True,
+              help="List of accounts to display history for")
+@click.pass_context
+@handle_exceptions
+@log_usage
+def history(ctx, n, reverse, json_output, account):
+    """ Print the wallet's history
+    """
+    w = ctx.obj['wallet']
+    history = w.transaction_history(accounts=list(account))
+
+    if reverse:
+        h = list(reversed(history))
+    else:
+        h = history
+
+    if n > 0:
+        h = h[:n]
+
+    if json_output:
+        click.echo(json.dumps(h))
+        return
+
+    for i, th in enumerate(h):
+        dt = datetime.datetime.fromtimestamp(int(th['time']))
+
+        click.echo("%s (%s)" % (th['txid'], dt.strftime('%Y-%m-%d %H:%M:%S')))
+        click.echo("%s" % ('-' * 86))
+        click.echo("Type: %s" % (th['classification']))
+        if th['classification'] == "deposit":
+            for d in th['deposits']:
+                click.echo("Received %d satoshis into %s (Account: %s)" % (
+                    d['value'], d['address'], d['acct']))
+        elif th['classification'] in ["spend", "internal_transfer"]:
+            for i in range(max(len(th['spends']), len(th['deposits'])) + 1):
+                msg = ""
+                if i < len(th['spends']):
+                    s = th['spends'][i]
+                    msg = "%12d satoshis from %35s" % (s['value'], s['address'])
+                else:
+                    msg = "%s" % (" " * 62)
+                if i < len(th['deposits']):
+                    d = th['deposits'][i]
+                    msg += "%s%12d satoshis to %35s (%s)" % (
+                        " " * 5,
+                        d['value'],
+                        d['address'],
+                        d['addr_type'])
+                if i == len(th['deposits']):
+                    msg += "%s%12d satoshis to %35s (fees)" % (
+                        " " * 5,
+                        th['fees'],
+                        "miner")
+
+                click.echo(msg)
+
+        click.echo()
+
+
 @click.command(name="sweep")
 @click.argument('address',
                 metavar="ADDRESS")
@@ -813,6 +888,7 @@ main.add_command(create_account)
 main.add_command(list_accounts)
 main.add_command(list_addresses)
 main.add_command(list_balances)
+main.add_command(history)
 main.add_command(sweep)
 main.add_command(sign_bitcoin_message)
 main.add_command(verify_bitcoin_message)
