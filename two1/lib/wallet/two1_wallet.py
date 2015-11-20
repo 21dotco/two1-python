@@ -283,7 +283,14 @@ class Two1Wallet(BaseWallet):
         # 2. First account
         # Store info to file
         account_type = "BIP44Testnet" if testnet else account_type
-        master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
+        good = False
+        while not good:
+            try:
+                master_key, mnemonic = HDPrivateKey.master_key_from_entropy(passphrase)
+                good = True
+            except ValueError:
+                pass
+
         passphrase_hash = PBKDF2.crypt(passphrase)
         key_salt = utils.rand_bytes(8)
 
@@ -336,8 +343,12 @@ class Two1Wallet(BaseWallet):
                              account_types.keys())
 
         testnet = account_type == "BIP44Testnet"
-        master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic,
-                                                           passphrase)
+        try:
+            master_key = HDPrivateKey.master_key_from_mnemonic(mnemonic,
+                                                               passphrase)
+        except ValueError:
+            raise exceptions.WalletError("Bad mnemonic")
+
         passphrase_hash = PBKDF2.crypt(passphrase)
         key_salt = utils.rand_bytes(8)
 

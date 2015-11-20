@@ -1230,7 +1230,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         Il, Ir = I[:32], I[32:]
         parse_Il = int.from_bytes(Il, 'big')
         if parse_Il == 0 or parse_Il >= bitcoin_curve.n:
-            return None
+            raise ValueError("Bad seed, resulting in invalid key!")
 
         return HDPrivateKey(key=parse_Il, chain_code=Ir, index=0, depth=0)
 
