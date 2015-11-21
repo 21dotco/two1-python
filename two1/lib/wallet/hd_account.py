@@ -93,16 +93,7 @@ class HDAccount(object):
             found_last = False
             current_last = self.last_indices[change]
 
-            # Check the txn cache to see which address is the last
-            # we have information for.
-            addr = self.get_address(change, current_last)
-            addr_has_txns = self._cache_manager.address_has_txns(addr)
-            while not addr_has_txns and current_last >= 0:
-                current_last -= 1
-                addr = self.get_address(change, current_last)
-                addr_has_txns = self._cache_manager.address_has_txns(addr)
-
-            addr_range = 0 if check_all else current_last
+            addr_range = 0
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
                 end = addr_range + self.DISCOVERY_INCREMENT
@@ -110,10 +101,11 @@ class HDAccount(object):
                              for i in range(addr_range, end)}
 
                 if self.data_provider.can_limit_by_height:
+                    min_block = None if check_all else self._cache_manager.last_block
                     txns = self.data_provider.get_transactions(
                         list(addresses.values()),
                         limit=10000,
-                        min_block=self._cache_manager.last_block)
+                        min_block=min_block)
                 else:
                     txns = self.data_provider.get_transactions(
                         list(addresses.values()),
