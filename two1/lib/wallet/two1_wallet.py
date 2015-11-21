@@ -3,6 +3,7 @@ import getpass
 import inspect
 import json
 import logging
+import random
 import time
 
 import base64
@@ -1120,7 +1121,10 @@ class Two1Wallet(BaseWallet):
         change = total_utxo_amount - total_with_fees
         if change > self.DUST_LIMIT:
             _, change_key_hash = utils.address_to_key_hash(accts[0].get_next_address(True))
-            outputs.append(TransactionOutput(value=change,
+            # Pick a random location to put the change output in
+            insert_index = random.randint(0, len(outputs))
+            outputs.insert(insert_index,
+                           TransactionOutput(value=change,
                                              script=Script.build_p2pkh(change_key_hash)))
 
         txn = WalletTransaction(version=Transaction.DEFAULT_TRANSACTION_VERSION,
