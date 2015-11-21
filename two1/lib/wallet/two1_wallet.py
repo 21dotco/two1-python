@@ -221,9 +221,21 @@ class Two1Wallet(BaseWallet):
 
     @staticmethod
     def _encrypt_str(s, key):
+        _s = ""
+        if isinstance(s, bytes):
+            try:
+                _s = s.decode('ascii')
+            except UnicodeDecodeError:
+                raise TypeError("s contains non-ASCII characters")
+        elif isinstance(s, str):
+            if not all([ord(c) for c in s]):
+                raise TypeError("s contains non-ASCII characters")
+            else:
+                _s = s
+
         iv = utils.rand_bytes(Two1Wallet.AES_BLOCK_SIZE)
-        encrypter = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
-        msg_enc = encrypter.feed(str.encode(s))
+        encrypter = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv=iv))
+        msg_enc = encrypter.feed(str.encode(_s))
         msg_enc += encrypter.feed()
         return base64.b64encode(iv + msg_enc).decode('ascii')
 
@@ -231,10 +243,10 @@ class Two1Wallet(BaseWallet):
     def _decrypt_str(enc, key):
         enc_bytes = base64.b64decode(enc)
         iv = enc_bytes[:Two1Wallet.AES_BLOCK_SIZE]
-        decrypter = pyaes.Decrypter(pyaes.AESModeOfOperationCBC(key, iv = iv))
+        decrypter = pyaes.Decrypter(pyaes.AESModeOfOperationCBC(key, iv=iv))
         dec = decrypter.feed(enc_bytes[Two1Wallet.AES_BLOCK_SIZE:])
         dec += decrypter.feed()
-        return dec.rstrip(b'\x00').decode('ascii')
+        return dec.decode('ascii')
 
     @staticmethod
     def encrypt(master_key, master_seed, passphrase, key_salt):

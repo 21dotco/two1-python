@@ -2,6 +2,8 @@ import json
 from unittest.mock import MagicMock
 import pytest
 from pbkdf2 import PBKDF2
+import random
+import string
 import tempfile
 
 from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey
@@ -10,6 +12,7 @@ from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.txn import UnspentTransactionOutput
 from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.bitcoin.utils import bytes_to_str
+from two1.lib.bitcoin.utils import rand_bytes
 from two1.lib.blockchain.mock_provider import MockProvider
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.two1_wallet import Two1Wallet
@@ -54,6 +57,15 @@ def test_encrypt_decrypt():
 
     assert mkey == config['master_key']
     assert mseed == config['master_seed']
+
+    for i in range(1000):
+        s = ''.join(random.choice(string.ascii_letters + string.digits)
+                    for _ in range(random.randint(1, 200)))
+        key = rand_bytes(Two1Wallet.AES_BLOCK_SIZE)
+
+        enc = Two1Wallet._encrypt_str(s, key)
+        dec = Two1Wallet._decrypt_str(enc, key)
+        assert dec == s
 
 
 def test_create():
