@@ -201,6 +201,12 @@ class PaymentServer:
         if index is None:
             raise BadTransactionError('Payment must pay to merchant pubkey.')
 
+        # Verify that both payments are not below the dust limit
+        if any(p.value < PaymentServer.DUST_LIMIT for p in payment_tx.outputs):
+            raise BadTransactionError(
+                'Final payment must have outputs greater than {}.'.format(
+                    PaymentServer.DUST_LIMIT))
+
         # Validate that the payment is more than the last one
         new_pmt_amt = payment_tx.outputs[index].value
         if new_pmt_amt <= last_pmt_amt:
