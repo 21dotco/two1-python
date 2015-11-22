@@ -228,17 +228,6 @@ class Config(object):
         if not self.json_output:
             click.echo_via_pager(msg, color)
 
-    @property
-    def device_uuid(self):
-        uuid = None
-        try:
-            with open("/proc/device-tree/hat/uuid", "r") as f:
-                uuid = f.readline().strip("\n")
-
-        except FileNotFoundError:
-            pass
-        return uuid
-
     def log_purchase(self, **kwargs):
         # simple logging to file
         # this can be replaced with pickle/sqlite
@@ -261,6 +250,16 @@ class Config(object):
     def __repr__(self):
         return "<Config\n%s>" % self.fmt()
 
+
+def get_device_uuid():
+    uuid = None
+    try:
+        with open("/proc/device-tree/hat/uuid", "r") as f:
+            uuid = f.readline().strip("\n")
+
+    except FileNotFoundError:
+        pass
+    return uuid
 
 # IMPORTANT: Suppose you want to invoke a command as a function
 # for the purpose of testing, eg:

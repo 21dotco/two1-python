@@ -25,7 +25,7 @@ from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.util.decorators import docstring_parameter
-from two1.lib.util.exceptions import TwoOneError
+from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.util.uxstring import UxString
 # from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
@@ -85,7 +85,10 @@ goods both at the command line and programmatically, visit 21.co/learn
         raise TwoOneError(UxString.Error.server_err)
 
     if create_wallet_and_account:
-        check_setup_twentyone_account(cfg)
+		try:
+	        check_setup_twentyone_account(cfg)
+		except UnloggedException:
+			sys.exit(1)
 
     ctx.obj = dict(config=cfg)
 
