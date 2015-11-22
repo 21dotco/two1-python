@@ -1,4 +1,6 @@
 """Flask bitserv payment library for selling 402 API endpoints."""
+import codecs
+
 from urllib.parse import urlparse
 from functools import wraps
 from flask import jsonify, request
@@ -6,7 +8,7 @@ from flask.views import MethodView
 from werkzeug.exceptions import HTTPException, BadRequest, NotFound
 
 from two1.lib.wallet import Wallet
-from two1.lib.bitcoin import Transaction
+from two1.lib.bitcoin import Transaction, Signature
 from two1.lib.bitcoin.utils import bytes_to_str
 
 from ..payment_methods import OnChain, PaymentChannel, BitTransfer
@@ -191,7 +193,14 @@ class Channel(MethodView):
             payment_txid (string): final payment channel transaction id
         """
         try:
-            payment_txid = self.server.close(deposit_txid)
+            params = request.values.to_dict()
+            # Validate parameters
+            if 'signature' not in params:
+                raise BadParametersError('No signature provided.')
+
+            signature_der = codecs.decode(params['signature'], 'hex_codec')
+            deposit_txid_signature = Signature.from_der(signature_der)
+            payment_txid = self.server.close(deposit_txid, deposit_txid_signature)
             return jsonify({'payment_txid': payment_txid})
         except PaymentChannelNotFoundError as e:
             raise NotFound(str(e))

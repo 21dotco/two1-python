@@ -7,6 +7,7 @@ from two1.lib.bitcoin import Script
 from two1.lib.bitserv.wallet import Two1WalletWrapper, MockTwo1Wallet
 from two1.lib.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.lib.bitserv.payment_server import PaymentChannelNotFoundError
+from two1.lib.bitserv.payment_server import TransactionVerificationError
 from two1.lib.bitserv.payment_server import BadTransactionError
 from two1.lib.bitserv.models import DatabaseSQLite3
 
@@ -22,6 +23,7 @@ TEST_FEE_AMOUNT = 10000
 TEST_EXPIRY = 86400
 cust_wallet = MockTwo1Wallet()
 merch_wallet = MockTwo1Wallet()
+BAD_SIGNATURE = cust_wallet._private_key.sign('fake')
 server = PaymentServer(merch_wallet, testnet=True)
 server._blockchain = MockBlockchain()
 
@@ -160,13 +162,19 @@ def test_status_close_channel():
 
     # Test that channel close fails when no channel exists
     with pytest.raises(PaymentChannelNotFoundError):
-        server.close(deposit_txid)
+        server.close(deposit_txid, BAD_SIGNATURE)
 
-    # Test that channel close succeeds
+    # Open the channel and make a payment
     server.initialize_handshake(refund_tx)
     server.complete_handshake(deposit_txid, deposit_tx)
     server.receive_payment(deposit_txid, payment_tx)
     server.redeem(str(payment_tx.hash))
 
-    closed = server.close(deposit_txid)
+    # Test that channel close fails without a valid signature
+    with pytest.raises(TransactionVerificationError):
+        closed = server.close(deposit_txid, BAD_SIGNATURE)
+
+    # Test that channel close succeeds
+    good_signature = cust_wallet._private_key.sign(deposit_txid)
+    closed = server.close(deposit_txid, good_signature)
     assert closed

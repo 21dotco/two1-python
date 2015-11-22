@@ -1,8 +1,10 @@
+import codecs
+
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 
-from two1.lib.bitcoin import Transaction
+from two1.lib.bitcoin import Transaction, Signature
 from two1.lib.bitcoin.utils import bytes_to_str
 
 from . import payment
@@ -94,7 +96,14 @@ class ChannelViewSet(ViewSet):
             payment_txid (string): final payment channel transaction id
         """
         try:
-            payment_txid = payment.server.close(pk)
+            params = request.data
+            # Validate parameters
+            if 'signature' not in params:
+                raise BadParametersError('No signature provided.')
+
+            signature_der = codecs.decode(params['signature'], 'hex_codec')
+            deposit_txid_signature = Signature.from_der(signature_der)
+            payment_txid = payment.server.close(pk, deposit_txid_signature)
             return Response({'payment_txid': payment_txid})
         except Exception as e:
             error = {'error': str(e)}
