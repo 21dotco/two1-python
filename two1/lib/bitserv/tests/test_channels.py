@@ -7,6 +7,7 @@ from two1.lib.bitcoin import Script
 from two1.lib.bitserv.wallet import Two1WalletWrapper, MockTwo1Wallet
 from two1.lib.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.lib.bitserv.payment_server import PaymentChannelNotFoundError
+from two1.lib.bitserv.payment_server import BadTransactionError
 from two1.lib.bitserv.models import DatabaseSQLite3
 
 
@@ -15,6 +16,7 @@ class MockBlockchain:
         return tx
 
 TEST_DEP_AMOUNT = 100000
+TEST_DUST_AMOUNT = 1
 TEST_PMT_AMOUNT = 5000
 TEST_FEE_AMOUNT = 10000
 TEST_EXPIRY = 86400
@@ -108,9 +110,17 @@ def test_receive_payment():
     with pytest.raises(PaymentChannelNotFoundError):
         server.receive_payment(deposit_txid, payment_tx)
 
-    # Test that payment receipt succeeds
+    # Initiate and complete the payment channel handshake
     server.initialize_handshake(refund_tx)
     server.complete_handshake(deposit_txid, deposit_tx)
+
+    # Test that payment receipt fails when an output is considered dust
+    payment_tx.outputs[0].value = TEST_DUST_AMOUNT
+    with pytest.raises(BadTransactionError):
+        server.receive_payment(deposit_txid, payment_tx)
+
+    # Test that payment receipt succeeds under the right conditions
+    payment_tx.outputs[0].value = TEST_PMT_AMOUNT
     server.receive_payment(deposit_txid, payment_tx)
 
     # Test that payment receipt fails with a duplicate payment
