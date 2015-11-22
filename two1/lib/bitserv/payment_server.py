@@ -1,9 +1,9 @@
 """Server-side implementation of payment channels."""
 import time
 import codecs
-from two1.lib.bitcoin.crypto import PublicKey
+from two1.lib.bitcoin import PublicKey
 from two1.commands.config import TWO1_PROVIDER_HOST
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.lib.blockchain import TwentyOneProvider
 
 from .wallet import Two1WalletWrapper
 from .wallet import get_redeem_script
@@ -245,19 +245,29 @@ class PaymentServer:
                 'balance': channel['last_payment_amount'],
                 'time_left': channel['expires_at']}
 
-    def close(self, deposit_txid):
+    def close(self, deposit_txid, deposit_txid_signature):
         """Close a payment channel.
 
         Args:
             deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
-            txid_signature (string): a signed message consisting solely of the
-                deposit_txid to verify the authenticity of the close request.
+            deposit_txid_signature (two1.lib.bitcoin.Signature): a signature
+                consisting solely of the deposit_txid to verify the
+                authenticity of the close request.
         """
         try:
             channel = self._db.pc.lookup(deposit_txid)
         except:
             raise PaymentChannelNotFoundError('Related channel not found.')
+
+        # Verify that the user is authorized to close the channel
+        redeem_script = get_redeem_script(channel['refund_tx'])
+        pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
+        pubkey = next(p for p in pubkeys if p != channel['merchant_pubkey'])
+        sig_valid = PublicKey.from_bytes(pubkey).verify(deposit_txid.encode(),
+                                                        deposit_txid_signature)
+        if not sig_valid:
+            raise TransactionVerificationError('Invalid signature.')
 
         # Verify that there is a valid payment to close
         if not channel['payment_tx']:
