@@ -2,6 +2,13 @@ import click
 
 
 class UxString:
+
+    # general
+    update_required = "You are using an old version of 21. Please update using the '21 " \
+                      "update' command."
+    bitcoin_computer_needed = "You need a 21 Bitcoin Computer (21.co/buy) to access " \
+                              "this service. If you believe you have received this " \
+                              "message in error, please contact support@21.co"
     # account creation
     creating_account = "Creating 21.co account. Username: %s."
     missing_account = "Looks like you do not have a 21.co account. Let's create one..."

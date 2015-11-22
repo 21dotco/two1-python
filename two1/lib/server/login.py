@@ -1,6 +1,8 @@
 import base64
 import click
 import re
+
+from two1.lib.util.exceptions import UnloggedException
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.rest_client import ServerRequestError
@@ -101,10 +103,9 @@ def create_username(config, username=None):
             click.echo("")
             click.echo(UxString.creating_account % username)
 
-        device_uuid = config.device_uuid
         rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, username)
         try:
-            r = rest_client.account_post(bitcoin_payout_address, email, device_uuid)
+            r = rest_client.account_post(bitcoin_payout_address, email)
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
@@ -117,6 +118,9 @@ def create_username(config, username=None):
                 click.echo(UxString.username_exists % username)
             elif e.status_code == 404:
                 click.echo(UxString.Error.invalid_username)
+            elif e.status_code == 403:
+                click.secho(UxString.bitcoin_computer_needed, fg="red")
+                raise UnloggedException("Bitcoin Computer Needed")
             else:
                 click.echo(UxString.Error.account_failed)
             username = None

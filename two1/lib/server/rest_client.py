@@ -6,8 +6,11 @@ from collections import namedtuple
 import urllib.parse
 import datetime
 import requests
+
+from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError
+from two1.lib.util.uxstring import UxString
+from two1.commands import config
 from two1.commands.config import TWO1_VERSION
-from two1.lib.bitcoin.crypto import PrivateKey
 
 
 class ServerRequestError(Exception):
@@ -27,10 +30,12 @@ class TwentyOneRestClient(object):
         self.version = version
         self.username = username
         self._session = None
+        self._device_id = config.get_device_uuid() or 'local'
 
     # @property
     # def username(self):
-    #    return self.email.replace("@", "_AT_").replace(".", "_DOT_") if self.email else None
+    #    return self.email.replace("@", "_AT_").replace(".", "_DOT_") if self.email
+    # else None
 
     def _create_session(self):
         self._session = requests.Session()
@@ -55,13 +60,25 @@ class TwentyOneRestClient(object):
                                                             sig)
         # Change the user agent to contain the 21 CLI and version
         headers["User-Agent"] = "21/{}".format(TWO1_VERSION)
+        headers["From"] = self._device_id
 
         try:
             result = self._session.request(method, url, headers=headers, **kwargs)
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
             raise ServerConnectionError
-        # Raise ServerRequestError (if status_code > 299)
+
+        # update required
+        if result.status_code == 301:
+            click.secho(UxString.update_required, fg="red")
+            raise UpdateRequiredError()
+
+        if result.status_code == 403:
+            r = result.json()
+            if "detail" in r and "TO100" in r["detail"]:
+                click.secho(UxString.bitcoin_computer_needed, fg="red")
+                raise BitcoinComputerNeededError()
+
         if result.status_code > 299:
             x = ServerRequestError()
             x.status_code = result.status_code
@@ -75,29 +92,28 @@ class TwentyOneRestClient(object):
         return result
 
     # POST /pool/account
-    def account_post(self, payout_address, email, device_uuid=None):
+    def account_post(self, payout_address, email):
         path = "/pool/account/%s/" % self.username
         cb = self.auth.public_key.compressed_bytes
         body = {
             "email": email,
             "payout_address": payout_address,
             "public_key": base64.b64encode(cb).decode(),
+            "device_uuid": self._device_id
         }
-        if device_uuid:
-            body["device_uuid"] = device_uuid
 
         data = json.dumps(body)
         ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
         return ret
 
-    # GET /pool/work/{username}/?device_id=True
-    def get_work(self, device_id):
-        path = "/pool/work/{}/?device_id={}".format(self.username, device_id)
+    # GET /pool/work/{username}
+    def get_work(self):
+        path = "/pool/work/{}/".format(self.username)
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # POST /pool/work/{username}/?device_id=True
-    def send_work(self, data, device_id):
-        path = "/pool/work/{}/?device_id={}".format(self.username, device_id)
+    # POST /pool/work/{username}
+    def send_work(self, data):
+        path = "/pool/work/{}/".format(self.username)
         return self._request(sign_username=None, method="POST", path=path, data=data)
 
     # POST /pool/account/{username}/payoutaddress

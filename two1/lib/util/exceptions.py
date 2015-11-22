@@ -17,3 +17,11 @@ class UnloggedException(Exception):
 
 class MiningDisabledError(UnloggedException):
     pass
+
+
+class UpdateRequiredError(UnloggedException):
+    pass
+
+
+class BitcoinComputerNeededError(UnloggedException):
+    pass
