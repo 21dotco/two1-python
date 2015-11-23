@@ -64,5 +64,17 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
 
     change_index = 0 if num_used_change_addresses == 0 else num_used_change_addresses - 1
     payout_index = 0 if num_used_payout_addresses == 0 else num_used_payout_addresses - 1
-    assert acct.current_change_address == mk0['change_addresses'][change_index]
-    assert acct.current_payout_address == mk0['payout_addresses'][payout_index]
+
+    # The mock provider doesn't have a transaction per used address
+    # so we need to check to see what the right index is
+    change_addr = acct.get_address(True, change_index)
+    payout_addr = acct.get_address(False, payout_index)
+
+    if acct._cache_manager.address_has_txns(change_addr):
+        change_index += 1
+
+    if acct._cache_manager.address_has_txns(payout_addr):
+        payout_index += 1    
+
+    assert acct.get_next_address(True) == mk0['change_addresses'][change_index]
+    assert acct.get_next_address(False) == mk0['payout_addresses'][payout_index]

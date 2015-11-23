@@ -374,24 +374,3 @@ class HDAccount(object):
                               for i in range(last + 1)]
 
         return all_addresses
-
-    @property
-    def current_change_address(self):
-        """ Returns the current change address
-
-        Returns:
-            str: Base58Check-encoded string containing the current
-               change address.
-        """
-        return self.get_address(True, self.last_indices[self.CHANGE_CHAIN])
-
-    @property
-    def current_payout_address(self):
-        """ Returns the current payout address
-
-        Returns:
-            str: Base58Check-encoded string containing the current
-               payout address.
-        """
-        print(self.last_indices)
-        return self.get_address(False, self.last_indices[self.PAYOUT_CHAIN])
