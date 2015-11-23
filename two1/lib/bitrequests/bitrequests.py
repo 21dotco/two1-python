@@ -283,18 +283,16 @@ class ChannelRequests(BitRequests):
 
     DEFAULT_DEPOSIT_AMOUNT = 100000
     DEFAULT_DURATION = 86400
-    DEFAULT_CLOSE_AMOUNT = 1000
     DEFAULT_ZEROCONF = True
     DEFAULT_USE_UNCONFIRMED = False
 
-    def __init__(self, wallet, deposit_amount=DEFAULT_DEPOSIT_AMOUNT, duration=DEFAULT_DURATION, close_amount=DEFAULT_CLOSE_AMOUNT):
+    def __init__(self, wallet, deposit_amount=DEFAULT_DEPOSIT_AMOUNT, duration=DEFAULT_DURATION):
         """Initialize the channel requests with a payment channel client."""
         super().__init__()
         from two1.lib.channels import PaymentChannelClient
         self._channelclient = PaymentChannelClient(wallet)
         self._deposit_amount = deposit_amount
         self._duration = duration
-        self._close_amount = close_amount
 
     def make_402_payment(self, response, max_price):
         """Make a channel payment."""
@@ -331,7 +329,7 @@ class ChannelRequests(BitRequests):
                 channel_url = None
 
             # Check if the channel balance is sufficient
-            elif status.ready and (status.balance - price) < self._close_amount:
+            elif status.ready and status.balance < price:
                 logger.debug("[ChannelRequests] Channel balance low. Refreshing channel.")
                 self._channelclient.close(channel_url)
                 status = self._channelclient.status(channel_url)
