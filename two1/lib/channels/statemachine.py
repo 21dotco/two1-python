@@ -514,6 +514,17 @@ class PaymentChannelStateMachine:
         return str(self._model.deposit_tx.hash) if self._model.deposit_tx else None
 
     @property
+    def deposit_txid_signature(self):
+        """Get channel deposit transaction ID signature, to authenticate
+        channel close with server.
+
+        Returns:
+            str or None: DER-encoded signature (ASCII hex).
+
+        """
+        return codecs.encode(self._wallet.sign(self.deposit_txid.encode(), self._customer_public_key).to_der(), 'hex_codec').decode() if self._model.deposit_tx else None
+
+    @property
     def refund_tx(self):
         """Get channel refund transaction.
 

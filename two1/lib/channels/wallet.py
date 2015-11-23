@@ -76,6 +76,21 @@ class WalletWrapperBase:
         """
         raise NotImplementedError()
 
+    def sign(self, message, public_key):
+        """Sign a message with the private key corresponding to the specified
+        public key.
+
+        Args:
+            message (bytes): Message to sign.
+            public_key (bitcoin.PublicKey): Public key of private key to sign
+                with.
+
+        Returns:
+            bitcoin.Signature: Signature object.
+
+        """
+        raise NotImplementedError()
+
 
 class Two1WalletWrapper(WalletWrapperBase):
     """Wallet interface to a two1 Wallet."""
@@ -141,3 +156,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         payment_tx.sign_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)
 
         return payment_tx
+
+    def sign(self, message, public_key):
+        private_key = self._wallet.get_private_for_public(public_key)
+        return private_key.sign(message)
