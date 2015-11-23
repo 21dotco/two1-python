@@ -85,6 +85,9 @@ class PaymentChannelModel:
 class PaymentChannelStateMachine:
     """Customer payment channel state machine interface."""
 
+    PAYMENT_TX_MIN_OUTPUT_AMOUNT = 1000
+    """Minimum payment transaction output (above dust limit)."""
+
     def __init__(self, model, wallet):
         """Instantiate a payment channel state machine.
 
@@ -166,7 +169,7 @@ class PaymentChannelStateMachine:
 
         # Build deposit tx
         try:
-            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit, fee, use_unconfirmed=use_unconfirmed)
+            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee, use_unconfirmed=use_unconfirmed)
         except wallet.InsufficientBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
@@ -203,7 +206,7 @@ class PaymentChannelStateMachine:
         if len(my_outputs) != 1:
             raise InvalidTransactionError("Invalid output address in refund transaction.")
         # Validate transaction output value
-        if refund_tx.outputs[0].value != self.deposit_amount:
+        if refund_tx.outputs[0].value != self.deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT:
             raise InvalidTransactionError("Invalid output value in refund transaction.")
 
         # Validate transaction lock time
@@ -268,7 +271,12 @@ class PaymentChannelStateMachine:
         elif (self.balance_amount - amount) < 0:
             raise InsufficientBalanceError("Insufficient payment channel balance: requested amount {}, remaining balance {}.".format(amount, self.balance_amount))
 
-        # Build payment tx (FIXME build once and update)
+        # If this is the first payment, ensure the payment is at least the dust
+        # limit
+        if not self._model.payment_tx:
+            amount = max(PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, amount)
+
+        # Build payment tx
         self._pending_payment_tx = self._wallet.create_payment_tx(self._model.deposit_tx, self._redeem_script, self._merchant_public_key, self._customer_public_key, self.deposit_amount - self.balance_amount + amount, self.fee_amount)
         self._pending_amount = amount
 
@@ -451,7 +459,7 @@ class PaymentChannelStateMachine:
             int: Deposit amount in satoshis.
 
         """
-        return self._model.refund_tx.outputs[0].value
+        return self._model.refund_tx.outputs[0].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT
 
     @property
     def fee_amount(self):
