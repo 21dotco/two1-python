@@ -75,12 +75,14 @@ class PaymentChannelServerBase:
         """
         raise NotImplementedError()
 
-    def close(self, deposit_txid):
+    def close(self, deposit_txid, deposit_txid_signature):
         """Close a payment channel.
 
         Args:
             deposit_txid (str): Deposit transaction ID identifying the payment
                 channel (RPC byte order).
+            deposit_txid_signature (str): Signature of deposit transaction ID,
+                signed by customer prviate key.
 
         Returns:
             str: Transaction ID of broadcast payment transaction (RPC byte
@@ -146,8 +148,8 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
 
         return r.json()
 
-    def close(self, deposit_txid):
-        r = requests.delete(self._url + "/" + deposit_txid)
+    def close(self, deposit_txid, deposit_txid_signature):
+        r = requests.delete(self._url + "/" + deposit_txid, data={'signature': deposit_txid_signature})
         if r.status_code != 200:
             raise PaymentChannelServerError("Closing payment channel: Status Code {}, {}".format(r.status_code, r.text))
 
@@ -222,19 +224,24 @@ class MockPaymentChannelServer(PaymentChannelServerBase):
     def status(self, deposit_txid):
         return {}
 
-    def close(self, deposit_txid):
+    def close(self, deposit_txid, deposit_txid_signature):
         # Check if a payment has been made to this chanel
         if not os.path.exists(deposit_txid + ".server.tx"):
             raise Exception("No payment has been made to this channel.")
 
         # Read last payment tx from file
         with open(deposit_txid + ".server.tx") as f:
-            payment_tx = f.read().strip()
+            payment_tx_hex = f.read().strip()
+
+        # Verify deposit txid singature
+        payment_tx = bitcoin.Transaction.from_hex(payment_tx_hex)
+        redeem_script = payment_tx.inputs[0].script.extract_multisig_sig_info()['redeem_script']
+        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][0])
+        assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
 
         # Broadcast to blockchain
         bc = blockchain.InsightBlockchain("https://blockexplorer.com" if not self._wallet.testnet else "https://testnet.blockexplorer.com")
-        bc.broadcast_tx(payment_tx)
+        bc.broadcast_tx(payment_tx_hex)
 
         # Return payment txid
-        payment_tx = bitcoin.Transaction.from_hex(payment_tx)
         return str(payment_tx.hash)

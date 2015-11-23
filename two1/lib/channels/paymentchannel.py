@@ -270,7 +270,7 @@ class PaymentChannel:
             # Call close() on server
             protocol = SupportedProtocols[model.url.split(":")[0]]
             payment_server = protocol(model.url[:model.url.rfind("/")])
-            payment_txid = payment_server.close(sm.deposit_txid)
+            payment_txid = payment_server.close(sm.deposit_txid, sm.deposit_txid_signature)
 
             # Call close() on state machine
             sm.close(payment_txid)
