@@ -96,6 +96,8 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
     """RESTful HTTP Payment Channel Server interface. Protocol documented in
     docs/rest-handshake-402.txt."""
 
+    PROTOCOL_VERSION = 1
+
     def __init__(self, url):
         """Instantiate a HTTP Payment Channel Server interface for the
         specified URL.
@@ -115,8 +117,13 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         if r.status_code != 200:
             raise PaymentChannelServerError("Getting merchant public key: Status Code {}, {}".format(r.status_code, r.text))
 
-        public_key_info = r.json()
-        return public_key_info['public_key']
+        channel_info = r.json()
+
+        # Check protocol version before proceeding
+        if channel_info['version'] != HTTPPaymentChannelServer.PROTOCOL_VERSION:
+            raise PaymentChannelServerError("Unsupported protocol version: Server version is {}, client version is {}.".format(channel_info['version'], HTTPPaymentChannelServer.PROTOCOL_VERSION))
+
+        return channel_info['public_key']
 
     def open(self, refund_tx):
         r = requests.post(self._url, data={'refund_tx': refund_tx})
