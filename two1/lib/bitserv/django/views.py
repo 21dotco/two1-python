@@ -22,7 +22,8 @@ class ChannelViewSet(ViewSet):
 
     def list(self, request, format='json'):
         """Return the merchant's public key."""
-        return Response({'public_key': payment.server.discovery()})
+        return Response({'public_key': self.server.discovery(),
+                        'version': self.server._VERSION})
 
     def create(self, request, format='json'):
         """Initialize the payment channel handshake.

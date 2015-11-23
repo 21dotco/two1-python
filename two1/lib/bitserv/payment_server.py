@@ -47,6 +47,7 @@ class PaymentServer:
     MIN_TX_FEE = 5000
     DUST_LIMIT = 546
     MIN_EXP_TIME = 4 * 3600
+    _VERSION = 1
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
                  blockchain=None):
