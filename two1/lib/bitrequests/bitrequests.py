@@ -284,6 +284,8 @@ class ChannelRequests(BitRequests):
     DEFAULT_DEPOSIT_AMOUNT = 100000
     DEFAULT_DURATION = 86400
     DEFAULT_CLOSE_AMOUNT = 1000
+    DEFAULT_ZEROCONF = True
+    DEFAULT_USE_UNCONFIRMED = False
 
     def __init__(self, wallet, deposit_amount=DEFAULT_DEPOSIT_AMOUNT, duration=DEFAULT_DURATION, close_amount=DEFAULT_CLOSE_AMOUNT):
         """Initialize the channel requests with a payment channel client."""
@@ -339,7 +341,7 @@ class ChannelRequests(BitRequests):
         # Open a new channel if we don't have a usable one
         if not channel_url or not status.ready:
             logger.debug("[ChannelRequests] Opening channel at {} with deposit {}.".format(channel_url, self._deposit_amount))
-            channel_url = self._channelclient.open(server_url, self._deposit_amount, self._duration, zeroconf=True, use_unconfirmed=True)
+            channel_url = self._channelclient.open(server_url, self._deposit_amount, self._duration, zeroconf=ChannelRequests.DEFAULT_ZEROCONF, use_unconfirmed=ChannelRequests.DEFAULT_USE_UNCONFIRMED)
             status = self._channelclient.status(channel_url)
             logger.debug("[ChannelRequests] Channel deposit txid is {}".format(status.deposit_txid))
 
