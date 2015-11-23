@@ -19,7 +19,7 @@ def payment_required_exception_handler(exc, context):
         if response.status_code == PaymentRequiredException.status_code:
             response["Bitcoin-Address"] = \
                 settings.BITSERV_DEFAULT_PAYMENT_ADDRESS
-            response["Bitcoin-Micropayment-Server"] = \
+            response["Bitcoin-Payment-Channel-Server"] = \
                 context["request"]._request.scheme + "://" + \
                 context["request"]._request.get_host() + \
                 settings.DEFAULT_PAYMENT_CHANNEL_PATH

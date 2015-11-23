@@ -278,8 +278,8 @@ class ChannelRequests(BitRequests):
     """BitRequests for making channel payments."""
 
     HTTP_BITCOIN_PRICE = 'price'
-    HTTP_BITCOIN_MICROPAYMENT_SERVER = 'bitcoin-micropayment-server'
-    HTTP_BITCOIN_MICROPAYMENT_TOKEN = 'bitcoin-micropayment-token'
+    HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER = 'bitcoin-payment-channel-server'
+    HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN = 'bitcoin-payment-channel-token'
 
     DEFAULT_DEPOSIT_AMOUNT = 100000
     DEFAULT_DURATION = 86400
@@ -299,7 +299,7 @@ class ChannelRequests(BitRequests):
 
         # Retrieve payment headers
         price = response.headers.get(ChannelRequests.HTTP_BITCOIN_PRICE)
-        server_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER)
+        server_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER)
 
         # Verify that the payment method is supported
         if price is None or server_url is None:
@@ -347,12 +347,12 @@ class ChannelRequests(BitRequests):
         logger.debug("[ChannelRequests] Paying channel {} with amount {}.".format(channel_url, price))
         token = self._channelclient.pay(channel_url, price)
 
-        return {ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_TOKEN: token}
+        return {ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token}
 
     def get_402_info(self, url):
         """Get channel payment information about the resource."""
         response = requests.get(url)
         price = response.headers.get(ChannelRequests.HTTP_BITCOIN_PRICE)
-        channel_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER)
+        channel_url = response.headers.get(ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER)
         return {ChannelRequests.HTTP_BITCOIN_PRICE: price,
-                ChannelRequests.HTTP_BITCOIN_MICROPAYMENT_SERVER: channel_url}
+                ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER: channel_url}
