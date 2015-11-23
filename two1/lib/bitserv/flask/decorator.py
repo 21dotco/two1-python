@@ -117,7 +117,8 @@ class Channel(MethodView):
     def get(self, deposit_txid):
         """Return the merchant's public key or info about a channel."""
         if deposit_txid is None:
-            return jsonify({'public_key': self.server.discovery()})
+            return jsonify({'public_key': self.server.discovery(),
+                            'version': self.server._VERSION})
         else:
             try:
                 return jsonify(self.server.status(deposit_txid))
