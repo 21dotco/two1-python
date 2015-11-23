@@ -200,13 +200,9 @@ def test_rest():
     assert wallet.balances == {'confirmed': 10000, 'total': 20000}
 
     # Check that we can get a new payout address
-    for i in range(3):
-        m.set_num_used_addresses(0, i, 0)
-        m.set_txn_side_effect_for_index(0, i, 0)
-        ext_addr = wallet.get_payout_address("default")
-        assert ext_addr == ext_addrs[1]
-        assert wallet.accounts[0].last_indices[0] == 1
-        assert wallet.accounts[0].current_payout_address == ext_addr
+    ext_addr = wallet.get_payout_address("default")
+    assert ext_addr == ext_addrs[1]
+    assert wallet.accounts[0].last_indices[0] == 0
 
     # Check the balance again - should be the same
     m.set_num_used_addresses(0, 1, 0)
@@ -261,7 +257,7 @@ def test_rest():
         assert params['account_type'] == "BIP44BitcoinMainnet"
         assert params['account_map']['default'] == 0
         assert len(params['accounts']) == 1
-        assert params['accounts'][0]['last_payout_index'] == 1
+        assert params['accounts'][0]['last_payout_index'] == 0
         assert params['accounts'][0]['last_change_index'] == 1
         assert params['accounts'][0]['public_key'] == config['accounts'][0]['public_key']
 
