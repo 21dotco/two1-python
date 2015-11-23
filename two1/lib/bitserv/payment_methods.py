@@ -172,9 +172,9 @@ class PaymentChannel(PaymentBase):
 
     """Making a payment within a payment channel."""
 
-    http_payment_token = 'Bitcoin-Micropayment-Token'
+    http_payment_token = 'Bitcoin-Payment-Channel-Token'
     http_402_price = 'Price'
-    http_402_micro_server = 'Bitcoin-Micropayment-Server'
+    http_402_micro_server = 'Bitcoin-Payment-Channel-Server'
 
     def __init__(self, server, endpoint_path):
         """Initialize payment handling for on-chain payments."""
