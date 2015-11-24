@@ -119,7 +119,9 @@ def create_username(config, username=None):
             elif e.status_code == 404:
                 click.echo(UxString.Error.invalid_username)
             elif e.status_code == 403:
-                click.secho(UxString.bitcoin_computer_needed, fg="red")
+                r = e.data
+                if "detail" in r and "TO200" in r["detail"]:
+                    click.secho(UxString.max_accounts_reached)
                 raise UnloggedException("Bitcoin Computer Needed")
             else:
                 click.echo(UxString.Error.account_failed)
