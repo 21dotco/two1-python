@@ -93,6 +93,11 @@ class TwentyOneRestClient(object):
 
         return result
 
+    # GET /pool/accounts
+    def account_info(self):
+        path = "/pool/accounts/"
+        return self._request(sign_username=None, method="GET", path=path)
+
     # POST /pool/account
     def account_post(self, payout_address, email):
         path = "/pool/account/%s/" % self.username
