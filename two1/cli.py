@@ -42,6 +42,8 @@ from two1.commands.search import search
 from two1.commands.rate import rate
 from two1.commands.sell import sell
 from two1.commands.publish import publish
+from two1.commands.join import join
+
 
 CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -109,6 +111,7 @@ main.add_command(rate)
 main.add_command(sell)
 main.add_command(publish)
 main.add_command(login)
+main.add_command(join)
 
 if __name__ == "__main__":
     if platform.system() == 'Windows':
