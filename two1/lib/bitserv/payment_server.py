@@ -95,7 +95,7 @@ class PaymentServer:
                 Transaction from a customer. This object is passed by reference
                 and modified directly.
         """
-        # Verify that the transaction is build correctly
+        # Verify that the transaction is built correctly
         if not self._wallet.verify_half_signed_tx(refund_tx):
             raise TransactionVerificationError(
                 'Half-signed transaction could not be verified.')
