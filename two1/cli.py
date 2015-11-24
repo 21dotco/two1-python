@@ -32,6 +32,7 @@ from two1.commands.buy import buy
 from two1.commands.doctor import doctor
 from two1.commands.mine import mine
 from two1.commands.log import log
+from two1.commands.login import login
 from two1.commands.help import help
 from two1.commands.status import status
 from two1.commands.update import update
@@ -76,7 +77,7 @@ For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
     create_wallet_and_account = ctx.invoked_subcommand not in \
-                                ('help', 'update', 'publish', 'sell', 'rate', 'search')
+                                ('help', 'update', 'publish', 'sell', 'rate', 'search', 'login')
     try:
         cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
     except DataProviderUnavailableError:
@@ -106,6 +107,7 @@ main.add_command(search)
 main.add_command(rate)
 main.add_command(sell)
 main.add_command(publish)
+main.add_command(login)
 
 if __name__ == "__main__":
     if platform.system() == 'Windows':

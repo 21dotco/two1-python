@@ -48,6 +48,18 @@ class UxString:
         "To check progress:  https://blockexplorer.com/address/{}\n"\
         "To get more bitcoin, use {}."
 
+    # account recovery
+    no_active_wallets = "No active wallets found. Please contact support@21.co"
+    no_usernames_for_wallet = \
+        "No usernames are associated with your active wallet. " \
+        "Either switch your wallet or type " + click.style(
+            "21 status", bold=True) + " to create a new username."
+    registered_usernames_title = "\nRegistered usernames: \n"
+    login_prompt = "\nPlease select the number associated with the username you want to " \
+                   "login with"
+    login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
+                                "corresponding username"
+
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
