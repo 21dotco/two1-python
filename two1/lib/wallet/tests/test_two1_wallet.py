@@ -208,6 +208,11 @@ def test_rest():
     m.set_num_used_addresses(0, 1, 0)
     assert wallet.balances == {'confirmed': 10000, 'total': 20000}
 
+    # Try sending below the dust limit
+    with pytest.raises(ValueError):
+        wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                       amount=544)
+
     # Try sending more than we have and make sure it raises an exception
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",

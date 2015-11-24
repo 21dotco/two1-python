@@ -47,6 +47,9 @@ UTXOs to send coins. To use unconfirmed transactions, use the
                    "To see in the blockchain: "
                    "https://blockexplorer.com/tx/%s\n"
                    % (satoshis, address, txid, tx, txid))
+    except ValueError as e:
+        # This will trigger if there's a below dust-limit output.
+        raise click.ClickException(str(e))
     except WalletBalanceError:
         if w.unconfirmed_balance() > satoshis:
             raise click.ClickException("Insufficient confirmed balance. However, you can use"
