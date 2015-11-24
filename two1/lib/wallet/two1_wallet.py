@@ -1069,7 +1069,16 @@ class Two1Wallet(BaseWallet):
         Returns:
             list(WalletTransaction): A list of WalletTransaction objects
         """
-        total_amount = sum([amt for amt in addresses_and_amounts.values()])
+        total_amount = 0
+        # Add up total amount & check for any outputs that are below
+        # the dust limit as they would make the transaction non-standard
+        for addr, amount in addresses_and_amounts.items():
+            if amount <= Two1Wallet.DUST_LIMIT:
+                raise ValueError(
+                    "Can't send %d satoshis to %s: amount is below dust limit!" %
+                    (amount, addr))
+            total_amount += amount
+
 
         if not accounts:
             accts = self._accounts
