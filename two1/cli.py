@@ -77,7 +77,8 @@ For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
     create_wallet_and_account = ctx.invoked_subcommand not in \
-                                ('help', 'update', 'publish', 'sell', 'rate', 'search', 'login')
+                                ('help', 'update', 'publish', 'sell', 'rate', 'search',
+                                 'login')
     try:
         cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
     except DataProviderUnavailableError:
@@ -86,10 +87,10 @@ goods both at the command line and programmatically, visit 21.co/learn
         raise TwoOneError(UxString.Error.server_err)
 
     if create_wallet_and_account:
-		try:
-	        check_setup_twentyone_account(cfg)
-		except UnloggedException:
-			sys.exit(1)
+        try:
+            check_setup_twentyone_account(cfg)
+        except UnloggedException:
+            sys.exit(1)
 
     ctx.obj = dict(config=cfg)
 
