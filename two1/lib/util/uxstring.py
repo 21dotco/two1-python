@@ -9,7 +9,15 @@ class UxString:
     bitcoin_computer_needed = "You need a 21 Bitcoin Computer (21.co/buy) to access " \
                               "this service. If you believe you have received this " \
                               "message in error, please contact support@21.co"
+    max_accounts_reached = click.style(
+        "You have reached the maximum number of accounts that you can create on this "
+        "Bitcoin Computer. Use ",
+        fg="red") + click.style(
+        "21 login", fg="red", bold=True) + click.style(
+        " to switch between your available accounts",
+        fg="red")
     # account creation
+
     creating_account = "Creating 21.co account. Username: %s."
     missing_account = "Looks like you do not have a 21.co account. Let's create one..."
 
