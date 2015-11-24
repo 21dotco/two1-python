@@ -31,6 +31,8 @@ class TwentyOneRestClient(object):
         self.username = username
         self._session = None
         self._device_id = config.get_device_uuid() or 'local'
+        cb = self.auth.public_key.compressed_bytes
+        self._wallet_pk = base64.b64encode(cb).decode()
 
     # @property
     # def username(self):
@@ -60,7 +62,7 @@ class TwentyOneRestClient(object):
                                                             sig)
         # Change the user agent to contain the 21 CLI and version
         headers["User-Agent"] = "21/{}".format(TWO1_VERSION)
-        headers["From"] = self._device_id
+        headers["From"] = "{}@{}".format(self._wallet_pk, self._device_id)
 
         try:
             result = self._session.request(method, url, headers=headers, **kwargs)
@@ -94,11 +96,10 @@ class TwentyOneRestClient(object):
     # POST /pool/account
     def account_post(self, payout_address, email):
         path = "/pool/account/%s/" % self.username
-        cb = self.auth.public_key.compressed_bytes
         body = {
             "email": email,
             "payout_address": payout_address,
-            "public_key": base64.b64encode(cb).decode(),
+            "public_key": self._wallet_pk,
             "device_uuid": self._device_id
         }
 
