@@ -163,6 +163,10 @@ class UxString:
     buy_message = "You bought {} from {}"
     sell_message = "You sold {} to {}"
 
+    # join
+    successful_join = "Joined network {}"
+    invalid_network = "Invalid network specified, please verify the network name"
+
     # publish
     coming_soon = click.style("Coming soon", bold=True)
     slack_21_co = click.style("slack.21.co", bold=True)

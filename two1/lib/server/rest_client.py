@@ -155,6 +155,11 @@ class TwentyOneRestClient(object):
         path = "/pool/account/%s/earnings/?action=flush" % self.username
         return self._request(sign_username=self.username, method="POST", path=path)
 
+    def join(self, network, device_id):
+        data = json.dumps({"network" : network, "zerotier_device_id": device_id})
+        path = "/pool/account/%s/zerotier/" % self.username
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+
     # GET /mmm/v1/search
     def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
         method = "GET"
