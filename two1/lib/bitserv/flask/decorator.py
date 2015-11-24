@@ -31,6 +31,14 @@ class PaymentRequiredException(HTTPException):
         return payment_headers
 
 
+class PaymentAPIError(Exception):
+    pass
+
+
+class BadParametersError(PaymentAPIError):
+    pass
+
+
 class Payment:
 
     """Class to store merchant settings."""
