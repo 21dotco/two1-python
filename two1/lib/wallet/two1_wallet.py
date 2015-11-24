@@ -1763,10 +1763,12 @@ class Wallet(object):
 
     txn_list_deser = lambda rv: [dict(txid=t['txid'],
                                       txn=WalletTransaction._deserialize(t['txn'])) for t in rv]
+    priv_key_deser = lambda pkey: HDPrivateKey.from_b58check(pkey) if pkey is not None else None
+
     serializers = dict(
         get_private_for_public=dict(
             args=dict(public_key=_public_key_serializer),
-            return_value=HDPrivateKey.from_b58check),
+            return_value=priv_key_deser),
         get_change_public_key=dict(
             args=dict(),
             return_value=HDPublicKey.from_b58check),
