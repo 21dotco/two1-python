@@ -9,6 +9,8 @@ import pexpect
 import json
 import requests
 import subprocess
+from two1.commands.config import Config, get_device_uuid
+
 
 
 SINK_PAYOUT_ADDRESS = "12bVw5YTYqBghFxxZDwNCcAA78FKUNbWCJ"
@@ -100,7 +102,6 @@ class CLI21():
     def _set_config(self):
         # FIXME Find a user-visible to perform that type of operation. For now, using the code.
         # Keeping the hack contained here as much as possible.
-        from two1.commands.config import Config
         self.config = Config(self.config_str_path, (("wallet_path", self.wallet_path),))
 
     def init_wallet(self):
@@ -130,7 +131,7 @@ class CLI21():
         child.close()
         print("CLI21 - Starting wallet daemon... -------------------")
         try:
-            wallet_daemon_process = subprocess.Popen(
+            self.wallet_daemon_process = subprocess.Popen(
                 ["walletd", "-wp", self.wallet_path])
         except Exception as e:
             raise(e)
@@ -152,10 +153,13 @@ class CLI21():
     def stop_walletd(self):
         print("Shutting down walletd..")
         try:
-            wallet_daemon_process.kill()
+            self.wallet_daemon_process.kill()
         except Exception as e:
             print(e)
-                
+
+    def is_running_on_bc(self):
+        return get_device_uuid() != None
+
     def sweep_wallet(self):
         if self.walletCreated:
             print("CLI21 - Sweeping the wallet -------")
@@ -183,7 +187,6 @@ class CLI21():
     def _flush_21_satoshis(self):
         # FIXME Find a user-visible to perform that type of operation. For now, using the code.
         # Keeping the hack contained here as much as possible.
-        from two1.commands.config import Config
         from two1.lib.server import rest_client
         from two1.commands.config import TWO1_HOST
 
@@ -220,7 +223,7 @@ class CLI21():
         # explicitly sync wallet cache (auto-synced w/ 25 sec period)
         wallet = Wallet(self.wallet_path)
         wallet.sync_wallet_file()
-        
+
     def get_status(self):
         """Get current status using the '21 status' command.
         """
