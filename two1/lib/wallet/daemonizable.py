@@ -1,6 +1,5 @@
 import builtins
 import inspect
-from functools import wraps
 
 _funcs = {}
 _inst_methods = {}
@@ -121,10 +120,15 @@ def serdes_return_value(serialize, cls, method_name, val):
     return rv
 
 
-def get_inst_daemon_methods(inst):
-    inst_cls = inst.__class__
-
-    if inst_cls.__name__ in _inst_methods:
-        return _inst_methods[inst_cls.__name__]
+def get_daemon_methods(cls):
+    if cls.__name__ in _inst_methods:
+        return _inst_methods[cls.__name__]
     else:
         return {}
+
+
+def get_daemon_properties(cls):
+    if cls.__name__ in _inst_properties:
+        return _inst_properties[cls.__name__]
+    else:
+        return []
