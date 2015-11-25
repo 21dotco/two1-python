@@ -265,7 +265,8 @@ def perform_apt_based_update():
                        "install",
                        "--only-upgrade",
                        TWO1_PACKAGE_NAME,
-                       "minerd"
+                       "minerd",
+                       "zerotier-one"
                        ]
     ret = False
     try:
