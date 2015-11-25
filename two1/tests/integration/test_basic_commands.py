@@ -52,7 +52,7 @@ def test_21_status(cli_runner, **kwargs):
 def test_21_mine(cli_runner, **kwargs):
 
     # Mining is only available on PI.
-    if not cli_runner.config.get_device_uuid():
+    if not cli_runner.is_running_on_bc():
         # TODO: verify that the mining fails as expected on ubuntu/osx
         # FIXME: I am not sure there is a better way to check that we are on a BC
         # FIXME (cont.) see conftest.py
@@ -257,7 +257,7 @@ def test_21_buy_search_onchain(cli_runner, **kwargs):
     child.expect(pexpect.EOF)
     child.close()
     cli_runner.sync_onchain_balance()
-    
+
     #Running log to catch some errors
     test_21_log_raw(cli_runner)
 
