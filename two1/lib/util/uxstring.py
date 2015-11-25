@@ -8,13 +8,13 @@ class UxString:
                       "update' command."
     bitcoin_computer_needed = "You need a 21 Bitcoin Computer (21.co/buy) to access " \
                               "this service. If you believe you have received this " \
-                              "message in error, please contact support@21.co"
+                              "message in error, please contact support@21.co."
     max_accounts_reached = click.style(
-        "You have reached the maximum number of accounts that you can create on this "
-        "Bitcoin Computer. Use ",
+        "You have reached the maximum number of 21.co accounts that you can create on "
+        "this Bitcoin Computer. Use ",
         fg="red") + click.style(
         "21 login", fg="red", bold=True) + click.style(
-        " to switch between your available accounts",
+        " to switch between your available accounts.",
         fg="red")
     # account creation
 
@@ -49,14 +49,18 @@ class UxString:
         "To get more bitcoin, use {}."
 
     # account recovery
-    no_active_wallets = "No active wallets found. Please contact support@21.co"
+    no_active_wallets = click.style("No accounts found. Please type ",
+                                    fg="red") + click.style(
+        "21 status", bold=True, fg="red") + click.style(
+        " to create a wallet and 21.co account.",
+        fg="red")
     no_usernames_for_wallet = \
         "No usernames are associated with your active wallet. " \
         "Either switch your wallet or type " + click.style(
             "21 status", bold=True) + " to create a new username."
     registered_usernames_title = "\nRegistered usernames: \n"
     login_prompt = "\nPlease select the number associated with the username you want to " \
-                   "login with"
+                   "log in with"
     login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
                                 "corresponding username"
 
@@ -136,7 +140,7 @@ class UxString:
     flush_insufficient_earnings = "You must have a minimum of 20000 Satoshis to " \
                                   "be able to flush your earnings to the Blockchain"
     # ad
-    buy_ad = "Get a 21 Bitcoin Computer at 21.co/buy"
+    buy_ad = "Get a 21 Bitcoin Computer at https://21.co/buy"
 
     # log
     reasons = {
