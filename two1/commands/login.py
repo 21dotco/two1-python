@@ -34,7 +34,7 @@ def _login(config):
         dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
         wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
         if not Two1Wallet.check_wallet_file(wallet_path):
-            click.secho(UxString.no_active_wallets, fg="red")
+            click.secho(UxString.no_active_wallets)
             return
 
         wallet = Wallet(wallet_path=wallet_path,
