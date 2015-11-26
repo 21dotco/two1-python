@@ -49,15 +49,6 @@ class UxString:
         "To get more bitcoin, use {}."
 
     # account recovery
-    no_active_wallets = click.style("No accounts found. Please type ",
-                                    fg="red") + click.style(
-        "21 status", bold=True, fg="red") + click.style(
-        " to create a wallet and 21.co account.",
-        fg="red")
-    no_usernames_for_wallet = \
-        "No usernames are associated with your active wallet. " \
-        "Either switch your wallet or type " + click.style(
-            "21 status", bold=True) + " to create a new username."
     registered_usernames_title = "\nRegistered usernames: \n"
     login_prompt = "\nPlease select the number associated with the username you want to " \
                    "log in with"

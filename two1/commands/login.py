@@ -1,14 +1,17 @@
 import base64
-
 import click
+import sys
+from two1.lib.server.login import check_setup_twentyone_account
 
+from two1.lib.blockchain.exceptions import DataProviderUnavailableError, DataProviderError
+from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
 from two1.lib.util.decorators import json_output
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST
+from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 import two1.lib.server.login as server_login
@@ -23,7 +26,6 @@ def login(config):
 
 @capture_usage
 def _login(config):
-
     if config.username:
         click.secho("currently logged in as: {}".format(config.username), fg="blue")
 
@@ -34,7 +36,7 @@ def _login(config):
         dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
         wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
         if not Two1Wallet.check_wallet_file(wallet_path):
-            click.secho(UxString.no_active_wallets)
+            create_wallet_and_account()
             return
 
         wallet = Wallet(wallet_path=wallet_path,
@@ -48,7 +50,9 @@ def _login(config):
     res = client.account_info()
     usernames = res.json()["usernames"]
     if len(usernames) == 0:
-        click.secho(UxString.no_usernames_for_wallet)
+        create_wallet_and_account()
+        return
+
 
     else:
         # interactively select the username
@@ -80,4 +84,15 @@ def save_config(config, machine_auth, username):
     config.update_key("username", username)
     config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
     config.save()
-    server_login.analytics_optin(config)
+
+
+def create_wallet_and_account():
+    try:
+        cfg = Config()
+        check_setup_twentyone_account(cfg)
+    except DataProviderUnavailableError:
+        raise TwoOneError(UxString.Error.connection_cli)
+    except DataProviderError:
+        raise TwoOneError(UxString.Error.server_err)
+    except UnloggedException:
+        sys.exit(1)
