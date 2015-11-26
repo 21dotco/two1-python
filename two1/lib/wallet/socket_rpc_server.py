@@ -1,25 +1,21 @@
-import getpass
 import json
+import os
 import select
 import socket
 import socketserver
 import threading
 
-import tempfile
 from jsonrpcserver import dispatcher
 from jsonrpcserver.request import Request
 from jsonrpcserver.response import ErrorResponse
 from jsonrpcserver.status import HTTP_STATUS_CODES
 from jsonrpcclient.server import Server
-from path import Path
 from two1.lib.wallet.exceptions import DaemonRunningError
 from two1.lib.wallet.exceptions import DaemonNotRunningError
 
 
 class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                               socketserver.UnixStreamServer):
-    TEMP_DIR = Path(tempfile.gettempdir())
-    SOCKET_FILE_NAME = TEMP_DIR.joinpath("walletd.%s.sock" % getpass.getuser())
     STOP_EVENT = threading.Event()
 
     class JSONRPCHandler(socketserver.BaseRequestHandler):
@@ -84,41 +80,44 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
                     if logger is not None:
                         logger.exception(e)
 
-    def __init__(self, dispatcher_methods, client_lock,
+    def __init__(self, socket_file_name, dispatcher_methods, client_lock,
                  request_cb=None, logger=None):
-        if self.SOCKET_FILE_NAME.exists():
+        self.socket_file_name = socket_file_name
+        if os.path.exists(self.socket_file_name):
             # Try connecting to it
             try:
                 sock = socket.socket(family=socket.AF_UNIX)
-                sock.connect(UnixSocketJSONRPCServer.SOCKET_FILE_NAME)
+                sock.connect(self.socket_file_name)
                 raise DaemonRunningError("A daemon is already running.")
             except ConnectionRefusedError:
-                self.SOCKET_FILE_NAME.unlink()
+                os.remove(self.socket_file_name)
 
         self._methods = dispatcher_methods
         self._client_lock = client_lock
         self._request_cb = request_cb
         self.logger = logger
 
-        super().__init__(self.SOCKET_FILE_NAME,
+        super().__init__(self.socket_file_name,
                          UnixSocketJSONRPCServer.JSONRPCHandler)
 
 
 class UnixSocketServerProxy(Server):
     not_running_msg = "walletd is not running, or the socket is not readable."
-    
-    def __init__(self):
+
+    def __init__(self, socket_file_name):
+        self.socket_file_name = socket_file_name
+
         # Try connecting to the socket
         self.sock = socket.socket(family=socket.AF_UNIX)
 
         try:
-            self.sock.connect(UnixSocketJSONRPCServer.SOCKET_FILE_NAME)
+            self.sock.connect(socket_file_name)
         except FileNotFoundError:
             raise DaemonNotRunningError(self.not_running_msg)
         except ConnectionRefusedError:
             raise DaemonNotRunningError(self.not_running_msg)
 
-        super().__init__(UnixSocketJSONRPCServer.SOCKET_FILE_NAME)
+        super().__init__(socket_file_name)
 
     def __getattr__(self, name):
         # Override the getattr to have 'response' default to True
