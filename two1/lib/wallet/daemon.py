@@ -19,6 +19,7 @@ from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.exceptions import WalletLockedError
 from two1.lib.wallet.exceptions import WalletNotLoadedError
 from two1.lib.wallet.two1_wallet import Two1Wallet
+from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.wallet.cli import validate_data_provider
 from two1.lib.wallet.cli import WALLET_VERSION
 
@@ -704,10 +705,12 @@ def main(ctx, wallet_path, blockchain_data_provider,
 
 
 try:
-    rpc_server = UnixSocketJSONRPCServer(dispatcher_methods=methods,
-                                         client_lock=client_lock,
-                                         request_cb=track_connections_cb,
-                                         logger=logger)
+    rpc_server = UnixSocketJSONRPCServer(
+        socket_file_name=Wallet.SOCKET_FILE_NAME,
+        dispatcher_methods=methods,
+        client_lock=client_lock,
+        request_cb=track_connections_cb,
+        logger=logger)
 except DaemonRunningError as e:
     click.echo(str(e))
     sys.exit(-1)

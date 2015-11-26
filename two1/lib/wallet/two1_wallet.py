@@ -1715,6 +1715,10 @@ class Wallet(object):
     Returns:
         Two1WalletProxy: A proxy object.
     """
+    SOCKET_FILE_NAME = os.path.join(os.path.expanduser('~'),
+                                    ".two1",
+                                    "wallet",
+                                    "walletd.sock")
 
     @staticmethod
     def check_daemon_running(wallet_path=Two1Wallet.DEFAULT_WALLET_PATH):
@@ -1731,7 +1735,7 @@ class Wallet(object):
         """
         rv = None
         try:
-            w = UnixSocketServerProxy()
+            w = UnixSocketServerProxy(Wallet.SOCKET_FILE_NAME)
 
             # Check the path to make sure it's the same
             wp = w.wallet_path()
