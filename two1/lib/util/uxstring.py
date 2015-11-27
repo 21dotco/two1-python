@@ -239,6 +239,3 @@ For further information, please contact %s""" % \
             "To use on-chain balance add {} to your buy command*".format(
                     click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True)
                 )
-
-        # wallet daemon
-        daemon_stop = "Could not stop Wallet Daemon. Please consider rebooting your system."
