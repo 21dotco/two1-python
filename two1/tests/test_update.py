@@ -12,6 +12,9 @@ from two1.commands.update import checked_for_an_update_today
 from two1.commands.update import update_two1_package
 from two1.commands import update, config
 
+# mock update.stop_walletd to always return True
+update.stop_walletd = MagicMock(return_value=True)
+
 
 class MockConfig(object):
     def __init__(self):
