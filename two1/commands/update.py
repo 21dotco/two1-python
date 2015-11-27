@@ -252,8 +252,7 @@ def perform_pip_based_update(version):
                        "-I",
                        "{}=={}".format(TWO1_PACKAGE_NAME, version)]
 
-    if not stop_walletd():
-        raise click.ClickException(UxString.Error.retry_update_after_reboot)
+    stop_walletd()
 
     try:
         # Inside a virtualenv, sys.prefix points to the virtualenv directory,
@@ -278,8 +277,7 @@ def perform_apt_based_update():
     """ This will perform an apt-get based update.
     """
 
-    if not stop_walletd():
-        raise click.ClickException(UxString.Error.retry_update_after_reboot)
+    stop_walletd()
 
     update_command = ["sudo",
                       "apt-get",
