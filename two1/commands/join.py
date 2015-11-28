@@ -12,7 +12,7 @@ from two1.lib.util import zerotier
 @click.argument("network")
 @click.pass_context
 def join(ctx, network):
-    """Join a peer2peer network over zerotier.
+    """Join a p2p network to buy/sell for BTC.
 
 \b
 Usage
