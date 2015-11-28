@@ -20,7 +20,7 @@ import two1.lib.server.login as server_login
 @click.command()
 @json_output
 def login(config):
-    """login into your different 21 accounts"""
+    """Log in to your different 21 accounts."""
     return _login(config)
 
 
