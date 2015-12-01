@@ -683,12 +683,14 @@ class Script(object):
 
                 ast.append(token)
             elif opcode in ['OP_ELSE', 'OP_ENDIF']:
-                if in_if_else is None:
+                if not in_if_else:
                     raise ParsingError("Illegal %s when not in if/else." %
                                        opcode)
 
                 if opcode == 'OP_ELSE':
                     self.tokens = [opcode] + self.tokens
+                else:
+                    ast.append(opcode)
 
                 break
             else:
