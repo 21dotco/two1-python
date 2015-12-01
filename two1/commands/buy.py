@@ -74,10 +74,10 @@ $ 21 buy sms -h
     ctx.obj["info_only"] = info_only
 
 
-@click.argument('query', default="")
+@click.argument('query')
 @buy.command()
 @click.pass_context
-def search(ctx, query=""):
+def search(ctx, query):
     """Execute a search query for bitcoin. See no ads.
 
 \b
@@ -85,9 +85,6 @@ Example
 -------
 $ 21 buy search "First Bitcoin Computer"
 """
-    if query == "":
-        ctx.obj["info_only"] = True
-
     _buy(ctx.obj["config"],
          "search",
          dict(query=query),
@@ -100,8 +97,8 @@ $ 21 buy search "First Bitcoin Computer"
          )
 
 
-@click.argument('body', default="")
-@click.argument('phone_number', default="")
+@click.argument('body')
+@click.argument('phone_number')
 @buy.command()
 @click.pass_context
 def sms(ctx, phone_number, body):
@@ -112,8 +109,6 @@ Example
 -------
 $ 21 buy sms +15005550002 "I just paid for this SMS with BTC"
 """
-    if phone_number == "" and body == "":
-        ctx.obj["info_only"] = True
     _buy(ctx.obj["config"],
          "sms",
          dict(phone=phone_number, text=body),
