@@ -73,6 +73,13 @@ $ 21 buy sms -h
     ctx.obj["maxprice"] = maxprice
     ctx.obj["info_only"] = info_only
 
+    # Bypass subcommand if the user is only requesting its 402 information
+    if ctx.invoked_subcommand and info_only:
+        _buy(ctx.obj["config"], ctx.invoked_subcommand,
+             None, None, None, None,
+             payment_method, maxprice, info_only)
+        ctx.exit()
+
 
 @click.argument('query')
 @buy.command()
