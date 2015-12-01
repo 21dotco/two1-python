@@ -217,8 +217,8 @@ def _buy(config, resource, data, method, data_file, output_file,
         # Write response to console
         config.log(res.text)
 
-    # Write the amount paid out
-    if not info_only:
+    # Write the amount paid out if something was truly paid
+    if not info_only and hasattr(res, 'amount_paid'):
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                                  config.machine_auth,
                                                  config.username)

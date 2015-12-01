@@ -212,7 +212,7 @@ class BitTransferRequests(BitRequests):
     def get_402_info(self, url):
         """Get bit-transfer payment information about the resource."""
         headers = requests.get(url).headers
-        price = headers.get(BitTransferRequests.HTTP_BITCOIN_PRICE)
+        price = headers.get(BitTransferRequests.HTTP_BITCOIN_PRICE, 0)
         payee_address = headers.get(BitTransferRequests.HTTP_BITCOIN_ADDRESS)
         payee_username = headers.get(BitTransferRequests.HTTP_BITCOIN_USERNAME)
         return {BitTransferRequests.HTTP_BITCOIN_PRICE: int(price),
