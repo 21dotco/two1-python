@@ -159,6 +159,11 @@ class TwentyOneRestClient(object):
         path = "/pool/account/%s/zerotier/" % self.username
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
+    def publish(self, publish_info):
+        data = json.dumps(publish_info)
+        path = "/pool/market/"
+        return self._request(sign_username=self.username, method="POST", path=path,
+                             data=data)
     # GET /mmm/v1/search
     def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
         method = "GET"

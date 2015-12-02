@@ -54,7 +54,6 @@ def _login(config, user):
         create_wallet_and_account()
         return
 
-
     else:
         if user is None:
             # interactively select the username
