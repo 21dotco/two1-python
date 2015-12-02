@@ -84,6 +84,7 @@ if os.path.exists(dotenv_path):
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = path(TWO1_USER_FOLDER + 'two1.json')
 TWO1_HOST = os.environ.get("TWO1_HOST", "https://api.21.co")
+TWO1_WEB_HOST = os.environ.get("TWO1_WEB_HOST", "https://21.co")
 TWO1_PROVIDER_HOST = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co")
 TWO1_PYPI_HOST = os.environ.get("TWO1_PYPI_HOST", "https://pypi-3844.21.co")
 TWO1_PACKAGE_NAME = "two1"

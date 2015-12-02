@@ -179,6 +179,39 @@ class TwentyOneRestClient(object):
             path += "?detailed=True"
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    # POST pool/jwt/{scope}/
+    def pair(self, requested_scopes):
+        data = json.dumps({"scopes": requested_scopes})
+        path = "/pool/auth/jwt/generate_token/"
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+
+    # GET /pool/coinbase/me/
+    def get_coinbase_status(self):
+        path = "/pool/coinbase/me/"
+        return self._request(sign_username=self.username, method="GET", path=path)
+
+    # POST /pool/coinbase/buy/
+    def buy_bitcoin_from_exchange(self, amount, unit):
+        data = json.dumps({"amount" : amount, "unit": unit})
+        path = "/pool/coinbase/buy/"
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+
+    # POST /pool/coinbase/send/
+    def send_bitcoin_from_exchange(self, amount):
+        data = json.dumps({"amount" : amount})
+        path = "/pool/coinbase/send/"
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+
+    # GET /mmm/v1/search
+    def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
+        method = "GET"
+        path = "/mmm/v1/search/"
+        params = {
+            "q": query,
+            "page": page_num,
+            'sort': sort,
+        }
+
     def mark_notifications_read(self, username):
         path = "/pool/account/%s/notifications/?action=mark_read" % self.username
         return self._request(sign_username=self.username, method="POST", path=path)
