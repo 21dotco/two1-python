@@ -126,6 +126,24 @@ class UxString:
     doctor_error = click.style("    Error: ", fg='red')
     doctor_total = click.style("Summary", fg='yellow')
 
+    # buybitcoin
+    buybitcoin_title = click.style("Buy Bitcoin", fg='green') + "\n"
+    buybitcoin_pairing = \
+        "To buy bitcoin, you first need to pair your Bitcoin computer with your {} account.\n\n" + \
+        "Go to this URL in your browser to complete the pairing:\n\n{}"
+    buybitcoin_exchange_status = "Bitcoins will be bought from {} account {}.\nLinked wallet: {}\n{}\n"
+    buybitcoin_instructions = \
+        "To buy some bitcoin, use " + click.style("21 buybitcoin k satoshi", bold=True, fg="green") + \
+        " to buy k satoshi of bitcoin\nfrom {} and have it automatically deposited into your 21 wallet.\n\n" + \
+        "To edit account details, use " + click.style("21 buybitcoin --config", bold=True, fg="white") + "."
+    buybitcoin_no_payment_method = \
+        "To add a payment method to {}, go to {}."
+    buybitcoin_buying = "Buying {} {}.."
+    buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
+    buybitcoin_success = click.style("Successfully", bold=True, fg="green") + " bought {} for {}."
+    buybitcoin_success_payout_time = "The funds will arrive in your 21 account at {}."
+    buybitcoin_success_instant = "The bitcoin has been transferred to your 21 wallet."
+
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \
