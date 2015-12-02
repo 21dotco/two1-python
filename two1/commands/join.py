@@ -1,3 +1,5 @@
+import platform
+
 import click
 import subprocess
 from two1.lib.server import rest_client
@@ -32,10 +34,12 @@ def _join(config, network):
 
     try:
         config.log(UxString.update_superuser)
-        start_zerotier_command = [
-            "sudo", "service", "zerotier-one", "start"
-        ]
-        subprocess.check_output(start_zerotier_command)
+        user_platform = platform.system()
+        if user_platform != "Darwin":
+            start_zerotier_command = [
+                "sudo", "service", "zerotier-one", "start"
+            ]
+            subprocess.check_output(start_zerotier_command)
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:

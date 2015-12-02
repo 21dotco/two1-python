@@ -184,20 +184,51 @@ class UxString:
     sell_message = "You sold {} to {}"
 
     # join
-    successful_join = "Joined network {}"
+    successful_join = "Joined network {}. It might take a couple of seconds for joining " \
+                      "to take effect."
     invalid_network = "Invalid network specified, please verify the network name"
+    join_cmd = click.style("21 join", bold=True)
 
     # publish
     coming_soon = click.style("Coming soon", bold=True)
     slack_21_co = click.style("slack.21.co", bold=True)
     support_21_co = click.style("support@21.co", bold=True)
-    publish_stub = """%s
-- Publish functionality will be available in a forthcoming 21 update
-- In the meantime, please visit the 21 Developer Community at %s
-- There, you can find other 21 developers to buy your machine-payable endpoints
-For further information, please contact %s""" % \
-  (coming_soon, slack_21_co, support_21_co)
+    publish_docs_url = click.style("https://21.co/learn/publishing", bold=True)
 
+    manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
+                       "how to create one, please refer to {}"
+
+    bad_manifest = "Invalid manifest file at {}.\nFor instructions on " \
+                   "publishing your app, please refer to {}"
+
+    large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
+                     "2MB.\nFor instructions on publishing your app, please refer to {}"
+
+    reading_manifest = "Reading app manifest from {}"
+
+    no_zt_network = click.style("You are not part of the {}. Use {}",
+                                fg="red") + click.style(" to join the market.", fg="red")
+
+    wrong_ip = click.style(
+        "It seems that the IP address "
+        "that you put in your manifest file (") + click.style(
+        "{}", bold=True) + click.style(
+        ") is different than your current 21 marketplace IP (") + click.style(
+        "{}", bold=True) + click.style(
+        ")\nAre you sure you want to continue publishing with ") + click.style(
+        "{}", bold=True) + click.style(" ?")
+
+    switch_host = click.style(
+        "Please edit ") + click.style("{}", bold=True) + click.style(
+        " and replace ") + click.style("{}", bold=True) + click.style(
+        " with ") + click.style("{}", bold=True)
+
+    publish_start = click.style("Publishing {} at ") + click.style(
+        "{}", bold=True) + click.style(" to {}")
+
+    publish_success = click.style(
+        "{} successfully published to {}. It may take a couple of minutes for your app "
+        "to show up in the marketplace.", fg="magenta")
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
