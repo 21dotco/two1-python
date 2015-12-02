@@ -1,4 +1,5 @@
 """"""
+import os
 import time
 import codecs
 import sqlite3
@@ -174,7 +175,12 @@ class DatabaseSQLite3(ChannelDataManager):
 
     """Default payment channel data bindings when no data service is provided."""
 
-    def __init__(self, db='payment.sqlite3'):
+    DEFAULT_PAYMENT_DB_DIR = os.path.expanduser('~/.two1/payment/')
+    DEFAULT_PAYMENT_DB_PATH = DEFAULT_PAYMENT_DB_DIR + 'payment.sqlite3'
+
+    def __init__(self, db=DEFAULT_PAYMENT_DB_PATH):
+        if not os.path.exists(DatabaseSQLite3.DEFAULT_PAYMENT_DB_DIR):
+            os.makedirs(DatabaseSQLite3.DEFAULT_PAYMENT_DB_DIR)
         self.connection = sqlite3.connect(db, check_same_thread=False)
         self.c = self.connection.cursor()
         self.pc = ChannelSQLite3(self)
@@ -352,8 +358,14 @@ class OnChainDjango(OnChainDatabase):
 
 class OnChainSQLite3(OnChainDatabase):
 
-    def __init__(self, db='payment.sqlite3'):
+    DEFAULT_PAYMENT_DB_DIR = os.path.expanduser('~/.two1/payment/')
+    DEFAULT_PAYMENT_DB_PATH = DEFAULT_PAYMENT_DB_DIR + 'payment.sqlite3'
+
+    def __init__(self, db=DEFAULT_PAYMENT_DB_PATH):
         """Instantiate SQLite3 for storing on chain transaction data."""
+        if not os.path.exists(OnChainSQLite3.DEFAULT_PAYMENT_DB_DIR):
+            os.makedirs(OnChainSQLite3.DEFAULT_PAYMENT_DB_DIR)
+        OnChainSQLite3.DEFAULT_PAYMENT_DB_PATH
         self.connection = sqlite3.connect(db, check_same_thread=False)
         self.c = self.connection.cursor()
         self.c.execute("CREATE TABLE IF NOT EXISTS 'payment_onchain' (txid text, amount integer)")
