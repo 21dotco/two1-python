@@ -56,7 +56,12 @@ class Script(object):
         'OP_RIPEMD160':             0xa6, 'OP_SHA1':                  0xa7, 'OP_SHA256':                0xa8,
         'OP_HASH160':               0xa9, 'OP_HASH256':               0xaa, 'OP_CODESEPARATOR':         0xab,
         'OP_CHECKSIG':              0xac, 'OP_CHECKSIGVERIFY':        0xad, 'OP_CHECKMULTISIG':         0xae,
-        'OP_CHECKMULTISIGVERIFY':   0xaf, }
+        'OP_CHECKMULTISIGVERIFY':   0xaf,
+        'OP_CAT':                   0x7e, 'OP_SUBSTR':                0x7f, 'OP_LEFT':                  0x80,
+        'OP_RIGHT':                 0x81, 'OP_INVERT':                0x83, 'OP_AND':                   0x84,
+        'OP_OR':                    0x85, 'OP_XOR':                   0x86, 'OP_2MUL':                  0x8d,
+        'OP_2DIV':                  0x8e, 'OP_MUL':                   0x95, 'OP_DIV':                   0x96,
+        'OP_MOD':                   0x97, 'OP_LSHIFT':                0x98, 'OP_RSHIFT':                0x99}
 
     BTC_OPCODE_REV_TABLE = {v: k for k, v in BTC_OPCODE_TABLE.items()}
     _ser_dispatch_table = None

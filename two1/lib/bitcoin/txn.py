@@ -5,6 +5,7 @@ import struct
 from two1.lib.bitcoin import crypto
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.script_interpreter import ScriptInterpreter
 from two1.lib.bitcoin.utils import address_to_key_hash
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.bitcoin.utils import pack_compact_int
@@ -606,167 +607,76 @@ class Transaction(object):
         if not sub_script.is_p2pkh():
             raise TypeError("sub_script is not a P2PKH script!")
 
-        rv = False
         sig_script = self.inputs[input_index].script
 
-        # Use a fake stack
-        stack = []
-
-        # Push sigScript and publicKey onto stack
-        stack.append(bytes.fromhex(sig_script.ast[0][2:]))
-        stack.append(bytes.fromhex(sig_script.ast[1][2:]))
-
-        # OP_DUP
-        stack.append(stack[-1])
-
-        # OP_HASH160
-        pub_key_bytes = stack.pop()
-        pub_key = crypto.PublicKey.from_bytes(pub_key_bytes)
-        # Was it compressed?
-        compressed = pub_key_bytes[0] in [0x02, 0x03]
-        hash160 = pub_key.hash160(compressed=compressed)
-
-        # OP_EQUALVERIFY - this pub key must match the one in
-        # sub_script
-        sub_script_pub_key_hash = bytes.fromhex(sub_script.get_hash160()[2:])
-        rv = hash160 == sub_script_pub_key_hash
-
-        # OP_CHECKSIG
-        stack.pop()  # pop duplicate pub key off stack
-        script_sig_complete = stack.pop()
-        script_sig, hash_type = script_sig_complete[:-1], script_sig_complete[-1]
-
         # Re-create txn for sig verification
-        txn_copy_bytes = bytes(self._copy_for_sig(input_index,
-                                                  hash_type,
-                                                  sub_script))
+        s = bytes.fromhex(sig_script.ast[0][2:])
+        hash_type = s[-1]
+        txn_copy = self._copy_for_sig(input_index,
+                                      hash_type,
+                                      sub_script)
 
-        # Now verify
-        sig = crypto.Signature.from_der(script_sig)
-        msg = txn_copy_bytes + pack_u32(hash_type)
-        tx_digest = hashlib.sha256(msg).digest()
-        rv &= pub_key.verify(tx_digest, sig)
+        si = ScriptInterpreter(data=txn_copy)
+        si.run_script(sig_script)
+        si.run_script(sub_script)
 
-        return rv
+        si._op_verify()
+        return si.valid
 
     def _verify_p2sh_multisig_input(self, input_index, sub_script,
                                     partial=False):
         if not sub_script.is_p2sh():
             raise TypeError("sub_script is not a P2SH script!")
 
-        rv = False
+        rv = True
         sig_script = self.inputs[input_index].script
 
         if not sig_script.is_multisig_sig():
             raise TypeError("sigScript doesn't appear to be a multisig signature script")
 
-        stack = []
         sig_info = sig_script.extract_multisig_sig_info()
-
-        stack.append(bytes([Script.BTC_OPCODE_TABLE[sig_script.ast[0]]]))  # Push OP_0
-
-        # Push all the signatures
-        hash_types = set()
-        for s in sig_info['signatures']:
-            s1, hash_type = s[:-1], s[-1]
-            stack.append(s1)
-            hash_types.add(hash_type)
-
-        if len(hash_types) != 1:
-            raise TypeError("Not all signatures have the same hash type!")
-
-        hash_type = hash_types.pop()
         redeem_script = sig_info['redeem_script']
-        redeem_script_h160 = redeem_script.hash160()
+
+        # Assume for now that all hash-types are the same. If they're not
+        # it'll be caught when running the script
+        hash_type = sig_info['signatures'][0][-1]
 
         # Re-create txn for sig verification
-        txn_copy_bytes = bytes(self._copy_for_sig(input_index,
-                                                  hash_type,
-                                                  redeem_script))
-        msg = txn_copy_bytes + pack_u32(hash_type)
-        txn_digest = hashlib.sha256(msg).digest()
+        txn_copy = self._copy_for_sig(input_index,
+                                      hash_type,
+                                      redeem_script)
 
-        sub_script_h160 = bytes.fromhex(sub_script.get_hash160()[2:])
-        rv = redeem_script_h160 == sub_script_h160
+        si = ScriptInterpreter(data=txn_copy)
+        si.run_script(sig_script)
+        # In bitcoin core, a copy of the stack is made at this point
+        # and restored following the run of the sub_script (next line)
+        # so that the result of the OP_EQUAL is not there when running
+        # the redeem_script. Since we've validated our scripts to be "standard"
+        # and we're not yet running arbitrary scripts, we will do an op_verify
+        # after running the sub_script to clear that portion of the stack out.
+        # See: https://github.com/bitcoin/bitcoin/blob/327291af02d05e09188713d882bf68ac708c1077/src/script/interpreter.cpp#L1169
+        si.run_script(sub_script)
+        si._op_verify()
+        if not si.valid:
+            return False
 
-        rs_info = redeem_script.extract_multisig_redeem_info()
-        # Now start pushing the elements of the redeem script
-        stack.append(bytes([0x50 + rs_info['m']]))
-        for p in rs_info['public_keys']:
-            stack.append(p)
-        stack.append(bytes([0x50 + rs_info['n']]))
+        if partial:
+            # This is a hack for partial verification
+            partial_script = copy.deepcopy(redeem_script)
+            partial_script.ast[-1] = 'OP_CHECKPARTIALMULTISIG'
 
         try:
-            res, match_count = self._op_checkmultisig(stack=stack,
-                                                      txn_digest=txn_digest,
-                                                      partial=partial)
             if partial:
-                rv &= match_count > 0 and match_count <= len(sig_info['signatures'])
+                si.run_script(partial_script)
+                rv &= si.match_count > 0 and si.match_count <= len(sig_info['signatures'])
             else:
-                rv &= res
-        except Exception as e:
+                si.run_script(redeem_script)
+                si._op_verify()
+                rv &= si.valid
+        except:
             rv = False
 
         return rv
-
-    def _op_checkmultisig(self, stack, txn_digest, partial=False):
-        # This belongs in Script, and will get moved later
-        num_keys = int.from_bytes(stack.pop(), byteorder='big') - 0x50
-        keys_bytes = []
-        for i in range(num_keys):
-            keys_bytes.insert(0, stack.pop())
-        public_keys = [crypto.PublicKey.from_bytes(p) for p in keys_bytes]
-
-        min_num_sigs = int.from_bytes(stack.pop(), byteorder='big') - 0x50
-
-        # Although "m" is the *minimum* number of required signatures, bitcoin
-        # core only consumes "m" signatures and then expects an OP_0. This
-        # means that if m < min_num_sigs <= n, bitcoin core will return a
-        # script failure. See:
-        # https://github.com/bitcoin/bitcoin/blob/0.10/src/script/interpreter.cpp#L840
-        # We will do the same.
-        sigs = []
-        for i in range(min_num_sigs):
-            s = stack.pop()
-            try:
-                sig = crypto.Signature.from_der(s)
-                sigs.insert(0, sig)
-            except ValueError:
-                if partial:
-                    # Put it back on stack
-                    stack.append(s)
-                else:
-                    # If not a partial evaluation there are not enough
-                    # sigs
-                    rv = False
-                break
-
-        # Now we verify
-        last_match = -1
-        rv = True
-        match_count = 0
-        for sig in sigs:
-            matched_any = False
-            for i, pub_key in enumerate(public_keys[last_match+1:]):
-                if pub_key.verify(txn_digest, sig):
-                    last_match = i
-                    match_count += 1
-                    matched_any = True
-                    break
-
-            if not matched_any:
-                # Bail early if the sig couldn't be verified
-                # by any public key
-                rv = False
-                break
-
-        rv &= match_count >= min_num_sigs
-
-        # Now make sure the last thing on the stack is OP_0
-        rv &= stack.pop() == bytes([0])
-        rv &= len(stack) == 0
-
-        return rv, match_count
 
     def output_index_for_address(self, address_or_hash160):
         """ Returns the index of the output in this transaction
