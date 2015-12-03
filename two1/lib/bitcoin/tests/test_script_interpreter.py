@@ -1,9 +1,13 @@
 import pytest
 
+from two1.lib.bitcoin.hash import Hash
+from two1.lib.bitcoin.exceptions import ScriptInterpreterError
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.script_interpreter import ScriptInterpreter
 from two1.lib.bitcoin.txn import Transaction
-
+from two1.lib.bitcoin.txn import TransactionInput
+from two1.lib.bitcoin.txn import TransactionOutput
+from two1.lib.bitcoin import utils
 
 def test_op_0():
     s = Script("OP_0")
@@ -38,7 +42,7 @@ def test_op_pushdata():
     s = Script("OP_PUSHDATA1 0x4e 0x" + "12" * 0x4d)
 
     # Should fail since there isn't enough data
-    with pytest.raises(ValueError):
+    with pytest.raises(ScriptInterpreterError):
         si.run_script(s)
 
     s = Script("OP_PUSHDATA2 0x4eff 0x" + "12" * 0x4eff)
@@ -86,7 +90,7 @@ def test_op_if():
 
     assert len(si.stack) == 1
     assert list(si.stack) == [4]
-    assert len(si._if_else_stack) == 0    
+    assert len(si._if_else_stack) == 0
 
     s = Script("OP_1 OP_IF OP_2 OP_3 OP_IF OP_15 OP_ADD OP_ENDIF OP_ENDIF OP_4")
 
@@ -95,7 +99,7 @@ def test_op_if():
 
     assert len(si.stack) == 2
     assert list(si.stack) == [17, 4]
-    assert len(si._if_else_stack) == 0    
+    assert len(si._if_else_stack) == 0
 
 
 def test_op_notif():
@@ -152,13 +156,13 @@ def test_op_verify():
     si.run_script(s)
 
     assert len(si.stack) == 0
-    assert si.valid
+    assert not si.stop
 
     s = Script("0x00 OP_VERIFY")
     si.run_script(s)
 
     assert len(si.stack) == 0
-    assert not si.valid
+    assert si.stop
 
 
 def test_op_return():
@@ -167,9 +171,8 @@ def test_op_return():
     si = ScriptInterpreter()
     si.run_script(s)
 
-    assert not si.valid
-    assert len(si.stack) == 1
-    assert si.stack[-1] == b'\x01\x02\x03'
+    assert si.stop
+    assert len(si.stack) == 0
 
 
 def test_op_toaltstack():
@@ -818,7 +821,7 @@ def test_op_checksig():
     si.run_script(s)
 
     assert len(si.stack) == 0
-    assert si.valid
+    assert not si.stop
 
     # Try it once more with an incorrect sig
     pub_key_hex = "0x04e674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbef"
@@ -837,7 +840,7 @@ def test_op_checksig():
     si.run_script(s)
 
     assert len(si.stack) == 0
-    assert not si.valid
+    assert si.stop
 
 
 def test_op_checkmultisig():
@@ -856,17 +859,70 @@ def test_op_checkmultisig():
     si.run_script(script_pub_key)
     assert len(si.stack) == 4
     assert si.stack[-1] == True
-    si._op_verify()
     assert si.valid
+    si._op_verify()
 
     # This will do the OP_CHECKMULTISIG
     si.run_script(redeem_script)
     assert len(si.stack) == 1
     assert si.stack[0] == True
 
-    si._op_verify()
     assert si.valid
-    assert len(si.stack) == 0
+    assert len(si.stack) == 1
+
+
+def test_op_checklocktimeverify():
+    prev_txn_hash = Hash('6eae1e03964799c4e29039db459ea4fad4df57c2b06f730b60032a48fb075620')
+    txn_input = TransactionInput(prev_txn_hash, 0, Script(""), 1)
+
+    addr = "1HJiL6AYYmtkbJzC9bxAorznWijwNK5Z8E"
+    out_script_pub_key = Script.build_p2pkh(
+        utils.address_to_key_hash(addr)[1])
+    txn_output = TransactionOutput(9000, out_script_pub_key)
+
+    # Create the txn
+    txn = Transaction(Transaction.DEFAULT_TRANSACTION_VERSION,
+                      [txn_input],
+                      [txn_output],
+                      367987)
+
+    # This is one more (367988) so it should fail
+    s = Script("0x059d74 OP_CHECKLOCKTIMEVERIFY")
+
+    si = ScriptInterpreter(txn=txn, input_index=0)
+    si.run_script(s)
+
+    assert not si.valid
+
+    # This is negative, so it should fail
+    s = Script("0xfff59d74 OP_CHECKLOCKTIMEVERIFY")
+
+    si = ScriptInterpreter(txn=txn, input_index=0)
+    si.run_script(s)
+
+    assert not si.valid
+
+    # This is one less (367986) so it should pass
+    s = Script("0x059d72 OP_CHECKLOCKTIMEVERIFY")
+
+    si = ScriptInterpreter(txn=txn, input_index=0)
+    si.run_script(s)
+
+    assert not si.stop
+
+    # Now reformulate the txn so that the input is finalized
+    txn_input.sequence_num = 0xffffffff
+    si.run_script(s)
+
+    assert not si.valid
+
+    # The last check is if there are mismatching notions of locktime
+    txn_input.sequence_num = 1
+    txn.lock_time = 500000001
+    si = ScriptInterpreter(txn=txn, input_index=0)
+    si.run_script(s)
+
+    assert not si.valid
 
 
 def test_disabled_ops():
@@ -876,3 +932,11 @@ def test_disabled_ops():
 
         assert not si.valid
         assert list(si.stack) == [1]
+
+
+def test_stack_overflow():
+    s = Script("OP_0 " * 1001 + "OP_1")
+
+    si = ScriptInterpreter()
+    with pytest.raises(ScriptInterpreterError):
+        si.run_script(s)
