@@ -616,11 +616,10 @@ class Transaction(object):
                                       hash_type,
                                       sub_script)
 
-        si = ScriptInterpreter(data=txn_copy)
+        si = ScriptInterpreter(txn=txn_copy, input_index=input_index)
         si.run_script(sig_script)
         si.run_script(sub_script)
 
-        si._op_verify()
         return si.valid
 
     def _verify_p2sh_multisig_input(self, input_index, sub_script,
@@ -646,7 +645,7 @@ class Transaction(object):
                                       hash_type,
                                       redeem_script)
 
-        si = ScriptInterpreter(data=txn_copy)
+        si = ScriptInterpreter(txn=txn_copy, input_index=input_index)
         si.run_script(sig_script)
         # In bitcoin core, a copy of the stack is made at this point
         # and restored following the run of the sub_script (next line)
@@ -656,9 +655,10 @@ class Transaction(object):
         # after running the sub_script to clear that portion of the stack out.
         # See: https://github.com/bitcoin/bitcoin/blob/327291af02d05e09188713d882bf68ac708c1077/src/script/interpreter.cpp#L1169
         si.run_script(sub_script)
-        si._op_verify()
         if not si.valid:
             return False
+
+        si._op_verify()
 
         if partial:
             # This is a hack for partial verification
@@ -671,7 +671,6 @@ class Transaction(object):
                 rv &= si.match_count > 0 and si.match_count <= len(sig_info['signatures'])
             else:
                 si.run_script(redeem_script)
-                si._op_verify()
                 rv &= si.valid
         except:
             rv = False

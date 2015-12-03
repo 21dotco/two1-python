@@ -438,7 +438,6 @@ class Two1Wallet(BaseWallet):
         self.utxo_selector = utxo_selector
         self._testnet = False
         self._filename = ""
-        self._cache_manager = CacheManager(self._testnet)
 
         params = {}
         if isinstance(params_or_file, dict):
@@ -485,6 +484,7 @@ class Two1Wallet(BaseWallet):
 
         self._root_keys = HDKey.from_path(self._master_key,
                                           self.account_type.account_derivation_prefix)
+        self._cache_manager = CacheManager(self._testnet)
 
         self._accounts = []
         self._account_map = {}

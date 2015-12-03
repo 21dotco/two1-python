@@ -18,7 +18,8 @@ from .exceptions import InvalidTransactionOutputError
 from .exceptions import InvalidTransactionError
 from .exceptions import InvalidBlockHeaderError
 from .exceptions import InvalidBlockError
-from .exceptions import ParsingError
+from .exceptions import ScriptParsingError
+from .exceptions import ScriptInterpreterError
 from .exceptions import ScriptTypeError
 
 from .hash import Hash

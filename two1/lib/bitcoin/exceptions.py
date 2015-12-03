@@ -1,26 +1,38 @@
 class DeserializationError(Exception):
     pass
 
+
 class InvalidTransactionInputError(DeserializationError):
     pass
+
 
 class InvalidCoinbaseInputError(InvalidTransactionInputError):
     pass
 
+
 class InvalidTransactionOutputError(DeserializationError):
     pass
+
 
 class InvalidTransactionError(DeserializationError):
     pass
 
+
 class InvalidBlockHeaderError(DeserializationError):
     pass
+
 
 class InvalidBlockError(DeserializationError):
     pass
 
-class ParsingError(Exception):
+
+class ScriptParsingError(Exception):
     pass
 
+
 class ScriptTypeError(Exception):
+    pass
+
+
+class ScriptInterpreterError(Exception):
     pass

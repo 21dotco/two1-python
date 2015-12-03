@@ -3,6 +3,7 @@ import hashlib
 
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import Signature
+from two1.lib.bitcoin.exceptions import ScriptInterpreterError
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin import utils
@@ -31,18 +32,22 @@ class ScriptInterpreter(object):
                       'OP_RESERVED1', 'OP_RESERVED2']
     NOP_WORDS = ['OP_NOP%d' for i in [1] + list(range(3, 11))]
 
-    def __init__(self, txn=None):
+    def __init__(self, txn=None, input_index=-1):
         self._stack = deque()
         self._alt_stack = deque()
 
         self._txn = txn
-        self.valid = True
+        self._input_index = input_index
         self.stop = False
 
         self._if_else_stack = deque()
 
     def _walk_ast(self, ast):
         for a in ast:
+            total_stack_size = len(self._stack) + len(self._alt_stack)
+            if total_stack_size > 1000:
+                raise ScriptInterpreterError(
+                    "Too many items (%d) on the stack!" % total_stack_size)
             if self.stop:
                 break
 
@@ -55,7 +60,7 @@ class ScriptInterpreter(object):
                 opcode = a
 
             if opcode in self.DISABLED_OPS + self.RESERVED_WORDS:
-                self.valid = False
+                self.stop = True
                 break
 
             if opcode in Script.BTC_OPCODE_TABLE:
@@ -72,15 +77,14 @@ class ScriptInterpreter(object):
                 data = bytes.fromhex(args[1][2:])
                 num_bytes = int(opcode[-1])
                 if num_bytes != (datalen.bit_length() + 7) // 8:
-                    raise ValueError("datalen does not correspond with opcode")
+                    raise ScriptInterpreterError(
+                        "datalen does not correspond with opcode")
                 self._op_pushdata(datalen, data)
             elif op and op >= Script.BTC_OPCODE_TABLE['OP_1'] and \
                 op <= Script.BTC_OPCODE_TABLE['OP_16']:
                 self._op_pushnum(opcode)
-            elif opcode == 'OP_IF':
-                self._op_if(args)
-            elif opcode == 'OP_NOTIF':
-                self._op_notif(args)
+            elif opcode in ['OP_IF', 'OP_NOTIF']:
+                self._op_if(opcode, args)
             elif hasattr(self, "_" + opcode.lower()):
                 f = getattr(self, "_" + opcode.lower())
                 f()
@@ -91,8 +95,14 @@ class ScriptInterpreter(object):
         Args:
             script (Script): A Script object to evaluate
         """
-        if self.valid:
+        if not self.stop:
             self._walk_ast(script.ast)
+
+    @property
+    def valid(self):
+        """ Returns whether the script is valid
+        """
+        return not self.stop and self._get_bool(pop=False)
 
     @property
     def stack(self):
@@ -115,7 +125,8 @@ class ScriptInterpreter(object):
         """
         s = self._alt_stack if alt else self._stack
         if len(s) < min_len:
-            raise ValueError("Stack has fewer than %d operands." % min_len)
+            raise ScriptInterpreterError(
+                "Stack has fewer than %d operands." % min_len)
 
     def _check_txn(self):
         """ Checks that a transaction object has been initialized
@@ -126,7 +137,7 @@ class ScriptInterpreter(object):
         """
         from two1.lib.bitcoin.txn import Transaction
         if not isinstance(self._txn, Transaction):
-            raise ValueError("No transaction found!")
+            raise ScriptInterpreterError("No transaction found!")
 
     def _get_int(self, pop=True):
         """ Casts the top stack element to an integer.
@@ -142,7 +153,7 @@ class ScriptInterpreter(object):
             self._stack.pop()
 
         if isinstance(x, bytes):
-            x = int.from_bytes(x, 'big')
+            x = int.from_bytes(x, byteorder='big', signed=True)
         elif isinstance(x, str):
             x = int(x, 0)
 
@@ -190,7 +201,7 @@ class ScriptInterpreter(object):
             data (bytes): Array of bytes of at least opcode length.
         """
         if len(data) < 0x01 or len(data) > 0x4b:
-            raise ValueError(
+            raise ScriptInterpreterError(
                 "data must only be between 1 and 75 bytes long")
 
         self._stack.append(data)
@@ -204,7 +215,7 @@ class ScriptInterpreter(object):
             data (bytes): Array of bytes.
         """
         if len(data) < datalen:
-            raise ValueError(
+            raise ScriptInterpreterError(
                 "data should have at least %d bytes but has only %d." %
                 (datalen, len(data)))
 
@@ -228,35 +239,28 @@ class ScriptInterpreter(object):
         """
         pass
 
-    def _op_if(self, data):
-        """ If the top stack value is not 0, the statements are
-            executed. The top stack value is removed.
+    def _op_if(self, opcode, data):
+        """ If the top stack value is not 0 (OP_IF) or 1 (OP_NOTIF),
+            the statements are executed. The top stack value is
+            removed.
         """
         self._check_stack_len(1)
-        do_if = self._get_bool()
-        self._if_else_stack.append(do_if)
+        do = self._get_bool()
+        if opcode == 'OP_NOTIF':
+            do = not do
 
-        if do_if:
+        if do:
+            self._if_else_stack.append(do)
             self._walk_ast(data[0])
-        elif len(data) == 2:
+        elif len(data) == 3:
+            self._if_else_stack.append(do)
             self._op_else(data[1])
 
-        self._op_endif()
-
-    def _op_notif(self, data):
-        """ If the top stack value is 0, the statements are
-            executed. The top stack value is removed.
-        """
-        self._check_stack_len(1)
-        do_not_if = not self._get_bool()
-        self._if_else_stack.append(do_not_if)
-
-        if do_not_if:
-            self._walk_ast(data[0])
-        elif len(data) == 2:
-            self._op_else(data[1])
-
-        self._op_endif()
+        if data[-1] == "OP_ENDIF":
+            if self._if_else_stack:
+                self._op_endif()
+        else:
+            raise ScriptInterpreterError("No matching OP_ENDIF!")
 
     def _op_else(self, data):
         """ If the preceding OP_IF or OP_NOTIF or OP_ELSE was not
@@ -265,8 +269,8 @@ class ScriptInterpreter(object):
             not.
         """
         if len(self._if_else_stack) == 0:
-            self.valid = False
-            raise Exception("In OP_ELSE without OP_IF/NOTIF")
+            self.stop = True
+            raise ScriptInterpreterError("In OP_ELSE without OP_IF/NOTIF")
 
         if not self._if_else_stack[-1]:
             self._walk_ast(data)
@@ -277,19 +281,18 @@ class ScriptInterpreter(object):
             also invalid.
         """
         if len(self._if_else_stack) == 0:
-            self.valid = False
-            raise Exception("OP_ENDIF without OP_IF/NOTIF")
+            self.stop = True
+            raise ScriptInterpreterError("OP_ENDIF without OP_IF/NOTIF")
 
         self._if_else_stack.pop()
 
     def _op_verify(self):
         x = self._get_int()
         if not x:
-            self.valid = False
             self.stop = True
 
     def _op_return(self):
-        self.valid = False
+        self.stop = True
 
     # Stack ops
     def _op_toaltstack(self):
@@ -351,8 +354,8 @@ class ScriptInterpreter(object):
         self._check_stack_len(2)
         n = self._get_int()
         if n <= 0 or n >= len(self._stack):
-            self.valid = False
-            raise ValueError("n (%d) is invalid." % n)
+            self.stop = True
+            raise ScriptInterpreterError("n (%d) is invalid." % n)
         x = self._stack[-n]
         if roll:
             del self._stack[-n]
@@ -744,7 +747,7 @@ class ScriptInterpreter(object):
                 break
 
         if len(hash_types) != 1:
-            raise TypeError("Not all signatures have the same hash type!")
+            raise ScriptInterpreterError("Not all signatures have the same hash type!")
 
         hash_type = hash_types.pop()
         msg = bytes(self._txn) + utils.pack_u32(hash_type)
@@ -795,3 +798,38 @@ class ScriptInterpreter(object):
         """
         self._op_checkmultisig()
         self._op_verify()
+
+    def _op_checklocktimeverify(self):
+        """ Marks transaction as invalid if the top stack item is
+            greater than the transaction's nLockTime field, otherwise
+            script evaluation continues as though an OP_NOP was
+            executed. Transaction is also invalid if 1. the top stack item
+            is negative; or 2. the top stack item is greater than or equal
+            to 500000000 while the transaction's nLockTime field is less
+            than 500000000, or vice versa; or 3. the input's nSequence
+            field is equal to 0xffffffff.
+        """
+        lt_thresh = 500000000
+        self._check_txn()
+        self._check_stack_len(1)
+
+        lock_time = self._get_int(pop=False)
+        if lock_time < 0:
+            self.stop = True
+            return
+
+        # Do the actual checks here
+        if not (self._txn.lock_time < lt_thresh and lock_time < lt_thresh or
+                self._txn.lock_time >= lt_thresh and lock_time >= lt_thresh):
+            self.stop = True
+            return
+
+        # Check against the txn lock time
+        if lock_time > self._txn.lock_time:
+            self.stop = True
+            return
+
+        # Finally check that the input hasn't been finalized
+        inp = self._txn.inputs[self._input_index]
+        if inp.sequence_num == 0xffffffff:
+            self.stop = True

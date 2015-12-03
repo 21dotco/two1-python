@@ -5,7 +5,7 @@ import struct
 
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import Signature
-from two1.lib.bitcoin.exceptions import ParsingError
+from two1.lib.bitcoin.exceptions import ScriptParsingError
 from two1.lib.bitcoin.utils import bytes_to_str
 from two1.lib.bitcoin.utils import hash160
 from two1.lib.bitcoin.utils import key_hash_to_address
@@ -56,7 +56,7 @@ class Script(object):
         'OP_RIPEMD160':             0xa6, 'OP_SHA1':                  0xa7, 'OP_SHA256':                0xa8,
         'OP_HASH160':               0xa9, 'OP_HASH256':               0xaa, 'OP_CODESEPARATOR':         0xab,
         'OP_CHECKSIG':              0xac, 'OP_CHECKSIGVERIFY':        0xad, 'OP_CHECKMULTISIG':         0xae,
-        'OP_CHECKMULTISIGVERIFY':   0xaf,
+        'OP_CHECKMULTISIGVERIFY':   0xaf, 'OP_CHECKLOCKTIMEVERIFY':   0xb1,
         'OP_CAT':                   0x7e, 'OP_SUBSTR':                0x7f, 'OP_LEFT':                  0x80,
         'OP_RIGHT':                 0x81, 'OP_INVERT':                0x83, 'OP_AND':                   0x84,
         'OP_OR':                    0x85, 'OP_XOR':                   0x86, 'OP_2MUL':                  0x8d,
@@ -134,12 +134,14 @@ class Script(object):
                                  cls._serialize_var_data,
                                  b'')
 
-        if len(args) == 2:
+        if len(args) == 3:
             bytestr += bytes([cls.BTC_OPCODE_TABLE['OP_ELSE']])
             bytestr += cls._walk_ast(args[1],
                                      cls._ser_dispatch_table,
                                      cls._serialize_var_data,
                                      b'')
+
+        if args[-1] == 'OP_ENDIF':
             bytestr += bytes([cls.BTC_OPCODE_TABLE['OP_ENDIF']])
 
         return bytestr
@@ -675,8 +677,12 @@ class Script(object):
                 data = self.tokens.pop(0)
                 ast.append([opcode, datalen, data])
             elif opcode in ['OP_IF', 'OP_NOTIF']:
+                got_endif = False
                 # Recursively descend
                 if_clause = self._do_parse(True)
+                if if_clause[-1] == 'OP_ENDIF':
+                    got_endif = True
+                    if_clause.pop()
 
                 token = [opcode, if_clause]
 
@@ -684,13 +690,20 @@ class Script(object):
                 if self.tokens[0] == 'OP_ELSE':
                     self.tokens.pop(0)
                     else_clause = self._do_parse(True)
+                    if else_clause[-1] == 'OP_ENDIF':
+                        got_endif = True
+                        else_clause.pop()
                     token.append(else_clause)
 
+                if got_endif:
+                    token.append('OP_ENDIF')
+                else:
+                    raise ScriptParsingError("No matching OP_ENDIF")
                 ast.append(token)
             elif opcode in ['OP_ELSE', 'OP_ENDIF']:
                 if not in_if_else:
-                    raise ParsingError("Illegal %s when not in if/else." %
-                                       opcode)
+                    raise ScriptParsingError("Illegal %s when not in if/else." %
+                                             opcode)
 
                 if opcode == 'OP_ELSE':
                     self.tokens = [opcode] + self.tokens
