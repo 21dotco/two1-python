@@ -1,11 +1,10 @@
 
-two1.lib.bitcoin.block
-----------------------
+two1.lib.bitcoin.block module
+-----------------------------
 
 .. automodule:: two1.lib.bitcoin.block
     :members:
     :undoc-members:
-	:special-members: __init__	   
     :show-inheritance:
 
 two1.lib.bitcoin.crypto module
@@ -44,15 +43,6 @@ two1.lib.bitcoin.utils module
 -----------------------------
 
 .. automodule:: two1.lib.bitcoin.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: lib.bitcoin
     :members:
     :undoc-members:
     :show-inheritance:

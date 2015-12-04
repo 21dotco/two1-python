@@ -1,7 +1,7 @@
 two1.lib.wallet package
 =======================
 
-The wallet package provides a fully-functional, programatic HD wallet that conforms to both
+The wallet package provides a fully-functional, programmatic HD wallet that conforms to both
 `BIP-32 <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>`_ and
 `BIP-44 <https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki>`_.
 
@@ -61,11 +61,11 @@ The first call to ``wallet startdaemon`` will also install scripts to automatica
     --version                       Show the version and exit.
     -h, --help                      Show this message and exit.
 
-==================
-Programatic access
-==================
+===================
+Programmatic access
+===================
 
-To create a wallet programatically, the easiest way is to use ``Two1Wallet.configure()``::
+To create a wallet programmatically, the easiest way is to use ``Two1Wallet.configure()``::
 
   from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
   from two1.lib.wallet.two1_wallet import Two1Wallet

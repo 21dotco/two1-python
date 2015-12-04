@@ -8,12 +8,18 @@ The bitcoin package is a full-featured library that provides the following funct
 3. Transaction creation, signing and verification, including multi-sig transactions.
 4. Standard public/private key generation as well as HD key generation.
 
+Module contents
+---------------
+   
 The library is organized as follows:
    
 .. toctree::
 
     two1.lib.bitcoin.submodules
 
+Serializing and Deserializing
+-----------------------------
+    
 Serialization and deserialization is consistent amongst all classes. Serialization is achieved via the `bytes()` method and deserialization is achieved via the `from_bytes()` static method of each class.
 
 Parsing a transaction
