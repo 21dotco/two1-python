@@ -36,7 +36,7 @@ DEMOS = {
 }
 
 @click.group()
-@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
+@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain']))
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.pass_context

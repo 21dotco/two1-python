@@ -1,7 +1,16 @@
 two1.lib.crypto.ecdsa
 ---------------------
 
-.. automodule:: two1.lib.crypto.ecdsa
+For the vast majority of use cases, importing either `EllipticCurve` or `secp256k1` from `two1.lib.crypto.ecdsa` should be sufficient. The module will automatically use `ecdsa_openssl` if OpenSSL is installed and usable on the system. If it is not installed/usable, `ecdsa_python` will be used instead.
+
+To use one or the other directly, import from `two1.lib.crypto.ecdsa_openssl` or `two1.lib.crypto.ecdsa_python`.
+
+.. automodule:: two1.lib.crypto.ecdsa_openssl
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: two1.lib.crypto.ecdsa_python
     :members:
     :undoc-members:
     :show-inheritance:

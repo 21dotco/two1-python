@@ -17,7 +17,6 @@ Contents:
    two1.lib.bitrequests
    two1.lib.blockchain
    two1.lib.crypto
-   two1.lib.mining
    two1.lib.server
    two1.lib.util
    two1.lib.wallet
