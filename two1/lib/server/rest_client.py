@@ -9,8 +9,7 @@ import requests
 
 from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError
 from two1.lib.util.uxstring import UxString
-from two1.commands import config
-from two1.commands.config import TWO1_VERSION
+from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
 
 
 class ServerRequestError(Exception):
@@ -30,7 +29,7 @@ class TwentyOneRestClient(object):
         self.version = version
         self.username = username
         self._session = None
-        self._device_id = config.get_device_uuid() or 'local'
+        self._device_id = TWO1_DEVICE_ID or "local"
         cb = self.auth.public_key.compressed_bytes
         self._wallet_pk = base64.b64encode(cb).decode()
 
