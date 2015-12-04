@@ -110,6 +110,8 @@ def device_ip(network_id=None):
     ret = None
     if network_id:
         ret = next((n for n in networks if n['nwid'] == network_id), None)
+        if ret:
+            ret = ret["assignedAddresses"][0]
     else:
         if len(networks) == 1:
             if len(networks[0]["assignedAddresses"]) > 0:
