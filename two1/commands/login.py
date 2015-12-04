@@ -18,14 +18,15 @@ import two1.lib.server.login as server_login
 
 
 @click.command()
+@click.option('-u', '--user', default=None, help='The user to log in with.')
 @json_output
-def login(config):
+def login(config, user):
     """Log in to your different 21 accounts."""
-    return _login(config)
+    return _login(config, user)
 
 
 @capture_usage
-def _login(config):
+def _login(config, user):
     if config.username:
         click.secho("currently logged in as: {}".format(config.username), fg="blue")
 
@@ -55,20 +56,28 @@ def _login(config):
 
 
     else:
-        # interactively select the username
-        counter = 1
-        click.secho(UxString.registered_usernames_title)
-        for user in usernames:
-            click.secho("{}- {}".format(counter, user))
-            counter += 1
+        if user is None:
+            # interactively select the username
+            counter = 1
+            click.secho(UxString.registered_usernames_title)
+            for user in usernames:
+                click.secho("{}- {}".format(counter, user))
+                counter += 1
 
-        username_index = -1
-        while username_index <= 0 or username_index > len(usernames):
-            username_index = click.prompt(UxString.login_prompt, type=int)
-            if username_index <= 0 or username_index > len(usernames):
-                click.secho(UxString.login_prompt_invalid_user.format(1, len(usernames)))
+            username_index = -1
+            while username_index <= 0 or username_index > len(usernames):
+                username_index = click.prompt(UxString.login_prompt, type=int)
+                if username_index <= 0 or username_index > len(usernames):
+                    click.secho(UxString.login_prompt_invalid_user.format(1, len(usernames)))
 
-        username = usernames[username_index - 1]
+            username = usernames[username_index - 1]
+        else:
+            # log in with provided username
+            if user in usernames:
+                username = user
+            else:
+                click.secho(UxString.login_prompt_user_does_not_exist.format(user))
+                return
 
         # save the selection in the config file
         save_config(config, machine_auth, username)

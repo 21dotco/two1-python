@@ -112,3 +112,8 @@ TAGS
 
 # wheel related
 wheelhouse
+
+#Other envs
+dev.env
+prod.env
+stage.env

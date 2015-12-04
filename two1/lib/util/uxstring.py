@@ -54,7 +54,8 @@ class UxString:
                    "log in with"
     login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
                                 "corresponding username"
-
+    login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet/device.\n"
+    
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
