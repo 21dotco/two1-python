@@ -369,18 +369,13 @@ class Script(object):
         return self._ast
 
     def hash160(self):
-        """ Return the RIPEMD-160 hash of the SHA-256 hash of a
-            multisig redeem script.
+        """ Return the RIPEMD-160 hash of the SHA-256 hash of the
+            script.
 
         Returns
-            bytes: RIPEMD-160 byte string or b"" if this script
-                is not a multisig redeem script.
+            bytes: RIPEMD-160 byte string.
         """
-        rv = b""
-        if self.is_multisig_redeem():
-            rv = hash160(bytes(self))
-
-        return rv
+        return hash160(bytes(self))
 
     def address(self, testnet=False):
         """ Returns the Base58Check encoded version of the HASH160.
@@ -392,11 +387,9 @@ class Script(object):
         Returns:
             bytes: Base58Check encoded string
         """
-        hash160 = self.hash160()
         rv = ""
-        if hash160:
-            prefix = bytes([self.P2SH_TESTNET_VERSION if testnet else self.P2SH_MAINNET_VERSION])
-            rv = base58.b58encode_check(prefix + hash160)
+        prefix = bytes([self.P2SH_TESTNET_VERSION if testnet else self.P2SH_MAINNET_VERSION])
+        rv = base58.b58encode_check(prefix + self.hash160())
 
         return rv
 
