@@ -389,6 +389,98 @@ class Transaction(object):
 
         return private_key.public_key.compressed_bytes if compressed else bytes(pub_key)
 
+    def _match_public_key(self, private_key, sub_script):
+        multisig = False
+        multisig_params = None
+        multisig_key_index = -1
+
+        if sub_script.is_multisig_redeem():
+            multisig = True
+            multisig_params = sub_script.extract_multisig_redeem_info()
+
+        rv = dict(match=False,
+                  info=dict(multisig=multisig,
+                            multisig_key_index=-1,
+                            compressed=False))
+        if multisig:
+            # Determine which of the public keys this private key
+            # corresponds to.
+            public_keys = multisig_params['public_keys']
+            pub_key_full = self._get_public_key_bytes(private_key, False)
+            pub_key_comp = self._get_public_key_bytes(private_key, True)
+
+            compressed = False
+            for i, p in enumerate(public_keys):
+                if pub_key_full == p or pub_key_comp == p:
+                    multisig_key_index = i
+                    compressed = pub_key_comp == p
+                    break
+
+            if multisig_key_index != -1:
+                rv['match'] = True
+                rv['info']['multisig_key_index'] = multisig_key_index
+                rv['info']['compressed'] = compressed
+        else:
+            script_pub_key_h160 = sub_script.get_hash160()
+            if script_pub_key_h160 is None:
+                raise ValueError("Couldn't find public key hash in sub_script!")
+
+            # first try uncompressed key
+            h160 = None
+            for compressed in [True, False]:
+                h160 = private_key.public_key.hash160(compressed)
+                if h160 != script_pub_key_h160:
+                    h160 = None
+                else:
+                    break
+
+            if h160 is not None:
+                rv['match'] = True
+                rv['info']['compressed'] = compressed
+
+        return rv
+
+    def get_signature_for_input(self, input_index, hash_type, private_key,
+                                sub_script):
+        """ Returns the signature for an input.
+
+            This function only returns the signature for an input, it
+            does not insert the signature into the script member of
+            the input. It also does not validate that the given private key
+            matches any public keys in the sub_script.
+
+        Args:
+            input_index (int): The index of the input to sign.
+            hash_type (int): What kind of signature hash to do.
+            private_key (crypto.PrivateKey): private key with which
+                to sign the transaction.
+            sub_script (Script): the scriptPubKey of the corresponding
+                utxo being spent if the outpoint is P2PKH or the redeem
+                script if the outpoint is P2SH.
+
+        Returns:
+            tuple: A tuple containing the signature object and the message that
+                was signed.
+        """
+        if input_index < 0 or input_index >= len(self.inputs):
+            raise ValueError("Invalid input index.")
+
+        tmp_script = sub_script.remove_op("OP_CODESEPARATOR")
+        if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
+            # This is to deal with the bug where specifying an index
+            # that is out of range (wrt outputs) results in a
+            # signature hash of 0x1 (little-endian)
+            msg_to_sign = 0x1.to_bytes(32, 'little')
+        else:
+            txn_copy = self._copy_for_sig(input_index, hash_type, tmp_script)
+
+            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) +
+                                           pack_u32(hash_type)))
+
+        sig = private_key.sign(msg_to_sign, False)
+
+        return sig, msg_to_sign
+
     def sign_input(self, input_index, hash_type, private_key, sub_script):
         """ Signs an input.
 
@@ -406,77 +498,40 @@ class Transaction(object):
 
         inp = self.inputs[input_index]
 
-        curr_script_sig = inp.script
         multisig = False
-        multisig_params = None
-        multisig_key_index = -1
         if sub_script.is_multisig_redeem():
             multisig = True
-            multisig_params = sub_script.extract_multisig_redeem_info()
         elif not sub_script.is_p2pkh():
             raise TypeError("Signing arbitrary redeem scripts is not currently supported.")
 
         tmp_script = sub_script.remove_op("OP_CODESEPARATOR")
 
-        compressed = False
-        if hash_type & 0x1f == self.SIG_HASH_SINGLE and len(self.inputs) > len(self.outputs):
-            # This is to deal with the bug where specifying an index
-            # that is out of range (wrt outputs) results in a
-            # signature hash of 0x1 (little-endian)
-            msg_to_sign = 0x1.to_bytes(32, 'little')
-        else:
-            txn_copy = self._copy_for_sig(input_index, hash_type, tmp_script)
-
+        # Before signing we should verify that the address in the
+        # sub_script corresponds to that of the private key
+        m = self._match_public_key(private_key, tmp_script)
+        if not m['match']:
             if multisig:
-                # Determine which of the public keys this private key
-                # corresponds to.
-                public_keys = multisig_params['public_keys']
-                pub_key_full = self._get_public_key_bytes(private_key, False)
-                pub_key_comp = self._get_public_key_bytes(private_key, True)
-
-                for i, p in enumerate(public_keys):
-                    if pub_key_full == p or pub_key_comp == p:
-                        multisig_key_index = i
-                        break
-
-                if multisig_key_index == -1:
-                    raise ValueError(
-                        "Public key derived from private key does not match any of the public keys in redeem script.")
+                msg = "Public key derived from private key does not match any of the public keys in redeem script."
             else:
-                # Before signing we should verify that the address in the
-                # sub_script corresponds to that of the private key
-                script_pub_key_h160 = tmp_script.get_hash160()
-                if script_pub_key_h160 is None:
-                    raise ValueError("Couldn't find public key hash in sub_script!")
+                msg = "Address derived from private key does not match sub_script!"
+            raise ValueError(msg)
 
-                # first try uncompressed key
-                h160 = None
-                for compressed in [True, False]:
-                    h160 = private_key.public_key.hash160(compressed)
-                    if h160 != script_pub_key_h160:
-                        h160 = None
-                    else:
-                        break
-
-                if h160 is None:
-                    raise ValueError("Address derived from private key does not match sub_script!")
-
-            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) +
-                                           pack_u32(hash_type)))
-
-        sig = private_key.sign(msg_to_sign, False)
+        sig, signed_message = self.get_signature_for_input(
+            input_index, hash_type, private_key, sub_script)
 
         if multisig:
             # For multisig, we need to determine if there are already
             # signatures and if so, where we insert this signature
-            inp.script = self._do_multisig_script([dict(index=multisig_key_index,
-                                                        signature=sig)],
-                                                  msg_to_sign,
-                                                  curr_script_sig,
-                                                  tmp_script,
-                                                  hash_type)
+            inp.script = self._do_multisig_script(
+                [dict(index=m['info']['multisig_key_index'],
+                      signature=sig)],
+                signed_message,
+                inp.script,
+                tmp_script,
+                hash_type)
         else:
-            pub_key_bytes = self._get_public_key_bytes(private_key, compressed)
+            pub_key_bytes = self._get_public_key_bytes(private_key,
+                                                       m['info']['compressed'])
             inp.script = Script([sig.to_der() + pack_compact_int(hash_type),
                                  pub_key_bytes])
 
