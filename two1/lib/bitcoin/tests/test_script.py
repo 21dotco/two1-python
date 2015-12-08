@@ -77,7 +77,7 @@ def test_is_p2pkh():
     assert not s.is_multisig_redeem()
     assert not s.is_p2pkh_sig()
 
-    assert not s.address()
+    assert s.address()
 
     addresses = s.get_addresses()
     assert len(addresses) == 1
