@@ -183,6 +183,25 @@ class Script(object):
         return (Script(raw_script), b)
 
     @staticmethod
+    def from_hex(h, size_prepended=False):
+        """ Deserializes a hex-encoded string into a Script.
+
+        Args:
+            h (str): hex-encoded string, starting with the length of
+                the script as a compact int.
+            size_prepended (bool): Should be True if the size of the
+                script has already been prepended.
+
+        Returns:
+            Script: A Script object.
+        """
+        b = bytes.fromhex(h)
+        if not size_prepended:
+            b = pack_var_str(b)
+        s, _ = Script.from_bytes(b)
+        return s
+
+    @staticmethod
     def build_p2pkh(hash160_key):
         """ Builds a Pay-to-Public-Key-Hash script.
 
@@ -786,3 +805,11 @@ class Script(object):
                                                b'')
 
         return self.raw_script
+
+    def to_hex(self):
+        """ Generates a hex encoding of the serialized script.
+
+        Returns:
+            str: Hex-encoded serialization.
+        """
+        return bytes_to_str(bytes(self))
