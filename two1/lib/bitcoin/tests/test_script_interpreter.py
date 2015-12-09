@@ -802,8 +802,12 @@ def test_op_checksig():
     pub_key_hex = "0x04e674caf81eb3bb4a97f2acf81b54dc930d9db6a6805fd46ca74ac3ab212c0bbf62164a11e7edaf31fbf24a878087d925303079f2556664f3b32d125f2138cbef"
     sig_hex = "0x3045022100ed84be709227397fb1bc13b749f235e1f98f07ef8216f15da79e926b99d2bdeb02206ff39819d91bc81fecd74e59a721a38b00725389abb9cbecb42ad1c939fd826201"
     s = Script("%s %s OP_CHECKSIG" % (sig_hex, pub_key_hex))
+    prev_script_pub_key = Script.build_p2pkh(utils.address_to_key_hash(
+        "1NKxQnbtKDdL6BY1UaKdrzCxQHfn3TQnqZ")[1])
 
-    si = ScriptInterpreter(txn=txn)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=prev_script_pub_key)
     si.run_script(s)
 
     assert len(si.stack) == 1
@@ -811,7 +815,9 @@ def test_op_checksig():
 
     s = Script("%s %s OP_CHECKSIGVERIFY" % (sig_hex, pub_key_hex))
 
-    si = ScriptInterpreter(txn=txn)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=prev_script_pub_key)
     si.run_script(s)
 
     assert len(si.stack) == 0
@@ -822,7 +828,9 @@ def test_op_checksig():
     sig_hex = "0x3045022100ed84be709227397fc1bc13b749f235e1f98f07ef8216f15da79e926b99d2bdeb02206ff39819d91bc81fecd74e59a721a38b00725389abb9cbecb42ad1c939fd826201"
     s = Script("%s %s OP_CHECKSIG" % (sig_hex, pub_key_hex))
 
-    si = ScriptInterpreter(txn=txn)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=prev_script_pub_key)
     si.run_script(s)
 
     assert len(si.stack) == 1
@@ -830,7 +838,9 @@ def test_op_checksig():
 
     s = Script("%s %s OP_CHECKSIGVERIFY" % (sig_hex, pub_key_hex))
 
-    si = ScriptInterpreter(txn=txn)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=prev_script_pub_key)
     si.run_script(s)
 
     assert len(si.stack) == 0
@@ -844,10 +854,9 @@ def test_op_checkmultisig():
     redeem_script = Script(sig_script.ast[-1][-1])
     script_pub_key = Script.build_p2sh(redeem_script.hash160())
 
-    txn_copy = txn._copy_for_sig(0,
-                                 Transaction.SIG_HASH_ALL,
-                                 redeem_script)
-    si = ScriptInterpreter(txn=txn_copy)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=redeem_script)
     si.run_script(sig_script)
     assert len(si.stack) == 4
     si.run_script(script_pub_key)
@@ -883,7 +892,9 @@ def test_op_checklocktimeverify():
     # This is one more (367988) so it should fail
     s = Script("0x749d05 OP_CHECKLOCKTIMEVERIFY")
 
-    si = ScriptInterpreter(txn=txn, input_index=0)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=out_script_pub_key)
     si.run_script(s)
 
     assert not si.valid
@@ -891,7 +902,9 @@ def test_op_checklocktimeverify():
     # This is negative, so it should fail
     s = Script("0xfff74d05 OP_CHECKLOCKTIMEVERIFY")
 
-    si = ScriptInterpreter(txn=txn, input_index=0)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=out_script_pub_key)
     si.run_script(s)
 
     assert not si.valid
@@ -899,7 +912,9 @@ def test_op_checklocktimeverify():
     # This is one less (367986) so it should pass
     s = Script("0x729d05 OP_CHECKLOCKTIMEVERIFY")
 
-    si = ScriptInterpreter(txn=txn, input_index=0)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=out_script_pub_key)
     si.run_script(s)
 
     assert not si.stop
@@ -913,7 +928,9 @@ def test_op_checklocktimeverify():
     # The last check is if there are mismatching notions of locktime
     txn_input.sequence_num = 1
     txn.lock_time = 500000001
-    si = ScriptInterpreter(txn=txn, input_index=0)
+    si = ScriptInterpreter(txn=txn,
+                           input_index=0,
+                           sub_script=out_script_pub_key)
     si.run_script(s)
 
     assert not si.valid

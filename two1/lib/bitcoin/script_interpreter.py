@@ -24,6 +24,12 @@ class ScriptInterpreter(object):
     Args:
         txn (Transaction): If provided, should be a Transaction object
             which the script is part of.
+        input_index (int): The index of the input in the transaction for
+            which the script is being run.
+        sub_script (Script): A Script object that replaces the input
+            signature script when verifying the transaction. In the
+            case of a P2PKH UTXO, this will be the UTXO scriptPubKey.
+            In the case of a P2SH UTXO, this will be the redeemScript.
     """
     DISABLED_OPS = ['OP_CAT', 'OP_SUBSTR', 'OP_LEFT', 'OP_RIGHT',
                     'OP_INVERT', 'OP_AND', 'OP_OR', 'OP_XOR',
@@ -33,12 +39,13 @@ class ScriptInterpreter(object):
                       'OP_RESERVED1', 'OP_RESERVED2']
     NOP_WORDS = ['OP_NOP%d' for i in [1] + list(range(3, 11))]
 
-    def __init__(self, txn=None, input_index=-1):
+    def __init__(self, txn=None, input_index=-1, sub_script=None):
         self._stack = deque()
         self._alt_stack = deque()
 
         self._txn = txn
         self._input_index = input_index
+        self._sub_script = sub_script
         self.stop = False
 
         self._if_else_stack = deque()
@@ -147,6 +154,15 @@ class ScriptInterpreter(object):
         from two1.lib.bitcoin.txn import Transaction
         if not isinstance(self._txn, Transaction):
             raise ScriptInterpreterError("No transaction found!")
+
+        if self._input_index < 0 or self._input_index >= len(self._txn.inputs):
+            raise ValueError("Invalid input index.")
+
+        if self._sub_script is None:
+            raise ValueError("sub_script must not be None.")
+
+        if not isinstance(self._sub_script, Script):
+            raise TypeError("sub_script must be a Script object.")
 
     def _get_int(self, pop=True):
         """ Casts the top stack element to an integer.
@@ -697,7 +713,10 @@ class ScriptInterpreter(object):
         pub_key = PublicKey.from_bytes(pub_key_bytes)
         sig = Signature.from_der(sig_der)
 
-        msg = bytes(self._txn) + utils.pack_u32(hash_type)
+        txn_copy = self._txn._copy_for_sig(input_index=self._input_index,
+                                           hash_type=hash_type,
+                                           sub_script=self._sub_script)
+        msg = bytes(txn_copy) + utils.pack_u32(hash_type)
         tx_digest = hashlib.sha256(msg).digest()
 
         verified = pub_key.verify(tx_digest, sig)
@@ -766,7 +785,11 @@ class ScriptInterpreter(object):
             raise ScriptInterpreterError("Not all signatures have the same hash type!")
 
         hash_type = hash_types.pop()
-        msg = bytes(self._txn) + utils.pack_u32(hash_type)
+        txn_copy = self._txn._copy_for_sig(input_index=self._input_index,
+                                           hash_type=hash_type,
+                                           sub_script=self._sub_script)
+
+        msg = bytes(txn_copy) + utils.pack_u32(hash_type)
         txn_digest = hashlib.sha256(msg).digest()
 
         # Now we verify
