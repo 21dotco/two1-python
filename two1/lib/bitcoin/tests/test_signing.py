@@ -120,8 +120,7 @@ def test_multisig_sign():
     script_pub_key = script.Script.build_p2sh(redeem_script.hash160())
     assert tx.verify_input_signature(0, script_pub_key)
 
-    with pytest.raises(TypeError):
-        tx.verify_input_signature(0, redeem_script)
+    assert not tx.verify_input_signature(0, redeem_script)
 
     wrong_script_pub_key = script.Script(
         "OP_HASH160 0x5c406de4915e37a7e71c7ef9bff42fbf1404daa1 OP_EQUAL")
