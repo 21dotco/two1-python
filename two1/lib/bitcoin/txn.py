@@ -662,14 +662,9 @@ class Transaction(object):
 
         sig_script = self.inputs[input_index].script
 
-        # Re-create txn for sig verification
-        s = sig_script.ast[0]
-        hash_type = s[-1]
-        txn_copy = self._copy_for_sig(input_index,
-                                      hash_type,
-                                      sub_script)
-
-        si = ScriptInterpreter(txn=txn_copy, input_index=input_index)
+        si = ScriptInterpreter(txn=self,
+                               input_index=input_index,
+                               sub_script=sub_script)
         si.run_script(sig_script)
         si.run_script(sub_script)
 
@@ -689,16 +684,9 @@ class Transaction(object):
         sig_info = sig_script.extract_multisig_sig_info()
         redeem_script = sig_info['redeem_script']
 
-        # Assume for now that all hash-types are the same. If they're not
-        # it'll be caught when running the script
-        hash_type = sig_info['signatures'][0][-1]
-
-        # Re-create txn for sig verification
-        txn_copy = self._copy_for_sig(input_index,
-                                      hash_type,
-                                      redeem_script)
-
-        si = ScriptInterpreter(txn=txn_copy, input_index=input_index)
+        si = ScriptInterpreter(txn=self,
+                               input_index=input_index,
+                               sub_script=redeem_script)
         si.run_script(sig_script)
         # In bitcoin core, a copy of the stack is made at this point
         # and restored following the run of the sub_script (next line)
