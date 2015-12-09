@@ -1,6 +1,7 @@
 import codecs
 import time
 import enum
+import math
 
 import two1.lib.bitcoin as bitcoin
 
@@ -82,6 +83,74 @@ class PaymentChannelModel:
         return "<Channel(url='{}', state='{}', creation_time={}, deposit_tx='{}', refund_tx='{}', payment_tx='{}', spend_tx='{}', spend_txid='{}')>".format(self.url, self.state, self.creation_time, self.deposit_tx, self.refund_tx, self.payment_tx, self.spend_tx, self.spend_txid)
 
 
+class PaymentChannelRedeemScript(bitcoin.Script):
+    """Derived class of Script to create and access the payment channel redeem
+    script."""
+
+    def __init__(self, merchant_public_key, customer_public_key, expiration_time):
+        """Instantiate a payment channel redeem script.
+
+        Args:
+            merchant_public_key (bitcoin.PublicKey): Merchant public key.
+            customer_public_key (bitcoin.PublicKey): Customer public key.
+            expiration_time (int): Expiration absolute time (UNIX time).
+
+        Returns:
+            PaymentChannelRedeemScript: Instance of PaymentChannelRedeemScript.
+
+        """
+        super().__init__(["OP_IF", merchant_public_key.compressed_bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", expiration_time.to_bytes(math.ceil(expiration_time.bit_length() / 8), 'little'), "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", customer_public_key.compressed_bytes, "OP_CHECKSIG"])
+
+    @classmethod
+    def from_bytes(cls, b):
+        """Instantiate a payment channel redeem script from bytes.
+
+        Args:
+            b (bytes): Serialized payment channel redeem script.
+
+        Returns:
+            PaymentChannelRedeemScript: Instance of PaymentChannelRedeemScript.
+
+        """
+        self = cls.__new__(cls)
+        bitcoin.Script.__init__(self, b)
+
+        if not bitcoin.Script.validate_template(self, ["OP_IF", bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", bytes, "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", bytes, "OP_CHECKSIG"]):
+            raise ValueError("Invalid payment channel redeem script.")
+
+        return self
+
+    @property
+    def merchant_public_key(self):
+        """Get channel merchant public key.
+
+        Returns:
+            bitcoin.PublicKey: merchant public key.
+
+        """
+        return bitcoin.PublicKey.from_bytes(self[1])
+
+    @property
+    def customer_public_key(self):
+        """Get channel customer public key.
+
+        Returns:
+            bitcoin.PublicKey: Customer public key.
+
+        """
+        return bitcoin.PublicKey.from_bytes(self[-2])
+
+    @property
+    def expiration_time(self):
+        """Get channel expiration time.
+
+        Returns:
+            int: Expiration absolute time (UNIX time).
+
+        """
+        return int.from_bytes(self[4], 'little')
+
+
 class PaymentChannelStateMachine:
     """Customer payment channel state machine interface."""
 
@@ -123,9 +192,8 @@ class PaymentChannelStateMachine:
                 deposit transaction.
 
         Returns:
-            tuple: Serialized half-signed refund transaction (ASCII hex),
-                callback that takes serialized fully-signed refund transaction
-                (ASCII hex).
+            tuple: Serialized deposit transaction (ASCII hex), and serialized
+                redeem script (ASCII hex).
 
         Raises:
             StateTransitionError: If channel is already open.
@@ -164,8 +232,7 @@ class PaymentChannelStateMachine:
         merchant_public_key = bitcoin.PublicKey.from_bytes(codecs.decode(merchant_public_key, 'hex_codec'))
 
         # Build redeem script
-        public_keys = [customer_public_key.compressed_bytes, merchant_public_key.compressed_bytes]
-        redeem_script = bitcoin.Script.build_multisig_redeem(2, public_keys)
+        redeem_script = PaymentChannelRedeemScript(merchant_public_key, customer_public_key, expiration_time)
 
         # Build deposit tx
         try:
@@ -180,49 +247,12 @@ class PaymentChannelStateMachine:
         self._model.creation_time = creation_time
         self._model.deposit_tx = deposit_tx
         self._model.refund_tx = refund_tx
-
-        return (refund_tx.to_hex(), lambda refund_tx: self._create_finish(refund_tx, zeroconf))
-
-    def _create_finish(self, refund_tx, zeroconf):
-        # Assert state
-        if self._model.state != PaymentChannelState.OPENING:
-            raise StateTransitionError("Channel state is not Opening.")
-
-        # Deserialize refund transaction
-        refund_tx = bitcoin.Transaction.from_hex(refund_tx)
-
-        # Validate transaction input
-        if len(refund_tx.inputs) != 1:
-            raise InvalidTransactionError("Invalid refund transaction inputs length.")
-        elif str(refund_tx.inputs[0].outpoint) != self.deposit_txid:
-            raise InvalidTransactionError("Refund transaction input does not use deposit transction.")
-
-        # Validate transaction output
-        if len(refund_tx.outputs) != 1:
-            raise InvalidTransactionError("Invalid refund transaction outputs length.")
-        # Find output corresponding to our address
-        my_hash160 = "0x" + codecs.encode(self._customer_public_key.hash160(), "hex_codec").decode('utf-8')
-        my_outputs = list(filter(lambda output: output.script.get_hash160() == my_hash160, refund_tx.outputs))
-        if len(my_outputs) != 1:
-            raise InvalidTransactionError("Invalid output address in refund transaction.")
-        # Validate transaction output value
-        if refund_tx.outputs[0].value != self.deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT:
-            raise InvalidTransactionError("Invalid output value in refund transaction.")
-
-        # Validate transaction lock time
-        if refund_tx.lock_time != self.expiration_time:
-            raise InvalidTransactionError("Invalid locktime in refund transaction.")
-
-        # Verify P2SH deposit spend signature
-        if not refund_tx.verify_input_signature(0, self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].script):
-            raise InvalidTransactionError("Invalid input signature in refund transaction.")
-
-        # Update core state
-        self._model.refund_tx = refund_tx
         if not zeroconf:
             self._model.state = PaymentChannelState.CONFIRMING_DEPOSIT
         else:
             self._model.state = PaymentChannelState.READY
+
+        return (deposit_tx.to_hex(), redeem_script.to_hex())
 
     def confirm(self):
         """Confirm the deposit of the payment channel.
@@ -377,14 +407,13 @@ class PaymentChannelStateMachine:
             raise InvalidTransactionError("Spent transaction input does not use deposit transction.")
 
         # Find output corresponding to our address
-        my_hash160 = "0x" + codecs.encode(self._customer_public_key.hash160(), "hex_codec").decode('utf-8')
-        my_outputs = list(filter(lambda output: output.script.get_hash160() == my_hash160, spend_tx.outputs))
+        my_outputs = list(filter(lambda output: output.script.get_hash160() == self._customer_public_key.hash160(), spend_tx.outputs))
         if len(my_outputs) != 1:
-            raise InvalidTransactionError("Invalid spent transaction outputs length.")
+            raise InvalidTransactionError("Invalid spent transaction outputs.")
 
         # Verify P2SH deposit spend signature
         if not spend_tx.verify_input_signature(0, self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].script):
-            raise InvalidTransactionError("Invalid input signature in spend transaction.")
+            raise InvalidTransactionError("Invalid scriptSig in spend transaction.")
 
         # Save spend tx
         self._model.spend_tx = spend_tx
@@ -401,7 +430,7 @@ class PaymentChannelStateMachine:
             bitcoin.Script: Redeem script.
 
         """
-        return self._model.refund_tx.inputs[0].script.extract_multisig_sig_info()['redeem_script']
+        return PaymentChannelRedeemScript.from_bytes(self._model.refund_tx.inputs[0].script[-1])
 
     @property
     def _customer_public_key(self):
@@ -411,7 +440,7 @@ class PaymentChannelStateMachine:
             bitcoin.PublicKey: Customer public key.
 
         """
-        return bitcoin.PublicKey.from_bytes(self._redeem_script.extract_multisig_redeem_info()['public_keys'][0])
+        return self._redeem_script.customer_public_key
 
     @property
     def _merchant_public_key(self):
@@ -421,7 +450,7 @@ class PaymentChannelStateMachine:
             bitcoin.PublicKey: Merchant public key.
 
         """
-        return bitcoin.PublicKey.from_bytes(self._redeem_script.extract_multisig_redeem_info()['public_keys'][1])
+        return self._redeem_script.merchant_public_key
 
     # Public Properties
 
@@ -554,7 +583,7 @@ class PaymentChannelStateMachine:
 
     @property
     def payment_tx(self):
-        """Get channel payment transaction.
+        """Get channel half-signed payment transaction.
 
         Returns:
             str or None: Serialized payment transaction (ASCII hex).

@@ -116,21 +116,15 @@ class PaymentChannel:
 
             # Call create() on state machine
             try:
-                (halfsigned_refund_tx, create_callback) = sm.create(pubkey, deposit, expiration, fee, zeroconf, use_unconfirmed)
+                (deposit_tx, redeem_script) = sm.create(pubkey, deposit, expiration, fee, zeroconf, use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 
-            # Call sign_refund_tx(refund_tx) on server
-            (refund_tx, open_callback) = payment_server.open(halfsigned_refund_tx)
-
-            # Call create() callback on state machine
-            create_callback(refund_tx)
+            # Call open(deposit_tx, redeem_script) on server
+            payment_server.open(deposit_tx, redeem_script)
 
             # Call broadcast(deposit_tx) on blockchain
             blockchain.broadcast_tx(sm.deposit_tx)
-
-            # Call open_finish(deposit_txid, deposit_tx) on server
-            open_callback(sm.deposit_txid, sm.deposit_tx)
 
             # Form the complete payment channel URL
             model.url = url + ("/" if url[-1] != "/" else "") + sm.deposit_txid

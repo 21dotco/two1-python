@@ -6,6 +6,7 @@ import two1.lib.bitcoin as bitcoin
 from two1.lib.wallet import Wallet
 
 from . import blockchain
+from .statemachine import PaymentChannelRedeemScript
 
 
 class PaymentChannelServerError(Exception):
@@ -33,16 +34,12 @@ class PaymentChannelServerBase:
         """
         raise NotImplementedError()
 
-    def open(self, refund_tx):
+    def open(self, deposit_tx, redeem_script):
         """Open a new payment channel with the merchant.
 
         Args:
-            refund_tx (str): Serialized half-signed refund transaction.
-
-        Returns:
-            tuple: Tuple of signed serialized refund transaction and callback
-                that takes deposit txid and deposit transaction to finish
-                opening the payment channel.
+            deposit_tx (str): Serialized deposit transaction.
+            redeem_script (str): Serialized redeem script.
 
         """
         raise NotImplementedError()
@@ -96,7 +93,7 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
     """RESTful HTTP Payment Channel Server interface. Protocol documented in
     docs/rest-handshake-402.txt."""
 
-    PROTOCOL_VERSION = 1
+    PROTOCOL_VERSION = 2
 
     def __init__(self, url):
         """Instantiate a HTTP Payment Channel Server interface for the
@@ -125,18 +122,10 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
 
         return channel_info['public_key']
 
-    def open(self, refund_tx):
-        r = requests.post(self._url, data={'refund_tx': refund_tx})
+    def open(self, deposit_tx, redeem_script):
+        r = requests.post(self._url, data={'deposit_tx': deposit_tx, 'redeem_script': redeem_script})
         if r.status_code != 200:
-            raise PaymentChannelServerError("Signing refund transaction: Status Code {}, {}".format(r.status_code, r.text))
-
-        signed_refund = r.json()
-        return (signed_refund['refund_tx'], self._open_finish)
-
-    def _open_finish(self, deposit_txid, deposit_tx):
-        r = requests.put(self._url + "/" + deposit_txid, data={'deposit_tx': deposit_tx})
-        if r.status_code != 200:
-            raise PaymentChannelServerError("Sending deposit transaction: Status Code {}, {}".format(r.status_code, r.text))
+            raise PaymentChannelServerError("Opening payment channel: Status Code {}, {}".format(r.status_code, r.text))
 
     def pay(self, deposit_txid, payment_tx):
         r = requests.put(self._url + "/" + deposit_txid, data={'payment_tx': payment_tx})
@@ -165,7 +154,7 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
 
 
 class MockPaymentChannelServer(PaymentChannelServerBase):
-    """Mock Payment Channel Server interface for testing."""
+    """Mock Payment Channel Server interface for local testing."""
 
     def __init__(self, url, wallet=None):
         """Instantiate a Mock Payment Channel Server interface for the
@@ -185,41 +174,28 @@ class MockPaymentChannelServer(PaymentChannelServerBase):
     def get_public_key(self):
         return codecs.encode(self._wallet.get_payout_public_key('merchant').compressed_bytes, 'hex_codec').decode('utf-8')
 
-    def open(self, refund_tx):
-        # Deserialize refund tx and redeem script
-        refund_tx = bitcoin.Transaction.from_hex(refund_tx)
-        redeem_script = refund_tx.inputs[0].script.extract_multisig_sig_info()['redeem_script']
+    def open(self, deposit_tx, redeem_script):
+        # Deserialize deposit tx and redeem script
+        deposit_tx = bitcoin.Transaction.from_hex(deposit_tx)
+        redeem_script = bitcoin.Script.from_hex(redeem_script)
 
-        # Verify partial signature in refund transaction
-        if not refund_tx.verify_partial_multisig(0, bitcoin.Script.build_p2sh(redeem_script.hash160())):
-            raise Exception("Partial verification of refund transaction failed.")
-
-        # Sign refund tx
-        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][1])
-        private_key = self._wallet.get_private_for_public(public_key)
-        assert private_key, "Redeem script public key not found in wallet."
-        refund_tx.sign_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)
-
-        # Return serialized refund tx
-        return (refund_tx.to_hex(), self._open_finish)
-
-    def _open_finish(self, deposit_txid, deposit_tx):
-        pass
+        # FIXME verify
 
     def pay(self, deposit_txid, payment_tx):
         # Deserialize payment tx and redeem script
         payment_tx = bitcoin.Transaction.from_hex(payment_tx)
-        redeem_script = payment_tx.inputs[0].script.extract_multisig_sig_info()['redeem_script']
-
-        # Verify partial signature in payment transaction
-        if not payment_tx.verify_partial_multisig(0, bitcoin.Script.build_p2sh(redeem_script.hash160())):
-            raise Exception("Partial verification of refund transaction failed.")
+        redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
 
         # Sign payment tx
-        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][1])
+        public_key = redeem_script.merchant_public_key
         private_key = self._wallet.get_private_for_public(public_key)
         assert private_key, "Redeem script public key not found in wallet."
-        payment_tx.sign_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)
+        sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
+
+        # Update input script sig
+        payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL))
+
+        # FIXME verify
 
         # Write payment tx to file
         with open(deposit_txid + ".server.tx", "w") as f:
@@ -242,8 +218,9 @@ class MockPaymentChannelServer(PaymentChannelServerBase):
 
         # Verify deposit txid singature
         payment_tx = bitcoin.Transaction.from_hex(payment_tx_hex)
-        redeem_script = payment_tx.inputs[0].script.extract_multisig_sig_info()['redeem_script']
-        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][0])
+        redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
+
+        public_key = redeem_script.customer_public_key
         assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
 
         # Broadcast to blockchain
