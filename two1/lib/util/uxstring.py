@@ -229,6 +229,7 @@ class UxString:
     publish_success = click.style(
         "{} successfully published to {}. It may take a couple of minutes for your app "
         "to show up in the marketplace.", fg="magenta")
+
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
@@ -268,13 +269,16 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="red")
 
     # search
-    search_stub = """%s
-- Full search functionality will be available in a forthcoming 21 update
-- In the meantime, please visit the 21 Developer Community at %s
-- There, you can find machine-payable endpoints to buy from other 21 developers
-For further information, please contact %s""" % \
-  (coming_soon, slack_21_co, support_21_co)
+    list_all = "Listing all the marketplace apps: "
+    pagination = click.style("\nType ", fg="blue") + click.style(
+        "N", bold=True, fg="blue") + click.style(
+        " for next page, ", fg="blue") + click.style(
+        "B", bold=True,fg="blue") + click.style(
+        " for the previous page, and ", fg="blue") + click.style(
+        "C", bold=True, fg="blue") + click.style(
+        " to stop search", fg="blue")
 
+    empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n", fg='blue')
     # rate
     rate_stub = """%s
 - Rating functionality will be available in a forthcoming 21 update

@@ -1,9 +1,8 @@
-import re
+import urllib
+
 import base64
 import json
 import click
-from collections import namedtuple
-import urllib.parse
 import datetime
 import requests
 
@@ -161,9 +160,18 @@ class TwentyOneRestClient(object):
 
     def publish(self, publish_info):
         data = json.dumps(publish_info)
-        path = "/pool/market/"
+        path = "/market/apps/"
         return self._request(sign_username=self.username, method="POST", path=path,
                              data=data)
+
+    def search(self, query=None, page=0):
+        path = "/market/apps/?page={}".format(page)
+        if query:
+            query = urllib.parse.quote(query)
+            path += "&query={}".format(query)
+
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # GET /mmm/v1/search
     def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
         method = "GET"
@@ -362,41 +370,6 @@ class TwentyOneRestClient(object):
         if len(form) > 0:
             formstr = "--data '%s'" % json.dumps(form)
         return "21 buy %s%s %s" % (url, querystr, formstr)
-
-    # GET /docs/api-docs
-    def search(self, query="", detail=False, page_num=1):
-        """Search the Many Machine Market. If blank query, list all endpoints.
-        """
-        path = "/docs/api-docs"
-        data = self._request(path=path).json()
-        apis = []
-        for xx in data['apis']:
-            apipath = path + xx['path']
-            r = self._request(path=apipath).json()['apis']
-            apis.append(r)
-        fields = ("url", "method", "description", "price", "example")
-        Listing = namedtuple("Listing", fields)
-        listings = []
-        for api in apis:
-            for function in api:
-                ops = function['operations']
-                assert len(ops) == 1
-                url = self.server_url + function['path']
-                example = self.params2example(ops[0]['parameters'], url) \
-                    if detail else ""
-                ll = Listing(url=url,
-                             method=ops[0]['method'],
-                             description=function['description'],
-                             price=0,
-                             example=example)
-                if query == "":
-                    listings.append(ll)
-                else:
-                    if re.search(query, ll.url) or \
-                       re.search(query, ll.description):
-                        listings.append(ll)
-
-        return listings
 
 
 if __name__ == "__main__":
