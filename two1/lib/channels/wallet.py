@@ -42,7 +42,7 @@ class WalletWrapperBase:
         raise NotImplementedError()
 
     def create_refund_tx(self, deposit_tx, redeem_script, customer_public_key, expiration_time, fee):
-        """Create a half-signed refund transaction for a payment channel.
+        """Create a fully-signed refund transaction for a payment channel.
 
         Args:
             deposit_tx (bitcoin.Transaction): Deposit transaction object.
@@ -53,7 +53,7 @@ class WalletWrapperBase:
             fee (int): Fee in satoshis.
 
         Returns:
-            bitcoin.Transaction: Half-signed refund transaction object.
+            bitcoin.Transaction: Refund transaction object.
 
         """
         raise NotImplementedError()
@@ -123,16 +123,19 @@ class Two1WalletWrapper(WalletWrapperBase):
         deposit_amount = deposit_tx.outputs[deposit_utxo_index].value - fee
 
         # Build unsigned refund transaction
-        script_sig = bitcoin.Script()
-        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, script_sig, 0x0)]
+        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0x0)]
         outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(customer_public_key.hash160()))]
         refund_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, expiration_time)
 
         # Sign refund transaction
-        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][0])
+        public_key = redeem_script.customer_public_key
         private_key = self._wallet.get_private_for_public(public_key)
         assert private_key, "Redeem script public key not found in wallet."
-        refund_tx.sign_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)
+        sig = refund_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
+
+        # Update input script sig
+        script_sig = bitcoin.Script([sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL), b"\x00", bytes(redeem_script)])
+        refund_tx.inputs[0].script = script_sig
 
         return refund_tx
 
@@ -144,16 +147,19 @@ class Two1WalletWrapper(WalletWrapperBase):
         deposit_amount = deposit_tx.outputs[deposit_utxo_index].value - fee
 
         # Build unsigned payment transaction
-        script_sig = bitcoin.Script()
-        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, script_sig, 0xffffffff)]
+        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0xffffffff)]
         outputs = [bitcoin.TransactionOutput(amount, bitcoin.Script.build_p2pkh(merchant_public_key.hash160())), bitcoin.TransactionOutput(deposit_amount - amount, bitcoin.Script.build_p2pkh(customer_public_key.hash160()))]
         payment_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, 0x0)
 
         # Sign payment transaction
-        public_key = bitcoin.PublicKey.from_bytes(redeem_script.extract_multisig_redeem_info()['public_keys'][0])
+        public_key = redeem_script.customer_public_key
         private_key = self._wallet.get_private_for_public(public_key)
         assert private_key, "Redeem script public key not found in wallet."
-        payment_tx.sign_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)
+        sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
+
+        # Update input script sig
+        script_sig = bitcoin.Script([sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL), "OP_1", bytes(redeem_script)])
+        payment_tx.inputs[0].script = script_sig
 
         return payment_tx
 
