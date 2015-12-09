@@ -3,6 +3,7 @@ import hashlib
 import struct
 
 from two1.lib.bitcoin import crypto
+from two1.lib.bitcoin.exceptions import ScriptInterpreterError
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.script_interpreter import ScriptInterpreter
@@ -623,23 +624,12 @@ class Transaction(object):
 
         Args:
             input_index (int): The index of the input to verify.
-            sub_script (Script): The P2SH script in the corresponding outpoint.
+            sub_script (Script): The script in the corresponding outpoint.
 
         Returns:
             bool: True if the sigScript is verified, False otherwise.
         """
-        # First extract the signature script
-        sig_script = self.inputs[input_index].script
-
-        # Both of these will eventually get replaced with a generic
-        # script interpreter & verifier.
-        rv = False
-        if sig_script.is_multisig_sig():
-            rv = self._verify_p2sh_multisig_input(input_index, sub_script)
-        elif sub_script.is_p2pkh():
-            rv = self._verify_p2pkh_input(input_index, sub_script)
-
-        return rv
+        return self._verify_input(input_index, sub_script)
 
     def verify_partial_multisig(self, input_index, sub_script):
         """ Verifies a partially signed multi-sig input.
@@ -654,67 +644,52 @@ class Transaction(object):
         Returns:
             bool: True if > 1 and <= m signatures verify the input.
         """
-        return self._verify_p2sh_multisig_input(input_index, sub_script, True)
+        return self._verify_input(input_index, sub_script, True)
 
-    def _verify_p2pkh_input(self, input_index, sub_script):
-        if not sub_script.is_p2pkh():
-            raise TypeError("sub_script is not a P2PKH script!")
+    def _verify_input(self, input_index, sub_script, partial_multisig=False):
+        p2sh = sub_script.is_p2sh()
 
         sig_script = self.inputs[input_index].script
 
         si = ScriptInterpreter(txn=self,
                                input_index=input_index,
                                sub_script=sub_script)
-        si.run_script(sig_script)
-        si.run_script(sub_script)
-
-        return si.valid
-
-    def _verify_p2sh_multisig_input(self, input_index, sub_script,
-                                    partial=False):
-        if not sub_script.is_p2sh():
-            raise TypeError("sub_script is not a P2SH script!")
-
-        rv = True
-        sig_script = self.inputs[input_index].script
-
-        if not sig_script.is_multisig_sig():
-            raise TypeError("sigScript doesn't appear to be a multisig signature script")
-
-        sig_info = sig_script.extract_multisig_sig_info()
-        redeem_script = sig_info['redeem_script']
-
-        si = ScriptInterpreter(txn=self,
-                               input_index=input_index,
-                               sub_script=redeem_script)
-        si.run_script(sig_script)
-        # In bitcoin core, a copy of the stack is made at this point
-        # and restored following the run of the sub_script (next line)
-        # so that the result of the OP_EQUAL is not there when running
-        # the redeem_script. Since we've validated our scripts to be "standard"
-        # and we're not yet running arbitrary scripts, we will do an op_verify
-        # after running the sub_script to clear that portion of the stack out.
-        # See: https://github.com/bitcoin/bitcoin/blob/327291af02d05e09188713d882bf68ac708c1077/src/script/interpreter.cpp#L1169
-        si.run_script(sub_script)
-        if not si.valid:
+        try:
+            si.run_script(sig_script)
+        except ScriptInterpreterError:
             return False
 
-        si._op_verify()
-
-        if partial:
-            # This is a hack for partial verification
-            partial_script = copy.deepcopy(redeem_script)
-            partial_script.ast[-1] = 'OP_CHECKPARTIALMULTISIG'
+        # This copy_stack and the restore_stack emulate the behavior
+        # found in bitcoin core for evaluating P2SH scripts. See:
+        # https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.cpp#L1170
+        if p2sh:
+            si.copy_stack()
 
         try:
-            if partial:
-                si.run_script(partial_script)
-                rv &= si.match_count > 0 and si.match_count <= len(sig_info['signatures'])
-            else:
-                si.run_script(redeem_script)
-                rv &= si.valid
-        except:
-            rv = False
+            si.run_script(sub_script)
+        except ScriptInterpreterError:
+            return False
+        rv = si.valid
+
+        if p2sh:
+            si.restore_stack()
+            redeem_script = Script(si.stack.pop())
+            si._sub_script = redeem_script
+
+            try:
+                if sig_script.is_multisig_sig() and partial_multisig:
+                    # This is a hack for partial verification
+                    partial_script = copy.deepcopy(redeem_script)
+                    partial_script.ast[-1] = 'OP_CHECKPARTIALMULTISIG'
+
+                    sig_info = sig_script.extract_multisig_sig_info()
+                    si.run_script(partial_script)
+                    rv &= si.match_count > 0 and si.match_count <= len(sig_info['signatures'])
+                else:
+                    si.run_script(redeem_script)
+                    rv &= si.valid
+            except:
+                rv = False
 
         return rv
 

@@ -1,4 +1,5 @@
 from collections import deque
+import copy
 import hashlib
 import struct
 
@@ -42,6 +43,7 @@ class ScriptInterpreter(object):
     def __init__(self, txn=None, input_index=-1, sub_script=None):
         self._stack = deque()
         self._alt_stack = deque()
+        self._stack_copy = None
 
         self._txn = txn
         self._input_index = input_index
@@ -125,6 +127,20 @@ class ScriptInterpreter(object):
         """ Getter for the stack
         """
         return self._stack
+
+    def copy_stack(self):
+        """ Copies the current stack
+        """
+        self._stack_copy = copy.deepcopy(self._stack)
+
+    def restore_stack(self):
+        """ Restores the stack to a previously copied stack
+        """
+        if self._stack_copy is not None:
+            self._stack = self._stack_copy
+            self._stack_copy = None
+        else:
+            raise ValueError("Stack must be copied before it can be restored.")
 
     def _check_stack_len(self, min_len, alt=False):
         """ Checks that the stack has a minimum number
