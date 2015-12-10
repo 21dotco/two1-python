@@ -24,7 +24,7 @@ def publish(ctx, app_directory, marketplace):
 
 @capture_usage
 def _publish(config, app_directory, marketplace):
-    api_docs_path = os.path.join(app_directory, "api-docs", "manifest.json")
+    api_docs_path = os.path.join(app_directory, "manifest", "manifest.json")
     try:
         manifest_json = check_app_manifest(api_docs_path)
         app_name = manifest_json["info"]["title"]

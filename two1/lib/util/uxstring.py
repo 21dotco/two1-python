@@ -270,15 +270,17 @@ refer to 21.co/app for futher instructions.", fg="red")
 
     # search
     list_all = "Listing all the marketplace apps: "
-    pagination = click.style("\nType ", fg="blue") + click.style(
-        "N", bold=True, fg="blue") + click.style(
+    pagination = click.style("\nType index of the app for more info, ",
+                             fg="blue") + click.style(
+        "n", bold=True, fg="blue") + click.style(
         " for next page, ", fg="blue") + click.style(
-        "B", bold=True,fg="blue") + click.style(
-        " for the previous page, and ", fg="blue") + click.style(
-        "C", bold=True, fg="blue") + click.style(
+        "b", bold=True,fg="blue") + click.style(
+        " for the previous page, ", fg="blue") + click.style(
+        "q", bold=True, fg="blue") + click.style(
         " to stop search", fg="blue")
 
-    empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n", fg='blue')
+    empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n",
+                                fg='blue')
     # rate
     rate_stub = """%s
 - Rating functionality will be available in a forthcoming 21 update
