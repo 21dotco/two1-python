@@ -204,8 +204,11 @@ class Script(object):
             scr (Script): a serializable Script object containing the
                 p2pkh script.
         """
-        return Script('OP_DUP OP_HASH160 0x%s OP_EQUALVERIFY OP_CHECKSIG' %
-                      bytes_to_str(hash160_key))
+        return Script(['OP_DUP',
+                       'OP_HASH160',
+                       hash160_key,
+                       'OP_EQUALVERIFY',
+                       'OP_CHECKSIG'])
 
     @staticmethod
     def build_p2sh(hash160_key):
@@ -220,7 +223,7 @@ class Script(object):
                 p2sh script.
         """
 
-        return Script('OP_HASH160 0x%s OP_EQUAL' % bytes_to_str(hash160_key))
+        return Script(['OP_HASH160', hash160_key, 'OP_EQUAL'])
 
     @staticmethod
     def build_multisig_redeem(m, pub_keys):
@@ -461,29 +464,29 @@ class Script(object):
                 'signature': The DER-encoded signature
                 'public_key': The bytes corresponding the public key.
         """
-        if len(self.ast) != 2:
+        if len(self) != 2:
             raise TypeError("Script is not a P2PKH signature script")
 
-        if not isinstance(self.ast[0], bytes) or \
-           not isinstance(self.ast[1], bytes):
+        if not isinstance(self[0], bytes) or \
+           not isinstance(self[1], bytes):
             raise TypeError(
                 "Signature script must contain two push operations.")
 
         try:
-            sig_bytes = self.ast[0]
+            sig_bytes = self[0]
             hash_type = sig_bytes[-1]
             _ = Signature.from_der(sig_bytes[:-1])
         except ValueError:
             raise TypeError("Signature does not appear to be valid")
 
         try:
-            _ = PublicKey.from_bytes(self.ast[1])
+            _ = PublicKey.from_bytes(self[1])
         except ValueError:
             raise TypeError("Public key does not appear to be valid")
 
         return dict(hash_type=hash_type,
                     signature=sig_bytes,
-                    public_key=self.ast[1])
+                    public_key=self[1])
 
     def extract_multisig_redeem_info(self):
         """ Returns information about the multisig redeem script
@@ -644,13 +647,14 @@ class Script(object):
         Returns:
             bytes: the hash160 or None.
         """
-        if not self._ast:
-            self._parse()
+        if not self._tokens:
+            raise ScriptParsingError(
+                "Script is empty or has not been disassembled")
 
         # Scan for OP_HASH160
-        for i, opcode in enumerate(self._ast):
+        for i, opcode in enumerate(self):
             if opcode == "OP_HASH160":
-                return self._ast[i+1]
+                return self[i+1]
 
         return None
 
@@ -711,7 +715,7 @@ class Script(object):
         if op not in self.BTC_OPCODE_TABLE:
             raise ValueError("Unknown op (%s)" % (op))
 
-        return Script(" ".join([t for t in str(self).split() if t != op]))
+        return Script([t for t in self._tokens if t != op])
 
     def _tokenize(self, s):
         """ Breaks up a string into tokens and converts all tokens
