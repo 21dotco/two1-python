@@ -1,13 +1,15 @@
 """Server-side implementation of payment channels."""
 import time
 import codecs
-from two1.lib.bitcoin import PublicKey
-from two1.commands.config import TWO1_PROVIDER_HOST
-from two1.lib.blockchain import TwentyOneProvider
+import threading
+
+from two1.lib.bitcoin.utils import pack_u32
+from two1.lib.bitcoin import PublicKey, Transaction, Hash, Signature
+from two1.lib.channels.statemachine import PaymentChannelRedeemScript
+from two1.lib.channels.blockchain import InsightBlockchain
 
 from .wallet import Two1WalletWrapper
-from .wallet import get_redeem_script
-from .models import DatabaseSQLite3
+from .models import DatabaseSQLite3, ChannelSQLite3, Channel
 
 
 class PaymentServerError(Exception):
@@ -43,14 +45,29 @@ class PaymentServer:
     server to redeem micropayments made within the channel.
     """
 
-    # Minimum transaction fee and total payment amount (dust limit)
+    DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com"
+    """Default mainnet blockchain URL."""
+
     MIN_TX_FEE = 5000
+    """Minimum transaction fee for payment channel deposit/payment."""
+
     DUST_LIMIT = 546
-    MIN_EXP_TIME = 4 * 3600
-    _VERSION = 1
+    """Minimum payment amount (dust limit) for any transaction output."""
+
+    MIN_EXP_TIME = 12 * 3600
+    """Minimum expiration time (in sec) for a payment channel refund."""
+
+    EXP_TIME_BUFFER = 4 * 3600
+    """Buffer time before expiration (in sec) in which to broadcast payment."""
+
+    PROTOCOL_VERSION = 2
+    """Payment channel protocol version."""
+
+    lock = threading.Lock()
+    """Thread lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None):
+                 blockchain=None, zeroconf=True):
         """Initalize the payment server.
 
         Args:
@@ -66,102 +83,73 @@ class PaymentServer:
             blockchain (two1.lib.blockchain.provider): a blockchain data
                 provider capable of broadcasting raw transactions.
         """
+        self.zeroconf = zeroconf
         self._wallet = Two1WalletWrapper(wallet, account)
         self._blockchain = blockchain
         self._db = db
         if db is None:
             self._db = DatabaseSQLite3()
         if blockchain is None:
-            self._blockchain = TwentyOneProvider(TWO1_PROVIDER_HOST)
+            self._blockchain = InsightBlockchain(PaymentServer.DEFAULT_INSIGHT_BLOCKCHAIN_URL)
 
     def discovery(self):
         """Return the merchant's public key.
 
         A customer requests a public key from a merchant. This allows the
-        customer to create a multi-signature refund transaction with both the
+        customer to create a multi-signature payment transaction with both the
         customer and merchant's public keys.
         """
         return self._wallet.get_public_key()
 
-    def initialize_handshake(self, refund_tx):
-        """Initialize a payment channel.
-
-        The customer initializes the payment channel by providing a half-signed
-        multi-signature refund transaction. This allows the merchant to return
-        a fully executed refund transaction.
+    def open(self, deposit_tx, redeem_script):
+        """Open a payment channel.
 
         Args:
-            refund_tx (two1.lib.bitcoin.txn.Transaction): half-signed refund
-                Transaction from a customer. This object is passed by reference
-                and modified directly.
+            deposit_tx (string): signed deposit transaction which pays to a
+                2 of 2 multisig script hash.
+            redeem_script (string): the redeem script that comprises the script
+                hash so that the merchant can verify.
+        Returns:
+            (string): deposit transaction id
         """
-        # Verify that the transaction is built correctly
-        if not self._wallet.verify_half_signed_tx(refund_tx):
-            raise TransactionVerificationError(
-                'Half-signed transaction could not be verified.')
+        with self.lock:
+            # Parse payment channel `open` parameters
+            deposit_tx = Transaction.from_hex(deposit_tx)
+            redeem_script = PaymentChannelRedeemScript.from_bytes(codecs.decode(redeem_script, 'hex_codec'))
 
-        # Verify that the lock time is an allowable amount in the future
-        minimum_locktime = int(time.time()) + self.MIN_EXP_TIME
-        if refund_tx.lock_time < minimum_locktime:
-            raise TransactionVerificationError(
-                'Transaction locktime must be further in the future.')
+            # Verify that the deposit pays to the redeem script
+            output_index = deposit_tx.output_index_for_address(redeem_script.hash160())
+            if output_index is None:
+                raise BadTransactionError('Deposit does not pay to the provided script hash.')
 
-        # Try to create the channel and verify that the deposit txid is good
-        deposit_txid = str(refund_tx.inputs[0].outpoint)
-        redeem_script = get_redeem_script(refund_tx)
-        pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
-        merch_pubkey = self._wallet.get_merchant_key_from_keys(pubkeys)
+            # Parse payment channel data for open
+            deposit_txid = str(deposit_tx.hash)
+            merch_pubkey = codecs.encode(redeem_script.merchant_public_key.compressed_bytes, 'hex_codec').decode()
+            amount = deposit_tx.outputs[output_index].value
 
-        # Sign the remaining half of the transaction
-        self._wallet.sign_half_signed_tx(refund_tx, merch_pubkey)
+            # Verify that one of the public keys belongs to the merchant
+            valid_merchant_public_key = self._wallet.validate_merchant_public_key(redeem_script.merchant_public_key)
+            if not valid_merchant_public_key:
+                raise BadTransactionError('Public key does not belong to the merchant.')
 
-        try:
-            # Save the initial payment channel
-            self._db.pc.create(refund_tx, merch_pubkey)
-        except:
-            raise BadTransactionError(
-                'That deposit has already been used to create a channel.')
+            # Verify that the deposit is not already part of a payment channel
+            if self._db.pc.lookup(deposit_txid):
+                raise BadTransactionError('That deposit has already been used to create a channel.')
 
-    def complete_handshake(self, deposit_txid, deposit_tx):
-        """Complete the final step in the channel handshake.
+            # Verify that the lock time is an allowable amount in the future
+            minimum_locktime = int(time.time()) + self.MIN_EXP_TIME
+            if redeem_script.expiration_time < minimum_locktime:
+                raise TransactionVerificationError('Transaction locktime must be further in the future.')
 
-        The customer completes the handshake by sending the merchant the
-        customer's signed deposit transaction, which the merchant can then
-        broadcast to the network. The merchant responds with 200 to verify that
-        the handshake has completed successfully.
+            # Open and save the payment channel
+            channel = self._db.pc.create(
+                deposit_txid, deposit_tx.to_hex(), merch_pubkey, amount, redeem_script.expiration_time)
 
-        Args:
-            deposit_txid (string): string representation of the deposit
-                transaction hash. This is used to look up the payment channel.
-            deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
-                Transaction from a customer. This object is passed by reference
-                and modified directly.
-        """
-        try:
-            channel = self._db.pc.lookup(deposit_txid)
-        except:
-            raise PaymentChannelNotFoundError('Related channel not found.')
+            # Set the channel to `ready` if zeroconf is enabled
+            if self.zeroconf:
+                self._db.pc.update_state(deposit_txid, ChannelSQLite3.READY)
 
-        # Get the refund spend address
-        refund_tx = channel['refund_tx']
-
-        # Find the payment amount associated with the refund
-        refund_hash160 = get_redeem_script(refund_tx).hash160()
-        deposit_index = deposit_tx.output_index_for_address(refund_hash160)
-
-        # Verify that the deposit funds the refund in our records
-        if deposit_index is not None:
-            deposit_amt = deposit_tx.outputs[deposit_index].value
-        else:
-            raise BadTransactionError('Deposit must fund refund.')
-
-        # Save the deposit transaction
-        try:
-            self._db.pc.update_deposit(deposit_txid, deposit_tx, deposit_amt)
-        except:
-            raise BadTransactionError('Deposit already used.')
-
-        self._db.pc.update_state(deposit_txid, 'confirming')
+            return str(deposit_tx.hash)
 
     def receive_payment(self, deposit_txid, payment_tx):
         """Receive and process a payment within the channel.
@@ -175,60 +163,69 @@ class PaymentServer:
         Args:
             deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
-            deposit_tx (two1.lib.bitcoin.txn.Transaction): half-signed deposit
-                Transaction from a customer. This object is passed by reference
-                and modified directly.
+            payment_tx (string): half-signed payment transaction from a
+                customer.
+        Returns:
+            (string): payment transaction id
         """
-        # Verify that the transaction is what we expect
-        self._wallet.verify_half_signed_tx(payment_tx)
+        with self.lock:
+            # Parse payment channel `payment` parameters
+            payment_tx = Transaction.from_hex(payment_tx)
 
-        # Get channel and addresses related to the deposit
-        try:
+            # Get channel and addresses related to the deposit
             channel = self._db.pc.lookup(deposit_txid)
-        except:
-            raise PaymentChannelNotFoundError('Related channel not found.')
 
-        # Get merchant public key information from payment channel
-        last_pmt_amt = channel['last_payment_amount']
-        merch = channel['merchant_pubkey']
-        merch_pubkey = PublicKey.from_bytes(codecs.decode(merch, 'hex_codec'))
-        index = payment_tx.output_index_for_address(merch_pubkey.hash160())
+            if not channel:
+                raise PaymentChannelNotFoundError('Related channel not found.')
 
-        # Verify that the payment channel is still open
-        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
-            raise ChannelClosedError('Payment channel closed.')
+            # Get merchant public key information from payment channel
+            redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
+            merch_pubkey = redeem_script.merchant_public_key
 
-        # Find the payment amount associated with the merchant address
-        if index is None:
-            raise BadTransactionError('Payment must pay to merchant pubkey.')
+            # Verify that the payment has a valid signature from the customer
+            txn_copy = payment_tx._copy_for_sig(0, Transaction.SIG_HASH_ALL, redeem_script)
+            msg_to_sign = bytes(Hash.dhash(bytes(txn_copy) + pack_u32(Transaction.SIG_HASH_ALL)))
+            sig = Signature.from_der(payment_tx.inputs[0].script[0][:-1])
+            if not redeem_script.customer_public_key.verify(msg_to_sign, sig, False):
+                raise BadTransactionError('Invalid payment signature.')
 
-        # Verify that both payments are not below the dust limit
-        if any(p.value < PaymentServer.DUST_LIMIT for p in payment_tx.outputs):
-            raise BadTransactionError(
-                'Final payment must have outputs greater than {}.'.format(
-                    PaymentServer.DUST_LIMIT))
+            # Verify the length of the script is what we expect
+            if len(payment_tx.inputs[0].script) != 3:
+                raise BadTransactionError('Invalid payment channel transaction structure.')
 
-        # Validate that the payment is more than the last one
-        new_pmt_amt = payment_tx.outputs[index].value
-        if new_pmt_amt <= last_pmt_amt:
-            raise BadTransactionError('Micropayment must be greater than 0.')
+            # Verify that the payment channel is ready
+            if channel.state == ChannelSQLite3.CONFIRMING:
+                raise ChannelClosedError('Payment channel not ready.')
+            elif channel.state == ChannelSQLite3.CLOSED:
+                raise ChannelClosedError('Payment channel closed.')
 
-        # Verify that the payment channel is still open
-        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
-            raise ChannelClosedError('Payment channel closed.')
+            # Verify that payment is made to the merchant's pubkey
+            index = payment_tx.output_index_for_address(merch_pubkey.hash160())
+            if index is None:
+                raise BadTransactionError('Payment must pay to merchant pubkey.')
 
-        # Verify that the transaction has adequate fees
-        net_pmt_amount = sum([d.value for d in payment_tx.outputs])
-        deposit_amount = channel['amount']
-        if deposit_amount < net_pmt_amount + PaymentServer.MIN_TX_FEE:
-            raise BadTransactionError('Payment must have adequate fees.')
+            # Verify that both payments are not below the dust limit
+            if any(p.value < PaymentServer.DUST_LIMIT for p in payment_tx.outputs):
+                raise BadTransactionError(
+                    'Final payment must have outputs greater than {}.'.format(PaymentServer.DUST_LIMIT))
 
-        # Sign the remaining half of the transaction
-        self._wallet.sign_half_signed_tx(payment_tx, merch_pubkey)
+            # Validate that the payment is more than the last one
+            new_pmt_amt = payment_tx.outputs[index].value
+            if new_pmt_amt <= channel.last_payment_amount:
+                raise BadTransactionError('Payment must be greater than 0.')
 
-        # Update the current payment transaction
-        self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
-        self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt-last_pmt_amt)
+            # Verify that the transaction has adequate fees
+            net_pmt_amount = sum([d.value for d in payment_tx.outputs])
+            deposit_amount = channel.amount
+            if deposit_amount < net_pmt_amount + PaymentServer.MIN_TX_FEE:
+                raise BadTransactionError('Payment must have adequate fees.')
+
+            # Update the current payment transaction
+            self._db.pc.update_payment(deposit_txid, payment_tx.to_hex(), new_pmt_amt)
+            self._db.pmt.create(deposit_txid, str(payment_tx.hash), payment_tx.to_hex(),
+                                new_pmt_amt - channel.last_payment_amount)
+
+            return str(payment_tx.hash)
 
     def status(self, deposit_txid):
         """Get a payment channel's current status.
@@ -237,14 +234,14 @@ class PaymentServer:
             deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
         """
-        try:
-            channel = self._db.pc.lookup(deposit_txid)
-        except:
+        channel = self._db.pc.lookup(deposit_txid)
+
+        if not channel:
             raise PaymentChannelNotFoundError('Related channel not found.')
 
-        return {'status': channel['state'],
-                'balance': channel['last_payment_amount'],
-                'time_left': channel['expires_at']}
+        return dict(status=channel.state,
+                    balance=channel.last_payment_amount,
+                    time_left=channel.expires_at)
 
     def close(self, deposit_txid, deposit_txid_signature):
         """Close a payment channel.
@@ -256,31 +253,42 @@ class PaymentServer:
                 consisting solely of the deposit_txid to verify the
                 authenticity of the close request.
         """
-        try:
+        with self.lock:
             channel = self._db.pc.lookup(deposit_txid)
-        except:
-            raise PaymentChannelNotFoundError('Related channel not found.')
 
-        # Verify that the user is authorized to close the channel
-        redeem_script = get_redeem_script(channel['refund_tx'])
-        pubkeys = redeem_script.extract_multisig_redeem_info()['public_keys']
-        pubkey = next(p for p in pubkeys if p != channel['merchant_pubkey'])
-        sig_valid = PublicKey.from_bytes(pubkey).verify(deposit_txid.encode(),
-                                                        deposit_txid_signature)
-        if not sig_valid:
-            raise TransactionVerificationError('Invalid signature.')
+            # Verify that the requested channel exists
+            if not channel:
+                raise PaymentChannelNotFoundError('Related channel not found.')
 
-        # Verify that there is a valid payment to close
-        if not channel['payment_tx']:
-            raise BadTransactionError('No payments made in channel.')
+            # Parse payment channel `close` parameters
+            try:
+                signature_der = codecs.decode(deposit_txid_signature, 'hex_codec')
+                deposit_txid_signature = Signature.from_der(signature_der)
+            except TypeError:
+                raise TransactionVerificationError('Invalid signature provided.')
 
-        # Broadcast payment transaction to the blockchain
-        self._blockchain.broadcast_transaction(channel['payment_tx'].to_hex())
+            # Verify that there is a valid payment to close
+            if not channel.payment_tx:
+                raise BadTransactionError('No payments made in channel.')
 
-        # Record the broadcast in the database
-        self._db.pc.update_state(deposit_txid, 'closed')
+            # Verify that the user is authorized to close the channel
+            payment_tx = channel.payment_tx
+            redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
+            sig_valid = redeem_script.customer_public_key.verify(
+                deposit_txid.encode(), deposit_txid_signature)
+            if not sig_valid:
+                raise TransactionVerificationError('Invalid signature.')
 
-        return str(channel['payment_tx'].hash)
+            # Sign the final transaction
+            self._wallet.sign_half_signed_payment(payment_tx, redeem_script)
+
+            # Broadcast payment transaction to the blockchain
+            self._blockchain.broadcast_tx(payment_tx.to_hex())
+
+            # Record the broadcast in the database
+            self._db.pc.update_state(deposit_txid, ChannelSQLite3.CLOSED)
+
+            return str(payment_tx.hash)
 
     def redeem(self, payment_txid):
         """Determine the validity and amount of a payment.
@@ -295,26 +303,67 @@ class PaymentServer:
         Raises:
             PaymentError: reason why payment is not redeemable.
         """
-        # Verify that we have this payment transaction saved
-        try:
+        with self.lock:
+            # Verify that we have this payment transaction saved
             payment = self._db.pmt.lookup(payment_txid)
-        except:
-            raise PaymentChannelNotFoundError('Payment not found.')
+            if not payment:
+                raise PaymentChannelNotFoundError('Payment not found.')
 
-        # Verify that this payment exists within a channel (do we need this?)
-        try:
-            channel = self._db.pc.lookup(payment['deposit_txid'])
-        except:
-            raise PaymentChannelNotFoundError('Channel not found.')
+            # Verify that this payment exists within a channel
+            channel = self._db.pc.lookup(payment.deposit_txid)
+            if not channel:
+                raise PaymentChannelNotFoundError('Channel not found.')
 
-        # Verify that the payment channel is still open
-        if (channel['state'] != 'confirming' and channel['state'] != 'ready'):
-            raise ChannelClosedError('Payment channel closed.')
+            # Verify that the payment channel is ready
+            if channel.state == ChannelSQLite3.CONFIRMING:
+                raise ChannelClosedError('Payment channel not ready.')
+            elif channel.state == ChannelSQLite3.CLOSED:
+                raise ChannelClosedError('Payment channel closed.')
 
-        # Verify that the most payment has not already been redeemed
-        if payment['is_redeemed']:
-            raise RedeemPaymentError('Payment already redeemed.')
+            # Verify that the payment has not already been redeemed
+            if payment.is_redeemed:
+                raise RedeemPaymentError('Payment already redeemed.')
 
-        # Calculate and redeem the current payment
-        self._db.pmt.redeem(payment_txid)
-        return payment['amount']
+            # Calculate and redeem the current payment
+            self._db.pmt.redeem(payment_txid)
+            return payment.amount
+
+    def sync(self):
+        """Sync the state of all payment channels."""
+        with self.lock:
+            # Look up all channels
+            channel_query = self._db.pc.lookup()
+
+            # Check whether the return result is a single Channel or list
+            if isinstance(channel_query, Channel):
+                payment_channels = [channel_query]
+            else:
+                payment_channels = channel_query
+
+            # Return if there are no payment channels to sync
+            if not payment_channels:
+                return
+
+            for pc in payment_channels:
+
+                # Skip sync if channel is closed
+                if pc.state == ChannelSQLite3.CLOSED:
+                    return
+
+                # Check for deposit confirmation
+                if pc.state == ChannelSQLite3.CONFIRMING and self._blockchain.check_confirmed(pc.deposit_txid):
+                    self._db.pc.update_state(pc.deposit_txid, ChannelSQLite3.READY)
+
+                # Check if channel got closed
+                if pc.state in (ChannelSQLite3.CONFIRMING, ChannelSQLite3.READY) and pc.payment_tx:
+                    redeem_script = PaymentChannelRedeemScript.from_bytes(pc.payment_tx.inputs[0].script[-1])
+                    deposit_tx_utxo_index = pc.deposit_tx.output_index_for_address(redeem_script.hash160())
+                    spend_txid = self._blockchain.lookup_spend_txid(pc.deposit_txid, deposit_tx_utxo_index)
+                    if spend_txid:
+                        self._db.pc.update_state(pc.deposit_txid, ChannelSQLite3.CLOSED)
+
+                # Check for channel expiration
+                if pc.state != ChannelSQLite3.CLOSED:
+                    if time.time() + PaymentServer.EXP_TIME_BUFFER > pc.expires_at:
+                        self._blockchain.broadcast_tx(pc.payment_tx.to_hex())
+                        self._db.pc.update_state(pc.deposit_txid, ChannelSQLite3.CLOSED)

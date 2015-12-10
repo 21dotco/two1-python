@@ -3,14 +3,22 @@ import os
 import time
 import codecs
 import sqlite3
+import datetime
+import collections
 from two1.lib.bitcoin import Transaction
 
+Channel = collections.namedtuple('Channel', [
+    'deposit_txid', 'state', 'deposit_tx', 'payment_tx', 'merchant_pubkey',
+    'created_at', 'expires_at', 'amount', 'last_payment_amount'])
+Payment = collections.namedtuple('Payment', [
+    'payment_txid', 'payment_tx', 'amount', 'is_redeemed', 'deposit_txid'])
 
 ###############################################################################
 # Payment Channel Models                                                      #
 ###############################################################################
 
 # *************************** Base Data Models ****************************** #
+
 
 class ChannelError(Exception):
     pass
@@ -52,9 +60,6 @@ class ChannelDatabase:
     def lookup(self, deposit_txid):
         raise NotImplementedError()
 
-    def update_deposit(self, deposit_txid, deposit_tx, amount):
-        raise NotImplementedError()
-
     def update_payment(self, deposit_txid, payment_tx, pmt_amt):
         raise NotImplementedError()
 
@@ -91,81 +96,80 @@ class DatabaseDjango(ChannelDataManager):
 
 class ChannelDjango(ChannelDatabase):
 
-    def __init__(self, Channel):
-        self.Channel = Channel
+    CONFIRMING = 'confirming'
+    READY = 'ready'
+    CLOSED = 'closed'
 
-    def create(self, refund_tx, merch_pubkey):
+    def __init__(self, ChannelModel):
+        """Initialize the channel data handler with a Channel django model."""
+        self.Channel = ChannelModel
+
+    def create(self, deposit_txid, deposit_tx, merch_pubkey, amount, expiration):
         """Create a payment channel entry."""
-        deposit_txid = str(refund_tx.inputs[0].outpoint)
-        state = 'opening'
-        now = time.time()
-        expiry = refund_tx.lock_time
-        mp = codecs.encode(merch_pubkey.compressed_bytes, 'hex_codec').decode()
-        ch = self.Channel(deposit_txid=deposit_txid, state=state,
-                          refund_tx=refund_tx.to_hex(), merchant_pubkey=mp,
-                          expires_at=expiry)
+        ch = self.Channel(deposit_txid=deposit_txid, state=ChannelDjango.CONFIRMING,
+                          deposit_tx=deposit_tx, merchant_pubkey=merch_pubkey,
+                          expires_at=expiration, amount=amount)
         ch.save()
-        return True
 
-    def lookup(self, deposit_txid):
+    def lookup(self, deposit_txid=None):
         """Look up a payment channel entry by deposit txid."""
-        rv = self.Channel.objects.get(deposit_txid=deposit_txid)
-        deposit_tx = Transaction.from_hex(rv.deposit_tx) if rv.deposit_tx else None
-        payment_tx = Transaction.from_hex(rv.payment_tx) if rv.payment_tx else None
-        refund_tx = Transaction.from_hex(rv.refund_tx) if rv.refund_tx else None
-        return {'deposit_txid': rv.deposit_txid, 'state': rv.state,
-                'deposit_tx': deposit_tx, 'payment_tx': payment_tx,
-                'refund_tx': refund_tx, 'merchant_pubkey': rv.merchant_pubkey,
-                'created_at': rv.created_at, 'expires_at': rv.expires_at,
-                'amount': rv.amount, 'last_payment_amount': rv.last_payment_amount}
+        # Check whether to query a single channel or all
+        if not deposit_txid:
+            query = self.Channel.objects.all()
+        else:
+            try:
+                query = [self.Channel.objects.get(deposit_txid=deposit_txid)]
+            except self.Channel.DoesNotExist:
+                query = []
+        if not len(query) or not query[0]:
+            return None
 
-    def update_deposit(self, deposit_txid, deposit_tx, amount):
-        """Update a payment channel with the deposit transaction."""
-        # Make sure there isn't already a deposit in this channel
-        rv = self.Channel.objects.get(deposit_txid=deposit_txid)
-        if rv.deposit is not None:
-            raise DuplicateRequestError()
-        # Update the channel with the new deposit
-        rv.update(deposit_tx=deposit_tx.to_hex(), amount=amount)
-        return True
+        # Collect all records as a list of Channels
+        records = []
+        for rec in query:
+            deposit_tx = Transaction.from_hex(rec.deposit_tx) if rec.deposit_tx else None
+            payment_tx = Transaction.from_hex(rec.payment_tx) if rec.payment_tx else None
+            records.append(Channel(rec.deposit_txid, rec.state, deposit_tx, payment_tx,
+                                   rec.merchant_pubkey, rec.created_at, rec.expires_at,
+                                   rec.amount, rec.last_payment_amount))
+
+        # Return a single record or list of records
+        return records if len(records) > 1 else records[0]
 
     def update_payment(self, deposit_txid, payment_tx, pmt_amt):
         """Update a payment channel with a new payment transaction."""
-        self.Channel.objects.get(deposit_txid=deposit_txid).update(
+        self.Channel.objects.filter(deposit_txid=deposit_txid).update(
             payment_tx=payment_tx, last_payment_amount=pmt_amt)
-        return True
 
     def update_state(self, deposit_txid, new_state):
         """Update payment channel state."""
-        self.Channel.objects.get(deposit_txid=deposit_txid).update(state=new_state)
-        return True
+        self.Channel.objects.filter(deposit_txid=deposit_txid).update(state=new_state)
 
 
 class PaymentDjango(ChannelDatabase):
 
-    def __init__(self, Payment):
-        self.Payment = Payment
+    def __init__(self, PaymentModel):
+        """Initialize the payment data handler with a Payment django model."""
+        self.Payment = PaymentModel
 
-    def create(self, deposit_txid, payment_tx, amount):
+    def create(self, deposit_txid, payment_txid, payment_tx, amount):
         """Create a payment entry."""
         pmt = self.Payment(payment_txid=payment_txid, amount=amount,
-                           payment_tx=payment_tx.to_hex(),
-                           deposit_txid=deposit_txid)
+                           payment_tx=payment_tx, deposit_txid=deposit_txid)
         pmt.save()
-        return True
 
     def lookup(self, payment_txid):
         """Look up a payment entry by deposit txid."""
-        rv = self.Payment.objects.get(payment_txid=payment_txid)
-        return {'payment_txid': rv.payment_txid,
-                'payment_tx': Transaction.from_hex(rv.payment_tx),
-                'amount': rv.amount, 'is_redeemed': rv.is_redeemed,
-                'deposit_txid': rv.deposit_txid}
+        try:
+            rec = self.Payment.objects.get(payment_txid=payment_txid)
+        except self.Payment.DoesNotExist:
+            return None
+        return Payment(rec.payment_txid, Transaction.from_hex(rec.payment_tx),
+                       rec.amount, rec.is_redeemed, rec.deposit_txid)
 
     def redeem(self, payment_txid):
         """Update payment entry to be redeemed."""
-        self.Payment.objects.get(payment_txid=txid).update(is_redeemed=True)
-        return True
+        self.Payment.objects.filter(payment_txid=payment_txid).update(is_redeemed=True)
 
 
 # *************************** Default SQLite3 ****************************** #
@@ -189,77 +193,71 @@ class DatabaseSQLite3(ChannelDataManager):
 
 class ChannelSQLite3(ChannelDatabase):
 
+    CONFIRMING = 'confirming'
+    READY = 'ready'
+    CLOSED = 'closed'
+
     def __init__(self, db):
         """Instantiate SQLite3 for storing channel transaction data."""
         self.c = db.c
         self.connection = db.connection
         self.c.execute("CREATE TABLE IF NOT EXISTS 'payment_channel' "
-                       "(deposit_txid text unique, state text,"
-                       "deposit_tx text, payment_tx text, refund_tx text, "
+                       "(deposit_txid text unique, state text, "
+                       "deposit_tx text, payment_tx text, "
                        "merchant_pubkey text, created_at timestamp, "
                        "expires_at timestamp, amount integer, "
                        "last_payment_amount integer)")
 
-    def create(self, refund_tx, merch_pubkey):
+    def create(self, deposit_txid, deposit_tx, merch_pubkey, amount, expiration):
         """Create a payment channel entry."""
-        deposit_txid = str(refund_tx.inputs[0].outpoint)
-        state = 'opening'
-        now = time.time()
-        expiry = refund_tx.lock_time
-        mp = codecs.encode(merch_pubkey.compressed_bytes, 'hex_codec').decode()
-        insert = 'INSERT INTO payment_channel VALUES (?' + ',?' * 9 + ')'
-        self.c.execute(insert, (deposit_txid, state, None, None,
-                                refund_tx.to_hex(), mp, now, expiry, 0, 0))
+        insert = 'INSERT INTO payment_channel VALUES (?' + ',?' * 8 + ')'
+        self.c.execute(insert, (deposit_txid, ChannelSQLite3.CONFIRMING,
+                                deposit_tx, None, merch_pubkey,
+                                time.time(), expiration, amount, 0))
         self.connection.commit()
-        return True
 
-    def lookup(self, deposit_txid):
+    def lookup(self, deposit_txid=None):
         """Look up a payment channel entry by deposit txid."""
-        select = 'SELECT * FROM payment_channel WHERE deposit_txid=?'
-        self.c.execute(select, (deposit_txid,))
-        rv = self.c.fetchone()
-        if rv is None:
-            raise ModelNotFound()
-        deposit_tx = Transaction.from_hex(rv[2]) if rv[2] else None
-        payment_tx = Transaction.from_hex(rv[3]) if rv[3] else None
-        refund_tx = Transaction.from_hex(rv[4]) if rv[4] else None
-        return {'deposit_txid': rv[0], 'state': rv[1],
-                'deposit_tx': deposit_tx, 'payment_tx': payment_tx,
-                'refund_tx': refund_tx, 'merchant_pubkey': rv[5],
-                'created_at': rv[6], 'expires_at': rv[7], 'amount': rv[8],
-                'last_payment_amount': rv[9]}
+        # Check whether to query a single channel or all
+        if not deposit_txid:
+            self.c.execute('SELECT * FROM payment_channel')
+            query = self.c.fetchall()
+        else:
+            select = 'SELECT * FROM payment_channel WHERE deposit_txid=?'
+            self.c.execute(select, (deposit_txid,))
+            query = [self.c.fetchone()]
+        if not len(query) or not query[0]:
+            return None
 
-    def update_deposit(self, deposit_txid, deposit_tx, amount):
-        """Update a payment channel with the deposit transaction."""
-        # Make sure there isn't already a deposit in this channel
-        select = 'SELECT deposit_tx FROM payment_channel WHERE deposit_txid=?'
-        self.c.execute(select, (deposit_txid,))
-        deposit = self.c.fetchone()[0]
-        if deposit is not None:
-            raise DuplicateRequestError()
-        # Update the channel with the new deposit
-        update = ('UPDATE payment_channel SET deposit_tx=?, amount=? '
-                  'WHERE deposit_txid=?')
-        self.c.execute(update, (deposit_tx.to_hex(), amount, deposit_txid))
-        self.connection.commit()
-        return True
+        # Collect all records as a list of Channels
+        records = []
+        for rec in query:
+            record = list(rec)
+            record[2] = Transaction.from_hex(record[2]) if record[2] else None
+            record[3] = Transaction.from_hex(record[3]) if record[3] else None
+            records.append(Channel(*record))
+
+        # Return a single record or list of records
+        return records if len(records) > 1 else records[0]
 
     def update_payment(self, deposit_txid, payment_tx, pmt_amt):
         """Update a payment channel with a new payment transaction."""
         update = ('UPDATE payment_channel SET payment_tx=?,'
                   'last_payment_amount=? WHERE deposit_txid=?')
-        self.c.execute(update, (payment_tx.to_hex(), pmt_amt, deposit_txid))
-        return True
+        self.c.execute(update, (payment_tx, pmt_amt, deposit_txid))
+        self.connection.commit()
 
     def update_state(self, deposit_txid, new_state):
         """Update payment channel state."""
         update = 'UPDATE payment_channel SET state=? WHERE deposit_txid=?'
         self.c.execute(update, (new_state, deposit_txid))
         self.connection.commit()
-        return True
 
 
 class PaymentSQLite3(PaymentDatabase):
+
+    NOT_REDEEMED = 0
+    WAS_REDEEMED = 1
 
     def __init__(self, db):
         """Instantiate SQLite3 for storing channel payment data."""
@@ -270,13 +268,12 @@ class PaymentSQLite3(PaymentDatabase):
                        "amount integer, is_redeemed integer, "
                        "deposit_txid text)")
 
-    def create(self, deposit_txid, payment_tx, amount):
+    def create(self, deposit_txid, payment_txid, payment_tx, amount):
         """Create a payment entry."""
         insert = 'INSERT INTO payment_channel_spend VALUES (?,?,?,?,?)'
-        self.c.execute(insert, (str(payment_tx.hash), payment_tx.to_hex(),
-                                amount, 0, deposit_txid))
+        self.c.execute(insert, (payment_txid, payment_tx, amount,
+                                PaymentSQLite3.NOT_REDEEMED, deposit_txid))
         self.connection.commit()
-        return True
 
     def lookup(self, payment_txid):
         """Look up a payment entry by deposit txid."""
@@ -284,19 +281,18 @@ class PaymentSQLite3(PaymentDatabase):
         self.c.execute(select, (payment_txid,))
         rv = self.c.fetchone()
         if rv is None:
-            raise ModelNotFound()
-        return {'payment_txid': rv[0],
-                'payment_tx': Transaction.from_hex(rv[1]),
-                'amount': rv[2], 'is_redeemed': (rv[3] == 1),
-                'deposit_txid': rv[4]}
+            return rv
+        channel = list(rv)
+        channel[1] = Transaction.from_hex(channel[1])
+        channel[3] = channel[3] == PaymentSQLite3.WAS_REDEEMED
+        return Payment(*channel)
 
     def redeem(self, payment_txid):
         """Update payment entry to be redeemed."""
         update = ('UPDATE payment_channel_spend SET is_redeemed=? '
                   'WHERE payment_txid=?')
-        self.c.execute(update, (1, payment_txid))
+        self.c.execute(update, (PaymentSQLite3.WAS_REDEEMED, payment_txid))
         self.connection.commit()
-        return True
 
 
 ##############################################################################
