@@ -162,9 +162,16 @@ class ScriptInterpreter(object):
             self._stack.pop()
 
         if isinstance(x, bytes):
-            x = int.from_bytes(x, byteorder='big', signed=True)
-        elif isinstance(x, str):
-            x = int(x, 0)
+            if x:
+                # Handle bitcoin's weird negative representation
+                negative = x[-1] & 0x80
+                _x = x[0:-1] + bytes([x[-1] & 0x7f])
+                x = int.from_bytes(_x, byteorder='little')
+                if negative:
+                    x = -x
+            else:
+                # Null-length byte vector is positive 0
+                x = 0
 
         return x
 

@@ -888,7 +888,7 @@ def test_op_checklocktimeverify():
                       367987)
 
     # This is one more (367988) so it should fail
-    s = Script("0x059d74 OP_CHECKLOCKTIMEVERIFY")
+    s = Script("0x749d05 OP_CHECKLOCKTIMEVERIFY")
 
     si = ScriptInterpreter(txn=txn, input_index=0)
     si.run_script(s)
@@ -896,7 +896,7 @@ def test_op_checklocktimeverify():
     assert not si.valid
 
     # This is negative, so it should fail
-    s = Script("0xfff59d74 OP_CHECKLOCKTIMEVERIFY")
+    s = Script("0xfff74d05 OP_CHECKLOCKTIMEVERIFY")
 
     si = ScriptInterpreter(txn=txn, input_index=0)
     si.run_script(s)
@@ -904,7 +904,7 @@ def test_op_checklocktimeverify():
     assert not si.valid
 
     # This is one less (367986) so it should pass
-    s = Script("0x059d72 OP_CHECKLOCKTIMEVERIFY")
+    s = Script("0x729d05 OP_CHECKLOCKTIMEVERIFY")
 
     si = ScriptInterpreter(txn=txn, input_index=0)
     si.run_script(s)
