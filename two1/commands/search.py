@@ -1,6 +1,5 @@
-"""
-Find machine-payable endpoints on the MMM
-"""
+import datetime
+
 import click
 from tabulate import tabulate
 from two1.commands.config import TWO1_HOST
@@ -30,8 +29,10 @@ def _search(config, search_string):
         click.secho(UxString.list_all, fg="green")
 
     current_page = 0
-    total_pages = get_search_results(client, search_string, current_page)
-    if total_pages <= 1:
+    row_id_to_model_id = {}
+    total_pages = get_search_results(client, search_string, current_page,
+                                     row_id_to_model_id)
+    if total_pages < 1:
         return
 
     while 0 <= current_page < total_pages:
@@ -39,21 +40,29 @@ def _search(config, search_string):
             prompt_resp = click.prompt(UxString.pagination,
                                        type=str)
             try:
-                next_page = get_next_page(prompt_resp, current_page)
-            except ValueError:
-                continue
+                index = int(prompt_resp)
+                if index not in row_id_to_model_id:
+                    raise ValueError
 
-            if next_page >= total_pages or next_page < 0:
-                continue
-            else:
-                get_search_results(client, search_string, next_page)
-                current_page = next_page
+                model_id = row_id_to_model_id[index]
+                display_search_info(config, client, model_id)
+
+            except ValueError:
+
+                next_page = get_next_page(prompt_resp, current_page)
+
+                if next_page >= total_pages or next_page < 0:
+                    continue
+                else:
+                    get_search_results(client, search_string, next_page,
+                                       row_id_to_model_id)
+                    current_page = next_page
 
         except click.exceptions.Abort:
             return
 
 
-def get_search_results(rest_client, search_string, page=0):
+def get_search_results(rest_client, search_string, page, row_id_to_model_id):
     resp = rest_client.search(search_string, page)
     if resp.ok:
         resp_json = resp.json()
@@ -66,13 +75,25 @@ def get_search_results(rest_client, search_string, page=0):
         shorten_search_results(search_results)
         click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
         headers = ["id", "title", "description", "price range", "creator", "category"]
-        rows = [[r["id"], r["title"], r["description"],
-                 "{} - {}".format(r["min_price"], r["max_price"]), r["username"],
-                 r["category"]] for r in search_results]
+        rows = extract_rows(search_results, page, row_id_to_model_id)
         click.echo(tabulate(rows, headers, tablefmt="grid"))
         return total_pages
     else:
         raise ServerRequestError()
+
+
+MAX_PAGE_SIZE = 10
+
+
+def extract_rows(search_results, current_page, row_id_to_model_id):
+    rows = []
+    for indx, result in enumerate(search_results):
+        id = (current_page * MAX_PAGE_SIZE) + indx + 1
+        row_id_to_model_id[id] = result["id"]
+        rows.append([id, result["title"], result["description"],
+                     "{} - {} Satoshis".format(result["min_price"], result["max_price"]),
+                     result["username"], result["category"]])
+    return rows
 
 
 def shorten_search_results(search_result):
@@ -87,7 +108,49 @@ def get_next_page(prompt_response, current_page):
         return current_page + 1
     elif prompt_response.lower() in ["b", "back"]:
         return current_page - 1
-    elif prompt_response.lower() in ["c", "cancel"]:
+    elif prompt_response.lower() in ["q", "cancel", "c"]:
         raise click.exceptions.Abort()
     else:
-        raise ValueError()
+        return -1
+
+
+def display_search_info(config, client, listing_id):
+    resp = client.get_listing_info(listing_id)
+    if resp.ok:
+        result_json = resp.json()
+        title = click.style("{}".format(result_json["title"]), bold=True,
+                            fg="magenta")
+        created_by = click.style("Created By: {}\n".format(result_json["username"]),
+                                 bold=True, fg="magenta")
+
+        desc = click.style("{}".format(result_json["description"]))
+        price = click.style("Price Range: {} - {} Satoshis\n").format(
+            result_json["min_price"], result_json["max_price"])
+        doc_url = click.style("Docs URL: {}".format(result_json["website_url"]))
+        app_url = click.style("App URL: {}\n".format(result_json["app_url"]))
+        keywords = click.style("Keywords: {}\n".format(', '.join(result_json["keywords"])))
+        version = click.style("Version: {}".format(result_json["version"]))
+        last_updated_str = datetime.datetime.fromtimestamp(
+            result_json["updated"]).strftime("%Y-%m-%d %H:%M")
+        last_update = click.style("Last Update: {}\n".format(last_updated_str))
+        quick_start = click.style("Quick Start\n\n", fg="blue", bold=True) + click.style(
+            result_json["quick_buy"] + "\n"
+        )
+        if result_json["is_active"] and result_json["is_up"] and result_json[
+            "is_healthy"]:
+            is_active = click.style("Active", fg="green")
+        else:
+            is_active = click.style("Inactive", fg="red")
+
+        availability = "Availability in the past month: {}%\n".format(
+            int(result_json["average_uptime"]) * 100)
+        usage_docs = click.style("Detailed usage\n\n", fg="blue", bold=True) + click.style(
+            result_json["usage_docs"])
+
+        final_str = "\n".join(
+                [title, created_by, desc, price, is_active, availability, doc_url,
+                 app_url, keywords, version,
+                 last_update, quick_start, usage_docs, "\n\n"])
+        config.echo_via_pager(final_str)
+    else:
+        raise ServerRequestError()
