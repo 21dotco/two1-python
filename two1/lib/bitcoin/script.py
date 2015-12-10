@@ -71,91 +71,6 @@ class Script(object):
     P2PKH_TESTNET_VERSION = 0x6F
     P2PKH_MAINNET_VERSION = 0x00
 
-    @classmethod
-    def _walk_ast(cls, ast, dispatch_table, default_handler=None, data=None):
-        for a in ast:
-            opcode = None
-            args = None
-            if type(a) is list:
-                opcode = a[0]
-                args = a[1:]
-            else:
-                opcode = a
-
-            handler = dispatch_table.get(opcode, default_handler)
-            if handler is not None:
-                data = handler(opcode, args, data)
-            else:
-                raise ValueError("Opcode %s has no entry in the given dispatch_table!" % opcode)
-
-        return data
-
-    @classmethod
-    def _serialize_pushdata(cls, opcode, args, bytestr):
-        if len(args) < 2:
-            raise ValueError("Not enough arguments for %s" % opcode)
-
-        bytestr += bytes([cls.BTC_OPCODE_TABLE[opcode]])
-        bytestr += args[0]
-        bytestr += args[1]
-
-        return bytestr
-
-    @classmethod
-    def _serialize_var_data(cls, opcode, args, bytestr):
-        data = opcode
-        l = len(data)
-        if l < 0x01 or l > 0x4b:
-            raise ValueError(
-                "Opcode has too much data to push onto stack: \"%s\"" % opcode)
-        bytestr += bytes([l])
-        bytestr += data
-
-        return bytestr
-
-    @classmethod
-    def _serialize_if_else(cls, opcode, args, bytestr):
-        bytestr += bytes([cls.BTC_OPCODE_TABLE[opcode]])
-
-        if len(args) == 0:
-            raise ValueError("Not enough clauses for %s!" % opcode)
-
-        bytestr += cls._walk_ast(args[0],
-                                 cls._ser_dispatch_table,
-                                 cls._serialize_var_data,
-                                 b'')
-
-        if len(args) == 3:
-            bytestr += bytes([cls.BTC_OPCODE_TABLE['OP_ELSE']])
-            bytestr += cls._walk_ast(args[1],
-                                     cls._ser_dispatch_table,
-                                     cls._serialize_var_data,
-                                     b'')
-
-        if args[-1] == 'OP_ENDIF':
-            bytestr += bytes([cls.BTC_OPCODE_TABLE['OP_ENDIF']])
-
-        return bytestr
-
-    @classmethod
-    def _serialize_default_opcode(cls, opcode, args, bytestr):
-        bytestr += bytes([cls.BTC_OPCODE_TABLE[opcode]])
-
-        return bytestr
-
-    @classmethod
-    def _build_serializer_dispatch_table(cls):
-        table = {}
-        for k, v in cls.BTC_OPCODE_TABLE.items():
-            if k in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA4']:
-                table[k] = cls._serialize_pushdata
-            elif k in ['OP_IF', 'OP_NOTIF']:
-                table[k] = cls._serialize_if_else
-            else:
-                table[k] = cls._serialize_default_opcode
-
-        cls._ser_dispatch_table = table
-
     @staticmethod
     def from_bytes(b):
         """ Deserializes a byte stream containing a script into a Script object.
@@ -336,9 +251,6 @@ class Script(object):
             return Script.build_push_str(render_int(i))
 
     def __init__(self, script=""):
-        if Script._ser_dispatch_table is None:
-            Script._build_serializer_dispatch_table()
-
         self._ast = []
         self._tokens = []
 
@@ -858,12 +770,28 @@ class Script(object):
         Returns:
             b (bytes): a serialized byte stream of this Script object.
         """
-        if len(self._ast) == 0:
-            self._parse()
-        return Script._walk_ast(self._ast,
-                                Script._ser_dispatch_table,
-                                Script._serialize_var_data,
-                                b'')
+        b = b''
+        i = 0
+        while i < len(self):
+            t = self[i]
+            if t in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
+                b += bytes([self.BTC_OPCODE_TABLE[t]])
+                b += self[i+1]
+                b += self[i+2]
+                i += 2
+            elif isinstance(t, bytes):
+                l = len(t)
+                if l < 0x01 or l > 0x4b:
+                    raise ValueError(
+                        "Opcode has too much data to push onto stack: \"%s\"" % t)
+                b += bytes([l])
+                b += t
+            else:
+                b += bytes([self.BTC_OPCODE_TABLE[t]])
+
+            i += 1
+
+        return b
 
     def to_hex(self):
         """ Generates a hex encoding of the serialized script.
