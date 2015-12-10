@@ -1,15 +1,8 @@
 """Flask bitserv payment library for selling 402 API endpoints."""
-import codecs
-
-from urllib.parse import urlparse
 from functools import wraps
-from flask import jsonify, request
-from flask.views import MethodView
+from urllib.parse import urlparse
+from flask import jsonify, request, views
 from werkzeug.exceptions import HTTPException, BadRequest, NotFound
-
-from two1.lib.wallet import Wallet
-from two1.lib.bitcoin import Transaction, Signature
-from two1.lib.bitcoin.utils import bytes_to_str
 
 from ..payment_methods import OnChain, PaymentChannel, BitTransfer
 from ..payment_server import PaymentServer, PaymentChannelNotFoundError
@@ -48,13 +41,15 @@ class Payment:
 
         Args:
             app (flask.Flask): A flask app to wrap payment handling around.
-            wallet (two1.lib.wallet.Wallet): The merchant's wallet instance.
+            wallet (two1.lib.Wallet): The merchant's wallet instance.
         """
         if allowed_methods is None:
             self.allowed_methods = [
                 PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet))),
                 OnChain(wallet),
                 BitTransfer(wallet)]
+            # Sync payment channels server on startup
+            self.allowed_methods[0].server.sync()
 
     def required(self, price, **kwargs):
         """API route decorator to request payment for a resource.
@@ -116,7 +111,7 @@ def flask_channel_adapter(app, server):
     return server, '/payment'
 
 
-class Channel(MethodView):
+class Channel(views.MethodView):
 
     def __init__(self, server):
         """Initialize the channel view with a PaymentServer object."""
@@ -126,7 +121,7 @@ class Channel(MethodView):
         """Return the merchant's public key or info about a channel."""
         if deposit_txid is None:
             return jsonify({'public_key': self.server.discovery(),
-                            'version': self.server._VERSION})
+                            'version': self.server.PROTOCOL_VERSION})
         else:
             try:
                 return jsonify(self.server.status(deposit_txid))
@@ -136,57 +131,51 @@ class Channel(MethodView):
                 raise BadRequest(str(e))
 
     def post(self):
-        """Initialize the payment channel handshake.
+        """Open a payment channel.
 
-        Params (query):
-            refund_tx (string): half-signed serialized refund transaction
+        Params (json):
+            deposit_tx (string): serialized deposit transaction.
+            redeem_script (string): serialized redeem script.
 
         Response (json) 2xx:
-            refund_tx (string): fully-signed serialized refund transaction
+            deposit_txid (string): deposit transaction id.
         """
         try:
-            params = request.values.to_dict()
             # Validate parameters
-            if 'refund_tx' not in params:
-                raise BadParametersError('No refund provided.')
+            params = request.values.to_dict()
+            if 'deposit_tx' not in params:
+                raise BadParametersError('No deposit provided.')
+            elif 'redeem_script' not in params:
+                raise BadParametersError('No redeem script provided.')
 
-            # Initialize the payment channel
-            refund_tx = Transaction.from_hex(params['refund_tx'])
-            self.server.initialize_handshake(refund_tx)
+            # Open the payment channel
+            deposit_txid = self.server.open(params['deposit_tx'], params['redeem_script'])
 
-            # Respond with the fully-signed refund transaction
-            success = {'refund_tx': bytes_to_str(bytes(refund_tx))}
-            return jsonify(success)
-        except PaymentChannelNotFoundError as e:
-            raise NotFound(str(e))
+            # Respond with the deposit transaction id as confirmation
+            return jsonify({'deposit_txid': deposit_txid})
         except Exception as e:
-            # Catch payment exceptions and send error response to client
             raise BadRequest(str(e))
 
     def put(self, deposit_txid):
-        """Complete the payment channel handshake or receive payments.
+        """Receive payments inside a payment channel.
 
         Args:
-            deposit_txid (string): initial signed deposit transaction id
+            deposit_txid (string): initial signed deposit transaction id.
 
-        Params (json) (one of the following):
-            deposit_tx (string): half-signed serialized deposit transaction
-            payment_tx (string):  half-signed serialized payment transaction
+        Params (json):
+            payment_tx (string): half-signed serialized payment transaction.
         """
         try:
+            # Validate parameters
             params = request.values.to_dict()
-            if 'deposit_tx' in params:
-                # Complete the handshake using the received deposit
-                deposit_tx = Transaction.from_hex(params['deposit_tx'])
-                self.server.complete_handshake(deposit_txid, deposit_tx)
-                return jsonify()
-            elif 'payment_tx' in params:
-                # Receive a payment in the channel using the received payment
-                payment_tx = Transaction.from_hex(params['payment_tx'])
-                self.server.receive_payment(deposit_txid, payment_tx)
-                return jsonify({'payment_txid': str(payment_tx.hash)})
-            else:
-                raise KeyError('No deposit or payment received.')
+            if 'payment_tx' not in params:
+                raise BadParametersError('No payment provided.')
+
+            # Receive a new payment in the channel
+            payment_txid = self.server.receive_payment(deposit_txid, params['payment_tx'])
+
+            # Respond with the payment transaction id as confirmation
+            return jsonify({'payment_txid': payment_txid})
         except PaymentChannelNotFoundError as e:
             raise NotFound(str(e))
         except Exception as e:
@@ -196,20 +185,23 @@ class Channel(MethodView):
         """Close a payment channel.
 
         Args:
-            deposit_txid (string): initial signed deposit transaction id
+            deposit_txid (string): initial signed deposit transaction id.
+
+        Params (json):
+            signature (string): deposit_txid signed by customer's private key.
 
         Response (json) 2xx:
-            payment_txid (string): final payment channel transaction id
+            payment_txid (string): final payment channel transaction id.
         """
         try:
-            params = request.values.to_dict()
             # Validate parameters
+            params = request.values.to_dict()
             if 'signature' not in params:
                 raise BadParametersError('No signature provided.')
 
-            signature_der = codecs.decode(params['signature'], 'hex_codec')
-            deposit_txid_signature = Signature.from_der(signature_der)
-            payment_txid = self.server.close(deposit_txid, deposit_txid_signature)
+            # Close the payment channel
+            payment_txid = self.server.close(deposit_txid, params['signature'])
+
             return jsonify({'payment_txid': payment_txid})
         except PaymentChannelNotFoundError as e:
             raise NotFound(str(e))
