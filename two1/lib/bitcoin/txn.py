@@ -445,15 +445,15 @@ class Transaction(object):
             else:
                 # Before signing we should verify that the address in the
                 # sub_script corresponds to that of the private key
-                script_pub_key_h160_hex = tmp_script.get_hash160()
-                if script_pub_key_h160_hex is None:
+                script_pub_key_h160 = tmp_script.get_hash160()
+                if script_pub_key_h160 is None:
                     raise ValueError("Couldn't find public key hash in sub_script!")
 
                 # first try uncompressed key
                 h160 = None
                 for compressed in [True, False]:
                     h160 = private_key.public_key.hash160(compressed)
-                    if h160 != bytes.fromhex(script_pub_key_h160_hex[2:]):
+                    if h160 != script_pub_key_h160:
                         h160 = None
                     else:
                         break
@@ -610,7 +610,7 @@ class Transaction(object):
         sig_script = self.inputs[input_index].script
 
         # Re-create txn for sig verification
-        s = bytes.fromhex(sig_script.ast[0][2:])
+        s = sig_script.ast[0]
         hash_type = s[-1]
         txn_copy = self._copy_for_sig(input_index,
                                       hash_type,
@@ -690,10 +690,9 @@ class Transaction(object):
             int: The index of the corresponding output or None.
         """
         if isinstance(address_or_hash160, str):
-            ver, h160_bytes = address_to_key_hash(address_or_hash160)
-            h160 = bytes_to_str(h160_bytes)
+            ver, h160 = address_to_key_hash(address_or_hash160)
         elif isinstance(address_or_hash160, bytes):
-            h160 = bytes_to_str(address_or_hash160)
+            h160 = address_or_hash160
         else:
             raise TypeError("address_or_hash160 can only be bytes or str")
 
@@ -701,7 +700,7 @@ class Transaction(object):
         for i, o in enumerate(self.outputs):
             scr = o.script
             if scr.is_p2pkh() or scr.is_p2sh():
-                if scr.get_hash160()[2:] == h160:
+                if scr.get_hash160() == h160:
                     rv = i
                     break
 

@@ -1,5 +1,6 @@
 from collections import deque
 import hashlib
+import struct
 
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.crypto import Signature
@@ -70,15 +71,23 @@ class ScriptInterpreter(object):
 
             if opcode == "OP_0":
                 self._op_0()
-            elif opcode.startswith('0x'):
-                self._op_push(bytes.fromhex(opcode[2:]))
+            elif isinstance(opcode, bytes):
+                self._op_push(opcode)
             elif opcode in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA4']:
-                datalen = int(args[0], 0)
-                data = bytes.fromhex(args[1][2:])
-                num_bytes = int(opcode[-1])
-                if num_bytes != (datalen.bit_length() + 7) // 8:
+                pushlen = int(opcode[-1])
+                if pushlen == 1:
+                    datalen = args[0][0]
+                elif pushlen == 2:
+                    datalen = struct.unpack("<H", args[0])[0]
+                elif pushlen == 4:
+                    datalen = struct.unpack("<I", args[0])[0]
+                data = args[1]
+                if pushlen != (datalen.bit_length() + 7) // 8:
                     raise ScriptInterpreterError(
                         "datalen does not correspond with opcode")
+                if len(data) != datalen:
+                    raise ScriptInterpreterError(
+                        "len(data) != datalen in %s" % opcode)
                 self._op_pushdata(datalen, data)
             elif op and op >= Script.BTC_OPCODE_TABLE['OP_1'] and \
                 op <= Script.BTC_OPCODE_TABLE['OP_16']:
