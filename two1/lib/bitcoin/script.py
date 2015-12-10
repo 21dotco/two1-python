@@ -343,9 +343,81 @@ class Script(object):
             self._disassemble(script)
         elif isinstance(script, str):
             self._tokenize(script)
+        elif isinstance(script, list):
+            self._tokens = script
         else:
-            raise TypeError("Script must either be of type 'bytes' or 'str', not %r." % (type(script)))
+            raise TypeError(
+                "script must be of type 'bytes', 'str' or 'list', not %r." %
+                (type(script)))
 
+        self._parse()
+
+    def _check_valid_opcode(self, opcode):
+        rv = True
+        if isinstance(opcode, str):
+            # Make sure it's a valid opcode
+            if not opcode in self.BTC_OPCODE_TABLE and \
+               not opcode.startswith("0x"):
+                rv = False
+
+        return rv
+
+    def __getitem__(self, key):
+        return self._tokens[key]
+
+    def __setitem__(self, key, value):
+        if not isinstance(value, str) or \
+           not isinstance(value, bytes):
+            raise TypeError("value must either be str or bytes.")
+
+        v = value
+        if not self._check_valid_opcode(value):
+            raise ValueError("%s is not a valid opcode" % value)
+        if isinstance(value, str) and value.startswith("0x"):
+            v = bytes.fromhex(value[2:])
+
+        self._tokens[key] = v
+        self._parse()
+
+    def __delitem__(self, key):
+        del self._tokens[key]
+        self._parse()
+
+    def __iter__(self):
+        return iter(self._tokens)
+
+    def __len__(self):
+        return len(self._tokens)
+
+    def insert(self, index, value):
+        """ Inserts an OP before the specified index
+
+        Args:
+            index (int): Index of element to insert before
+            value (str or bytes): OP to insert.
+        """
+        v = value
+        if not self._check_valid_opcode(value):
+            raise ValueError("%s is not a valid opcode" % value)
+        if isinstance(value, str) and value.startswith("0x"):
+            v = bytes.fromhex(value[2:])
+
+        self._tokens.insert(index, v)
+        self._parse()
+
+    def append(self, value):
+        """ Append an OP to the end of the script
+
+        Args:
+            value (str or bytes): OP to insert.
+        """
+        v = value
+        if not self._check_valid_opcode(value):
+            raise ValueError("%s is not a valid opcode" % value)
+        if isinstance(value, str) and value.startswith("0x"):
+            v = bytes.fromhex(value[2:])
+
+        self._tokens.append(v)
         self._parse()
 
     @property
@@ -688,7 +760,8 @@ class Script(object):
                 token = [opcode, if_clause]
 
                 # Check for an else clause
-                if self._temp_tokens[0] == 'OP_ELSE':
+                if self._temp_tokens and \
+                   self._temp_tokens[0] == 'OP_ELSE':
                     self._temp_tokens.pop(0)
                     else_clause = self._do_parse(True)
                     if else_clause[-1] == 'OP_ENDIF':

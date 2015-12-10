@@ -1,5 +1,6 @@
-import base58
+import pytest
 
+from two1.lib.bitcoin.exceptions import ScriptParsingError
 from two1.lib.bitcoin.script import Script
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.bitcoin.utils import bytes_to_str, pack_var_str
@@ -42,6 +43,42 @@ def test_remove_op():
 
     s3 = s2.remove_op("OP_EQUAL")
     assert str(s2) == str(s3)
+
+
+def test_list_operations():
+    s = Script('OP_0 OP_1 OP_2')
+    assert s[0] == 'OP_0'
+
+    del s[2]
+    assert s._tokens == ['OP_0', 'OP_1']
+
+    s.append('OP_3')
+    assert str(s) == 'OP_0 OP_1 OP_3'
+
+    s.insert(2, 'OP_2')
+    assert s._tokens == ['OP_0', 'OP_1', 'OP_2', 'OP_3']
+    assert s._ast == ['OP_0', 'OP_1', 'OP_2', 'OP_3']
+
+    for i, o in enumerate(s):
+        assert o == 'OP_%d' % i
+
+    s = Script('OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF')
+    with pytest.raises(ScriptParsingError):
+        del s[1]
+
+    s = Script('OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF')
+    del s[3]
+    assert s._tokens == ['OP_1', 'OP_IF', 'OP_2', 'OP_3', 'OP_ENDIF']
+    assert len(s) == 5
+    assert str(s) == 'OP_1 OP_IF OP_2 OP_3 OP_ENDIF'
+
+    s = Script('OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF')
+    with pytest.raises(ScriptParsingError):
+        del s[5]
+
+    s = Script(['OP_1', 'OP_3'])
+    assert len(s) == 2
+    assert s._tokens == ['OP_1', 'OP_3']
 
 
 def test_multisig():
