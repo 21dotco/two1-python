@@ -156,14 +156,14 @@ class Script(object):
         if m < 1 or m > len(pub_keys):
             raise ValueError("m must be > 0 and <= len(pub_keys)!")
 
-        raw_redeem_script = bytes([0x50 + m])
+        redeem_script = Script("OP_%d" % m)
         for p in pub_keys:
-            raw_redeem_script += bytes([len(p)]) + p
+            redeem_script.append(p)
 
-        raw_redeem_script += bytes([0x50 + len(pub_keys)])
-        raw_redeem_script += bytes([Script.BTC_OPCODE_TABLE['OP_CHECKMULTISIG']])
+        redeem_script.append("OP_%d" % len(pub_keys))
+        redeem_script.append('OP_CHECKMULTISIG')
 
-        return Script(raw_redeem_script)
+        return redeem_script
 
     @staticmethod
     def build_multisig_sig(sigs, redeem_script):
@@ -194,43 +194,14 @@ class Script(object):
                              multisig_params['n'])
 
         # To correct for the early bitcoin-core off-by-1 error.
-        scr = bytes([0x00])
+        scr = Script('OP_0')
 
         for s in sigs:
-            scr += pack_var_str(s)
+            scr.append(s)
 
-        scr += Script.build_push_str(bytes(redeem_script))
+        scr.append(bytes(redeem_script))
 
-        return Script(scr)
-
-    @staticmethod
-    def build_push_str(s):
-        """ Creates a script to push s onto the stack.
-
-        Args:
-            s (bytes): bytes to be pushed onto the stack.
-
-        Returns:
-            b (bytes): Serialized bytes containing the appropriate PUSHDATA
-                       op for s.
-        """
-        ls = len(s)
-        hexstr = bytes_to_str(s)
-        pd_index = 0
-
-        if ls < Script.BTC_OPCODE_TABLE['OP_PUSHDATA1']:
-            return bytes([ls]) + s
-        # Determine how many bytes are required for the length
-        elif ls < 0xff:
-            pd_index = 1
-        elif ls < 0xffff:
-            pd_index = 2
-        else:
-            pd_index = 4
-
-        p = bytes([Script.BTC_OPCODE_TABLE['OP_PUSHDATA%d' % (pd_index)]])
-        p += bytes([ls]) + s
-        return p
+        return scr
 
     @staticmethod
     def build_push_int(i):
@@ -248,7 +219,7 @@ class Script(object):
         if i >= 0 and i <= 16:
             return bytes(Script('OP_%d' % i))
         else:
-            return Script.build_push_str(render_int(i))
+            return bytes(Script([render_int(i)]))
 
     def __init__(self, script=""):
         self._ast = []
@@ -260,6 +231,7 @@ class Script(object):
             self._tokenize(script)
         elif isinstance(script, list):
             self._tokens = script
+            self._validate_tokens()
         else:
             raise TypeError(
                 "script must be of type 'bytes', 'str' or 'list', not %r." %
@@ -272,7 +244,8 @@ class Script(object):
         if isinstance(opcode, str):
             # Make sure it's a valid opcode
             if not opcode in self.BTC_OPCODE_TABLE and \
-               not opcode.startswith("0x"):
+               not opcode.startswith("0x") or \
+               opcode in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
                 rv = False
 
         return rv
@@ -457,16 +430,14 @@ class Script(object):
                     hash_type appended at the end of the byte string.
                 'redeem_script' (Script): The associated redeem script.
         """
-        ast = self.ast
-
         # A signature script should start with OP_0
-        if ast[0] != 'OP_0':
+        if self[0] != 'OP_0':
             raise TypeError("Script does not start with OP_0!")
 
         # Everything after OP_0 and before the last operand is a signature.
         # If it does not start with '0x', something is wrong.
         sigs = []
-        for i, x in enumerate(ast[1:-1]):
+        for i, x in enumerate(self[1:-1]):
             if isinstance(x, bytes):
                 sigs.append(x)
             else:
@@ -474,15 +445,7 @@ class Script(object):
                     "Operand %d does not seem to be a signature!" % i)
 
         # The last operand should be the redeem script
-        r = ast[-1]
-        if isinstance(r, list):
-            if not r[0].startswith('OP_PUSHDATA'):
-                raise TypeError(
-                    "Expecting an OP_PUSHDATA but got %s" % r[0])
-            script_bytes = r[-1]
-        else:
-            script_bytes = r
-        redeem_script = Script(script_bytes)
+        redeem_script = Script(self[-1])
 
         if not redeem_script.is_multisig_redeem():
             raise TypeError("Invalid or no redeem script found!")
@@ -629,12 +592,22 @@ class Script(object):
 
         return Script([t for t in self._tokens if t != op])
 
+    def _validate_tokens(self):
+        """ Checks that there are no push OPs in the tokens as they
+            should all just be bytes.
+        """
+        for t in self._tokens:
+            if t in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
+                raise TypeError(
+                    "No push ops allowed, simply add the bytes to be pushed.")
+
     def _tokenize(self, s):
         """ Breaks up a string into tokens and converts all tokens
             starting with "0x" into bytes
         """
         self._tokens = [bytes.fromhex(t[2:]) if t.startswith("0x") else t
                         for t in s.split()]
+        self._validate_tokens()
 
     def _parse(self):
         """ This is a basic Recursive Descent Parser for the Bitcoin
@@ -655,16 +628,18 @@ class Script(object):
             if opcode in ['OP_0', 'OP_FALSE']:
                 ast.append(opcode)
             elif isinstance(opcode, bytes):
-                if len(opcode) < 0x01 or len(opcode) > 0x4b:
-                    raise ValueError(
-                        "Opcode has too much data to push onto stack: \"%s\"" %
-                        bytes_to_str(opcode))
-                ast.append(opcode)
+                l = len(opcode)
+                if l <= 0x4b:
+                    ast.append(opcode)
+                elif l <= 0xff:
+                    ast.append(['OP_PUSHDATA1', bytes([l]), opcode])
+                elif l <= 0xffff:
+                    ast.append(['OP_PUSHDATA2', struct.pack("<H", l), opcode])
+                elif l <= 0xffffffff:
+                    ast.append(['OP_PUSHDATA4', struct.pack("<I", l), opcode])
             elif opcode in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA4']:
-                # Easy enough that we don't need to recurse here
-                datalen = self._temp_tokens.pop(0)
-                data = self._temp_tokens.pop(0)
-                ast.append([opcode, datalen, data])
+                raise TypeError(
+                    "No push ops allowed, simply add the bytes to be pushed.")
             elif opcode in ['OP_IF', 'OP_NOTIF']:
                 got_endif = False
                 # Recursively descend
@@ -739,8 +714,6 @@ class Script(object):
                         datalen_bytes, raw = raw[0:4], raw[4:]
                         datalen = struct.unpack("<I", datalen_bytes)[0]
 
-                    self._tokens.append('OP_PUSHDATA%d' % pushlen)
-                    self._tokens.append(datalen_bytes)
                     self._tokens.append(raw[:datalen])
                     raw = raw[datalen:]
                 else:
@@ -774,18 +747,31 @@ class Script(object):
         i = 0
         while i < len(self):
             t = self[i]
-            if t in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
-                b += bytes([self.BTC_OPCODE_TABLE[t]])
-                b += self[i+1]
-                b += self[i+2]
-                i += 2
-            elif isinstance(t, bytes):
+            if isinstance(t, bytes):
                 l = len(t)
-                if l < 0x01 or l > 0x4b:
+                if l < 0x01:
                     raise ValueError(
-                        "Opcode has too much data to push onto stack: \"%s\"" % t)
-                b += bytes([l])
-                b += t
+                        "Empty byte string not allowed.")
+                elif l <= 0x4b:
+                    b += bytes([l])
+                    b += t
+                else:
+                    if l <= 0xff:
+                        op = 'OP_PUSHDATA1'
+                        pushlen = bytes([l])
+                    elif l <= 0xffff:
+                        op = 'OP_PUSHDATA2'
+                        pushlen = struct.pack("<H", l)
+                    elif l <= 0xffffffff:
+                        op = 'OP_PUSHDATA4'
+                        pushlen = struct.pack("<I", l)
+                    else:
+                        raise ValueError(
+                            "op has too much data to push onto stack.")
+
+                    b += bytes([self.BTC_OPCODE_TABLE[op]])
+                    b += pushlen
+                    b += t
             else:
                 b += bytes([self.BTC_OPCODE_TABLE[t]])
 
