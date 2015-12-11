@@ -31,7 +31,7 @@ def test_op_push():
 
 
 def test_op_pushdata():
-    s = Script("OP_PUSHDATA1 0x4e 0x" + "12" * 0x4e)
+    s = Script("0x" + "12" * 0x4e)
 
     si = ScriptInterpreter()
     si.run_script(s)
@@ -39,14 +39,7 @@ def test_op_pushdata():
     assert len(si.stack) == 1
     assert si.stack[0] == bytes([0x12] * 0x4e)
 
-    s = Script("OP_PUSHDATA1 0x4e 0x" + "12" * 0x4d)
-
-    # Should fail since there isn't enough data
-    with pytest.raises(ScriptInterpreterError):
-        si.run_script(s)
-
-    # Little-endian, thanks Satoshi.
-    s = Script("OP_PUSHDATA2 0xff4e 0x" + "12" * 0x4eff)
+    s = Script("0x" + "12" * 0x4eff)
     si.run_script(s)
 
     assert len(si.stack) == 2

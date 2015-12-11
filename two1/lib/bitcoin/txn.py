@@ -477,10 +477,8 @@ class Transaction(object):
                                                   hash_type)
         else:
             pub_key_bytes = self._get_public_key_bytes(private_key, compressed)
-            pub_key_str = pack_var_str(pub_key_bytes)
-            script_sig = pack_var_str(
-                sig.to_der() + pack_compact_int(hash_type)) + pub_key_str
-            inp.script = Script(script_sig)
+            inp.script = Script([sig.to_der() + pack_compact_int(hash_type),
+                                 pub_key_bytes])
 
         return True
 
