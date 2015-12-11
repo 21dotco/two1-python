@@ -1,5 +1,7 @@
 import requests
 
+import two1.lib.bitcoin as bitcoin
+
 
 class BlockchainError(Exception):
     """Base class for Blockchain errors."""
@@ -130,3 +132,77 @@ class InsightBlockchain(BlockchainBase):
             raise BlockchainServerError("Broadcasting transaction: Status Code {}, {}".format(r.status_code, r.text))
 
         return r.json()['txid']
+
+
+class BlockCypherBlockchain(BlockchainBase):
+    """Blockchain interface to a BlockCypher API."""
+
+    def __init__(self, base_url):
+        """Instantiate a BlockCypher blockchain interface with specified URL.
+
+        Args:
+            base_url (str): BlockCypher API URL.
+
+        Returns:
+            BlockCypherBlockchain: instance of BlockCypherBlockchain.
+
+        """
+        super().__init__()
+        self._base_url = base_url
+
+    def check_confirmed(self, txid, num_confirmations=1):
+        # Get transaction info
+        r = requests.get(self._base_url + "/txs/" + txid)
+        if r.status_code == 404:
+            return False
+        elif r.status_code != 200:
+            raise BlockchainServerError("Getting transaction info: Status Code {}, {}".format(r.status_code, r.text))
+
+        # Check confirmation
+        tx_info = r.json()
+        return "confirmations" in tx_info and tx_info["confirmations"] >= num_confirmations
+
+    def lookup_spend_txid(self, txid, output_index):
+        # Get transaction info
+        r = requests.get(self._base_url + "/txs/" + txid)
+        if r.status_code == 404:
+            return None
+        elif r.status_code != 200:
+            raise BlockchainServerError("Getting transaction info: Status Code {}, {}".format(r.status_code, r.text))
+
+        # Validate utxo index is in bounds
+        tx_info = r.json()
+        if len(tx_info['outputs']) <= output_index:
+            raise ValueError("Output index out of bounds.")
+
+        # If spent transaction exists
+        if "spent_by" in tx_info['outputs'][output_index]:
+            return tx_info['outputs'][output_index]['spent_by']
+
+        return None
+
+    def lookup_tx(self, txid):
+        # Get raw transaction
+        r = requests.get(self._base_url + "/txs/" + txid, params={'includeHex': 'true'})
+        if r.status_code == 404:
+            return None
+        elif r.status_code != 200:
+            raise BlockchainServerError("Getting raw transaction: Status Code {}, {}".format(r.status_code, r.text))
+
+        return r.json()['hex']
+
+    def broadcast_tx(self, tx):
+        # BlockCypher returns 400 on broadcast if the transaction has already
+        # been broadcast, so we check if it exists first.
+
+        # Get transaction info
+        r = requests.get(self._base_url + "/txs/" + str(bitcoin.Transaction.from_hex(tx).hash))
+        if r.status_code == 200:
+            return r.json()['hash']
+
+        # Broadcast transaction
+        r = requests.post(self._base_url + "/txs/push", json={'tx': tx})
+        if r.status_code != 201:
+            raise BlockchainServerError("Broadcasting transaction: Status Code {}, {}".format(r.status_code, r.text))
+
+        return r.json()['tx']['hash']
