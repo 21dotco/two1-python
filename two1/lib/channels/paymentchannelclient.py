@@ -22,10 +22,10 @@ class PaymentChannelClient:
     DEFAULT_CHANNELS_DB_PATH = os.path.expanduser('~/.two1/channels/channels.sqlite3')
     """Default payment channel database path."""
 
-    DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com"
+    DEFAULT_BLOCKCYPHER_BLOCKCHAIN_URL = "https://api.blockcypher.com/v1/btc/main"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL = "https://testnet.blockexplorer.com"
+    DEFAULT_BLOCKCYPHER_TESTNET_BLOCKCHAIN_URL = "https://api.blockcypher.com/v1/btc/test3"
     """Default testnet blockchain URL."""
 
     def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH):
@@ -42,7 +42,7 @@ class PaymentChannelClient:
         """
         self._wallet = walletwrapper.Two1WalletWrapper(wallet)
         self._database = database.Sqlite3Database(db_path)
-        self._blockchain = blockchain.InsightBlockchain(PaymentChannelClient.DEFAULT_INSIGHT_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL)
+        self._blockchain = blockchain.BlockCypherBlockchain(PaymentChannelClient.DEFAULT_BLOCKCYPHER_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_BLOCKCYPHER_TESTNET_BLOCKCHAIN_URL)
 
         self._channels = collections.OrderedDict()
         self._update_channels()
