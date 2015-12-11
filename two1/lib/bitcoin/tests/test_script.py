@@ -32,6 +32,17 @@ def test_serialization():
     assert bytes(s) == b
 
 
+def test_validate_template():
+    template = ['OP_HASH160', bytes, 'OP_EQUALVERIFY', 'OP_CHECKSIG']
+    scr = Script('OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUALVERIFY OP_NOP')
+
+    assert not Script.validate_template(scr, template)
+
+    scr[-1] = 'OP_CHECKSIG'
+
+    assert Script.validate_template(scr, template)
+
+
 def test_remove_op():
     scr = "OP_ADD OP_CODESEPARATOR OP_DUP OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUALVERIFY OP_CHECKSIG"
     s = Script(scr)
