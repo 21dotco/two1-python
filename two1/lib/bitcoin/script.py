@@ -221,6 +221,32 @@ class Script(object):
         else:
             return bytes(Script([render_int(i)]))
 
+    @staticmethod
+    def validate_template(script, template):
+        """ Validates a script against a template.
+
+        Args:
+            script (Script): A Script object.
+            template (list): A list of OPs or types against which to
+                validate script.
+
+        Returns:
+            bool: True if script has the same OPs and types as template,
+                False otherwise.
+        """
+        if len(script) != len(template):
+            return False
+
+        for i, e in enumerate(template):
+            if isinstance(e, str):
+                if script[i] != e:
+                    return False
+            elif isinstance(e, type):
+                if type(script[i]) != e:
+                    return False
+
+        return True
+
     def __init__(self, script=""):
         self._ast = []
         self._tokens = []
@@ -254,7 +280,7 @@ class Script(object):
         return self._tokens[key]
 
     def __setitem__(self, key, value):
-        if not isinstance(value, str) or \
+        if not isinstance(value, str) and \
            not isinstance(value, bytes):
             raise TypeError("value must either be str or bytes.")
 
