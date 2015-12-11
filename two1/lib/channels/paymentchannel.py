@@ -123,16 +123,17 @@ class PaymentChannel:
             # Call open(deposit_tx, redeem_script) on server
             payment_server.open(deposit_tx, redeem_script)
 
-            # Call broadcast(deposit_tx) on blockchain
-            blockchain.broadcast_tx(sm.deposit_tx)
-
-            # Form the complete payment channel URL
-            model.url = url + ("/" if url[-1] != "/" else "") + sm.deposit_txid
+            # Form the complete payment channel deposit URL
+            deposit_url = url + ("/" if url[-1] != "/" else "") + sm.deposit_txid
+            model.url = deposit_url
 
             # Add to the database
             database.create(model)
 
-            return PaymentChannel(model.url, database, wallet, blockchain)
+        # Call broadcast(deposit_tx) on blockchain
+        blockchain.broadcast_tx(sm.deposit_tx)
+
+        return PaymentChannel(deposit_url, database, wallet, blockchain)
 
     def pay(self, amount):
         """Pay to the payment channel.
