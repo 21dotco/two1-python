@@ -234,10 +234,10 @@ def cli_info(ctx, url):
         sys.exit(1)
 
     # Get channel status
-    status = ctx.obj['client'].status(url)
+    status = ctx.obj['client'].status(url, include_txs=True)
 
     if ctx.obj['json']:
-        print(json.dumps({'result': {'url': status.url, 'state': str(status.state), 'ready': status.ready, 'balance': status.balance, 'deposit': status.deposit, 'creation_time': status.creation_time, 'expiration_time': status.expiration_time, 'expired': status.expired, 'deposit_txid': status.deposit_txid, 'spend_txid': status.spend_txid}}))
+        print(json.dumps({'result': {'url': status.url, 'state': str(status.state), 'ready': status.ready, 'balance': status.balance, 'deposit': status.deposit, 'creation_time': status.creation_time, 'expiration_time': status.expiration_time, 'expired': status.expired, 'deposit_txid': status.deposit_txid, 'spend_txid': status.spend_txid, 'transactions': {'deposit_tx': status.transactions.deposit_tx, 'refund_tx': status.transactions.refund_tx, 'payment_tx': status.transactions.payment_tx, 'spend_tx': status.transactions.spend_tx}}}))
     else:
         print()
         print(COLORS['blue'] + status.url + COLORS['reset'])
@@ -248,6 +248,16 @@ def cli_info(ctx, url):
         print("    {:<16}{}".format("Expires", format_expiration_time(status.expiration_time)))
         print("    {:<16}{}".format("Deposit txid", status.deposit_txid))
         print("    {:<16}{}".format("Spend txid", status.spend_txid))
+        print()
+        print("    Transactions")
+        print("         Deposit tx")
+        print("             {}".format(status.transactions.deposit_tx))
+        print("         Refund tx")
+        print("             {}".format(status.transactions.refund_tx))
+        print("         Payment tx (half-signed)")
+        print("             {}".format(status.transactions.payment_tx))
+        print("         Spend Tx")
+        print("             {}".format(status.transactions.spend_tx))
         print()
 
 
