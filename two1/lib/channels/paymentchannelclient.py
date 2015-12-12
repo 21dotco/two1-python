@@ -7,8 +7,12 @@ from . import blockchain
 from . import paymentchannel
 
 
-PaymentChannelStatus = collections.namedtuple('PaymentChannelStatus', ['url', 'state', 'ready', 'balance', 'deposit', 'fee', 'creation_time', 'expiration_time', 'expired', 'deposit_txid', 'spend_txid'])
+PaymentChannelStatus = collections.namedtuple('PaymentChannelStatus', ['url', 'state', 'ready', 'balance', 'deposit', 'fee', 'creation_time', 'expiration_time', 'expired', 'deposit_txid', 'spend_txid', 'transactions'])
 """Container for the status information of a payment channel."""
+
+
+PaymentChannelTransactions = collections.namedtuple('PaymentChannelTransactions', ['deposit_tx', 'refund_tx', 'payment_tx', 'spend_tx'])
+"""Container for the raw transactions of a payment channel."""
 
 
 class NotFoundError(IndexError):
@@ -138,11 +142,12 @@ class PaymentChannelClient:
             # Pay to channel
             return self._channels[url].pay(amount)
 
-    def status(self, url):
+    def status(self, url, include_txs=False):
         """Get payment channel status and information.
 
         Args:
             url (str): Payment channel URL.
+            include_txs (bool): Include raw channel transactions.
 
         Returns:
             PaymentChannelStatus: Named tuple with url (str), state
@@ -158,6 +163,17 @@ class PaymentChannelClient:
 
             # Get channel status
             channel = self._channels[url]
+
+            if include_txs:
+                transactions = PaymentChannelTransactions(
+                    deposit_tx=channel.deposit_tx,
+                    refund_tx=channel.refund_tx,
+                    payment_tx=channel.payment_tx,
+                    spend_tx=channel.spend_tx
+                )
+            else:
+                transactions = None
+
             return PaymentChannelStatus(
                 url=channel.url,
                 state=channel.state,
@@ -169,7 +185,8 @@ class PaymentChannelClient:
                 expiration_time=channel.expiration_time,
                 expired=channel.expired,
                 deposit_txid=channel.deposit_txid,
-                spend_txid=channel.spend_txid
+                spend_txid=channel.spend_txid,
+                transactions=transactions
             )
 
     def close(self, url):
