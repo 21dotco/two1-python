@@ -1,6 +1,6 @@
 from calendar import timegm
 from collections import defaultdict
-
+import os
 import arrow
 
 
@@ -15,7 +15,7 @@ class TwentyOneProvider(ChainProvider):
         Args:
             // TODO: Use the MachineAuth here to avoid spam
     """
-    DEFAULT_HOST = "https://dotco-devel-pool2.herokuapp.com"
+    DEFAULT_HOST = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co")
 
     def __init__(self, twentyone_host_name=DEFAULT_HOST, testnet=False,
                  connection_pool_size=0):
@@ -73,3 +73,14 @@ class TwentyOneProvider(ChainProvider):
                                               transaction=txn))
 
         return ret
+
+    def get_balance(self, address_list):
+        """ Deprecated Method
+        """
+        raise NotImplementedError("This method has been deprecated")
+
+    def get_utxos(self, address_list):
+        """ Deprecated Method
+        """
+        raise NotImplementedError("This method has been deprecated")
+
