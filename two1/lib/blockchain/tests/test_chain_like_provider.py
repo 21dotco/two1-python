@@ -7,6 +7,7 @@ from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
+from two1.lib.blockchain.block_cypher_provider import BlockCypherProvider
 
 
 API_KEY_ID = os.environ.get("CHAIN_API_KEY_ID", None)
@@ -19,7 +20,8 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
-twentyone_provider = TwentyOneProvider("https://dotco-devel-pool2.herokuapp.com")
+twentyone_provider = TwentyOneProvider()
+block_cypher_provider = BlockCypherProvider()
 #twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
 
@@ -27,8 +29,6 @@ twentyone_provider = TwentyOneProvider("https://dotco-devel-pool2.herokuapp.com"
                          [
                              (chain_provider, False),
                              (chain_provider, True),
-                             (twentyone_provider, False),
-                             (twentyone_provider, True)
                          ])
 def test_get_balance(provider, testnet):
     cp = provider    
@@ -59,14 +59,13 @@ def test_get_balance(provider, testnet):
 
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
-twentyone_provider = TwentyOneProvider("https://dotco-devel-pool2.herokuapp.com")
+twentyone_provider = TwentyOneProvider()
 #twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (chain_provider, False),
                              (chain_provider, True),
-                             (twentyone_provider, False)
                          ])
 def test_utxo(provider, testnet):
     cp = provider
@@ -99,7 +98,9 @@ def test_utxo(provider, testnet):
                              (chain_provider, False),
                              (chain_provider, True),
                              (twentyone_provider, False),
-                             (twentyone_provider, True)
+                             (twentyone_provider, True),
+                             (block_cypher_provider, False),
+                             (block_cypher_provider, True)
                          ])
 def test_get_transactions(provider, testnet):
     cp = provider
@@ -122,7 +123,9 @@ def test_get_transactions(provider, testnet):
                              (chain_provider, False),
                              (chain_provider, True),
                              (twentyone_provider, False),
-                             (twentyone_provider, True)
+                             (twentyone_provider, True),
+                             (block_cypher_provider, False),
+                             (block_cypher_provider, True)
                          ])
 def test_get_transactions_by_id(provider, testnet):
     cp = provider
