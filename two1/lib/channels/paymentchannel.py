@@ -386,6 +386,45 @@ class PaymentChannel:
             return time.time() > sm.expiration_time
 
     @property
+    def refund_tx(self):
+        """Get refund transaction.
+
+        Returns:
+            str or None: Serialized refund transaction (ASCII hex).
+
+        """
+        with self._database:
+            model = self._database.read(self._url)
+            sm = PaymentChannelStateMachine(model, self._wallet)
+            return sm.refund_tx
+
+    @property
+    def refund_txid(self):
+        """Get refund transaction ID.
+
+        Returns:
+            str or None: Deposit transaction ID (RPC byte order).
+
+        """
+        with self._database:
+            model = self._database.read(self._url)
+            sm = PaymentChannelStateMachine(model, self._wallet)
+            return sm.refund_txid
+
+    @property
+    def deposit_tx(self):
+        """Get deposit transaction.
+
+        Returns:
+            str or None: Serialized deposit transaction (ASCII hex).
+
+        """
+        with self._database:
+            model = self._database.read(self._url)
+            sm = PaymentChannelStateMachine(model, self._wallet)
+            return sm.deposit_tx
+
+    @property
     def deposit_txid(self):
         """Get deposit transaction ID.
 
@@ -397,6 +436,32 @@ class PaymentChannel:
             model = self._database.read(self._url)
             sm = PaymentChannelStateMachine(model, self._wallet)
             return sm.deposit_txid
+
+    @property
+    def payment_tx(self):
+        """Get last half-signed payment transaction.
+
+        Returns:
+            str or None: Serialized payment transaction (ASCII hex).
+
+        """
+        with self._database:
+            model = self._database.read(self._url)
+            sm = PaymentChannelStateMachine(model, self._wallet)
+            return sm.payment_tx
+
+    @property
+    def spend_tx(self):
+        """Get spend transaction.
+
+        Returns:
+            str or None: Serialized spend transaction (ASCII hex).
+
+        """
+        with self._database:
+            model = self._database.read(self._url)
+            sm = PaymentChannelStateMachine(model, self._wallet)
+            return sm.spend_tx
 
     @property
     def spend_txid(self):
