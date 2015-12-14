@@ -250,20 +250,21 @@ class Script(object):
     def __init__(self, script=""):
         self._ast = []
         self._tokens = []
+        self._raw_script = None
 
         if isinstance(script, bytes):
-            self._disassemble(script)
+            self._raw_script = script
         elif isinstance(script, str):
             self._tokenize(script)
+            self._parse()
         elif isinstance(script, list):
             self._tokens = script
             self._validate_tokens()
+            self._parse()
         else:
             raise TypeError(
                 "script must be of type 'bytes', 'str' or 'list', not %r." %
                 (type(script)))
-
-        self._parse()
 
     def _check_valid_opcode(self, opcode):
         rv = True
@@ -276,10 +277,21 @@ class Script(object):
 
         return rv
 
+    def _check_tokenized(self):
+        if not self._tokens:
+            if self._raw_script:
+                self._disassemble()
+                self._parse()
+                self._raw_script = None
+
     def __getitem__(self, key):
+        self._check_tokenized()
         return self._tokens[key]
 
     def __setitem__(self, key, value):
+        if key > 0:
+            self._check_tokenized()
+
         if not isinstance(value, str) and \
            not isinstance(value, bytes):
             raise TypeError("value must either be str or bytes.")
@@ -294,13 +306,16 @@ class Script(object):
         self._parse()
 
     def __delitem__(self, key):
+        self._check_tokenized()
         del self._tokens[key]
         self._parse()
 
     def __iter__(self):
+        self._check_tokenized()
         return iter(self._tokens)
 
     def __len__(self):
+        self._check_tokenized()
         return len(self._tokens)
 
     def insert(self, index, value):
@@ -316,6 +331,8 @@ class Script(object):
         if isinstance(value, str) and value.startswith("0x"):
             v = bytes.fromhex(value[2:])
 
+        self._check_tokenized()
+
         self._tokens.insert(index, v)
         self._parse()
 
@@ -330,6 +347,8 @@ class Script(object):
             raise ValueError("%s is not a valid opcode" % value)
         if isinstance(value, str) and value.startswith("0x"):
             v = bytes.fromhex(value[2:])
+
+        self._check_tokenized()
 
         self._tokens.append(v)
         self._parse()
@@ -548,6 +567,7 @@ class Script(object):
         Returns:
             bytes: the hash160 or None.
         """
+        self._check_tokenized()
         if not self._tokens:
             raise ScriptParsingError(
                 "Script is empty or has not been disassembled")
@@ -613,6 +633,7 @@ class Script(object):
         Returns:
             scr (Script): New script object devoid of any OP_<op>.
         """
+        self._check_tokenized()
         if op not in self.BTC_OPCODE_TABLE:
             raise ValueError("Unknown op (%s)" % (op))
 
@@ -622,6 +643,7 @@ class Script(object):
         """ Checks that there are no push OPs in the tokens as they
             should all just be bytes.
         """
+        self._check_tokenized()
         for t in self._tokens:
             if t in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
                 raise TypeError(
@@ -641,6 +663,7 @@ class Script(object):
             interpretation of that script. The resultant tokens are stored
             in ``self._ast``.
         """
+        self._check_tokenized()
         if self._tokens:
             self._temp_tokens = copy.deepcopy(self._tokens)
             self._ast = self._do_parse()
@@ -708,15 +731,16 @@ class Script(object):
 
         return ast
 
-    def _disassemble(self, raw):
+    def _disassemble(self):
         """ Disassembles a raw script (in bytes) to human-readable text
             using the opcodes in BTC_OPCODE_TABLE. The disassembled string
             is stored in self._tokens.
-
-        Args:
-            raw (bytes): A byte stream containing the script to be
-                disassembled.
         """
+        if self._raw_script is None:
+            return
+
+        raw = self._raw_script
+
         self._tokens = []
         while raw:
             op, raw = raw[0], raw[1:]
@@ -752,6 +776,7 @@ class Script(object):
             s (str): String representation of the script
         """
         script = ""
+        self._check_tokenized()
         for t in self._tokens:
             if isinstance(t, bytes):
                 script += "0x%s " % bytes_to_str(t)
@@ -771,6 +796,9 @@ class Script(object):
         """
         b = b''
         i = 0
+        if self._raw_script is not None:
+            return self._raw_script
+
         while i < len(self):
             t = self[i]
             if isinstance(t, bytes):
