@@ -19,6 +19,8 @@ def txn_from_json(txn_json):
         if 'output_hash' in i:
             outpoint = Hash(i['output_hash'])
             script = Script(bytes.fromhex(i['script_signature_hex']))
+            # Do this to test script de/serialization
+            script._disassemble()
             inp = TransactionInput(outpoint,
                                    i['output_index'],
                                    script,
@@ -37,6 +39,7 @@ def txn_from_json(txn_json):
     outputs = []
     for o in txn_json['outputs']:
         scr = Script(bytes.fromhex(o['script_hex']))
+        scr._disassemble()
         out = TransactionOutput(o['value'], scr)
         outputs.append(out)
 

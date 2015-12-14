@@ -20,6 +20,7 @@ def test_serialization():
 
     raw_scr = "483045022100d60baf72dbaed8d15c3150e3309c9f7725fbdf91b0560330f3e2a0ccb606dfba02206422b1c73ce390766f0dc4e9143d0fbb400cc207e4a9fd9130e7f79e52bf81220121034ccd52d8f72cfdd680077a1a171458a1f7574ebaa196095390ae45e68adb3688"
     s = Script(bytes.fromhex(raw_scr))
+    s._check_tokenized()
     assert s._tokens
     assert s._ast
 
@@ -30,6 +31,7 @@ def test_serialization():
     b = bytes.fromhex("0063041337c0de6851")
     s1 = Script.from_bytes(pack_var_str(b))[0]
     assert bytes(s) == b
+    assert bytes(s) == bytes(s1)
 
 
 def test_validate_template():
