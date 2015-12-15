@@ -292,13 +292,12 @@ class PrivateKey(PrivateKeyBase):
             b (bytes): A byte stream containing a 256-bit (32-byte) integer.
 
         Returns:
-            tuple(PrivateKey, bytes): A PrivateKey object and the remainder
-                of the bytes.
+            PrivateKey: A PrivateKey object.
         """
         if len(b) < 32:
             raise ValueError('b must contain at least 32 bytes')
 
-        return (PrivateKey(int.from_bytes(b[:32], 'big')), b[32:])
+        return PrivateKey(int.from_bytes(b[:32], 'big'))
 
     @staticmethod
     def from_hex(h):
@@ -311,7 +310,7 @@ class PrivateKey(PrivateKeyBase):
         Returns:
             PrivateKey: A PrivateKey object.
         """
-        return PrivateKey.from_bytes(bytes.fromhex(h))[0]
+        return PrivateKey.from_bytes(bytes.fromhex(h))
 
     @staticmethod
     def from_int(i):
@@ -987,7 +986,7 @@ class HDKey(object):
             HDPrivateKey or HDPublicKey: Either an HD private or
                 public key object, depending on what was serialized.
         """
-        return HDKey.from_bytes(base58.b58decode_check(key))[0]
+        return HDKey.from_bytes(base58.b58decode_check(key))
 
     @staticmethod
     def from_bytes(b):
@@ -1038,7 +1037,7 @@ class HDKey(object):
         else:
             raise ValueError("incorrect encoding.")
 
-        return (rv, b[78:])
+        return rv
 
     @staticmethod
     def from_hex(h):
@@ -1054,7 +1053,7 @@ class HDKey(object):
             HDPrivateKey or HDPublicKey: Either an HD private or
                 public key object, depending on what was serialized.
         """
-        return HDKey.from_bytes(bytes.fromhex(h))[0]
+        return HDKey.from_bytes(bytes.fromhex(h))
 
     @staticmethod
     def from_path(root_key, path):
