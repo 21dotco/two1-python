@@ -36,7 +36,7 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, wallet, allowed_methods=None):
+    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600):
         """Configure bitserv settings.
 
         Args:
@@ -45,7 +45,7 @@ class Payment:
         """
         if allowed_methods is None:
             self.allowed_methods = [
-                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet))),
+                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet, zeroconf=zeroconf, sync_period=sync_period))),
                 OnChain(wallet),
                 BitTransfer(wallet)]
             # Sync payment channels server on startup

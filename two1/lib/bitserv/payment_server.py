@@ -67,7 +67,7 @@ class PaymentServer:
     """Thread lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None, zeroconf=True):
+                 blockchain=None, zeroconf=True, sync_period=600):
         """Initalize the payment server.
 
         Args:
@@ -82,6 +82,9 @@ class PaymentServer:
                 verify transactions against the bitcoin testnet blockchain.
             blockchain (two1.lib.blockchain.provider): a blockchain data
                 provider capable of broadcasting raw transactions.
+            zeroconf (boolean): whether or not to use a payment channel before
+                the deposit transaction has been confirmed by the network.
+            sync_period (integer): how often to sync channel status (in sec).
         """
         self.zeroconf = zeroconf
         self._wallet = Two1WalletWrapper(wallet, account)
@@ -91,6 +94,9 @@ class PaymentServer:
             self._db = DatabaseSQLite3()
         if blockchain is None:
             self._blockchain = InsightBlockchain(PaymentServer.DEFAULT_INSIGHT_BLOCKCHAIN_URL)
+        self._sync_stop = threading.Event()
+        self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
+        self._sync_thread.start()
 
     def discovery(self):
         """Return the merchant's public key.
@@ -367,3 +373,9 @@ class PaymentServer:
                     if time.time() + PaymentServer.EXP_TIME_BUFFER > pc.expires_at:
                         self._blockchain.broadcast_tx(pc.payment_tx.to_hex())
                         self._db.pc.update_state(pc.deposit_txid, ChannelSQLite3.CLOSED)
+
+    def _auto_sync(self, timeout, stop_event):
+        """Lightweight thread for automatic channel syncs."""
+        while not stop_event.is_set():
+            stop_event.wait(timeout)
+            self.sync()
