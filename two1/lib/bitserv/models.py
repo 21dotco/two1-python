@@ -54,16 +54,48 @@ class ChannelDatabase:
     def __init__(self):
         pass
 
-    def create(self, refund_tx, merch_pubkey):
+    def create(self, deposit_tx, merch_pubkey, amount, expiration):
+        """Create a payment channel entry.
+
+        Args:
+            deposit_tx (two1.lib.bitcoin.Transaction): initial deposit used to
+                open the payment channel.
+            merch_pubkey (str): the merchant public key used in the channel.
+            amount (int): the opening balance of the payment channel.
+            expiration (int): expiration timestamp in UNIX Epoch time.
+        """
         raise NotImplementedError()
 
-    def lookup(self, deposit_txid):
+    def lookup(self, deposit_txid=None):
+        """Look up a payment channel entry by deposit txid.
+
+        Args:
+            deposit_txid (str): optional argument to find a single channel or
+                query for all channels (in the case of a sync).
+        Returns:
+            Channel (collections.namedtuple): named tuple as defined above,
+                with `deposit_tx` and `payment_tx` as Transaction objects.
+        """
         raise NotImplementedError()
 
-    def update_payment(self, deposit_txid, payment_tx, pmt_amt):
+    def update_payment(self, deposit_txid, payment_tx, payment_amount):
+        """Update a payment channel with a new payment transaction.
+
+        Args:
+            deposit_txid (str): deposit txid used to identify the channel.
+            payment_tx (two1.lib.bitcoin.Transaction): payment transaction made
+                within the channel.
+            payment_amount (int): incremental payment amount of the tx.
+        """
         raise NotImplementedError()
 
-    def delete(self, deposit_txid):
+    def update_state(self, deposit_txid, new_state):
+        """Update payment channel state.
+
+        Args:
+            deposit_txid (str): deposit txid used to identify the channel.
+            new_state (str): new state used for updating the channel.
+        """
         raise NotImplementedError()
 
 
@@ -72,13 +104,35 @@ class PaymentDatabase:
     def __init__(self):
         pass
 
-    def create(self, payment_tx):
+    def create(self, deposit_txid, payment_tx, amount):
+        """Create a payment entry.
+
+        Args:
+            deposit_txid (str): deposit txid used to identify the channel.
+            payment_tx (two1.lib.bitcoin.Transaction): payment transaction made
+                within the channel.
+            amount (int): the opening balance of the payment channel.
+            payment_amount (int): incremental payment amount of the tx.
+        """
         raise NotImplementedError()
 
     def lookup(self, payment_txid):
+        """Look up a payment entry by payment txid.
+
+        Args:
+            payment_txid (str): payment txid used to identify the payment.
+        Returns:
+            Payment (collections.namedtuple): named tuple as defined above,
+                with `payment_tx` as a Transaction object.
+        """
         raise NotImplementedError()
 
     def redeem(self, payment_txid):
+        """Update payment entry to be redeemed.
+
+        Args:
+            payment_txid (str): payment txid used to identify the payment.
+        """
         raise NotImplementedError()
 
 
@@ -104,10 +158,10 @@ class ChannelDjango(ChannelDatabase):
         """Initialize the channel data handler with a Channel django model."""
         self.Channel = ChannelModel
 
-    def create(self, deposit_txid, deposit_tx, merch_pubkey, amount, expiration):
+    def create(self, deposit_tx, merch_pubkey, amount, expiration):
         """Create a payment channel entry."""
-        ch = self.Channel(deposit_txid=deposit_txid, state=ChannelDjango.CONFIRMING,
-                          deposit_tx=deposit_tx, merchant_pubkey=merch_pubkey,
+        ch = self.Channel(deposit_txid=str(deposit_tx.hash), state=ChannelDjango.CONFIRMING,
+                          deposit_tx=deposit_tx.to_hex(), merchant_pubkey=merch_pubkey,
                           expires_at=expiration, amount=amount)
         ch.save()
 
@@ -136,10 +190,10 @@ class ChannelDjango(ChannelDatabase):
         # Return a single record or list of records
         return records if len(records) > 1 else records[0]
 
-    def update_payment(self, deposit_txid, payment_tx, pmt_amt):
+    def update_payment(self, deposit_txid, payment_tx, payment_amount):
         """Update a payment channel with a new payment transaction."""
         self.Channel.objects.filter(deposit_txid=deposit_txid).update(
-            payment_tx=payment_tx, last_payment_amount=pmt_amt)
+            payment_tx=payment_tx.to_hex(), last_payment_amount=payment_amount)
 
     def update_state(self, deposit_txid, new_state):
         """Update payment channel state."""
@@ -152,10 +206,10 @@ class PaymentDjango(ChannelDatabase):
         """Initialize the payment data handler with a Payment django model."""
         self.Payment = PaymentModel
 
-    def create(self, deposit_txid, payment_txid, payment_tx, amount):
+    def create(self, deposit_txid, payment_tx, amount):
         """Create a payment entry."""
-        pmt = self.Payment(payment_txid=payment_txid, amount=amount,
-                           payment_tx=payment_tx, deposit_txid=deposit_txid)
+        pmt = self.Payment(payment_txid=str(payment_tx.hash), amount=amount,
+                           payment_tx=payment_tx.to_hex(), deposit_txid=deposit_txid)
         pmt.save()
 
     def lookup(self, payment_txid):
@@ -208,11 +262,11 @@ class ChannelSQLite3(ChannelDatabase):
                        "expires_at timestamp, amount integer, "
                        "last_payment_amount integer)")
 
-    def create(self, deposit_txid, deposit_tx, merch_pubkey, amount, expiration):
+    def create(self, deposit_tx, merch_pubkey, amount, expiration):
         """Create a payment channel entry."""
         insert = 'INSERT INTO payment_channel VALUES (?' + ',?' * 8 + ')'
-        self.c.execute(insert, (deposit_txid, ChannelSQLite3.CONFIRMING,
-                                deposit_tx, None, merch_pubkey,
+        self.c.execute(insert, (str(deposit_tx.hash), ChannelSQLite3.CONFIRMING,
+                                deposit_tx.to_hex(), None, merch_pubkey,
                                 time.time(), expiration, amount, 0))
         self.connection.commit()
 
@@ -240,11 +294,11 @@ class ChannelSQLite3(ChannelDatabase):
         # Return a single record or list of records
         return records if len(records) > 1 else records[0]
 
-    def update_payment(self, deposit_txid, payment_tx, pmt_amt):
+    def update_payment(self, deposit_txid, payment_tx, payment_amount):
         """Update a payment channel with a new payment transaction."""
         update = ('UPDATE payment_channel SET payment_tx=?,'
                   'last_payment_amount=? WHERE deposit_txid=?')
-        self.c.execute(update, (payment_tx, pmt_amt, deposit_txid))
+        self.c.execute(update, (payment_tx.to_hex(), payment_amount, deposit_txid))
         self.connection.commit()
 
     def update_state(self, deposit_txid, new_state):
@@ -268,10 +322,10 @@ class PaymentSQLite3(PaymentDatabase):
                        "amount integer, is_redeemed integer, "
                        "deposit_txid text)")
 
-    def create(self, deposit_txid, payment_txid, payment_tx, amount):
+    def create(self, deposit_txid, payment_tx, amount):
         """Create a payment entry."""
         insert = 'INSERT INTO payment_channel_spend VALUES (?,?,?,?,?)'
-        self.c.execute(insert, (payment_txid, payment_tx, amount,
+        self.c.execute(insert, (str(payment_tx.hash), payment_tx.to_hex(), amount,
                                 PaymentSQLite3.NOT_REDEEMED, deposit_txid))
         self.connection.commit()
 
