@@ -21,6 +21,49 @@ def install_requirements():
         raise e
 
 
+def create_default_nginx_server():
+    """Creates a default server that hosts multiple
+    nginx locations.
+    """
+    with tempfile.NamedTemporaryFile() as tf:
+        tf.write("""server {
+       include /etc/nginx/site-includes/*;
+}""".encode())
+        tf.flush()
+        try:
+            subprocess.check_output([
+                "sudo",
+                "cp",
+                tf.name,
+                "/etc/nginx/sites-enabled/two1baseserver"
+            ])
+            subprocess.check_output([
+                "sudo",
+                "chmod",
+                "644",
+                "/etc/nginx/sites-enabled/two1baseserver"
+            ])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+
+def create_site_includes():
+    """Creates an /etc/nginx/site-includes.
+
+    This contains nginx "location" blocks,
+    http://nginx.org/en/docs/http/ngx_http_core_module.html#location
+    which pertain to individual apps.
+    """
+    if not os.path.isdir("/etc/nginx/site-includes"):
+        subprocess.check_output([
+                "sudo",
+                "mkdir",
+                "-p",
+                "/etc/nginx/site-includes"
+            ])
+
+
 def validate_directory(dirname):
     """Validate that the directory speicified
     has correct contents within it.
@@ -102,16 +145,12 @@ def create_nginx_config(dirname):
     appdir = dir_to_absolute(dirname)
     appname = dirname.rstrip("/")
     with tempfile.NamedTemporaryFile() as tf:
-        nginx_enabled_site_file = """
-server {
-    location /%s {
+        nginx_enabled_site_file = """location /%s {
         rewrite ^/%s(.*) /$1 break;
         proxy_pass http://unix:%s%s.sock;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-        """ % (
+    }""" % (
             appname, appname, appdir, appname
         )
         print(nginx_enabled_site_file)
@@ -134,14 +173,14 @@ server {
                 "sudo",
                 "rm",
                 "-f",
-                "/etc/nginx/sites-enabled/{}".format(appname)
+                "/etc/nginx/site-includes/{}".format(appname)
             ])
             subprocess.check_output([
                 "sudo",
                 "ln",
                 "-s",
                 "/etc/nginx/sites-available/{}".format(appname),
-                "/etc/nginx/sites-enabled/{}".format(appname),
+                "/etc/nginx/site-includes/{}".format(appname),
             ])
             subprocess.check_output([
                 "sudo",
@@ -207,6 +246,11 @@ def create(dirname):
         return
     install_requirements()
     click.echo(click.style("Installed requirements...", fg="magenta"))
+    create_default_nginx_server()
+    click.echo(click.style("Created default 21 nginx server...", fg="magenta"))
+    create_site_includes()
+    click.echo(click.style("Created site-includes to host apps...",
+                           fg="magenta"))
     create_systemd_file(dirname)
     click.echo(click.style("Systemd file created...", fg="magenta"))
     create_nginx_config(dirname)
@@ -226,10 +270,11 @@ def list():
     """
     List all currently running apps
 \b
-(as seen in /etc/nginx/sites-enabled/)
+(as seen in /etc/nginx/site-includes/)
     """
-    enabled_apps = os.listdir("/etc/nginx/sites-enabled/")
-    if len(enabled_apps) > 0:
+    if os.path.isdir("/etc/nginx/site-includes/") \
+            and len(os.listdir("/etc/nginx/site-includes/")) > 0:
+        enabled_apps = os.listdir("/etc/nginx/site-includes/")
         click.echo(click.style("Listing enabled apps...", fg="magenta"))
         enabled_apps_table = []
         headers = ('No.', 'App name')
@@ -258,12 +303,12 @@ def destroy(appname):
 \b
 Stop worker processes and disable site from sites-enabled
     """
-    if appname in os.listdir("/etc/nginx/sites-enabled/"):
+    if appname in os.listdir("/etc/nginx/site-includes/"):
         subprocess.check_output([
             "sudo",
             "rm",
             "-f",
-            "/etc/nginx/sites-enabled/{}".format(appname)
+            "/etc/nginx/site-includes/{}".format(appname)
         ])
         subprocess.check_output([
             "sudo",
@@ -291,3 +336,6 @@ Stop worker processes and disable site from sites-enabled
     else:
         click.echo(
             click.style("This app is not within your enabled apps.", fg="red"))
+
+if __name__ == "__main__":
+    sell()
