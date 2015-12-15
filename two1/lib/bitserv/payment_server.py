@@ -149,7 +149,7 @@ class PaymentServer:
 
             # Open and save the payment channel
             channel = self._db.pc.create(
-                deposit_txid, deposit_tx.to_hex(), merch_pubkey, amount, redeem_script.expiration_time)
+                deposit_tx, merch_pubkey, amount, redeem_script.expiration_time)
 
             # Set the channel to `ready` if zeroconf is enabled
             if self.zeroconf:
@@ -227,9 +227,8 @@ class PaymentServer:
                 raise BadTransactionError('Payment must have adequate fees.')
 
             # Update the current payment transaction
-            self._db.pc.update_payment(deposit_txid, payment_tx.to_hex(), new_pmt_amt)
-            self._db.pmt.create(deposit_txid, str(payment_tx.hash), payment_tx.to_hex(),
-                                new_pmt_amt - channel.last_payment_amount)
+            self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
+            self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt - channel.last_payment_amount)
 
             return str(payment_tx.hash)
 
