@@ -301,6 +301,19 @@ class PrivateKey(PrivateKeyBase):
         return (PrivateKey(int.from_bytes(b[:32], 'big')), b[32:])
 
     @staticmethod
+    def from_hex(h):
+        """ Generates PrivateKey from a hex-encoded string.
+
+        Args:
+            h (str): A hex-encoded string containing a 256-bit
+                 (32-byte) integer.
+
+        Returns:
+            PrivateKey: A PrivateKey object.
+        """
+        return PrivateKey.from_bytes(bytes.fromhex(h))[0]
+
+    @staticmethod
     def from_int(i):
         """ Initializes a private key from an integer.
 
@@ -585,6 +598,20 @@ class PublicKey(PublicKeyBase):
         return PublicKey(x, y)
 
     @staticmethod
+    def from_hex(h):
+        """ Generates a public key object from a hex-encoded string.
+
+            See from_bytes() for requirements of the hex string.
+
+        Args:
+            h (str): A hex-encoded string.
+
+        Returns:
+            PublicKey: A PublicKey object.
+        """
+        return PublicKey.from_bytes(h)
+
+    @staticmethod
     def from_signature(message, signature):
         """ Attempts to create PublicKey object by deriving it
             from the message and signature.
@@ -843,6 +870,20 @@ class Signature(object):
         s = int.from_bytes(b[32:64], 'big')
         return Signature(r, s)
 
+    @staticmethod
+    def from_hex(h):
+        """ Extracts the r and s components from a hex-encoded string.
+
+        Args:
+            h (str): A 64-byte (128 character) long string. The first
+               32 bytes are extracted as the r component and the
+               second 32 bytes are extracted as the s component.
+
+        Returns:
+            Signature: A Signature object.
+        """
+        return Signature.from_bytes(bytes.fromhex(h))
+
     def __init__(self, r, s, recovery_id=None):
         self.r = r
         self.s = s
@@ -998,6 +1039,22 @@ class HDKey(object):
             raise ValueError("incorrect encoding.")
 
         return (rv, b[78:])
+
+    @staticmethod
+    def from_hex(h):
+        """ Generates either a HDPrivateKey or HDPublicKey from the underlying
+            hex-encoded string.
+
+            The serialization must conform to the description in:
+            https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+        Args:
+            h (str): A hex-encoded string conforming to the above.
+
+        Returns:
+            HDPrivateKey or HDPublicKey: Either an HD private or
+                public key object, depending on what was serialized.
+        """
+        return HDKey.from_bytes(bytes.fromhex(h))[0]
 
     @staticmethod
     def from_path(root_key, path):
