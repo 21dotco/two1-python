@@ -1,6 +1,10 @@
 import arrow
 from calendar import timegm
 from two1.lib.bitcoin.block import Block
+from two1.lib.bitcoin.crypto import HDKey
+from two1.lib.bitcoin.crypto import HDPrivateKey
+from two1.lib.bitcoin.crypto import HDPublicKey
+from two1.lib.bitcoin.crypto import PrivateKey
 from two1.lib.bitcoin.crypto import PublicKey
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
@@ -141,6 +145,26 @@ def test_crypto():
         assert pk.point.y == pt[1]
         assert b == pk.compressed_bytes
         assert b_full == bytes(pk)
+
+        assert bytes(PublicKey.from_hex(pk.to_hex())) == b_full
+
+    for i in range(10):
+        pk = PrivateKey.from_random()
+        assert PrivateKey.from_hex(pk.to_hex()).key == pk.key
+
+    hd_priv = HDPrivateKey.master_key_from_entropy()[0]
+    hd_priv2 = HDKey.from_hex(hd_priv.to_hex())
+    hd_pub = hd_priv.public_key
+    hd_pub2 = HDKey.from_hex(hd_pub.to_hex())
+
+    assert isinstance(hd_priv2, HDPrivateKey)
+    assert hd_priv2._key.key == hd_priv._key.key
+    assert hd_priv2.chain_code == hd_priv.chain_code
+
+    assert isinstance(hd_pub2, HDPublicKey)
+    assert hd_pub2._key.point.x == hd_pub._key.point.x
+    assert hd_pub2._key.point.y == hd_pub._key.point.y
+    assert hd_pub2.chain_code == hd_pub.chain_code
 
 
 def test_utils():
