@@ -11,20 +11,32 @@ dir_to_absolute = lambda dirname: os.getcwd() + "/" + dirname
 def install_requirements():
     """Install requirements needed to host an app
     using nginx.
+
+    Returns:
+        bool: True if the requirements were succesfully installed,
+            False otherwise.
     """
+    rv = False
     try:
         subprocess.check_output(
             "sudo apt-get install -y nginx && sudo pip3 install gunicorn",
             shell=True
         )
+        rv = True
     except subprocess.CalledProcessError as e:
         raise e
+    return rv
 
 
 def create_default_nginx_server():
     """Creates a default server that hosts multiple
     nginx locations.
+
+    Returns:
+        bool: True if the process was succesfully completed,
+            False otherwise.
     """
+    rv = False
     with tempfile.NamedTemporaryFile() as tf:
         tf.write("""server {
        include /etc/nginx/site-includes/*;
@@ -43,9 +55,10 @@ def create_default_nginx_server():
                 "644",
                 "/etc/nginx/sites-enabled/two1baseserver"
             ])
-            return True
+            rv = True
         except subprocess.CalledProcessError:
-            return False
+            pass
+    return rv
 
 
 def create_site_includes():
@@ -54,7 +67,12 @@ def create_site_includes():
     This contains nginx "location" blocks,
     http://nginx.org/en/docs/http/ngx_http_core_module.html#location
     which pertain to individual apps.
+
+    Returns:
+        bool: True if the process was succesfully completed,
+            False otherwise.
     """
+    rv = False
     if not os.path.isdir("/etc/nginx/site-includes"):
         subprocess.check_output([
                 "sudo",
@@ -62,6 +80,8 @@ def create_site_includes():
                 "-p",
                 "/etc/nginx/site-includes"
             ])
+        rv = True
+    return rv
 
 
 def validate_directory(dirname):
@@ -70,7 +90,15 @@ def validate_directory(dirname):
 
     ie. filen with name "index.py"
         - which has a variable "app" within it.
+
+    Args:
+        dirname (string): directory the app is located in.
+
+    Returns:
+        bool: True if the directory structure is valid,
+            False otherwise.
     """
+    rv = False
     try:
         appdir = dir_to_absolute(dirname)
         os.stat(appdir)
@@ -78,14 +106,27 @@ def validate_directory(dirname):
         with open(indexpath, "r") as indexfile:
             lines = indexfile.readlines()
             # quick check
-            return len([l for l in lines if "app=" in l or "app =" in l]) > 0
+            rv = len([l for l in lines if "app=" in l or "app =" in l]) > 0
     except (FileNotFoundError, OSError):
-        return False
+        pass
+    return rv
 
 
 def create_systemd_file(dirname):
     """Create a systemd file that manages the starting/stopping
-    of the gunicorn process."""
+    of the gunicorn process.
+
+    All processes are bound to a socket by default within the
+    app directory.
+
+    Args:
+        dirname (string): directory the app is located in.
+
+    Returns:
+        bool: True if the process was succesfully completed,
+            False otherwise.
+    """
+    rv = False
     appdir = dir_to_absolute(dirname)
     appname = dirname.rstrip("/")
     # write systemd shit to tempfile
@@ -106,7 +147,6 @@ WantedBy=multi-user.target
             appdir,
             appname
         )
-        print(systemd_file)
         tf.write(systemd_file.encode())
         tf.flush()
         try:
@@ -134,27 +174,43 @@ WantedBy=multi-user.target
                 'start',
                 appname
             ])
+            rv = True
         except subprocess.CalledProcessError as e:
             raise e
+    return rv
 
 
 def create_nginx_config(dirname):
-    """Create a nginx config file to redirect
-    the socket from the gunicorn process into
-    0.0.0.0/."""
+    """Create a nginx location file that redirects
+    all request with the prefix of the appname to the
+    correct socket & process belonging to that app.
+
+    i.e. curl 0.0.0.0/myapp1 shoudl redirect requests
+    to unix:/mysocketpath.sock @ the route /
+
+    This allows for multiple apps to be namespaced and
+    hosted on a single machine.
+
+    Args:
+        dirname (string): directory the app is located in.
+
+    Returns:
+        bool: True if the process was succesfully completed,
+            False otherwise.
+    """
+    rv = False
     appdir = dir_to_absolute(dirname)
     appname = dirname.rstrip("/")
     with tempfile.NamedTemporaryFile() as tf:
-        nginx_enabled_site_file = """location /%s {
+        nginx_site_includes_file = """location /%s {
         rewrite ^/%s(.*) /$1 break;
         proxy_pass http://unix:%s%s.sock;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-    }""" % (
+}""" % (
             appname, appname, appdir, appname
         )
-        print(nginx_enabled_site_file)
-        tf.write(nginx_enabled_site_file.encode())
+        tf.write(nginx_site_includes_file.encode())
         tf.flush()
         try:
             subprocess.check_output([
@@ -188,8 +244,10 @@ def create_nginx_config(dirname):
                 "nginx",
                 "restart"
             ])
+            rv = True
         except subprocess.CalledProcessError as e:
             raise e
+    return rv
 
 
 @click.group()
