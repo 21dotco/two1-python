@@ -265,6 +265,39 @@ blockquote {
     background-color: #3366cc !important;
 }
 
+/* Code highlighting boxes */
+
+.highlight pre {
+  white-space: pre;
+  word-wrap: normal;
+}
+.highlight {
+  width: 100%;
+  position: relative;
+  table-layout: fixed;
+}
+/*
+This allows to show the horizontal scrollbar on Chrome and Safari
+on Mac OS X as otherwise nothing suggests scrolling is possible.
+*/
+.highlighttable ::-webkit-scrollbar,
+.highlight ::-webkit-scrollbar {
+  height: 10px;
+  background-color: rgb(127, 127, 127);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.highlighttable ::-webkit-scrollbar-thumb,
+.highlight ::-webkit-scrollbar-thumb {
+  background-color: rgb(255, 255, 255);
+}
+
+@media ( max-width: 768px ) {
+  .highlight {
+    width: 100%;
+    overflow-y: auto;
+  }
+}
+
 /* Pygment highlighting */
 
 div[class^='highlight'] pre,
