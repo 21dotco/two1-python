@@ -5,8 +5,6 @@ import math
 
 import two1.lib.bitcoin as bitcoin
 
-from . import wallet
-
 
 class StateTransitionError(AssertionError):
     """Invalid state transition error."""
