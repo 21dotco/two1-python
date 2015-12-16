@@ -140,7 +140,7 @@ WorkingDirectory=%s
 ExecStart=/usr/local/bin/gunicorn index:app --workers 1 --bind unix:%s%s.sock
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
         """ % (
             appname,
             appdir,
