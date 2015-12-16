@@ -283,14 +283,16 @@ class Script(object):
                 self._disassemble()
                 self._parse()
                 self._raw_script = None
+            else:
+                # Empty script, so just set _tokens to empty list
+                self._tokens = []
 
     def __getitem__(self, key):
         self._check_tokenized()
         return self._tokens[key]
 
     def __setitem__(self, key, value):
-        if key > 0:
-            self._check_tokenized()
+        self._check_tokenized()
 
         if not isinstance(value, str) and \
            not isinstance(value, bytes):
