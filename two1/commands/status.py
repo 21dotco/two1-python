@@ -1,4 +1,5 @@
 import click
+import two1.lib.channels as channels
 from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
@@ -136,8 +137,9 @@ SMS_UNIT_PRICE = 1000
 def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
+    channelclient = channels.PaymentChannelClient(config.wallet)
     twentyone_balance, onchain, pending_transactions, flushed_earnings, channels_balance = \
-        _get_balances(config, client)
+        _get_balances(config, client, channelclient)
 
     if detail:
         # show balances by address for default wallet
@@ -186,7 +188,7 @@ def status_wallet(config, client, detail=False):
     }
 
 
-def _get_balances(config, client):
+def _get_balances(config, client, channelclient):
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
@@ -197,7 +199,10 @@ def _get_balances(config, client):
     twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flushed_amount"]
 
-    channels_balance = 0
+    channelclient.sync()
+    channel_urls = channelclient.list()
+    channels_balance = sum(s.balance for s in (channelclient.status(url) for url in channel_urls)
+                           if s.state == channels.PaymentChannelState.READY)
 
     return twentyone_balance, spendable_balance, pending_transactions, flushed_earnings, channels_balance
 
