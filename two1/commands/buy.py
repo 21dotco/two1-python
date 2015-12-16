@@ -12,6 +12,7 @@ from two1.commands.formatters import text_formatter
 from two1.lib.server.analytics import capture_usage
 from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitTransferRequests
+from two1.lib.bitrequests import ChannelRequests
 from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
 from two1.lib.util.uxstring import UxString
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
@@ -36,7 +37,7 @@ DEMOS = {
 }
 
 @click.group()
-@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain']))
+@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.pass_context
@@ -181,6 +182,8 @@ def _buy(config, resource, data, method, data_file, output_file,
             bit_req = BitTransferRequests(config.machine_auth, config.username)
         elif payment_method == 'onchain':
             bit_req = OnChainRequests(config.wallet)
+        elif payment_method == 'channel':
+            bit_req = ChannelRequests(config.wallet)
         else:
             raise Exception('Payment method does not exist.')
 
