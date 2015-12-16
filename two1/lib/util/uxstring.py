@@ -175,13 +175,31 @@ For further information, please contact %s""" % \
   (coming_soon, slack_21_co, support_21_co)
 
     # sell
-    sell_stub = """%s
-- Full sell functionality will be available in a forthcoming 21 update
-- To get started, please see 21.co/learn/sell-or-license-any-file-for-bitcoin
-- Then visit the 21 Developer Community at %s
-- There, you can find other 21 developers to buy your machine-payable endpoints
-For further information, please contact %s""" % \
-  (coming_soon, slack_21_co, support_21_co)
+    app_directory_valid = click.style("App Directory Valid...", fg="magenta")
+    app_directory_invalid = click.style("App Directory Invalid. Please ensure \
+your directory and it's contents are correct,\
+refer to 21.co/app for futher instructions.", fg="red")
+    installed_requirements = click.style(
+        "Installed requirements...", fg="magenta")
+    created_nginx_server = click.style(
+        "Created default 21 nginx server...", fg="magenta")
+    created_site_includes = click.style(
+        "Created site-includes to host apps...",
+        fg="magenta")
+    created_systemd_file = click.style("Systemd file created...", fg="magenta")
+    created_app_nginx_file = click.style("Nginx file created...", fg="magenta")
+    hosted_app_location = click.style(
+        "Your app is now hosted at http://0.0.0.0/{}",
+        fg="magenta")
+    listing_enabled_apps = click.style("Listing enabled apps...", fg="magenta")
+    no_apps_currently_running = click.style(
+            "No apps currently running, refer to 21.co/sell to host some...",
+            fg="red")
+    succesfully_stopped_app = click.style(
+        "Succesfully stopped {}...",
+        fg="magenta")
+    app_not_enabled = click.style(
+        "This app is not within your enabled apps.", fg="red")
 
     # search
     search_stub = """%s
