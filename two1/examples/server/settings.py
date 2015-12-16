@@ -140,7 +140,7 @@ BITSERV_DEFAULT_PAYMENT_ADDRESS = os.environ.get(
     "BITSERV_DEFAULT_PAYMENT_ADDRESS",
     "1BHZExCqojqzmFnyyPEcUMWLiWALJ32Zp5"
 )
-DEFAULT_PAYMENT_CHANNEL_PATH = '/bitcoin_auth/payment/'
+DEFAULT_PAYMENT_CHANNEL_PATH = '/bitcoin_auth/payment'
 
 # Import a wallet if a mnemonic exists, else use defaults
 WALLET_MNEMONIC = os.environ.get('WALLET_MNEMONIC', 'secret mnemonic phrase')
@@ -228,8 +228,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'bitcoin_auth.authentication.BasicPaymentRequiredAuthentication',
         'bitcoin_auth.authentication.SessionPaymentRequiredAuthentication',
-        'bitcoin_auth.authentication.BitTransferAuthentication',
         'bitcoin_auth.authentication.PaymentServerAuthentication',
+        'bitcoin_auth.authentication.BitTransferAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'bitcoin_auth.permissions.IsBitcoinAuthenticated',
