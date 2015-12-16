@@ -47,7 +47,8 @@ $ 21 sell destroy --help
 
 @sell.command()
 @click.argument('dirname', type=click.Path(exists=True))
-def create(dirname):
+@click.pass_context
+def create(ctx, dirname):
     """
     Host your app on your 21 Bitcoin Computer in a production enviornment.
 
@@ -56,35 +57,38 @@ def create(dirname):
         -requirements.txt
     Host said app on host using nignx + gunicorn
     """
+    config = ctx.obj["config"]
     if validate_directory(dirname):
-        click.echo(UxString.app_directory_valid)
+        config.log(UxString.app_directory_valid)
     else:
-        click.echo(UxString.app_directory_invalid)
+        config.log(UxString.app_directory_invalid)
         return
     install_requirements()
-    click.echo(UxString.installed_requirements)
+    config.log(UxString.installed_requirements)
     create_default_nginx_server()
-    click.echo(UxString.created_nginx_server)
+    config.log(UxString.created_nginx_server)
     create_site_includes()
-    click.echo(UxString.created_site_includes)
+    config.log(UxString.created_site_includes)
     create_systemd_file(dirname)
-    click.echo(UxString.created_systemd_file)
+    config.log(UxString.created_systemd_file)
     create_nginx_config(dirname)
-    click.echo(UxString.created_app_nginx_file)
-    click.echo(UxString.hosted_app_location.format(dirname.rstrip("/")))
+    config.log(UxString.created_app_nginx_file)
+    config.log(UxString.hosted_app_location.format(dirname.rstrip("/")))
 
 
 @sell.command()
-def list():
+@click.pass_context
+def list(ctx):
     """
     List all currently running apps
 \b
 (as seen in /etc/nginx/site-includes/)
     """
+    config = ctx.obj["config"]
     if os.path.isdir("/etc/nginx/site-includes/") \
             and len(os.listdir("/etc/nginx/site-includes/")) > 0:
         enabled_apps = os.listdir("/etc/nginx/site-includes/")
-        click.echo(UxString.listing_enabled_apps)
+        config.log(UxString.listing_enabled_apps)
         enabled_apps_table = []
         headers = ('No.', 'App name', 'Url')
         for i, enabled_app in enumerate(enabled_apps):
@@ -93,19 +97,20 @@ def list():
                 enabled_app,
                 "http://0.0.0.0/{}".format(enabled_app)
                 ])
-        click.echo(tabulate(
+        config.log(tabulate(
             enabled_apps_table,
             headers=headers,
             tablefmt="psql",
         )
         )
     else:
-        click.echo(UxString.no_apps_currently_running)
+        config.log(UxString.no_apps_currently_running)
 
 
 @sell.command()
 @click.argument('appname')
-def destroy(appname):
+@click.pass_context
+def destroy(ctx, appname):
     """
     Stop/Remove a current app that is currently
     being run on the host.
@@ -113,14 +118,11 @@ def destroy(appname):
 \b
 Stop worker processes and disable site from sites-enabled
     """
+    config = ctx.obj["config"]
     if appname in os.listdir("/etc/nginx/site-includes/"):
         if destroy_app(appname):
-            click.echo(UxString.succesfully_stopped_app.format(appname))
+            config.log(UxString.succesfully_stopped_app.format(appname))
         else:
-            click.echo(UxString.failed_to_destroy_app)
+            config.log(UxString.failed_to_destroy_app)
     else:
-        click.echo(UxString.app_not_enabled)
-
-
-if __name__ == "__main__":
-    sell()
+        config.log(UxString.app_not_enabled)
