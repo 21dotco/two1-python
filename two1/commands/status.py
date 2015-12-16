@@ -136,7 +136,7 @@ SMS_UNIT_PRICE = 1000
 def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
-    twentyone_balance, onchain, pending_transactions, flushed_earnings = \
+    twentyone_balance, onchain, pending_transactions, flushed_earnings, channels_balance = \
         _get_balances(config, client)
 
     if detail:
@@ -149,12 +149,13 @@ def status_wallet(config, client, detail=False):
                     addr, balances['confirmed'], balances['total']))
         byaddress = '\n      '.join(byaddress)
     else:
-        byaddress = "To see all wallet addresses, do 21 status --detail"
+        byaddress = "To see all wallet addresses/payment channels, use '21 status --detail'"
 
     status_wallet = {
         "twentyone_balance": twentyone_balance,
         "onchain": onchain,
         "flushing": flushed_earnings,
+        "channels_balance": channels_balance,
         "byaddress": byaddress
     }
     config.log(UxString.status_wallet.format(**status_wallet))
@@ -196,7 +197,9 @@ def _get_balances(config, client):
     twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flushed_amount"]
 
-    return twentyone_balance, spendable_balance, pending_transactions, flushed_earnings
+    channels_balance = 0
+
+    return twentyone_balance, spendable_balance, pending_transactions, flushed_earnings, channels_balance
 
 
 def status_earnings(config, client):

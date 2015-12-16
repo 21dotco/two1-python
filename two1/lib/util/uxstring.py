@@ -72,10 +72,12 @@ class UxString:
     status_wallet = click.style("Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
     Your spendable balance on the Blockchain [2]              : {onchain} Satoshis
+    Your spendable balance in Payment Channels                : {channels_balance} Satoshis
     Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshis
 
-    [1]: Available for off-chain (21.co/micropayments)
-    [2]: Available for on-chain (21.co/micropayments)
+    [1]: Available for off-chain transactions
+    [2]: Available for on-chain and payment channel transactions
+    (See 21.co/micropayments for more details)
 
     {byaddress}
     """
