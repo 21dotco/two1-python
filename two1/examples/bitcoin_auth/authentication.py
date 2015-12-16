@@ -335,7 +335,7 @@ class PaymentServerAuthentication(BaseBitcoinAuthentication):
         """
         payment_header = 'HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN'
         # Whitelist payment channel route
-        if request._request.path in settings.DEFAULT_PAYMENT_CHANNEL_PATH:
+        if settings.DEFAULT_PAYMENT_CHANNEL_PATH in request._request.path:
             return (self.pc_user, None)
         # Do not authenticate if no payment channel token exists
         if payment_header not in request.META:
