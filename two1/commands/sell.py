@@ -3,6 +3,7 @@ import click
 import tempfile
 import subprocess
 from tabulate import tabulate
+from two1.lib.util.uxstring import UxString
 
 
 dir_to_absolute = lambda dirname: os.getcwd() + "/" + dirname
@@ -296,31 +297,21 @@ def create(dirname):
     Host said app on host using nignx + gunicorn
     """
     if validate_directory(dirname):
-        click.echo(click.style("App Directory Valid...", fg="magenta"))
+        click.echo(UxString.app_directory_valid)
     else:
-        click.echo(click.style("App Directory Invalid. Please ensure \
-            your directory and it's contents are correct,\
-            refer to 21.co/app for futher instructions.", fg="red"))
+        click.echo(UxString.app_directory_invalid)
         return
     install_requirements()
-    click.echo(click.style("Installed requirements...", fg="magenta"))
+    click.echo(UxString.installed_requirements)
     create_default_nginx_server()
-    click.echo(click.style("Created default 21 nginx server...", fg="magenta"))
+    click.echo(UxString.created_nginx_server)
     create_site_includes()
-    click.echo(click.style("Created site-includes to host apps...",
-                           fg="magenta"))
+    click.echo(UxString.created_site_includes)
     create_systemd_file(dirname)
-    click.echo(click.style("Systemd file created...", fg="magenta"))
+    click.echo(UxString.created_systemd_file)
     create_nginx_config(dirname)
-    click.echo(click.style("Nginx file created...", fg="magenta"))
-    click.echo(
-        click.style(
-            "Your app is now hosted at http://0.0.0.0/{}".format(
-                dirname.rstrip("/")
-            ),
-            fg="magenta"
-        )
-    )
+    click.echo(UxString.created_app_nginx_file)
+    click.echo(UxString.hosted_app_location.format(dirname.rstrip("/")))
 
 
 @sell.command()
@@ -333,7 +324,7 @@ def list():
     if os.path.isdir("/etc/nginx/site-includes/") \
             and len(os.listdir("/etc/nginx/site-includes/")) > 0:
         enabled_apps = os.listdir("/etc/nginx/site-includes/")
-        click.echo(click.style("Listing enabled apps...", fg="magenta"))
+        click.echo(UxString.listing_enabled_apps)
         enabled_apps_table = []
         headers = ('No.', 'App name', 'Url')
         for i, enabled_app in enumerate(enabled_apps):
@@ -349,10 +340,7 @@ def list():
         )
         )
     else:
-        click.echo(click.style(
-            "No apps currently running, refer to 21.co/sell to host some...",
-            fg="red")
-        )
+        click.echo(UxString.no_apps_currently_running)
 
 
 @sell.command()
@@ -390,14 +378,10 @@ Stop worker processes and disable site from sites-enabled
             "nginx",
             "restart"
         ])
-        click.echo(
-            click.style(
-                "Succesfully stopped {}...".format(appname),
-                fg="magenta")
-        )
+        click.echo(UxString.succesfully_stopped_app.format(appname))
     else:
-        click.echo(
-            click.style("This app is not within your enabled apps.", fg="red"))
+        click.echo(UxString.app_not_enabled)
+
 
 if __name__ == "__main__":
     sell()
