@@ -146,37 +146,38 @@ def status_wallet(config, client, detail=False):
     channelclient = channels.PaymentChannelClient(config.wallet)
     user_balances = _get_balances(config, client, channelclient)
 
-    if detail:
-        # show balances by address for default wallet
-        address_balances = config.wallet.balances_by_address(0)
-        status_detail = ["Addresses:"]
-        for addr, balances in address_balances.items():
-            if balances['confirmed'] > 0 or balances['total'] > 0:
-                status_detail.append("  {}: {} (confirmed), {} (total)".format(
-                    addr, balances['confirmed'], balances['total']))
-        status_detail.append('\n')
-
-        # Display status for all payment channels
-        status_detail.append("Channels:")
-        for url in channelclient.list():
-            status = channelclient.status(url)
-            url = urllib.parse.urlparse(url)
-            status_detail.append("  {}://{}/ {}, {} Satoshis, {}".format(
-                url.scheme, url.netloc, status.state, status.balance,
-                format_expiration_time(status.expiration_time)))
-
-        status_detail = '\n    '.join(status_detail)
-    else:
-        status_detail = "To see all wallet addresses/payment channels, use '21 status --detail'"
-
     status_wallet = {
         "twentyone_balance": user_balances.twentyone,
         "onchain": user_balances.onchain,
         "flushing": user_balances.flushed,
-        "channels_balance": user_balances.channels,
-        "status_detail": status_detail
+        "channels_balance": user_balances.channels
     }
     config.log(UxString.status_wallet.format(**status_wallet))
+
+    if detail:
+        # show balances by address for default wallet
+        address_balances = config.wallet.balances_by_address(0)
+        status_addresses = []
+        for addr, balances in address_balances.items():
+            if balances['confirmed'] > 0 or balances['total'] > 0:
+                status_addresses.append(UxString.status_wallet_address.format(
+                    addr, balances['confirmed'], balances['total']))
+
+        # Display status for all payment channels
+        status_channels = []
+        for url in channelclient.list():
+            status = channelclient.status(url)
+            url = urllib.parse.urlparse(url)
+            status_channels.append(UxString.status_wallet_channel.format(
+                url.scheme, url.netloc, status.state, status.balance,
+                format_expiration_time(status.expiration_time)))
+        if not len(status_channels):
+            status_channels = [UxString.status_wallet_channels_none]
+
+        config.log(UxString.status_wallet_detail_on.format(
+            addresses=''.join(status_addresses), channels=''.join(status_channels)))
+    else:
+        config.log(UxString.status_wallet_detail_off)
 
     total_balance = user_balances.twentyone + user_balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
@@ -216,7 +217,7 @@ def _get_balances(config, client, channelclient):
     flushed_earnings = data["flushed_amount"]
 
     channelclient.sync()
-    channel_urls = channelclient.list()
+    channel_urls = []
     channels_balance = sum(s.balance for s in (channelclient.status(url) for url in channel_urls)
                            if s.state == channels.PaymentChannelState.READY)
 

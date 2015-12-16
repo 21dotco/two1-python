@@ -78,9 +78,18 @@ class UxString:
     [1]: Available for off-chain transactions
     [2]: Available for on-chain and payment channel transactions
     (See 21.co/micropayments for more details)
-
-    {status_detail}
     """
+
+    status_wallet_detail_off = """\
+    To see all wallet addresses/payment channels, use '21 status --detail'\n"""
+
+    status_wallet_detail_on = """\
+    Addresses:\n{addresses}
+    Channels:\n{channels}"""
+
+    status_wallet_address = "\t{}: {} (confirmed), {} (total)\n"
+    status_wallet_channel = "\t{}://{}/ {}, {} Satoshis, {}\n"
+    status_wallet_channels_none = "\tNo payment channels have been created yet.\n"
 
     status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
     Search Queries        : {buyable_searches:<4} ({search_unit_price} Satoshis per search)
