@@ -1,4 +1,5 @@
 import click
+import collections
 import two1.lib.channels as channels
 from tabulate import tabulate
 from two1.lib.server import rest_client
@@ -6,6 +7,9 @@ from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.decorators import json_output
 from two1.lib.util.uxstring import UxString
+
+Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
+
 
 def has_bitcoinkit():
     """Quick check for presence of mining chip via file presence.
@@ -138,8 +142,7 @@ def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
     channelclient = channels.PaymentChannelClient(config.wallet)
-    twentyone_balance, onchain, pending_transactions, flushed_earnings, channels_balance = \
-        _get_balances(config, client, channelclient)
+    balances = _get_balances(config, client, channelclient)
 
     if detail:
         # show balances by address for default wallet
@@ -154,15 +157,15 @@ def status_wallet(config, client, detail=False):
         byaddress = "To see all wallet addresses/payment channels, use '21 status --detail'"
 
     status_wallet = {
-        "twentyone_balance": twentyone_balance,
-        "onchain": onchain,
-        "flushing": flushed_earnings,
-        "channels_balance": channels_balance,
+        "twentyone_balance": balances.twentyone,
+        "onchain": balances.onchain,
+        "flushing": balances.flushed,
+        "channels_balance": balances.channels,
         "byaddress": byaddress
     }
     config.log(UxString.status_wallet.format(**status_wallet))
 
-    total_balance = twentyone_balance + onchain
+    total_balance = balances.twentyone + balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_sms = int(total_balance / SMS_UNIT_PRICE)
     status_buyable = {
@@ -204,7 +207,8 @@ def _get_balances(config, client, channelclient):
     channels_balance = sum(s.balance for s in (channelclient.status(url) for url in channel_urls)
                            if s.state == channels.PaymentChannelState.READY)
 
-    return twentyone_balance, spendable_balance, pending_transactions, flushed_earnings, channels_balance
+    return Balances(twentyone_balance, spendable_balance, pending_transactions,
+                    flushed_earnings, channels_balance)
 
 
 def status_earnings(config, client):
