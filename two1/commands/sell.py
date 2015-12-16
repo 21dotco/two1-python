@@ -335,9 +335,13 @@ def list():
         enabled_apps = os.listdir("/etc/nginx/site-includes/")
         click.echo(click.style("Listing enabled apps...", fg="magenta"))
         enabled_apps_table = []
-        headers = ('No.', 'App name')
+        headers = ('No.', 'App name', 'Url')
         for i, enabled_app in enumerate(enabled_apps):
-            enabled_apps_table.append([i, enabled_app])
+            enabled_apps_table.append([
+                i,
+                enabled_app,
+                "http://0.0.0.0/{}".format(enabled_app)
+                ])
         click.echo(tabulate(
             enabled_apps_table,
             headers=headers,
