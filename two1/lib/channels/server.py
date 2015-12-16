@@ -1,6 +1,6 @@
-import requests
 import codecs
 import os.path
+import requests
 
 import two1.lib.bitcoin as bitcoin
 from two1.lib.wallet import Wallet
@@ -172,7 +172,7 @@ class MockPaymentChannelServer(PaymentChannelServerBase):
         self._wallet = wallet if wallet else Wallet()
 
     def get_public_key(self):
-        return codecs.encode(self._wallet.get_payout_public_key('merchant').compressed_bytes, 'hex_codec').decode('utf-8')
+        return codecs.encode(self._wallet.get_payout_public_key().compressed_bytes, 'hex_codec').decode('utf-8')
 
     def open(self, deposit_tx, redeem_script):
         # Deserialize deposit tx and redeem script
