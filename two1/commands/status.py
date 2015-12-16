@@ -1,6 +1,8 @@
 import click
+import urllib.parse
 import collections
 import two1.lib.channels as channels
+from two1.lib.channels.cli import format_expiration_time
 from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
@@ -142,30 +144,41 @@ def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
     channelclient = channels.PaymentChannelClient(config.wallet)
-    balances = _get_balances(config, client, channelclient)
+    user_balances = _get_balances(config, client, channelclient)
 
     if detail:
         # show balances by address for default wallet
         address_balances = config.wallet.balances_by_address(0)
-        byaddress = ["Addresses:"]
+        status_detail = ["Addresses:"]
         for addr, balances in address_balances.items():
             if balances['confirmed'] > 0 or balances['total'] > 0:
-                byaddress.append("{}: {} (confirmed), {} (total)".format(
+                status_detail.append("  {}: {} (confirmed), {} (total)".format(
                     addr, balances['confirmed'], balances['total']))
-        byaddress = '\n      '.join(byaddress)
+        status_detail.append('\n')
+
+        # Display status for all payment channels
+        status_detail.append("Channels:")
+        for url in channelclient.list():
+            status = channelclient.status(url)
+            url = urllib.parse.urlparse(url)
+            status_detail.append("  {}://{}/ {}, {} Satoshis, {}".format(
+                url.scheme, url.netloc, status.state, status.balance,
+                format_expiration_time(status.expiration_time)))
+
+        status_detail = '\n    '.join(status_detail)
     else:
-        byaddress = "To see all wallet addresses/payment channels, use '21 status --detail'"
+        status_detail = "To see all wallet addresses/payment channels, use '21 status --detail'"
 
     status_wallet = {
-        "twentyone_balance": balances.twentyone,
-        "onchain": balances.onchain,
-        "flushing": balances.flushed,
-        "channels_balance": balances.channels,
-        "byaddress": byaddress
+        "twentyone_balance": user_balances.twentyone,
+        "onchain": user_balances.onchain,
+        "flushing": user_balances.flushed,
+        "channels_balance": user_balances.channels,
+        "status_detail": status_detail
     }
     config.log(UxString.status_wallet.format(**status_wallet))
 
-    total_balance = balances.twentyone + balances.onchain
+    total_balance = user_balances.twentyone + user_balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_sms = int(total_balance / SMS_UNIT_PRICE)
     status_buyable = {

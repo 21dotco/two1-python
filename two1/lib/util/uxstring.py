@@ -79,7 +79,7 @@ class UxString:
     [2]: Available for on-chain and payment channel transactions
     (See 21.co/micropayments for more details)
 
-    {byaddress}
+    {status_detail}
     """
 
     status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
