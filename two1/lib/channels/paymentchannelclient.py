@@ -1,7 +1,7 @@
 import os.path
 import collections
 
-from . import wallet as walletwrapper
+from . import walletwrapper
 from . import database
 from . import blockchain
 from . import paymentchannel
