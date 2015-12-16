@@ -200,6 +200,8 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="magenta")
     app_not_enabled = click.style(
         "This app is not within your enabled apps.", fg="red")
+    failed_to_destroy_app = click.style(
+        "Failed to destroy app, please contact support@21.co", fg="red")
 
     # search
     search_stub = """%s
