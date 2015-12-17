@@ -26,10 +26,10 @@ class PaymentChannelClient:
     DEFAULT_CHANNELS_DB_PATH = os.path.expanduser('~/.two1/channels/channels.sqlite3')
     """Default payment channel database path."""
 
-    DEFAULT_BLOCKCYPHER_BLOCKCHAIN_URL = "https://api.blockcypher.com/v1/btc/main"
+    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = "https://dotco-devel-pool2.herokuapp.com/blockchain/bitcoin"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_BLOCKCYPHER_TESTNET_BLOCKCHAIN_URL = "https://api.blockcypher.com/v1/btc/test3"
+    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = "https://dotco-devel-pool2.herokuapp.com/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
     def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH):
@@ -50,7 +50,7 @@ class PaymentChannelClient:
 
         self._wallet = walletwrapper.Two1WalletWrapper(wallet)
         self._database = database.Sqlite3Database(db_path)
-        self._blockchain = blockchain.BlockCypherBlockchain(PaymentChannelClient.DEFAULT_BLOCKCYPHER_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_BLOCKCYPHER_TESTNET_BLOCKCHAIN_URL)
+        self._blockchain = blockchain.TwentyOneBlockchain(PaymentChannelClient.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
 
         self._channels = collections.OrderedDict()
         self._update_channels()
