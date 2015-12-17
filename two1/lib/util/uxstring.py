@@ -238,6 +238,8 @@ class UxString:
             "21 publish -a {YOUR_APP_DIRECTORY}", bold=True, fg="blue") + click.style(
             " to publish your apps to the marketplace.", fg="blue")
 
+    app_does_not_exist = "The specified id for the app ({}) does not match any app."
+
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
