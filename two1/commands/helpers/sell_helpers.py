@@ -41,7 +41,7 @@ def install_requirements():
 
 
 def validate_directory(dirname):
-    """Validate that the directory speicified
+    """Validate that the directory specified
     has correct contents within it.
 
     ie. file with name "index.py"
@@ -80,6 +80,13 @@ def create_site_includes():
             False otherwise.
     """
     rv = False
+    if os.path.isfile("/etc/nginx/sites-enabled/default"):
+        subprocess.check_output([
+            "sudo",
+            "rm",
+            "-f",
+            "/etc/nginx/sites-enabled/default"
+            ])
     if not os.path.isdir("/etc/nginx/site-includes"):
         subprocess.check_output([
                 "sudo",
@@ -141,7 +148,6 @@ def create_systemd_file(dirname):
     rv = False
     appdir = dir_to_absolute(dirname)
     appname = absolute_path_to_foldername(appdir)
-    # write systemd shit to tempfile
     with tempfile.NamedTemporaryFile() as tf:
         systemd_file = """[Unit]
 Description=gunicorn daemon for %s
