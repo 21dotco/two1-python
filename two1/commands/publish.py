@@ -34,7 +34,7 @@ def publish(ctx, app_directory, marketplace, list, delete):
         _list_apps(config)
         return
     elif delete:
-        print("DELETE")
+        _delete_app(config, delete)
         return
     elif app_directory:
         _publish(config, app_directory, marketplace)
@@ -155,7 +155,14 @@ def display_app_info(config, client, app_id):
 
 
 def _delete_app(config, app_id):
-    pass
+    if click.confirm(UxString.delete_confirmation.format(app_id)):
+        client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                                 config.machine_auth,
+                                                 config.username)
+        resp = client.delete_app(config.username, app_id)
+        resp_json = resp.json()
+        deleted_title = resp_json["deleted_title"]
+        click.secho(UxString.delete_success.format(app_id, deleted_title))
 
 
 @capture_usage

@@ -240,6 +240,10 @@ class UxString:
 
     app_does_not_exist = "The specified id for the app ({}) does not match any app."
 
+    # publish delete
+    delete_confirmation = "Are you sure that you want to delete the app with id '{}' ?"
+    delete_success = "App {} ({}) was successfully removed from the marketplace."
+
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
