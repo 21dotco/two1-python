@@ -176,6 +176,10 @@ class TwentyOneRestClient(object):
         path = "/market/apps/{}".format(listing_id)
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    def get_published_apps(self, username, page=0):
+        path = "/market/users/{}/apps/?page={}".format(self.username, page)
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self):
         path = "/pool/statistics/%s/earnings/" % self.username

@@ -230,6 +230,14 @@ class UxString:
         "{} successfully published to {}. It may take a couple of minutes for your app "
         "to show up in the marketplace.", fg="magenta")
 
+    # publish-list
+    my_apps = "Listing all the published apps by {}: "
+    no_published_apps = click.style(
+        "You haven't published any apps to the marketplace yet. Use ",
+        fg="blue") + click.style(
+            "21 publish -a {YOUR_APP_DIRECTORY}", bold=True, fg="blue") + click.style(
+            " to publish your apps to the marketplace.", fg="blue")
+
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
@@ -270,7 +278,7 @@ refer to 21.co/app for futher instructions.", fg="red")
 
     # search
     list_all = "Listing all the marketplace apps: "
-    pagination = click.style("\nType index of the app for more info, ",
+    pagination = click.style("\nType id of the app for more info, ",
                              fg="blue") + click.style(
         "n", bold=True, fg="blue") + click.style(
         " for next page, ", fg="blue") + click.style(
