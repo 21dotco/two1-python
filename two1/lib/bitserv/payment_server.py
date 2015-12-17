@@ -48,6 +48,9 @@ class PaymentServer:
     DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com"
     """Default mainnet blockchain URL."""
 
+    DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL = "https://testnet.blockexplorer.com"
+    """Default testnet blockchain URL."""
+
     MIN_TX_FEE = 5000
     """Minimum transaction fee for payment channel deposit/payment."""
 
@@ -93,7 +96,7 @@ class PaymentServer:
         if db is None:
             self._db = DatabaseSQLite3()
         if blockchain is None:
-            self._blockchain = InsightBlockchain(PaymentServer.DEFAULT_INSIGHT_BLOCKCHAIN_URL)
+            self._blockchain = InsightBlockchain(PaymentServer.DEFAULT_INSIGHT_BLOCKCHAIN_URL if not self._wallet._wallet.testnet else PaymentServer.DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL)
         self._sync_stop = threading.Event()
         self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
         self._sync_thread.start()

@@ -25,6 +25,7 @@ class MockTwo1Wallet:
     def __init__(self):
         """Initialize the mock wallet with a private key."""
         self._private_key = PrivateKey.from_random()
+        self.testnet = False
 
     def get_payout_public_key(self, account='default'):
         """Return the public key associated with the private key."""
