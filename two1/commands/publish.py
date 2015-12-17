@@ -90,7 +90,8 @@ def get_search_results(config, client, page):
                    "Last Update"]
         rows = [[r["id"], r["title"], r["app_url"], str(r["is_up"]), str(r["is_healthy"]),
                  "{}%".format(r["average_uptime"] * 100),
-                 r["last_update"]] for r in search_results]
+                 datetime.datetime.fromtimestamp(r["last_update"]).strftime(
+                     "%Y-%m-%d %H:%M")] for r in search_results]
         click.echo(tabulate(rows, headers, tablefmt="grid"))
         return total_pages
     else:
