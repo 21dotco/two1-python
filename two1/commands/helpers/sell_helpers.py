@@ -4,7 +4,20 @@ import tempfile
 import subprocess
 
 
-dir_to_absolute = lambda dirname: os.getcwd() + "/" + dirname
+def dir_to_absolute(dirname):
+    """Return absolute directory if only
+    folder name is provided."""
+    if dirname[-1] != "/":
+        dirname = dirname + '/'
+    if dirname[0] != "/":
+        dirname = os.getcwd() + "/" + dirname
+    return dirname
+
+
+def absolute_path_to_foldername(absolute_dir):
+    """Return the name of the folder given
+    an absolute path."""
+    return os.path.split(absolute_dir.rstrip('/'))[-1]
 
 
 def install_requirements():
@@ -12,7 +25,7 @@ def install_requirements():
     using nginx.
 
     Returns:
-        bool: True if the requirements were succesfully installed,
+        bool: True if the requirements were successfully installed,
             False otherwise.
     """
     rv = False
@@ -31,7 +44,7 @@ def validate_directory(dirname):
     """Validate that the directory speicified
     has correct contents within it.
 
-    ie. filen with name "index.py"
+    ie. file with name "index.py"
         - which has a variable "app" within it.
 
     Args:
@@ -63,7 +76,7 @@ def create_site_includes():
     which pertain to individual apps.
 
     Returns:
-        bool: True if the process was succesfully completed,
+        bool: True if the process was successfully completed,
             False otherwise.
     """
     rv = False
@@ -83,7 +96,7 @@ def create_default_nginx_server():
     nginx locations.
 
     Returns:
-        bool: True if the process was succesfully completed,
+        bool: True if the process was successfully completed,
             False otherwise.
     """
     rv = False
@@ -122,12 +135,12 @@ def create_systemd_file(dirname):
         dirname (string): directory the app is located in.
 
     Returns:
-        bool: True if the process was succesfully completed,
+        bool: True if the process was successfully completed,
             False otherwise.
     """
     rv = False
     appdir = dir_to_absolute(dirname)
-    appname = dirname.rstrip("/")
+    appname = absolute_path_to_foldername(appdir)
     # write systemd shit to tempfile
     with tempfile.NamedTemporaryFile() as tf:
         systemd_file = """[Unit]
@@ -181,10 +194,10 @@ WantedBy=default.target
 
 def create_nginx_config(dirname):
     """Create a nginx location file that redirects
-    all request with the prefix of the appname to the
+    all requests with the prefix of the appname to the
     correct socket & process belonging to that app.
 
-    i.e. curl 0.0.0.0/myapp1 shoudl redirect requests
+    i.e. curl 0.0.0.0/myapp1 should redirect requests
     to unix:/mysocketpath.sock @ the route /
 
     This allows for multiple apps to be namespaced and
@@ -194,12 +207,12 @@ def create_nginx_config(dirname):
         dirname (string): directory the app is located in.
 
     Returns:
-        bool: True if the process was succesfully completed,
+        bool: True if the process was successfully completed,
             False otherwise.
     """
     rv = False
     appdir = dir_to_absolute(dirname)
-    appname = dirname.rstrip("/")
+    appname = absolute_path_to_foldername(appdir)
     with tempfile.NamedTemporaryFile() as tf:
         nginx_site_includes_file = """location /%s {
         rewrite ^/%s(.*) /$1 break;
@@ -257,7 +270,7 @@ def destroy_app(appname):
         appname (str): name of the enabled app.
 
     Returns:
-        bool: True if the app was succesfully destroyed,
+        bool: True if the app was successfully destroyed,
             False otherwise.
     """
     rv = False

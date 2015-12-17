@@ -195,8 +195,8 @@ refer to 21.co/app for futher instructions.", fg="red")
     no_apps_currently_running = click.style(
             "No apps currently running, refer to 21.co/sell to host some...",
             fg="red")
-    succesfully_stopped_app = click.style(
-        "Succesfully stopped {}...",
+    successfully_stopped_app = click.style(
+        "successfully stopped {}...",
         fg="magenta")
     app_not_enabled = click.style(
         "This app is not within your enabled apps.", fg="red")

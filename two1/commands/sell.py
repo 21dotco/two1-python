@@ -9,6 +9,8 @@ from two1.commands.helpers.sell_helpers import create_default_nginx_server
 from two1.commands.helpers.sell_helpers import create_systemd_file
 from two1.commands.helpers.sell_helpers import create_nginx_config
 from two1.commands.helpers.sell_helpers import destroy_app
+from two1.commands.helpers.sell_helpers import dir_to_absolute
+from two1.commands.helpers.sell_helpers import absolute_path_to_foldername
 
 
 @click.group()
@@ -19,7 +21,7 @@ def sell():
 \b
 Usage
 _____
-Host your app in a production enviornment
+Host your app in a production environment
 $ 21 sell create myapp/
 
 \b
@@ -50,12 +52,13 @@ $ 21 sell destroy --help
 @click.pass_context
 def create(ctx, dirname):
     """
-    Host your app on your 21 Bitcoin Computer in a production enviornment.
+    Host your app on your 21 Bitcoin Computer in a production environment.
 
-    Given a folder with specific files inside:
-        -index.py
-        -requirements.txt
-    Host said app on host using nignx + gunicorn
+Given a folder with specific files inside:
+\n    -index.py
+\n    -requirements.txt
+\n
+Host said app on host (0.0.0.0/) using nginx + gunicorn
     """
     config = ctx.obj["config"]
     if validate_directory(dirname):
@@ -73,7 +76,9 @@ def create(ctx, dirname):
     config.log(UxString.created_systemd_file)
     create_nginx_config(dirname)
     config.log(UxString.created_app_nginx_file)
-    config.log(UxString.hosted_app_location.format(dirname.rstrip("/")))
+    appdir = dir_to_absolute(dirname)
+    appname = absolute_path_to_foldername(appdir)
+    config.log(UxString.hosted_app_location.format(appname))
 
 
 @sell.command()
@@ -121,7 +126,7 @@ Stop worker processes and disable site from sites-enabled
     config = ctx.obj["config"]
     if appname in os.listdir("/etc/nginx/site-includes/"):
         if destroy_app(appname):
-            config.log(UxString.succesfully_stopped_app.format(appname))
+            config.log(UxString.successfully_stopped_app.format(appname))
         else:
             config.log(UxString.failed_to_destroy_app)
     else:
