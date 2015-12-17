@@ -44,6 +44,10 @@ class PaymentChannelClient:
             PaymentChannelClient: instance of PaymentChannelClient.
 
         """
+        # Create leading directories to database if they don't exist
+        if not os.path.exists(os.path.dirname(db_path)):
+            os.makedirs(os.path.dirname(db_path))
+
         self._wallet = walletwrapper.Two1WalletWrapper(wallet)
         self._database = database.Sqlite3Database(db_path)
         self._blockchain = blockchain.BlockCypherBlockchain(PaymentChannelClient.DEFAULT_BLOCKCYPHER_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_BLOCKCYPHER_TESTNET_BLOCKCHAIN_URL)
