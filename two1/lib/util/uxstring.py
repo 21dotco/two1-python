@@ -179,8 +179,10 @@ For further information, please contact %s""" % \
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
 your directory and it's contents are correct,\
 refer to 21.co/app for futher instructions.", fg="red")
+    installing_requirements = click.style(
+        "Installing requirements...", fg="magenta")
     installed_requirements = click.style(
-        "Installed requirements...", fg="magenta")
+        "Successfully installed requirements...", fg="magenta")
     created_nginx_server = click.style(
         "Created default 21 nginx server...", fg="magenta")
     created_site_includes = click.style(
@@ -196,7 +198,7 @@ refer to 21.co/app for futher instructions.", fg="red")
             "No apps currently running, refer to 21.co/sell to host some...",
             fg="red")
     successfully_stopped_app = click.style(
-        "successfully stopped {}...",
+        "Successfully stopped {}...",
         fg="magenta")
     app_not_enabled = click.style(
         "This app is not within your enabled apps.", fg="red")
