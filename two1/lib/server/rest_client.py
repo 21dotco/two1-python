@@ -180,6 +180,10 @@ class TwentyOneRestClient(object):
         path = "/market/users/{}/apps/?page={}".format(self.username, page)
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    def get_app_full_info(self, username, app_id):
+        path = "/market/users/{}/apps/{}/".format(self.username, app_id)
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self):
         path = "/pool/statistics/%s/earnings/" % self.username
