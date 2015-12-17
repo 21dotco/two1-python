@@ -118,39 +118,54 @@ def display_search_info(config, client, listing_id):
     resp = client.get_listing_info(listing_id)
     if resp.ok:
         result_json = resp.json()
-        title = click.style("{}".format(result_json["title"]), bold=True,
-                            fg="magenta")
-        created_by = click.style("Created By: {}\n".format(result_json["username"]),
-                                 bold=True, fg="magenta")
+        title = click.style("App Name     : ", fg="blue") + click.style(
+            "{}".format(result_json["title"]))
+        created_by = click.style("Created By   : ", fg="blue") + click.style(
+            "{}".format(result_json["username"]))
 
-        desc = click.style("{}".format(result_json["description"]))
-        price = click.style("Price Range: {} - {} Satoshis\n").format(
-            result_json["min_price"], result_json["max_price"])
-        doc_url = click.style("Docs URL: {}".format(result_json["website_url"]))
-        app_url = click.style("App URL: {}\n".format(result_json["app_url"]))
-        keywords = click.style("Keywords: {}\n".format(', '.join(result_json["keywords"])))
-        version = click.style("Version: {}".format(result_json["version"]))
+        desc = click.style("Description  : ", fg="blue") + click.style(
+            "{}".format(result_json["description"]))
+        price = click.style("Price Range  : ", fg="blue") + click.style(
+                "{} - {} Satoshis").format(result_json["min_price"],
+                                           result_json["max_price"])
+
+        doc_url = click.style("Docs URL     : ", fg="blue") + click.style(
+            "{}".format(result_json["website_url"]))
+        app_url = click.style("App URL      : ", fg="blue") + click.style(
+            "{}".format(result_json["app_url"]))
+        category = click.style("Category     : ", fg="blue") + click.style(
+            "{}".format(result_json["category"]))
+        keywords = click.style("Keywords     : ", fg="blue") + click.style(
+            "{}".format(', '.join(result_json["keywords"])))
+        version = click.style("Version      : ", fg="blue") + click.style(
+            "{}".format(result_json["version"]))
         last_updated_str = datetime.datetime.fromtimestamp(
             result_json["updated"]).strftime("%Y-%m-%d %H:%M")
-        last_update = click.style("Last Update: {}\n".format(last_updated_str))
-        quick_start = click.style("Quick Start\n\n", fg="blue", bold=True) + click.style(
-            result_json["quick_buy"] + "\n"
+        last_update = click.style("Last Update  : ", fg="blue") + click.style(
+            "{}".format(last_updated_str))
+        quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
+            result_json["quick_buy"]
         )
+        is_active = click.style("Status       : ", fg="blue")
         if result_json["is_active"] and result_json["is_up"] and result_json[
             "is_healthy"]:
-            is_active = click.style("Active", fg="green")
+            is_active += click.style("Active")
         else:
-            is_active = click.style("Inactive", fg="red")
+            is_active += click.style("Inactive")
 
-        availability = "Availability in the past month: {}%\n".format(
-            int(result_json["average_uptime"]) * 100)
-        usage_docs = click.style("Detailed usage\n\n", fg="blue", bold=True) + click.style(
+        availability = click.style("Availability : ", fg="blue") + click.style(
+                "{}%".format(int(result_json["average_uptime"]) * 100))
+
+        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
             result_json["usage_docs"])
 
         final_str = "\n".join(
-                [title, created_by, desc, price, is_active, availability, doc_url,
-                 app_url, keywords, version,
-                 last_update, quick_start, usage_docs, "\n\n"])
+                [title, desc, created_by, price,"\n",
+                 is_active, availability, "\n",
+                 doc_url, app_url, "\n",
+                 category, keywords, version, last_update, "\n",
+                 quick_start, "\n",
+                 usage_docs, "\n\n"])
         config.echo_via_pager(final_str)
     else:
         raise ServerRequestError()
