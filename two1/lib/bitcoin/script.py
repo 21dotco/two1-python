@@ -624,6 +624,9 @@ class Script(object):
             sig_info = self.extract_sig_info()
             rv.append(key_hash_to_address(hash160(sig_info['public_key']),
                                           version))
+        elif Script.validate_template(self, [bytes, 'OP_CHECKSIG']):
+            version = self.P2PKH_TESTNET_VERSION if testnet else self.P2PKH_MAINNET_VERSION
+            rv.append(key_hash_to_address(hash160(self[0]), version))
 
         return rv
 
