@@ -155,7 +155,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=%s
-ExecStart=/usr/local/bin/gunicorn index:app --workers 1 --bind unix:%s%s.sock
+ExecStart=/usr/local/bin/gunicorn index:app --workers 1 --bind unix:%s%s.sock --access-logfile %sgunicorn.access.log --error-logfile %sgunicorn.error.log
 
 [Install]
 WantedBy=default.target
@@ -163,7 +163,9 @@ WantedBy=default.target
             appname,
             appdir,
             appdir,
-            appname
+            appname,
+            appdir,
+            appdir
         )
         tf.write(systemd_file.encode())
         tf.flush()
