@@ -80,9 +80,9 @@ class Sqlite3Database(DatabaseBase):
         self._db_path = db_path
 
         # Create the channels table if it doesn't exist
-        conn = sqlite3.connect(db_path)
-        with conn:
-            conn.execute("CREATE TABLE IF NOT EXISTS "
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
+        with self._conn:
+            self._conn.execute("CREATE TABLE IF NOT EXISTS "
                          "channels ("
                          "url VARCHAR NOT NULL PRIMARY KEY, "
                          "state VARCHAR(18), "
@@ -94,7 +94,6 @@ class Sqlite3Database(DatabaseBase):
                          "spend_txid VARCHAR, "
                          "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
                          ");")
-        conn.close()
 
         self._lock = Sqlite3DatabaseLock(db_path)
 
@@ -172,9 +171,6 @@ class Sqlite3Database(DatabaseBase):
         return self._lock
 
     def __enter__(self):
-        # Create the database connection
-        self._conn = sqlite3.connect(self._db_path)
-
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -182,9 +178,6 @@ class Sqlite3Database(DatabaseBase):
             self._conn.commit()
         else:
             self._conn.rollback()
-
-        # Close the database connection
-        self._conn.close()
 
 
 class Sqlite3DatabaseLock:
