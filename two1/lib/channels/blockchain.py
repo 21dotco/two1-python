@@ -64,6 +64,9 @@ class BlockchainBase:
         Args:
             tx (str): Serialized transaction (ASCII hex).
 
+        Returns:
+            str: Transaction ID (RPC byte order).
+
         """
         raise NotImplementedError()
 
