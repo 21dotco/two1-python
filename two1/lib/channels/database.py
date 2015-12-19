@@ -95,7 +95,10 @@ class Sqlite3Database(DatabaseBase):
                          "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
                          ");")
 
-        self._lock = Sqlite3DatabaseLock(db_path)
+        if db_path == ":memory:":
+            self._lock = threading.Lock()
+        else:
+            self._lock = Sqlite3DatabaseLock(db_path)
 
     @staticmethod
     def _model_to_sqlite(model):
