@@ -45,10 +45,10 @@ class PaymentServer:
     server to redeem micropayments made within the channel.
     """
 
-    DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com"
+    DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com/api"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL = "https://testnet.blockexplorer.com"
+    DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL = "https://testnet.blockexplorer.com/api"
     """Default testnet blockchain URL."""
 
     MIN_TX_FEE = 5000

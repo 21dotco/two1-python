@@ -102,7 +102,7 @@ class InsightBlockchain(BlockchainBase):
 
     def check_confirmed(self, txid, num_confirmations=1):
         # Get transaction info
-        r = requests.get(self._base_url + "/api/tx/" + txid)
+        r = requests.get(self._base_url + "/tx/" + txid)
         if r.status_code == 404:
             return False
         elif r.status_code != 200:
@@ -114,7 +114,7 @@ class InsightBlockchain(BlockchainBase):
 
     def lookup_spend_txid(self, txid, output_index):
         # Get transaction info
-        r = requests.get(self._base_url + "/api/tx/" + txid)
+        r = requests.get(self._base_url + "/tx/" + txid)
         if r.status_code == 404:
             return None
         elif r.status_code != 200:
@@ -133,7 +133,7 @@ class InsightBlockchain(BlockchainBase):
 
     def lookup_tx(self, txid):
         # Get raw transaction
-        r = requests.get(self._base_url + "/api/rawtx/" + txid)
+        r = requests.get(self._base_url + "/rawtx/" + txid)
         if r.status_code == 404:
             return None
         elif r.status_code != 200:
@@ -143,7 +143,7 @@ class InsightBlockchain(BlockchainBase):
 
     def broadcast_tx(self, tx):
         # Broadcast transaction
-        r = requests.post(self._base_url + "/api/tx/send", data={'rawtx': tx})
+        r = requests.post(self._base_url + "/tx/send", data={'rawtx': tx})
         if r.status_code != 200:
             raise BlockchainServerError("Broadcasting transaction: Status Code {}, {}".format(r.status_code, r.text))
 
