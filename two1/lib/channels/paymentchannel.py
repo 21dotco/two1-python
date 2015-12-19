@@ -116,7 +116,7 @@ class PaymentChannel:
 
             # Call create() on state machine
             try:
-                (deposit_tx, redeem_script) = sm.create(pubkey, deposit, expiration, fee, zeroconf, use_unconfirmed)
+                (deposit_tx, redeem_script) = sm.create(pubkey, deposit, int(time.time() + expiration), fee, zeroconf, use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 
