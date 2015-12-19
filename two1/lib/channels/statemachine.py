@@ -486,7 +486,7 @@ class PaymentChannelStateMachine:
             int: Deposit amount in satoshis.
 
         """
-        return self._model.refund_tx.outputs[0].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT
+        return (self._model.refund_tx.outputs[0].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT) if self._model.refund_tx else None
 
     @property
     def fee_amount(self):
@@ -496,7 +496,7 @@ class PaymentChannelStateMachine:
             int: Fee amount in satoshis.
 
         """
-        return self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].value - self._model.refund_tx.outputs[0].value
+        return (self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].value - self._model.refund_tx.outputs[0].value) if self._model.refund_tx else None
 
     @property
     def creation_time(self):
@@ -516,7 +516,7 @@ class PaymentChannelStateMachine:
             int: Expiration absolute time (UNIX time).
 
         """
-        return self._model.refund_tx.lock_time
+        return self._model.refund_tx.lock_time if self._model.refund_tx else None
 
     @property
     def deposit_tx_utxo_index(self):
@@ -557,7 +557,7 @@ class PaymentChannelStateMachine:
             str or None: DER-encoded signature (ASCII hex).
 
         """
-        return codecs.encode(self._wallet.sign(self.deposit_txid.encode(), self._customer_public_key).to_der(), 'hex_codec').decode() if self._model.deposit_tx else None
+        return codecs.encode(self._wallet.sign(self.deposit_txid.encode('ascii'), self._customer_public_key).to_der(), 'hex_codec').decode() if self._model.deposit_tx else None
 
     @property
     def refund_tx(self):
