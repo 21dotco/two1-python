@@ -357,8 +357,8 @@ class PaymentChannelStateMachine:
         """Close the channel.
 
         State machine transitions from READY to CONFIRMING_SPEND, OUTSTANDING
-        to CONFIRMING_SPEND, OPENING to CONFIRMING_SPEND, or CONFIRMING_SPEND
-        to CONFIRMING_SPEND.
+        to CONFIRMING_SPEND, CONFIRMING_DEPOSIT to CONFIRMING_SPEND, or
+        CONFIRMING_SPEND to CONFIRMING_SPEND.
 
         Args:
             spend_txid (str or None): Transaction ID of spending transaction,
@@ -371,12 +371,8 @@ class PaymentChannelStateMachine:
         # Assert state
         if self._model.state == PaymentChannelState.CLOSED:
             raise StateTransitionError("Channel already closed.")
-
-        # If we are still in OPENING, we haven't broadcast a deposit, so go
-        # straight to closed.
         if self._model.state == PaymentChannelState.OPENING:
-            self._model.state = PaymentChannelState.CLOSED
-            return
+            raise StateTransitionError("Channel not open.")
 
         self._model.spend_txid = spend_txid
         self._model.state = PaymentChannelState.CONFIRMING_SPEND
