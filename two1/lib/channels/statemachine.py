@@ -173,7 +173,7 @@ class PaymentChannelStateMachine:
         self._pending_payment_tx = None
         self._pending_amount = None
 
-    def create(self, merchant_public_key, deposit, expiration_time, fee, zeroconf, use_unconfirmed=False):
+    def create(self, merchant_public_key, deposit_amount, expiration_time, fee_amount, zeroconf, use_unconfirmed=False):
         """Open a new payment channel.
 
         State machine transitions from OPENING to CONFIRMING_DEPOSIT if
@@ -182,9 +182,9 @@ class PaymentChannelStateMachine:
         Args:
             merchant_public_key (str): Serialized compressed public key of the
                 merchant (ASCII hex).
-            deposit (int): Depost amount in satoshis.
+            deposit_amount (int): Depost amount in satoshis.
             expiration_time (int): Expiration absolute time (UNIX time).
-            fee (int): Fee amount in satoshis.
+            fee_amount (int): Fee amount in satoshis.
             zeroconf (bool): Use payment channel without deposit confirmation.
             use_unconfirmed (bool): Use unconfirmed transactions to build
                 deposit transaction.
@@ -210,17 +210,17 @@ class PaymentChannelStateMachine:
         # Validate inputs
         if not isinstance(merchant_public_key, str):
             raise TypeError("Merchant public key type should be str.")
-        elif not isinstance(deposit, int):
+        elif not isinstance(deposit_amount, int):
             raise TypeError("Deposit amount type should be int.")
-        elif not isinstance(fee, int):
+        elif not isinstance(fee_amount, int):
             raise TypeError("Fee amount type should be int.")
         elif not isinstance(expiration_time, int):
             raise TypeError("Expiration time type should be int.")
         elif expiration_time <= 0:
             raise ValueError("Expiration time should be positive.")
-        elif deposit <= 0:
+        elif deposit_amount <= 0:
             raise ValueError("Deposit amount should be positive.")
-        elif fee <= 0:
+        elif fee_amount <= 0:
             raise ValueError("Fee amount should be positive.")
 
         # Setup initial amounts and expiration time
@@ -235,12 +235,12 @@ class PaymentChannelStateMachine:
 
         # Build deposit tx
         try:
-            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee, use_unconfirmed=use_unconfirmed)
+            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee_amount, use_unconfirmed=use_unconfirmed)
         except wallet.InsufficientBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
         # Build refund tx
-        refund_tx = self._wallet.create_refund_tx(deposit_tx, redeem_script, customer_public_key, expiration_time, fee)
+        refund_tx = self._wallet.create_refund_tx(deposit_tx, redeem_script, customer_public_key, expiration_time, fee_amount)
 
         # Update model state
         self._model.creation_time = creation_time
