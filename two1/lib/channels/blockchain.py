@@ -110,7 +110,7 @@ class InsightBlockchain(BlockchainBase):
         # Validate utxo index is in bounds
         tx_info = r.json()
         if len(tx_info['vout']) <= output_index:
-            raise ValueError("Output index out of bounds.")
+            raise IndexError("Output index out of bounds.")
 
         # If spent transaction exists
         if "spentTxId" in tx_info['vout'][output_index]:
@@ -176,7 +176,7 @@ class BlockCypherBlockchain(BlockchainBase):
         # Validate utxo index is in bounds
         tx_info = r.json()
         if len(tx_info['outputs']) <= output_index:
-            raise ValueError("Output index out of bounds.")
+            raise IndexError("Output index out of bounds.")
 
         # If spent transaction exists
         if "spent_by" in tx_info['outputs'][output_index]:
