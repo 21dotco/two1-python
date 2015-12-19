@@ -240,7 +240,7 @@ class PaymentChannelStateMachine:
             raise InsufficientBalanceError(str(e))
 
         # Build refund tx
-        refund_tx = self._wallet.create_refund_tx(deposit_tx, redeem_script, customer_public_key, expiration_time, fee_amount)
+        refund_tx = self._wallet.create_refund_tx(deposit_tx, redeem_script, expiration_time, fee_amount)
 
         # Update model state
         self._model.creation_time = creation_time
@@ -306,7 +306,7 @@ class PaymentChannelStateMachine:
             amount = max(PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, amount)
 
         # Build payment tx
-        self._pending_payment_tx = self._wallet.create_payment_tx(self._model.deposit_tx, self._redeem_script, self._merchant_public_key, self._customer_public_key, self.deposit_amount - self.balance_amount + amount, self.fee_amount)
+        self._pending_payment_tx = self._wallet.create_payment_tx(self._model.deposit_tx, self._redeem_script, self.deposit_amount - self.balance_amount + amount, self.fee_amount)
         self._pending_amount = amount
 
         self._model.state = PaymentChannelState.OUTSTANDING

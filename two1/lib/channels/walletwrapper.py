@@ -41,14 +41,13 @@ class WalletWrapperBase:
         """
         raise NotImplementedError()
 
-    def create_refund_tx(self, deposit_tx, redeem_script, customer_public_key, expiration_time, fee):
+    def create_refund_tx(self, deposit_tx, redeem_script, expiration_time, fee):
         """Create a fully-signed refund transaction for a payment channel.
 
         Args:
             deposit_tx (bitcoin.Transaction): Deposit transaction object.
-            redeem_script (bitcoin.Script): Redeem script object.
-            customer_public_key (bitcoin.PublicKey): Customer public key (to
-                return refund to).
+            redeem_script (statemachine.PaymentChannelRedeemScript): Redeem
+                script object.
             expiration_time (int): Absolute expiration time (UNIX time).
             fee (int): Fee in satoshis.
 
@@ -58,15 +57,13 @@ class WalletWrapperBase:
         """
         raise NotImplementedError()
 
-    def create_payment_tx(self, deposit_tx, redeem_script, merchant_public_key, customer_public_key, amount, fee):
+    def create_payment_tx(self, deposit_tx, redeem_script, amount, fee):
         """Create a half-signed payment transaction for a payment channel.
 
         Args:
             deposit_tx (bitcoin.Transacton): Deposit transaction object.
-            redeem_script (bitcoin.Script): Redeem script object.
-            merchant_public_key (bitcoin.PublicKey): Merchant public key (to pay to).
-            customer_public_key (bitcoin.PublicKey): Customer public key (to
-                return change to).
+            redeem_script (statemachine.PaymentChannelRedeemScript): Redeem
+                script object.
             amount (int): Total amount to pay in satoshis.
             fee (int): Fee in satoshis.
 
@@ -115,7 +112,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         # Sign deposit transaction to script address
         return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True)[0]
 
-    def create_refund_tx(self, deposit_tx, redeem_script, customer_public_key, expiration_time, fee):
+    def create_refund_tx(self, deposit_tx, redeem_script, expiration_time, fee):
         # Find P2SH output index in deposit_tx
         deposit_utxo_index = deposit_tx.output_index_for_address(redeem_script.hash160())
 
@@ -124,7 +121,7 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         # Build unsigned refund transaction
         inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0x0)]
-        outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(customer_public_key.hash160()))]
+        outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
         refund_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, expiration_time)
 
         # Sign refund transaction
@@ -139,7 +136,7 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         return refund_tx
 
-    def create_payment_tx(self, deposit_tx, redeem_script, merchant_public_key, customer_public_key, amount, fee):
+    def create_payment_tx(self, deposit_tx, redeem_script, amount, fee):
         # Find P2SH output index in deposit_tx
         deposit_utxo_index = deposit_tx.output_index_for_address(redeem_script.hash160())
 
@@ -148,7 +145,7 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         # Build unsigned payment transaction
         inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0xffffffff)]
-        outputs = [bitcoin.TransactionOutput(amount, bitcoin.Script.build_p2pkh(merchant_public_key.hash160())), bitcoin.TransactionOutput(deposit_amount - amount, bitcoin.Script.build_p2pkh(customer_public_key.hash160()))]
+        outputs = [bitcoin.TransactionOutput(amount, bitcoin.Script.build_p2pkh(redeem_script.merchant_public_key.hash160())), bitcoin.TransactionOutput(deposit_amount - amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
         payment_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, 0x0)
 
         # Sign payment transaction
