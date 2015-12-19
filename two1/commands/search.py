@@ -154,7 +154,7 @@ def display_search_info(config, client, listing_id):
             is_active += click.style("Inactive")
 
         availability = click.style("Availability : ", fg="blue") + click.style(
-                "{}%".format(int(result_json["average_uptime"]) * 100))
+                "{:.2f}%".format(result_json["average_uptime"] * 100))
 
         usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
             result_json["usage_docs"])
