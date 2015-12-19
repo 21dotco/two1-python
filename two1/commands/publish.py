@@ -89,7 +89,7 @@ def get_search_results(config, client, page):
         headers = ["id", "Title", "Url", "Is up", "Is healthy", "Average Uptime",
                    "Last Update"]
         rows = [[r["id"], r["title"], r["app_url"], str(r["is_up"]), str(r["is_healthy"]),
-                 "{}%".format(r["average_uptime"] * 100),
+                 "{:.2f}%".format(r["average_uptime"] * 100),
                  datetime.datetime.fromtimestamp(r["last_update"]).strftime(
                      "%Y-%m-%d %H:%M")] for r in search_results]
         click.echo(tabulate(rows, headers, tablefmt="grid"))
@@ -121,8 +121,8 @@ def display_app_info(config, client, app_id):
         last_update = click.style("Last Update     : ", fg="blue") + click.style(
             "{}".format(last_updated_str))
 
-        availability = click.style("Availability    : ", fg="blue") + click.style("{}%".format(
-                int(app_info["average_uptime"]) * 100))
+        availability = click.style("Availability    : ", fg="blue") + click.style(
+                "{:.2f}%".format(app_info["average_uptime"] * 100))
 
         app_url = click.style("App URL         : ", fg="blue") + click.style("{}".format(app_info["app_url"]))
         category = click.style("Category        : ", fg="blue") + click.style("{}".format(app_info["category"]))
