@@ -173,7 +173,7 @@ class PaymentChannelStateMachine:
         self._pending_payment_tx = None
         self._pending_amount = None
 
-    def create(self, merchant_public_key, deposit, expiration, fee, zeroconf, use_unconfirmed=False):
+    def create(self, merchant_public_key, deposit, expiration_time, fee, zeroconf, use_unconfirmed=False):
         """Open a new payment channel.
 
         State machine transitions from OPENING to CONFIRMING_DEPOSIT if
@@ -183,7 +183,7 @@ class PaymentChannelStateMachine:
             merchant_public_key (str): Serialized compressed public key of the
                 merchant (ASCII hex).
             deposit (int): Depost amount in satoshis.
-            expiration (int): Relative expiration time in seconds.
+            expiration_time (int): Expiration absolute time (UNIX time).
             fee (int): Fee amount in satoshis.
             zeroconf (bool): Use payment channel without deposit confirmation.
             use_unconfirmed (bool): Use unconfirmed transactions to build
@@ -214,10 +214,10 @@ class PaymentChannelStateMachine:
             raise TypeError("Deposit amount type should be int.")
         elif not isinstance(fee, int):
             raise TypeError("Fee amount type should be int.")
-        elif not isinstance(expiration, int):
-            raise TypeError("Expiration type should be int.")
-        elif expiration <= 0:
-            raise ValueError("Expiration should be positive.")
+        elif not isinstance(expiration_time, int):
+            raise TypeError("Expiration time type should be int.")
+        elif expiration_time <= 0:
+            raise ValueError("Expiration time should be positive.")
         elif deposit <= 0:
             raise ValueError("Deposit amount should be positive.")
         elif fee <= 0:
@@ -225,7 +225,6 @@ class PaymentChannelStateMachine:
 
         # Setup initial amounts and expiration time
         creation_time = time.time()
-        expiration_time = int(creation_time + expiration)
 
         # Collect public keys
         customer_public_key = self._wallet.get_public_key()
