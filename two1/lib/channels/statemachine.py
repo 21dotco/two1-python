@@ -211,15 +211,17 @@ class PaymentChannelStateMachine:
         if not isinstance(merchant_public_key, str):
             raise TypeError("Merchant public key type should be str.")
         elif not isinstance(deposit, int):
-            raise TypeError("Deposit type should be int.")
+            raise TypeError("Deposit amount type should be int.")
+        elif not isinstance(fee, int):
+            raise TypeError("Fee amount type should be int.")
         elif not isinstance(expiration, int):
             raise TypeError("Expiration type should be int.")
         elif expiration <= 0:
             raise ValueError("Expiration should be positive.")
         elif deposit <= 0:
-            raise ValueError("Deposit should be positive.")
+            raise ValueError("Deposit amount should be positive.")
         elif fee <= 0:
-            raise ValueError("Fee should be positive.")
+            raise ValueError("Fee amount should be positive.")
 
         # Setup initial amounts and expiration time
         creation_time = time.time()
