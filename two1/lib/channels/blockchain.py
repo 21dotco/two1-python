@@ -142,6 +142,14 @@ class InsightBlockchain(BlockchainBase):
         return r.json()['rawtx']
 
     def broadcast_tx(self, tx):
+        # InsightBlockchain returns 400 on broadcast if the transaction has
+        # already been broadcast, so we check if it exists first.
+
+        # Get transaction info
+        r = requests.get(self._base_url + "/tx/" + str(bitcoin.Transaction.from_hex(tx).hash))
+        if r.status_code == 200:
+            return r.json()['txid']
+
         # Broadcast transaction
         r = requests.post(self._base_url + "/tx/send", data={'rawtx': tx})
         if r.status_code != 200:
