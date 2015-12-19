@@ -29,6 +29,9 @@ class BlockchainBase:
         Returns:
             bool: True if confirmed, False if not confirmed.
 
+        Raises:
+            BlockchainServerError: if an unexpected server error occurred.
+
         """
         raise NotImplementedError()
 
@@ -43,6 +46,10 @@ class BlockchainBase:
         Returns:
             str: Transaction ID (RPC byte order) or None.
 
+        Raises:
+            IndexError: if output_index is out of bounds.
+            BlockchainServerError: if an unexpected server error occurred.
+
         """
         raise NotImplementedError()
 
@@ -55,6 +62,9 @@ class BlockchainBase:
         Returns:
             str: Serialized transaction or None.
 
+        Raises:
+            BlockchainServerError: if an unexpected server error occurred.
+
         """
         raise NotImplementedError()
 
@@ -66,6 +76,9 @@ class BlockchainBase:
 
         Returns:
             str: Transaction ID (RPC byte order).
+
+        Raises:
+            BlockchainServerError: if an unexpected server error occurred.
 
         """
         raise NotImplementedError()
