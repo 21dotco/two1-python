@@ -3,6 +3,7 @@ from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.util.decorators import check_notifications
 from two1.lib.util.uxstring import UxString
 
 
@@ -16,6 +17,7 @@ def flush(ctx):
     _flush(config)
 
 
+@check_notifications
 @capture_usage
 def _flush(config):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,

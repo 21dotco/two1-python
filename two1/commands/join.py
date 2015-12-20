@@ -6,6 +6,7 @@ from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.util.decorators import check_notifications
 from two1.lib.util.uxstring import UxString
 from two1.lib.util import zerotier
 
@@ -25,6 +26,7 @@ Usage
     _join(config, network)
 
 
+@check_notifications
 @capture_usage
 def _join(config, network):
     """Perform the rest_client join"""

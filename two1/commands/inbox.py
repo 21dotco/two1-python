@@ -12,13 +12,13 @@ from two1.lib.util.uxstring import UxString
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
 @json_output
-def log(config, debug):
-    """Shows the log of all the 21 earnings"""
-    return _log(config, debug)
+def inbox(config, debug):
+    """Shows a list of notifications for your account"""
+    return _inbox(config, debug)
 
 
 @capture_usage
-def _log(config, debug):
+def _inbox(config, debug):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -78,7 +78,6 @@ def get_description(entry):
             reason = UxString.buy_message.format(buy_str[1], buy_str[0])
         else:
             reason = UxString.sell_message.format(buy_str[1], buy_str[0])
-
 
     description = "Description: {}".format(reason)
     return description
