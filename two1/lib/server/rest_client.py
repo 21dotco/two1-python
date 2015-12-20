@@ -164,6 +164,10 @@ class TwentyOneRestClient(object):
             path += "?detailed=True"
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    def mark_notifications_read(self, username):
+        path = "/pool/account/%s/notifications/?action=mark_read" % self.username
+        return self._request(sign_username=self.username, method="POST", path=path)
+
     def publish(self, publish_info):
         data = json.dumps(publish_info)
         path = "/market/apps/"
