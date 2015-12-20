@@ -8,7 +8,7 @@ from tabulate import tabulate
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
 from two1.lib.server.rest_client import ServerRequestError
-from two1.lib.util.decorators import json_output
+from two1.lib.util.decorators import json_output, check_notifications
 from two1.lib.util.uxstring import UxString
 from two1.lib.util import zerotier
 from two1.commands.config import TWO1_HOST
@@ -154,7 +154,7 @@ def display_app_info(config, client, app_id):
         else:
             raise e
 
-
+@check_notifications
 def _delete_app(config, app_id):
     if click.confirm(UxString.delete_confirmation.format(app_id)):
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
@@ -166,6 +166,7 @@ def _delete_app(config, app_id):
         click.secho(UxString.delete_success.format(app_id, deleted_title))
 
 
+@check_notifications
 @capture_usage
 def _publish(config, app_directory, marketplace):
     api_docs_path = os.path.join(app_directory, "manifest", "manifest.json")

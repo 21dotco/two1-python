@@ -10,7 +10,7 @@ from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
-from two1.lib.util.decorators import json_output
+from two1.lib.util.decorators import json_output, check_notifications
 from two1.lib.util.uxstring import UxString
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
@@ -113,6 +113,7 @@ def status(config, detail):
 
 
 @capture_usage
+@check_notifications
 def _status(config, detail):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,

@@ -22,6 +22,7 @@ from two1.commands import status
 from two1.commands.status import has_bitcoinkit
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.server.rest_client import ServerRequestError
+from two1.lib.util.decorators import check_notifications
 from two1.lib.util.exceptions import MiningDisabledError
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
@@ -57,6 +58,7 @@ $ 21 mine --dashboard
     _mine(config, dashboard=dashboard)
 
 
+@check_notifications
 @capture_usage
 def _mine(config, dashboard=False):
     if has_bitcoinkit():

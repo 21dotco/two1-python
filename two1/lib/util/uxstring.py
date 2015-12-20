@@ -158,7 +158,7 @@ class UxString:
     # ad
     buy_ad = "Get a 21 Bitcoin Computer at https://21.co/buy"
 
-    # log
+    # inbox
     reasons = {
         "CLI": "You got an advance against your future work on the Bitcoin Computer",
         "Shares": "You submitted work through the 21 Bitcoin Computer",
@@ -182,6 +182,11 @@ class UxString:
 
     buy_message = "You bought {} from {}"
     sell_message = "You sold {} to {}"
+
+    unread_notifications = click.style("\nYou have {} unread important notifications.Type ",
+                                       fg="blue") + click.style("21 inbox",
+                                                                bold=True, fg="blue") + click.style(
+            " to view your notifications.", fg="blue")
 
     # join
     successful_join = "Joined network {}. It might take a couple of seconds for joining " \

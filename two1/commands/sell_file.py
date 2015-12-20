@@ -3,6 +3,7 @@ import click
 
 from two1.commands.config import pass_config
 from two1.lib.server.analytics import capture_usage
+from two1.lib.util.decorators import check_notifications
 
 
 @click.command(context_settings=dict(
@@ -19,6 +20,7 @@ def sell_file(config, file, price, store):
     _sell_file(config, file, price, store)
 
 
+@check_notifications
 @capture_usage
 def _sell_file(config, file, price, store):
     import requests

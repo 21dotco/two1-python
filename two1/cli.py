@@ -31,7 +31,7 @@ from two1.lib.util.uxstring import UxString
 from two1.commands.buy import buy
 from two1.commands.doctor import doctor
 from two1.commands.mine import mine
-from two1.commands.log import log
+from two1.commands.inbox import inbox
 from two1.commands.login import login
 from two1.commands.help import help
 from two1.commands.status import status
@@ -102,7 +102,7 @@ main.add_command(mine)
 main.add_command(status)
 main.add_command(update)
 main.add_command(flush)
-main.add_command(log)
+main.add_command(inbox)
 main.add_command(help)
 main.add_command(send)
 main.add_command(search)
