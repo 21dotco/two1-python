@@ -171,7 +171,10 @@ class UxString:
 
     empty_logs = "[No events yet]"
 
-    log_intro = "21 Bitcoin Computer Activity Log.\n\n"
+    notification_intro = click.style("Account Notifications.\n\n", bold=True,
+                                     fg="magenta")
+
+    log_intro = click.style("21 Bitcoin Computer Activity Log.\n\n", bold=True, fg="magenta")
 
     debit_message = "{} : {:+d} Satoshis to your 21.co balance"
     blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
