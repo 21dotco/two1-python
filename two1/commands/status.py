@@ -1,7 +1,6 @@
 import click
 import urllib.parse
 import collections
-import two1.lib.channels as channels
 from two1.lib.channels.cli import format_expiration_time
 from tabulate import tabulate
 from two1.lib.server import rest_client
@@ -143,8 +142,7 @@ SMS_UNIT_PRICE = 1000
 def status_wallet(config, client, detail=False):
     """Print wallet status to the command line.
     """
-    channelclient = channels.PaymentChannelClient(config.wallet)
-    user_balances = _get_balances(config, client, channelclient)
+    user_balances = _get_balances(config, client)
 
     status_wallet = {
         "twentyone_balance": user_balances.twentyone,
@@ -165,8 +163,8 @@ def status_wallet(config, client, detail=False):
 
         # Display status for all payment channels
         status_channels = []
-        for url in channelclient.list():
-            status = channelclient.status(url)
+        for url in config.channel_client.list():
+            status = config.channel_client.status(url)
             url = urllib.parse.urlparse(url)
             status_channels.append(UxString.status_wallet_channel.format(
                 url.scheme, url.netloc, status.state, status.balance,
@@ -205,7 +203,7 @@ def status_wallet(config, client, detail=False):
     }
 
 
-def _get_balances(config, client, channelclient):
+def _get_balances(config, client):
     balance_c = config.wallet.confirmed_balance()
     balance_u = config.wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
@@ -216,9 +214,9 @@ def _get_balances(config, client, channelclient):
     twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flushed_amount"]
 
-    channelclient.sync()
+    config.channel_client.sync()
     channel_urls = []
-    channels_balance = sum(s.balance for s in (channelclient.status(url) for url in channel_urls)
+    channels_balance = sum(s.balance for s in (config.channel_client.status(url) for url in channel_urls)
                            if s.state == channels.PaymentChannelState.READY)
 
     return Balances(twentyone_balance, spendable_balance, pending_transactions,

@@ -225,9 +225,8 @@ def _buy(config, resource, data, method, data_file, output_file,
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                                  config.machine_auth,
                                                  config.username)
-        twentyone_balance, balance_c, pending_transactions, flushed_earnings = \
-            _get_balances(config, client)
-        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (res.amount_paid, twentyone_balance))
+        user_balances = _get_balances(config, client)
+        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (res.amount_paid, user_balances.twentyone))
 
     # Record the transaction if it was a payable request
     if hasattr(res, 'paid_amount'):
