@@ -169,3 +169,15 @@ def leave_network(network_id):
     if is_valid(network_id, idlen=16):
         result = cli('leave', network_id)
         return result
+
+
+def get_address_for_network(network_name):
+    all_networks = list_networks()
+    networks = [n for n in all_networks if n['name'] == network_name]
+    if len(networks) != 1:
+        raise ValueError
+    else:
+        network = networks[0]
+        address_and_mask = network["assignedAddresses"][0]
+        address = address_and_mask.split("/")[0]
+        return address
