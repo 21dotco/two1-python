@@ -13,6 +13,7 @@ from two1.lib.wallet.exceptions import DaemonizerError
 from two1.lib.wallet.two1_wallet import Two1Wallet
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
+from two1.lib.channels import PaymentChannelClient
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
 
@@ -146,6 +147,7 @@ class Config(object):
             self.wallet = Wallet(wallet_path=wallet_path,
                                  data_provider=dp)
             self.machine_auth = MachineAuthWallet(self.wallet)
+            self.channel_client = PaymentChannelClient(self.wallet)
         else:
             # This branch is hit when '21 help' or '21 update' is invoked
             pass
