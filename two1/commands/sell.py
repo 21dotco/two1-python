@@ -11,6 +11,7 @@ from two1.commands.helpers.sell_helpers import create_nginx_config
 from two1.commands.helpers.sell_helpers import destroy_app
 from two1.commands.helpers.sell_helpers import dir_to_absolute
 from two1.commands.helpers.sell_helpers import absolute_path_to_foldername
+from two1.commands.helpers.sell_helpers import check_or_create_manifest
 
 
 @click.group()
@@ -66,6 +67,11 @@ Host said app on host (0.0.0.0/) using nginx + gunicorn
     else:
         config.log(UxString.app_directory_invalid)
         return
+    config.log(UxString.check_or_create_manifest_file)
+    if check_or_create_manifest(dirname):
+        config.log(UxString.success_manifest)
+    else:
+        config.log(UxString.manifest_fail)
     config.log(UxString.installing_requirements)
     install_requirements()
     config.log(UxString.installed_requirements)
