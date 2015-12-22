@@ -88,11 +88,11 @@ $ 21 publish list
 
 
 @publish.command()
-@click.argument('app_directory', type=click.Path(exists=False))
+@click.argument('manifest_path', type=click.Path(exists=False))
 @click.option('-m', '--marketplace', default='21market',
               help="Selects the marketplace for publishing")
 @click.pass_context
-def submit(ctx, app_directory, marketplace):
+def submit(ctx, manifest_path, marketplace):
     """
 Submits an app to the Marketplace.
 
@@ -104,7 +104,7 @@ https://21.co/publish
 
 Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
     """
-    _publish(ctx.obj["config"], app_directory, marketplace)
+    _publish(ctx.obj["config"], manifest_path, marketplace)
 
 
 @capture_usage
@@ -153,10 +153,9 @@ def _delete_app(config, app_id):
 
 @check_notifications
 @capture_usage
-def _publish(config, app_directory, marketplace):
-    api_docs_path = os.path.join(app_directory, "manifest", "manifest.json")
+def _publish(config, manifest_path, marketplace):
     try:
-        manifest_json = check_app_manifest(api_docs_path)
+        manifest_json = check_app_manifest(manifest_path)
         app_name = manifest_json["info"]["title"]
         app_url = urlparse(manifest_json["host"])
         app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
@@ -167,14 +166,14 @@ def _publish(config, app_directory, marketplace):
 
         if address != app_ip:
             if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
-                click.secho(UxString.switch_host.format(api_docs_path, app_ip, address))
+                click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
                 return
 
     except ValueError:
         return
     except KeyError as e:
         click.secho(
-                UxString.bad_manifest.format(e.args[0], api_docs_path, UxString.publish_docs_url),
+                UxString.bad_manifest.format(e.args[0], manifest_path, UxString.publish_docs_url),
                 fg="red")
         return
 
