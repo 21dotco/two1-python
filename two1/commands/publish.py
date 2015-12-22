@@ -15,32 +15,96 @@ from two1.commands.config import TWO1_HOST
 from two1.commands.search import shorten_search_results, get_next_page
 
 
-@click.command("publish")
-@click.option('-l', '--list', is_flag=True, default=False,
-              help='Lists all the apps published by you.')
-@click.option('-d', '--delete', help="Deletes a published app by its id.")
-@click.option('-a', '--app_directory', type=click.Path(exists=False),
-              help="Publishes an app directory to the marketplace.")
-@click.option('-m', '--marketplace', default='21market',
-              help="Selects the marketplace to publish the app to. Must be used with the "
-                   "-a option")
-@click.pass_context
-def publish(ctx, app_directory, marketplace, list, delete):
-    """Publish a machine-payable endpoint to a market.
-    """
+@click.group()
+def publish():
+    """Publish/Manage your marketplace apps.
 
-    config = ctx.obj['config']
-    if list:
-        _list_apps(config)
-        return
-    elif delete:
-        _delete_app(config, delete)
-        return
-    elif app_directory:
-        _publish(config, app_directory, marketplace)
-        return
-    else:
-        click.secho(ctx.command.get_help(ctx))
+\b
+Usage
+_____
+Publish your app to the 21 Marketplace
+$ 21 publish submit path_to_manifest/manifest.json
+
+
+\b
+See the help for submit
+$ 21 publish submit --help
+
+
+\b
+View all of your published apps
+$ 21 publish list
+
+\b
+See the help for list
+$ 21 publish list --help
+
+\b
+Remove one of your published apps from the marketplace
+$ 21 publish remove app_id
+
+
+\b
+See the help for remove
+$ 21 publish remove --help
+
+    """
+    pass
+
+
+@publish.command()
+@click.pass_context
+def list(ctx):
+    """
+Lists all your published apps.
+
+$ 21 publish list
+
+Results from the list command are paginated.
+Use 'n' to move to the next page and 'p' to move to the previous page.
+
+You can view detailed admin information about an app by specifying it's id
+at the prompt.
+    """
+    config = ctx.obj["config"]
+    _list_apps(config)
+
+
+@publish.command()
+@click.argument('app_id')
+@click.pass_context
+def remove(ctx, app_id):
+    """
+Removes a published app from the Marketplace.
+
+$ 21 publish remove app_id
+
+The app_id can be obtained by performing:
+
+$ 21 publish list
+    """
+    config = ctx.obj["config"]
+    _delete_app(config, app_id)
+
+
+@publish.command()
+@click.argument('app_directory', type=click.Path(exists=False))
+@click.option('-m', '--marketplace', default='21market',
+              help="Selects the marketplace for publishing")
+@click.pass_context
+def submit(ctx, app_directory, marketplace):
+    """
+Submits an app to the Marketplace.
+
+\b
+$ 21 publish submit path_to_manifest/manifest.json
+
+The contents of the manifest file should follow the guidelines specified at
+https://21.co/publish
+
+Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
+    """
+    _publish(ctx.obj["config"], app_directory, marketplace)
 
 
 @capture_usage
@@ -65,7 +129,7 @@ def _list_apps(config):
                 model_id = prompt_resp
                 display_app_info(config, client, model_id)
             elif next_page >= total_pages or next_page < 0:
-                    continue
+                continue
             else:
                 get_search_results(config, client, next_page)
                 current_page = next_page
@@ -74,88 +138,8 @@ def _list_apps(config):
             return
 
 
-def get_search_results(config, client, page):
-    resp = client.get_published_apps(config.username, page)
-    if resp.ok:
-        resp_json = resp.json()
-        search_results = resp_json["results"]
-        if search_results is None or len(search_results) == 0:
-            click.secho(UxString.no_published_apps, fg="blue")
-            return 0
-
-        total_pages = resp_json["total_pages"]
-        shorten_search_results(search_results)
-        click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        headers = ["id", "Title", "Url", "Is up", "Is healthy", "Average Uptime",
-                   "Last Update"]
-        rows = [[r["id"], r["title"], r["app_url"], str(r["is_up"]), str(r["is_healthy"]),
-                 "{:.2f}%".format(r["average_uptime"] * 100),
-                 datetime.datetime.fromtimestamp(r["last_update"]).strftime(
-                     "%Y-%m-%d %H:%M")] for r in search_results]
-        click.echo(tabulate(rows, headers, tablefmt="grid"))
-        return total_pages
-    else:
-        raise ServerRequestError()
-
-
-def display_app_info(config, client, app_id):
-    try:
-        resp = client.get_app_full_info(config.username, app_id)
-        result = resp.json()
-        app_info = result["app_info"]
-        title = click.style("App Name        : ", fg="blue") + click.style("{}".format(app_info["title"]))
-        up_status = click.style("Status          : ", fg="blue")
-        if app_info["is_up"]:
-            up_status += click.style("Up")
-        else:
-            up_status += click.style("Down")
-
-        last_crawl_str = datetime.datetime.fromtimestamp(
-            app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
-
-        last_crawl = click.style("Last Crawl Time : ", fg="blue") + click.style("{}".format(last_crawl_str))
-        version = click.style("Version         : ", fg="blue") + click.style("{}".format(app_info["version"]))
-
-        last_updated_str = datetime.datetime.fromtimestamp(
-                app_info["updated"]).strftime("%Y-%m-%d %H:%M")
-        last_update = click.style("Last Update     : ", fg="blue") + click.style(
-            "{}".format(last_updated_str))
-
-        availability = click.style("Availability    : ", fg="blue") + click.style(
-                "{:.2f}%".format(app_info["average_uptime"] * 100))
-
-        app_url = click.style("App URL         : ", fg="blue") + click.style("{}".format(app_info["app_url"]))
-        category = click.style("Category        : ", fg="blue") + click.style("{}".format(app_info["category"]))
-        keywords = click.style("Keywords        : ", fg="blue") + click.style("{}".format(', '.join(app_info["keywords"])))
-        desc = click.style("Description     : ", fg="blue") + click.style("{}".format(app_info["description"]))
-        price = click.style("Price Range     : ", fg="blue") + click.style("{} - {} Satoshis").format(
-                app_info["min_price"], app_info["max_price"])
-        doc_url = click.style("Docs URL        : ", fg="blue") + click.style(
-            "{}".format(app_info["docs_url"]))
-        manifest_url = click.style("Manifest URL    : ", fg="blue") + click.style(
-                "{}".format(app_info["manifest_url"]))
-
-        quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
-                app_info["quick_buy"])
-
-        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-                app_info["usage_docs"])
-
-        final_str = "\n".join(
-                [title, "\n",
-                 up_status, availability, last_crawl, last_update, version, "\n",
-                 desc, app_url, doc_url, manifest_url, "\n",
-                 category, keywords, price, "\n", quick_start, "\n", usage_docs,"\n\n"])
-        config.echo_via_pager(final_str)
-
-    except ServerRequestError as e:
-        if e.status_code == 404:
-            click.secho(UxString.app_does_not_exist.format(app_id))
-        else:
-            raise e
-
-
 @check_notifications
+@capture_usage
 def _delete_app(config, app_id):
     if click.confirm(UxString.delete_confirmation.format(app_id)):
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
@@ -202,6 +186,95 @@ def _publish(config, app_directory, marketplace):
     response = client.publish(payload)
     if response.status_code == 201:
         click.secho(UxString.publish_success.format(app_name, marketplace))
+
+
+def get_search_results(config, client, page):
+    resp = client.get_published_apps(config.username, page)
+    if resp.ok:
+        resp_json = resp.json()
+        search_results = resp_json["results"]
+        if search_results is None or len(search_results) == 0:
+            click.secho(UxString.no_published_apps, fg="blue")
+            return 0
+
+        total_pages = resp_json["total_pages"]
+        shorten_search_results(search_results)
+        click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
+        headers = ["id", "Title", "Url", "Is up", "Is healthy", "Average Uptime",
+                   "Last Update"]
+        rows = [[r["id"], r["title"], r["app_url"], str(r["is_up"]), str(r["is_healthy"]),
+                 "{:.2f}%".format(r["average_uptime"] * 100),
+                 datetime.datetime.fromtimestamp(r["last_update"]).strftime(
+                         "%Y-%m-%d %H:%M")] for r in search_results]
+        click.echo(tabulate(rows, headers, tablefmt="grid"))
+        return total_pages
+    else:
+        raise ServerRequestError()
+
+
+def display_app_info(config, client, app_id):
+    try:
+        resp = client.get_app_full_info(config.username, app_id)
+        result = resp.json()
+        app_info = result["app_info"]
+        title = click.style("App Name        : ", fg="blue") + click.style(
+                "{}".format(app_info["title"]))
+        up_status = click.style("Status          : ", fg="blue")
+        if app_info["is_up"]:
+            up_status += click.style("Up")
+        else:
+            up_status += click.style("Down")
+
+        last_crawl_str = datetime.datetime.fromtimestamp(
+                app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
+
+        last_crawl = click.style("Last Crawl Time : ", fg="blue") + click.style(
+                "{}".format(last_crawl_str))
+        version = click.style("Version         : ", fg="blue") + click.style(
+                "{}".format(app_info["version"]))
+
+        last_updated_str = datetime.datetime.fromtimestamp(
+                app_info["updated"]).strftime("%Y-%m-%d %H:%M")
+        last_update = click.style("Last Update     : ", fg="blue") + click.style(
+                "{}".format(last_updated_str))
+
+        availability = click.style("Availability    : ", fg="blue") + click.style(
+                "{:.2f}%".format(app_info["average_uptime"] * 100))
+
+        app_url = click.style("App URL         : ", fg="blue") + click.style(
+                "{}".format(app_info["app_url"]))
+        category = click.style("Category        : ", fg="blue") + click.style(
+                "{}".format(app_info["category"]))
+        keywords = click.style("Keywords        : ", fg="blue") + click.style(
+                "{}".format(', '.join(app_info["keywords"])))
+        desc = click.style("Description     : ", fg="blue") + click.style(
+                "{}".format(app_info["description"]))
+        price = click.style("Price Range     : ", fg="blue") + click.style(
+                "{} - {} Satoshis").format(
+                app_info["min_price"], app_info["max_price"])
+        doc_url = click.style("Docs URL        : ", fg="blue") + click.style(
+                "{}".format(app_info["docs_url"]))
+        manifest_url = click.style("Manifest URL    : ", fg="blue") + click.style(
+                "{}".format(app_info["manifest_url"]))
+
+        quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
+                app_info["quick_buy"])
+
+        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
+                app_info["usage_docs"])
+
+        final_str = "\n".join(
+                [title, "\n",
+                 up_status, availability, last_crawl, last_update, version, "\n",
+                 desc, app_url, doc_url, manifest_url, "\n",
+                 category, keywords, price, "\n", quick_start, "\n", usage_docs, "\n\n"])
+        config.echo_via_pager(final_str)
+
+    except ServerRequestError as e:
+        if e.status_code == 404:
+            click.secho(UxString.app_does_not_exist.format(app_id))
+        else:
+            raise e
 
 
 def check_app_manifest(api_docs_path):
