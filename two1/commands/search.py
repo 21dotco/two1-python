@@ -15,7 +15,28 @@ from two1.lib.server import rest_client
 @click.argument('search_string', required=False)
 @json_output
 def search(config, search_string=None):
-    """Search for a machine-payable endpoint.
+    """Search for app on the 21 Marketplace.
+
+\b
+Usage
+-----
+View all the apps in the marketplace
+$ 21 search
+
+\b
+Search for specific keywords or terms
+$ 21 search "games social"
+
+\b
+Search for all the apps from a particular user
+$ 21 search "snakamoto"
+
+Results from the search command are paginated.
+Use 'n' to move to the next page and 'p' to move to the previous page.
+
+You can view detailed information about an app by specifying it's id
+at the prompt.
+
     """
     _search(config, search_string)
 
@@ -104,9 +125,9 @@ def shorten_search_results(search_result):
 
 
 def get_next_page(prompt_response, current_page):
-    if prompt_response.lower() in ["n", "next"]:
+    if prompt_response.lower() in ["n", "next", "f", "forward"]:
         return current_page + 1
-    elif prompt_response.lower() in ["b", "back"]:
+    elif prompt_response.lower() in ["p", "previous", 'b', "back"]:
         return current_page - 1
     elif prompt_response.lower() in ["q", "cancel", "c"]:
         raise click.exceptions.Abort()

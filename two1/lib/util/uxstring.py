@@ -201,7 +201,7 @@ class UxString:
     coming_soon = click.style("Coming soon", bold=True)
     slack_21_co = click.style("slack.21.co", bold=True)
     support_21_co = click.style("support@21.co", bold=True)
-    publish_docs_url = click.style("https://21.co/learn/publishing", bold=True)
+    publish_docs_url = click.style("https://21.co/publish", bold=True)
 
     manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
                        "how to create one, please refer to {}"
@@ -296,7 +296,7 @@ refer to 21.co/app for futher instructions.", fg="red")
                              fg="blue") + click.style(
         "n", bold=True, fg="blue") + click.style(
         " for next page, ", fg="blue") + click.style(
-        "b", bold=True,fg="blue") + click.style(
+        "p", bold=True,fg="blue") + click.style(
         " for the previous page, ", fg="blue") + click.style(
         "q", bold=True, fg="blue") + click.style(
         " to stop search", fg="blue")
