@@ -1,5 +1,6 @@
 """Helper methods for the 21 sell command."""
 import os
+import requests
 import tempfile
 import subprocess
 
@@ -37,6 +38,60 @@ def install_requirements():
         rv = True
     except subprocess.CalledProcessError as e:
         raise e
+    return rv
+
+
+def check_or_create_manifest(dirname):
+    """Create a manifest.json in application directory if it does not already
+    exist.
+
+    Returns:
+        bool: True if the manifest was successfully found or created,
+            False otherwise.
+    """
+    rv = False
+    manifest_exists = False
+    appdir = dir_to_absolute(dirname)
+    manifest_path = appdir + "manifest.json"
+    try:
+        os.stat(manifest_path)
+        manifest_exists = True
+    except FileNotFoundError:
+        pass
+    if not manifest_exists:
+        manifest_req = requests.get(
+            "https://manifest.21.co/",
+        )
+        if manifest_req.ok:
+            with tempfile.NamedTemporaryFile() as tf:
+                tf.write(manifest_req.text.encode())
+                tf.flush()
+                cp = False
+                ed = False
+                try:
+                    subprocess.check_output([
+                        "cp",
+                        tf.name,
+                        manifest_path
+                    ])
+                    cp = True
+                except subprocess.CalledProcessError as e:
+                    raise subprocess.CalledProcessError(
+                        "Failed to copy manifest to your local directory: {}".format(e)
+                    )
+                try:
+                    subprocess.check_call([
+                        "editor",
+                        manifest_path
+                        ])
+                    ed = True
+                except subprocess.CalledProcessError as e:
+                    raise subprocess.CalledProcessError(
+                        "Failed to edit your manifest: {}".format(e)
+                    )
+                rv = cp and ed
+    else:
+        rv = True
     return rv
 
 

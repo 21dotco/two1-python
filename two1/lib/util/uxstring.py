@@ -204,6 +204,13 @@ refer to 21.co/app for futher instructions.", fg="red")
         "This app is not within your enabled apps.", fg="red")
     failed_to_destroy_app = click.style(
         "Failed to destroy app, please contact support@21.co", fg="red")
+    check_or_create_manifest_file = click.style(
+        "Checking or creating manifest file...", fg="magenta")
+    success_manifest = click.style(
+        "Successfully found or created manifest file...", fg="magenta")
+    manifest_fail = click.style(
+        "Failed to create manifest file, please contact support@21.co",
+        fg="red")
 
     # search
     search_stub = """%s
