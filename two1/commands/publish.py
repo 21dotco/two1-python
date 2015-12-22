@@ -154,6 +154,7 @@ def display_app_info(config, client, app_id):
         else:
             raise e
 
+
 @check_notifications
 def _delete_app(config, app_id):
     if click.confirm(UxString.delete_confirmation.format(app_id)):
@@ -187,9 +188,9 @@ def _publish(config, app_directory, marketplace):
 
     except ValueError:
         return
-    except KeyError:
+    except KeyError as e:
         click.secho(
-                UxString.bad_manifest.format(api_docs_path, UxString.publish_docs_url),
+                UxString.bad_manifest.format(e.args[0], api_docs_path, UxString.publish_docs_url),
                 fg="red")
         return
 
@@ -235,13 +236,8 @@ def check_app_manifest(api_docs_path):
 
 def get_zerotier_address(marketplace):
     click.secho(UxString.update_superuser)
-    all_networks = zerotier.list_networks()
-    networks = [n for n in all_networks if n['name'] == marketplace]
-    if len(networks) != 1:
+    try:
+        return zerotier.get_address_for_network(marketplace)
+    except ValueError as e:
         click.secho(UxString.no_zt_network.format(marketplace, UxString.join_cmd))
-        raise ValueError
-    else:
-        network = networks[0]
-        address_and_mask = network["assignedAddresses"][0]
-        address = address_and_mask.split("/")[0]
-        return address
+        raise e

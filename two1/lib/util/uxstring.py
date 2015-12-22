@@ -206,8 +206,8 @@ class UxString:
     manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
                        "how to create one, please refer to {}"
 
-    bad_manifest = "Invalid manifest file at {}.\nFor instructions on " \
-                   "publishing your app, please refer to {}"
+    bad_manifest = "Field '{}' is missing from your manifest file at {}." \
+                   " For instructions on publishing your app, please refer to {}"
 
     large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
                      "2MB.\nFor instructions on publishing your app, please refer to {}"
