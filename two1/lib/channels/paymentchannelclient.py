@@ -32,7 +32,7 @@ class PaymentChannelClient:
     DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = "https://dotco-devel-pool2.herokuapp.com/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
-    def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH):
+    def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH, _database=None, _blockchain=None):
         """Instantiate a payment channel client with the specified wallet and
         channel database.
 
@@ -44,13 +44,24 @@ class PaymentChannelClient:
             PaymentChannelClient: instance of PaymentChannelClient.
 
         """
-        # Create leading directories to database if they don't exist
-        if not os.path.exists(os.path.dirname(db_path)):
-            os.makedirs(os.path.dirname(db_path))
 
+        # Wallet wrapper interface
         self._wallet = walletwrapper.Two1WalletWrapper(wallet)
-        self._database = database.Sqlite3Database(db_path)
-        self._blockchain = blockchain.TwentyOneBlockchain(PaymentChannelClient.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
+
+        # Payment channel database interface
+        if _database:
+            self._database = _database
+        else:
+            # Create leading directories to database if they don't exist
+            if not os.path.exists(os.path.dirname(db_path)):
+                os.makedirs(os.path.dirname(db_path))
+            self._database = database.Sqlite3Database(db_path)
+
+        # Blockchain interface
+        if _blockchain:
+            self._blockchain = _blockchain
+        else:
+            self._blockchain = blockchain.TwentyOneBlockchain(PaymentChannelClient.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
 
         self._channels = collections.OrderedDict()
         self._update_channels()
