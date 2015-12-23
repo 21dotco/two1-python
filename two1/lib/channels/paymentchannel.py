@@ -10,7 +10,7 @@ from .statemachine import PaymentChannelStateMachine
 
 SupportedProtocols = {
     "http": server.HTTPPaymentChannelServer,
-    "mock": server.MockPaymentChannelServer,
+    "test": server.TestPaymentChannelServer,
 }
 """Supported protocols table."""
 
