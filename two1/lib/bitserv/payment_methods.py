@@ -198,7 +198,7 @@ class PaymentChannel(PaymentBase):
             # Redeem the transaction in its payment channel
             paid_amount = self.server.redeem(txid)
             # Verify the amount of the payment against the resource price
-            return paid_amount == int(price)
+            return paid_amount >= int(price)
         except Exception as e:
             raise e
 
