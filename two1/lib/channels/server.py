@@ -224,7 +224,7 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
 
         # Broadcast to blockchain
-        bc = blockchain.InsightBlockchain("https://blockexplorer.com" if not self._wallet.testnet else "https://testnet.blockexplorer.com")
+        bc = blockchain.BlockCypherBlockchain("https://api.blockcypher.com/v1/btc/main" if not self._wallet.testnet else "https://api.blockcypher.com/v1/btc/testnet3")
         bc.broadcast_tx(payment_tx_hex)
 
         # Return payment txid
