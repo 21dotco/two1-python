@@ -177,7 +177,7 @@ class EllipticCurve(EllipticCurveBase):
             tuple: A private key in the range of 1 to `self.n - 1`
                and an ECPointAffine containing the public key point.
         """
-        private = random_generator.randrange(1, self.n - 1)
+        private = random_generator.randrange(1, self.n)
         return private, self.public_key(private)
 
     def public_key(self, private_key):
