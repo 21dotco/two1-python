@@ -153,19 +153,19 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         return payment_tx_info['payment_txid']
 
 
-class MockPaymentChannelServer(PaymentChannelServerBase):
-    """Mock Payment Channel Server interface for local testing."""
+class TestPaymentChannelServer(PaymentChannelServerBase):
+    """Test Payment Channel Server interface for local testing."""
 
     def __init__(self, url, wallet=None):
-        """Instantiate a Mock Payment Channel Server interface for the
+        """Instantiate a Test Payment Channel Server interface for the
         specified URL.
 
         Args:
-            url (str): URL of Mock server.
+            url (str): URL of Test server.
             wallet (two1.lib.wallet.Wallet): Wallet instance.
 
         Returns:
-            MockPaymentChannelServer: instance of MockPaymentChannelServer.
+            TestPaymentChannelServer: instance of TestPaymentChannelServer.
 
         """
         super().__init__()
