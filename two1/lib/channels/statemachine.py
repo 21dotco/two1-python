@@ -469,7 +469,7 @@ class PaymentChannelStateMachine:
         """
         if self._model.spend_tx:
             output_index = self._model.spend_tx.output_index_for_address(self._customer_public_key.hash160())
-            return self._model.spend_tx.outputs[output_index].value
+            return self._model.spend_tx.outputs[output_index].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT
         elif self._model.payment_tx:
             return self.deposit_amount - self._model.payment_tx.outputs[0].value
         else:
