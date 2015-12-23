@@ -12,7 +12,7 @@ from two1.lib.util.decorators import json_output, check_notifications
 from two1.lib.util.uxstring import UxString
 from two1.lib.util import zerotier
 from two1.commands.config import TWO1_HOST
-from two1.commands.search import shorten_search_results, get_next_page
+from two1.commands.search import get_next_page
 
 
 @click.group()
@@ -197,7 +197,6 @@ def get_search_results(config, client, page):
             return 0
 
         total_pages = resp_json["total_pages"]
-        shorten_search_results(search_results)
         click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
         headers = ["id", "Title", "Url", "Is up", "Is healthy", "Average Uptime",
                    "Last Update"]

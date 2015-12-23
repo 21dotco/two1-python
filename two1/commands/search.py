@@ -1,7 +1,9 @@
 import datetime
+from textwrap import wrap
 
 import click
 from tabulate import tabulate
+from two1.commands import formatters
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server.rest_client import ServerRequestError
@@ -93,11 +95,9 @@ def get_search_results(rest_client, search_string, page, row_id_to_model_id):
             return 0
 
         total_pages = resp_json["total_pages"]
-        shorten_search_results(search_results)
         click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        headers = ["id", "title", "description", "price range", "creator", "category"]
-        rows = extract_rows(search_results, page, row_id_to_model_id)
-        click.echo(tabulate(rows, headers, tablefmt="grid"))
+        content = market_search_formatter(search_results, page, row_id_to_model_id)
+        click.echo(content)
         return total_pages
     else:
         raise ServerRequestError()
@@ -106,24 +106,24 @@ def get_search_results(rest_client, search_string, page, row_id_to_model_id):
 MAX_PAGE_SIZE = 10
 
 
-def extract_rows(search_results, current_page, row_id_to_model_id):
+def market_search_formatter(search_results, current_page, row_id_to_model_id):
+    headers = ["id", "Details", "Creator", "price range", "category"]
     rows = []
-    for indx, result in enumerate(search_results):
-        id = (current_page * MAX_PAGE_SIZE) + indx + 1
-        row_id_to_model_id[id] = result["id"]
-        rows.append([id, result["title"], result["description"],
-                     "{} - {} Satoshis".format(result["min_price"], result["max_price"]),
-                     result["username"], result["category"]])
-    return rows
+    for i, item in enumerate(search_results):
+        id = click.style(str((current_page * MAX_PAGE_SIZE) + i + 1), fg="blue")
+        price_range = click.style("{} - {} Satoshis".format(item["min_price"],
+                                                            item["max_price"]), fg="blue")
 
+        category = click.style("{}".format(item["category"]), fg="blue")
+        creator = click.style("{}".format(item["username"]), fg="blue")
+        title = click.style(item["title"], fg="blue")
+        rows.append([id, title, creator, price_range, category])
+        rows.append(["", "", "", "", ""])
+        for indx, l in enumerate(wrap(item["description"])):
+            rows.append(["", l, "", "", ""])
+        rows.append(["", "", "", "", ""])
 
-def shorten_search_results(search_result):
-    for result in search_result:
-        for key, value in result.items():
-            if isinstance(value, str) and len(value) > 50:
-                result[key] = value[:50] + "..."
-
-
+    return tabulate(rows, headers=headers, tablefmt="psql")
 def get_next_page(prompt_response, current_page):
     if prompt_response.lower() in ["n", "next", "f", "forward"]:
         return current_page + 1
