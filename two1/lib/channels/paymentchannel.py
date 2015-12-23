@@ -71,7 +71,7 @@ class PaymentChannel:
         self._blockchain = blockchain
 
     @staticmethod
-    def open(database, wallet, blockchain, url, deposit, expiration, fee, zeroconf, use_unconfirmed=False):
+    def open(database, wallet, blockchain, url, deposit_amount, expiration_time, fee_amount, zeroconf, use_unconfirmed=False):
         """Open a payment channel at the specified URL.
 
         Args:
@@ -79,9 +79,9 @@ class PaymentChannel:
             wallet (WalletWrapperBase): Instance of the wallet interface.
             blockchain (BlockchainBase): Instance of the blockchain interface.
             url (str): Payment channel server URL.
-            deposit (int): Deposit amount in satoshis
-            expiration (int): Relative expiration time in seconds
-            fee (int): Fee in in satoshis
+            deposit_amount (int): Deposit amount in satoshis.
+            expiration_time (int): Relative expiration time in seconds.
+            fee_amount (int): Fee amount in in satoshis.
             zeroconf (bool): Use payment channel without deposit confirmation.
             use_unconfirmed (bool): Use unconfirmed transactions to build
                 deposit transaction.
@@ -116,7 +116,7 @@ class PaymentChannel:
 
             # Call create() on state machine
             try:
-                (deposit_tx, redeem_script) = sm.create(pubkey, deposit, int(time.time() + expiration), fee, zeroconf, use_unconfirmed)
+                (deposit_tx, redeem_script) = sm.create(pubkey, deposit_amount, int(time.time() + expiration_time), fee_amount, zeroconf, use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 
