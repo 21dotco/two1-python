@@ -1,6 +1,7 @@
 import codecs
 import os.path
 import requests
+import json
 
 import two1.lib.bitcoin as bitcoin
 from two1.lib.wallet import Wallet
@@ -171,20 +172,74 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         super().__init__()
         self._wallet = wallet if wallet else Wallet()
 
+    def _load_channel(self, deposit_txid):
+        # Check if a payment has been made to this chanel
+        if not os.path.exists(deposit_txid + ".server.tx"):
+            raise PaymentChannelNotFoundError("Payment channel not found.")
+
+        # Load JSON channel
+        with open(deposit_txid + ".server.tx") as f:
+            channel_json = json.load(f)
+
+        # Deserialize into objects
+        channel = {}
+        channel['deposit_tx'] = bitcoin.Transaction.from_hex(channel_json['deposit_tx'])
+        channel['redeem_script'] = PaymentChannelRedeemScript.from_bytes(codecs.decode(channel_json['redeem_script'], 'hex_codec'))
+        channel['payment_tx'] = bitcoin.Transaction.from_hex(channel_json['payment_tx']) if channel_json['payment_tx'] else None
+        return channel
+
+    def _store_channel(self, deposit_txid, channel):
+        # Form JSON-serializable channel
+        channel_json = {}
+        channel_json['deposit_tx'] = channel['deposit_tx'].to_hex()
+        channel_json['redeem_script'] = channel['redeem_script'].to_hex()
+        channel_json['payment_tx'] = channel['payment_tx'].to_hex() if channel['payment_tx'] else None
+
+        # Store JSON channel
+        with open(deposit_txid + ".server.tx", "w") as f:
+            json.dump(channel_json, f)
+
     def get_public_key(self):
         return codecs.encode(self._wallet.get_payout_public_key().compressed_bytes, 'hex_codec').decode('utf-8')
 
     def open(self, deposit_tx, redeem_script):
         # Deserialize deposit tx and redeem script
         deposit_tx = bitcoin.Transaction.from_hex(deposit_tx)
-        redeem_script = bitcoin.Script.from_hex(redeem_script)
+        try:
+            redeem_script = PaymentChannelRedeemScript.from_bytes(codecs.decode(redeem_script, 'hex_codec'))
+        except ValueError:
+            raise AssertionError("Invalid payment channel redeem script.")
 
-        # FIXME verify
+        # Validate deposit tx
+        assert len(deposit_tx.outputs) > 1, "Invalid deposit tx outputs."
+        output_index = deposit_tx.output_index_for_address(redeem_script.hash160())
+        assert output_index is not None, "Missing deposit tx P2SH output."
+        assert deposit_tx.outputs[output_index].script.is_p2sh(), "Invalid deposit tx output P2SH script."
+        assert deposit_tx.outputs[output_index].script.get_hash160() == redeem_script.hash160(), "Invalid deposit tx output script P2SH address."
+
+        # Store channel
+        deposit_txid = str(deposit_tx.hash)
+        self._store_channel(deposit_txid, {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None})
 
     def pay(self, deposit_txid, payment_tx):
+        # Load channel
+        channel = self._load_channel(deposit_txid)
+
         # Deserialize payment tx and redeem script
         payment_tx = bitcoin.Transaction.from_hex(payment_tx)
-        redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
+
+        # Validate payment tx
+        redeem_script = channel['redeem_script']
+        assert len(payment_tx.inputs) == 1, "Invalid payment tx inputs."
+        assert len(payment_tx.outputs) == 2, "Invalid payment tx outputs."
+        assert bytes(redeem_script) == bytes(channel['redeem_script']), "Invalid payment tx redeem script."
+        assert bytes(payment_tx.inputs[0].script[-1]) == bytes(redeem_script), "Invalid payment tx redeem script."
+
+        # Validate payment is greater than the last one
+        if channel['payment_tx']:
+            output_index = payment_tx.output_index_for_address(redeem_script.merchant_public_key.hash160())
+            assert output_index is not None, "Invalid payment tx output."
+            assert payment_tx.outputs[output_index].value > channel['payment_tx'].outputs[output_index].value, "Invalid payment tx output value."
 
         # Sign payment tx
         public_key = redeem_script.merchant_public_key
@@ -195,11 +250,13 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         # Update input script sig
         payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL))
 
-        # FIXME verify
+        # Verify signature
+        output_index = channel['deposit_tx'].output_index_for_address(redeem_script.hash160())
+        assert payment_tx.verify_input_signature(0, channel['deposit_tx'].outputs[output_index].script), "Payment tx input script verification failed."
 
-        # Write payment tx to file
-        with open(deposit_txid + ".server.tx", "w") as f:
-            f.write(payment_tx.to_hex())
+        # Save payment tx
+        channel['payment_tx'] = payment_tx
+        self._store_channel(deposit_txid, channel)
 
         # Return payment txid
         return str(payment_tx.hash)
@@ -208,24 +265,20 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         return {}
 
     def close(self, deposit_txid, deposit_txid_signature):
+        # Load channel
+        channel = self._load_channel(deposit_txid)
+
         # Check if a payment has been made to this chanel
-        if not os.path.exists(deposit_txid + ".server.tx"):
+        if channel['payment_tx'] is None:
             raise Exception("No payment has been made to this channel.")
 
-        # Read last payment tx from file
-        with open(deposit_txid + ".server.tx") as f:
-            payment_tx_hex = f.read().strip()
-
         # Verify deposit txid singature
-        payment_tx = bitcoin.Transaction.from_hex(payment_tx_hex)
-        redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
-
-        public_key = redeem_script.customer_public_key
+        public_key = channel['redeem_script'].customer_public_key
         assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
 
         # Broadcast to blockchain
-        bc = blockchain.BlockCypherBlockchain("https://api.blockcypher.com/v1/btc/main" if not self._wallet.testnet else "https://api.blockcypher.com/v1/btc/testnet3")
-        bc.broadcast_tx(payment_tx_hex)
+        bc = blockchain.BlockCypherBlockchain("https://api.blockcypher.com/v1/btc/main" if not self._wallet.testnet else "https://api.blockcypher.com/v1/btc/test3")
+        bc.broadcast_tx(channel['payment_tx'].to_hex())
 
         # Return payment txid
-        return str(payment_tx.hash)
+        return str(channel['payment_tx'].hash)
