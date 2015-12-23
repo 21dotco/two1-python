@@ -52,6 +52,9 @@ class PaymentChannel:
     """Rebroadcast timeout for the deposit, if it hasn't been confirmed by the
     blockchain."""
 
+    MIN_EXPIRATION_TIMEOUT = 12*3600
+    """Minimum channel duration."""
+
     def __init__(self, url, database, wallet, blockchain):
         """Instantiate a payment channel object with the specified url.
 
@@ -101,6 +104,14 @@ class PaymentChannel:
             protocol = SupportedProtocols[url_scheme]
         except IndexError:
             raise UnsupportedProtocolError("Protocol {} not supported.".format(url_scheme))
+
+        # Validate expiration timeout
+        if not isinstance(expiration_time, int):
+            raise TypeError("Expiration time type should be int.")
+        elif expiration_time <= 0:
+            raise ValueError("Expiration time should be positive.")
+        elif expiration_time < PaymentChannel.MIN_EXPIRATION_TIMEOUT:
+            raise ValueError("Expiration time should be at least {} seconds.".format(PaymentChannel.MIN_EXPIRATION_TIMEOUT))
 
         with database:
             # Create a new database model
