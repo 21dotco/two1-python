@@ -26,10 +26,10 @@ class PaymentChannelClient:
     DEFAULT_CHANNELS_DB_PATH = os.path.expanduser('~/.two1/channels/channels.sqlite3')
     """Default payment channel database path."""
 
-    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = "https://dotco-devel-pool2.herokuapp.com/blockchain/bitcoin"
+    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/bitcoin"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = "https://dotco-devel-pool2.herokuapp.com/blockchain/testnet3"
+    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
     def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH, _database=None, _blockchain=None):
