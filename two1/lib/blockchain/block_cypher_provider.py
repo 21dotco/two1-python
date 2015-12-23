@@ -180,7 +180,7 @@ class BlockCypherProvider(BaseProvider):
 
                 if result.status_code == 429:
                     if rate_limit:
-                       time.sleep(0.5)
+                       time.sleep(0.8)
                     else:
                         break
                 elif result.status_code in (200, 201, 202):
@@ -232,7 +232,10 @@ class BlockCypherProvider(BaseProvider):
         address_list_local = address_list[:]
         while address_list_local:
             addresses, address_list_local = self._pop_chunks(address_list_local, self.rate_limit_per_sec )
-            r = self._request("GET", "/addrs/{}/full".format(";".join(addresses)), False)
+            r = self._request("GET", "/addrs/{}/full".format(";".join(addresses)),
+                              False,
+                              params={"limit": 999999999, "after": min_block}
+                              )
             return_data = r.json()
             if isinstance(return_data, dict):
                 return_data = [return_data, ]
@@ -261,7 +264,7 @@ class BlockCypherProvider(BaseProvider):
             address_list_local.extend(remainder)
             if remainder:
                 # If the rate limit kicked, sleep for a little bit
-                time.sleep(0.5)
+                time.sleep(0.8)
 
         return ret
 
@@ -276,7 +279,10 @@ class BlockCypherProvider(BaseProvider):
         """
         ret = {}
         for txid in ids:
-            r = self._request("GET", "/txs/%s" % txid, True)
+            r = self._request("GET", "/txs/%s" % txid,
+                              True,
+                              params={"includeHex": "true", "limit": 999999999}
+                              )
             data = r.json()
 
             block_hash = None
