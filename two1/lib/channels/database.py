@@ -92,6 +92,7 @@ class Sqlite3Database(DatabaseBase):
                          "payment_tx VARCHAR, "
                          "spend_tx VARCHAR, "
                          "spend_txid VARCHAR, "
+                         "min_output_amount INTEGER, "
                          "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
                          ");")
 
@@ -119,8 +120,9 @@ class Sqlite3Database(DatabaseBase):
         payment_tx = model.payment_tx.to_hex() if model.payment_tx else None
         spend_tx = model.spend_tx.to_hex() if model.spend_tx else None
         spend_txid = model.spend_txid
+        min_output_amount = model.min_output_amount
 
-        return (url, state, creation_time, deposit_tx, refund_tx, payment_tx, spend_tx, spend_txid)
+        return (url, state, creation_time, deposit_tx, refund_tx, payment_tx, spend_tx, spend_txid, min_output_amount)
 
     @staticmethod
     def _sqlite_to_model(values):
@@ -141,6 +143,7 @@ class Sqlite3Database(DatabaseBase):
         payment_tx = bitcoin.Transaction.from_hex(values[5]) if values[5] else None
         spend_tx = bitcoin.Transaction.from_hex(values[6]) if values[6] else None
         spend_txid = values[7]
+        min_output_amount = values[8]
 
         return PaymentChannelModel(
             url=url,
@@ -151,11 +154,12 @@ class Sqlite3Database(DatabaseBase):
             payment_tx=payment_tx,
             spend_tx=spend_tx,
             spend_txid=spend_txid,
+            min_output_amount=min_output_amount,
         )
 
     def create(self, model):
         values = self._model_to_sqlite(model)
-        self._conn.execute("INSERT INTO channels VALUES (?,?,?,?,?,?,?,?)", values)
+        self._conn.execute("INSERT INTO channels VALUES (?,?,?,?,?,?,?,?,?)", values)
 
     def read(self, url):
         cur = self._conn.execute("SELECT * FROM channels WHERE url=? LIMIT 1", (url,))
@@ -163,7 +167,7 @@ class Sqlite3Database(DatabaseBase):
 
     def update(self, model):
         values = self._model_to_sqlite(model)
-        self._conn.execute("UPDATE channels SET state=?, creation_time=?, deposit_tx=?, refund_tx=?, payment_tx=?, spend_tx=?, spend_txid=? WHERE url=?", values[1:] + (values[0],))
+        self._conn.execute("UPDATE channels SET state=?, creation_time=?, deposit_tx=?, refund_tx=?, payment_tx=?, spend_tx=?, spend_txid=?, min_output_amount=? WHERE url=?", values[1:] + (values[0],))
 
     def list(self):
         cur = self._conn.execute("SELECT url FROM channels")

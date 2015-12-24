@@ -77,9 +77,10 @@ class PaymentChannelModel:
         self.payment_tx = kwargs.get('payment_tx', None)
         self.spend_tx = kwargs.get('spend_tx', None)
         self.spend_txid = kwargs.get('spend_txid', None)
+        self.min_output_amount = kwargs.get('min_output_amount', None)
 
     def __repr__(self):
-        return "<Channel(url='{}', state='{}', creation_time={}, deposit_tx='{}', refund_tx='{}', payment_tx='{}', spend_tx='{}', spend_txid='{}')>".format(self.url, self.state, self.creation_time, self.deposit_tx, self.refund_tx, self.payment_tx, self.spend_tx, self.spend_txid)
+        return "<Channel(url='{}', state='{}', creation_time={}, deposit_tx='{}', refund_tx='{}', payment_tx='{}', spend_tx='{}', spend_txid='{}', min_output_amount={})>".format(self.url, self.state, self.creation_time, self.deposit_tx, self.refund_tx, self.payment_tx, self.spend_tx, self.spend_txid, self.min_output_amount)
 
 
 class PaymentChannelRedeemScript(bitcoin.Script):
@@ -247,6 +248,7 @@ class PaymentChannelStateMachine:
         self._model.creation_time = creation_time
         self._model.deposit_tx = deposit_tx
         self._model.refund_tx = refund_tx
+        self._model.min_output_amount = PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT
         if not zeroconf:
             self._model.state = PaymentChannelState.CONFIRMING_DEPOSIT
         else:
@@ -304,7 +306,7 @@ class PaymentChannelStateMachine:
         # If this is the first payment, ensure the payment is at least the dust
         # limit
         if not self._model.payment_tx:
-            amount = max(PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, amount)
+            amount = max(self._model.min_output_amount, amount)
 
         # Build payment tx
         self._pending_payment_tx = self._wallet.create_payment_tx(self._model.deposit_tx, self._redeem_script, self.deposit_amount - self.balance_amount + amount, self.fee_amount)
@@ -470,7 +472,7 @@ class PaymentChannelStateMachine:
         """
         if self._model.spend_tx:
             output_index = self._model.spend_tx.output_index_for_address(self._customer_public_key.hash160())
-            return self._model.spend_tx.outputs[output_index].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT
+            return self._model.spend_tx.outputs[output_index].value - self._model.min_output_amount
         elif self._model.payment_tx:
             return self.deposit_amount - self._model.payment_tx.outputs[0].value
         else:
@@ -484,7 +486,7 @@ class PaymentChannelStateMachine:
             int: Deposit amount in satoshis.
 
         """
-        return (self._model.refund_tx.outputs[0].value - PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT) if self._model.refund_tx else None
+        return (self._model.refund_tx.outputs[0].value - self._model.min_output_amount) if self._model.refund_tx else None
 
     @property
     def fee_amount(self):
