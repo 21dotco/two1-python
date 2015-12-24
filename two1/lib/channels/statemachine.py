@@ -4,6 +4,7 @@ import enum
 import math
 
 import two1.lib.bitcoin as bitcoin
+from . import walletwrapper
 
 
 class StateTransitionError(AssertionError):
@@ -236,7 +237,7 @@ class PaymentChannelStateMachine:
         # Build deposit tx
         try:
             deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee_amount, use_unconfirmed=use_unconfirmed)
-        except wallet.InsufficientBalanceError as e:
+        except walletwrapper.InsufficientBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
         # Build refund tx

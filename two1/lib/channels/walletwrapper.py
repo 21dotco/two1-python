@@ -1,4 +1,6 @@
 import two1.lib.bitcoin as bitcoin
+import two1.lib.wallet as wallet
+import two1.lib.wallet.exceptions
 
 
 class WalletError(Exception):
@@ -110,7 +112,10 @@ class Two1WalletWrapper(WalletWrapperBase):
 
     def create_deposit_tx(self, script_address, amount, fee, use_unconfirmed=False):
         # Sign deposit transaction to script address
-        return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True)[0]
+        try:
+            return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True)[0]
+        except wallet.exceptions.WalletBalanceError as e:
+            raise InsufficientBalanceError(str(e))
 
     def create_refund_tx(self, deposit_tx, redeem_script, expiration_time, fee):
         # Find P2SH output index in deposit_tx
