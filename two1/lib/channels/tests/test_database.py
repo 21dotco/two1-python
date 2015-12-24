@@ -26,7 +26,8 @@ def test_database_sqlite3_create(db):
             refund_tx=bitcoin.Transaction.from_hex("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"),
             payment_tx=bitcoin.Transaction.from_hex("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"),
             spend_tx=None,
-            spend_txid=None
+            spend_txid=None,
+            min_output_amount=1000,
         ),
         statemachine.PaymentChannelModel(
             url='test2',
@@ -37,6 +38,7 @@ def test_database_sqlite3_create(db):
             payment_tx=bitcoin.Transaction.from_hex("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"),
             spend_tx=bitcoin.Transaction.from_hex("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"),
             spend_txid="e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba",
+            min_output_amount=1000,
         ),
     ]
 
@@ -73,8 +75,8 @@ def test_database_sqlite3_create(db):
             if models[i].payment_tx is not None else model.payment_tx is None
         assert bytes(model.spend_tx) == bytes(models[i].spend_tx) \
             if models[i].spend_tx is not None else model.spend_tx is None
-        assert model.spend_txid == models[i].spend_txid \
-            if models[i].spend_txid is not None else model.spend_txid is None
+        assert model.spend_txid == models[i].spend_txid
+        assert model.min_output_amount == models[i].min_output_amount
 
     # Update models
     models[0].creation_time = 1124345
@@ -102,5 +104,5 @@ def test_database_sqlite3_create(db):
             if models[i].payment_tx is not None else model.payment_tx is None
         assert bytes(model.spend_tx) == bytes(models[i].spend_tx) \
             if models[i].spend_tx is not None else model.spend_tx is None
-        assert model.spend_txid == models[i].spend_txid \
-            if models[i].spend_txid is not None else model.spend_txid is None
+        assert model.spend_txid == models[i].spend_txid
+        assert model.min_output_amount == models[i].min_output_amount
