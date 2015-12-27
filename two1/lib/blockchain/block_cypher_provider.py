@@ -328,7 +328,7 @@ class BlockCypherProvider(BaseProvider):
         data = {"tx": signed_hex}
         r = self._request("POST", "/txs/push", True, json=data)
         j = r.json()
-        return j["hash"]
+        return j["tx"]["hash"]
 
     def get_block_height(self):
         """ Returns the latest block height
