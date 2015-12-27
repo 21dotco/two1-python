@@ -168,3 +168,25 @@ def test_provider_json_error(provider, testnet):
     cp.testnet = testnet
     with pytest.raises(DataProviderError):
         data = cp.get_transactions_by_id(txids)
+
+
+@pytest.mark.parametrize("provider, testnet",
+                         [
+                             (chain_provider, False),
+                             (chain_provider, True),
+                             (twentyone_provider, False),
+                             (twentyone_provider, True),
+                             (block_cypher_provider, False),
+                             (block_cypher_provider, True)
+                         ])
+def test_transaction_send(provider, testnet):
+    cp = provider
+    # test invalid transaction push
+    if testnet:
+        tx = "01000"
+    else:
+        tx = "01000"
+    cp.testnet = testnet
+    with pytest.raises(DataProviderError):
+        data = cp.broadcast_transaction(tx)
+
