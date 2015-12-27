@@ -7,14 +7,6 @@ two1.bitcoin.tests.conftest
     :undoc-members:
     :show-inheritance:
 
-two1.bitcoin.tests.gen_test_inputs module
------------------------------------------
-
-.. automodule:: two1.lib.bitcoin.tests.gen_test_inputs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 two1.bitcoin.tests.test_bitcoin module
 --------------------------------------
 
