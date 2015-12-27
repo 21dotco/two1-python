@@ -12,14 +12,6 @@ The bitcoin module within the 21 Bitcoin Library (``two1``) provides the followi
    transactions.
 4. Standard public/private key generation as well as HD key generation.
 
-Module contents
----------------
-The library is organized as follows:
-   
-.. toctree::
-
-    two1.lib.bitcoin.submodules
-
 Quickstart
 ==========
 We will illustrate the use of the ``two1.lib.bitcoin`` module by showing
@@ -176,7 +168,7 @@ Let's put it all together::
 
   # We use a random private key.
   # If you wanted to use a real one, you'd import the wallet
-  # and do `wallet.get_private_key(utxo_addr)`
+  # and do wallet.get_private_key(utxo_addr)
   private_key = PrivateKey.from_random()
 
   # Get the public key and address associated with this address
@@ -225,8 +217,7 @@ Let's put it all together::
                                         sub_script=utxo_pubkey_script)
   print("\nInput verified? %r" % verified)
   
-And we get something like the following. As above, your results will
-be different since we're generating random private keys::
+And we get something like the following.::
   
   Address: 1De2UioE5RmT1VtLkhM3ffzbRB58TwjNmM
 
@@ -239,12 +230,26 @@ be different since we're generating random private keys::
 
   Input verified? True
 
-While this transaction could not be submitted to the Bitcoin network
-(since the UTXO we referenced doesn't exist), we were able to create a
-single input/single output transaction, sign the input, verify it, and
-serialize the entire transaction into a form that could be submitted.
+As above, your exact results will be different since we're generating
+random private keys.
 
-If you want to do this example with a proper UTXO, invoke
-``wallet.get_private_key(utxo_addr)`` using the ``two1.lib.wallet``
-library programmatically. See also the `Bitcoin Notary Public
-<../../learn/bitcoin-notary-public>`_ tutorial for a worked example.
+Note that while this transaction could not be submitted to the Bitcoin
+network (since the UTXO we referenced doesn't exist), we were able to
+create a single input/single output transaction, sign the input,
+verify it, and serialize the entire transaction into a form that
+`could` be submitted.
+
+If you want to do this example with a proper UTXO, replace the line
+referencing the ``private_key`` with
+``wallet.get_private_key(utxo_addr)``. This is an example of using the
+``two1.lib.wallet`` library programmatically. See also the `Bitcoin
+Notary Public <../../learn/bitcoin-notary-public>`_ tutorial for a
+worked example.
+
+Module contents
+===============
+The library is organized as follows:
+   
+.. toctree::
+
+    two1.lib.bitcoin.submodules
