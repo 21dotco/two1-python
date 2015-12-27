@@ -1,31 +1,38 @@
-two1.lib.bitcoin package
-========================
+The 21 Bitcoin Library (two1.lib.bitcoin)
+=========================================
+The bitcoin module within the 21 Bitcoin Library (``two1``) provides the following functionality:
 
-The bitcoin package is a full-featured library that provides the following functionality:
-
-1. Serialization/deserialization of all Bitcoin elements: blocks, transactions, scripts, etc.
-2. Creation of standard scripts: Pay-to-Public-Key-Hash (P2PKH) and Pay-to-Script-Hash (P2SH) as well multi-sig script support.
-3. Transaction creation, signing and verification, including multi-sig transactions.
+1. Serialization/deserialization of all Bitcoin elements: blocks,
+   transactions, scripts, etc. Serial ization is achieved via the
+   ``bytes()`` method and deserialization is achieved via the
+   ``from_bytes()`` static method of each class.
+2. Creation of standard scripts: Pay-to-Public-Key-Hash (P2PKH) and
+   Pay-to-Script-Hash (P2SH) as well multi-sig script support.
+3. Transaction creation, signing and verification, including multi-sig
+   transactions.
 4. Standard public/private key generation as well as HD key generation.
 
 Module contents
 ---------------
-   
 The library is organized as follows:
    
 .. toctree::
 
     two1.lib.bitcoin.submodules
 
-Serializing and Deserializing
------------------------------
-    
-Serialization and deserialization is consistent amongst all classes. Serialization is achieved via the `bytes()` method and deserialization is achieved via the `from_bytes()` static method of each class.
+Quickstart
+==========
+We will illustrate the use of the ``two1.lib.bitcoin`` module by showing
+how to parse, create, and sign a transaction.
+
 
 Parsing a transaction
 ---------------------
 
-Transactions are the most likely starting place for the library. A transaction can be deserialized from a hex string. For example, this `transaction <https://blockchain.info/tx/039fc554371f9381376b3ea7a3f22009709f05a993fa90a919ac73c1713bba3b>`_ can be deserialized as follows::
+Transactions are the most likely starting place for the library. A
+transaction can be deserialized from a hex string. For example, this
+`transaction <https://blockchain.info/tx/039fc554371f9381376b3ea7a3f22009709f05a993fa90a919ac73c1713bba3b>`_
+can be deserialized as follows::
 
   import requests
 
@@ -86,11 +93,16 @@ The transaction can be serialized to either hex or bytes::
   print(txn.to_hex())
   txn_bytes = bytes(txn)
 
+While this shows how to serialize a transaction, serialization and
+deserialization is consistent amongst all classes. Serialization is
+achieved via the ``bytes()`` method and deserialization is achieved via
+the ``from_bytes()`` static method of each class.
 
 Creating a transaction
 ----------------------
-
-A transaction can be created from scratch by creating and inserting inputs and outputs. As outputs don't require any signing, let's start by creating the first output in the above transacion::
+A transaction can be created from scratch by creating and inserting
+inputs and outputs. As outputs don't require any signing, let's start
+by creating the first output in the above transacion::
 
   from two1.lib.bitcoin.txn import TransactionOutput
   from two1.lib.bitcoin.script import Script
@@ -122,9 +134,21 @@ Results::
   Value: 100000
   a0860100000000001976a91417229b6b4ac45e1a73a6a64fedd9f7d4dab4333e88ac
 
-In the above example, we had to extract the HASH160 of the address. The utility function `address_to_key_hash` allowed us to do that. Using that, we built a Pay-to-Public-Key Hash script using `Script.build_p2pkh()` which was the first line of the output. We then created the transaction output, inspected the addresses and saw that we got the same address we input, inspected the value and finally serialized the output.
+In the above example, we had to extract the HASH160 of the
+address. The utility function ``address_to_key_hash`` allowed us to do
+that. Using that, we built a Pay-to-Public-Key Hash script using
+``Script.build_p2pkh()`` which was the first line of the output. We then
+created the transaction output, inspected the addresses and saw that
+we got the same address we input, inspected the value and finally
+serialized the output.
 
-An output by itself is relatively useless without an input as the input provides the funds to fund the transaction. However, to create an input, we need to prove we have ownership of the key that contains the input funds. Since we do not have the private key associated with the inputs in the above transaction, we will create a new key pair and sign a fake input. To do this, we will use the `two1.lib.bitcoin.crypto` library::
+An output by itself is relatively useless without an input as the
+input provides the funds to fund the transaction. However, to create
+an input, we need to prove we have ownership of the key that contains
+the input funds. Since we do not have the private key associated with
+the inputs in the above transaction, we will create a new key pair and
+sign a fake input. To do this, we will use the
+``two1.lib.bitcoin.crypto`` library::
 
   from two1.lib.bitcoin.crypto import PrivateKey
 
@@ -137,9 +161,8 @@ Results (this will be different for everyone as we are generating a random key):
 
   Address: 13wBf3z3rshFGWDpMCyBowzCGxWNVnXXyL
 
-Complete example: transaction creation
---------------------------------------
-
+A complete example: creating and signing a transaction
+------------------------------------------------------
 Let's put it all together::
 
   from two1.lib.bitcoin.crypto import PrivateKey
@@ -151,6 +174,9 @@ Let's put it all together::
   from two1.lib.bitcoin.utils import address_to_key_hash
   from two1.lib.bitcoin.utils import bytes_to_str
 
+  # We use a random private key.
+  # If you wanted to use a real one, you'd import the wallet
+  # and do `wallet.get_private_key(utxo_addr)`
   private_key = PrivateKey.from_random()
 
   # Get the public key and address associated with this address
@@ -199,7 +225,8 @@ Let's put it all together::
                                         sub_script=utxo_pubkey_script)
   print("\nInput verified? %r" % verified)
   
-And we get (again the results will be different since we're generating random private keys)::
+And we get something like the following. As above, your results will
+be different since we're generating random private keys::
   
   Address: 1De2UioE5RmT1VtLkhM3ffzbRB58TwjNmM
 
@@ -212,7 +239,12 @@ And we get (again the results will be different since we're generating random pr
 
   Input verified? True
 
-While this transaction could not be submitted to the Bitcoin network (since the UTXO we referenced doesn't exist), we were able to create a single input/single output transaction, sign the input, verify it, and serialize the entire transaction into a form that could be submitted.
+While this transaction could not be submitted to the Bitcoin network
+(since the UTXO we referenced doesn't exist), we were able to create a
+single input/single output transaction, sign the input, verify it, and
+serialize the entire transaction into a form that could be submitted.
 
-
-  
+If you want to do this example with a proper UTXO, invoke
+``wallet.get_private_key(utxo_addr)`` using the ``two1.lib.wallet``
+library programmatically. See also the `Bitcoin Notary Public
+<../../learn/bitcoin-notary-public>`_ tutorial for a worked example.
