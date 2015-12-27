@@ -156,7 +156,7 @@ def unpack_u32(b):
 
     Returns:
         (i, b) (tuple): A tuple containing the deserialized integer and the
-                        remainder of the byte stream.
+        remainder of the byte stream.
     """
     u32 = struct.unpack('<I', b[0:4])
     return (u32[0], b[4:])
@@ -182,7 +182,7 @@ def unpack_u64(b):
 
     Returns:
         (i, b) (tuple): A tuple containing the deserialized integer and the
-                        remainder of the byte stream.
+        remainder of the byte stream.
     """
     u64 = struct.unpack('<Q', b[0:8])
     return (u64[0], b[8:])
@@ -196,7 +196,7 @@ def pack_var_str(s):
 
     Return:
         b (bytes): Serialized bytes, prepended with the length of the
-            byte stream.
+        byte stream.
     """
     return pack_compact_int(len(s)) + s
 
@@ -209,7 +209,7 @@ def unpack_var_str(b):
 
     Returns:
         (s, b) (tuple): A tuple containing the variable length byte stream
-                        and the remainder of the input byte stream.
+        and the remainder of the input byte stream.
     """
     strlen, b0 = unpack_compact_int(b)
     return (b0[:strlen], b0[strlen:])
@@ -239,7 +239,7 @@ def bits_to_difficulty(bits):
 
     Returns:
         diff (float): Measure of how hard it is to find a solution
-                      below the target represented by bits.
+        below the target represented by bits.
     """
     target = bits_to_target(bits)
     return MAX_TARGET / target
@@ -299,7 +299,7 @@ def address_to_key_hash(s):
 
     Returns:
         (version, h160) (tuple): A tuple containing the version and
-            RIPEMD-160 hash of the public key.
+        RIPEMD-160 hash of the public key.
     """
     n = base58.b58decode_check(s)
     version = n[0]
@@ -355,7 +355,7 @@ def compute_reward(height):
 
     Returns:
         reward (int): Number of satoshis rewarded for solving a block at the
-                      given height.
+        given height.
     """
     base_subsidy = 50 * 100000000
     era = height // 210000

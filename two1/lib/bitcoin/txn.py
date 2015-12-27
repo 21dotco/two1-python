@@ -220,7 +220,7 @@ class TransactionOutput(object):
 
         Returns:
             b (bytes): byte stream containing the serialized
-                 transaction output.
+            transaction output.
         """
         return pack_u64(self.value) + pack_var_str(bytes(self.script))
 
