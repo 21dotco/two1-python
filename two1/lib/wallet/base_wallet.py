@@ -8,10 +8,10 @@ btc_to_satoshi = 1 / satoshi_to_btc
 def convert_to_satoshis(btc):
     """ Converts an amount in BTC to satoshis.
 
-        This function takes care of rounding and quantization issues
-        (i.e. IEEE-754 precision/representation) and guarantees the
-        correct BTC value. Specifically, any floating point digits
-        beyond 1e-8 will be rounded to the nearest satoshi.
+    This function takes care of rounding and quantization issues
+    (i.e. IEEE-754 precision/representation) and guarantees the
+    correct BTC value. Specifically, any floating point digits
+    beyond 1e-8 will be rounded to the nearest satoshi.
 
     Args:
         btc (float): Amount in BTC.
@@ -33,9 +33,9 @@ def convert_to_satoshis(btc):
 def convert_to_btc(satoshis):
     """ Converts an amount in satoshis to BTC.
 
-        The return value of this function should only
-        be used for display purposes. All internal calculations
-        should be done using satoshis (integers)
+    The return value of this function should only
+    be used for display purposes. All internal calculations
+    should be done using satoshis (integers)
 
     Args:
         satoshis (int): Amount in satoshis
@@ -65,7 +65,7 @@ class BaseWallet(object):
     @staticmethod
     def is_configured():
         """ Returns the configuration/initialization status of the
-            wallet.
+        wallet.
 
         Returns:
             bool: True if the wallet has been configured and ready to
@@ -143,8 +143,8 @@ class BaseWallet(object):
             amount (number): The amount of Bitcoin to send.
         Returns:
             list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            and raw transactions.  e.g.: [{"txid": txid0, "txn":
+            txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `make_signed_transaction_for` must be overridden')
 
@@ -152,11 +152,11 @@ class BaseWallet(object):
         """ Sends Bitcoin to the provided address for the specified amount.
 
         Args:
-            address (str): The address to send the Bitcoin too.
+            address (str): The address to send the Bitcoin to.
             amount (number): The amount of Bitcoin to send.
         Returns:
             list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            and raw transactions.  e.g.: [{"txid": txid0, "txn":
+            txn_hex0}, ...]
         """
         raise NotImplementedError('Abstract class, `send_to` must be overridden')

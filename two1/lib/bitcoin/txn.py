@@ -619,8 +619,8 @@ class Transaction(object):
     def verify_input_signature(self, input_index, sub_script):
         """ Verifies the signature for an input.
 
-            This also confirms that the HASH160 in the provided sub_script
-            corresponds with that found in the input sigScript.
+        This also confirms that the HASH160 in the provided sub_script
+        corresponds with that found in the input sigScript.
 
         Args:
             input_index (int): The index of the input to verify.
@@ -634,8 +634,8 @@ class Transaction(object):
     def verify_partial_multisig(self, input_index, sub_script):
         """ Verifies a partially signed multi-sig input.
 
-            This also confirms that the HASH160 in the provided sub_script
-            corresponds with that found in the input sigScript.
+        This also confirms that the HASH160 in the provided sub_script
+        corresponds with that found in the input sigScript.
 
         Args:
             input_index (int): The index of the input to verify.
@@ -695,7 +695,7 @@ class Transaction(object):
 
     def output_index_for_address(self, address_or_hash160):
         """ Returns the index of the output in this transaction
-            that pays to the provided address.
+        that pays to the provided address.
 
         Args:
             address_or_hash160 (str or bytes): If a string, a

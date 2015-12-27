@@ -61,9 +61,9 @@ def hex_str_to_bytes(h):
 def render_int(n):
     """ Renders an int in the shortest possible form.
 
-        When packing the height into the coinbase script, the integer
-        representing the height must be encoded in the shortest possible
-        manner. See: https://bitcoin.org/en/developer-reference#coinbase.
+    When packing the height into the coinbase script, the integer
+    representing the height must be encoded in the shortest possible
+    manner. See: https://bitcoin.org/en/developer-reference#coinbase.
 
     Args:
         n (int): number to be encoded.
@@ -93,7 +93,7 @@ def render_int(n):
 
 def pack_compact_int(i):
     """ See
-        https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
+    https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
 
     Args:
         i (int): Integer to be serialized.
@@ -113,7 +113,7 @@ def pack_compact_int(i):
 
 def unpack_compact_int(bytestr):
     """ See
-        https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
+    https://bitcoin.org/en/developer-reference#compactsize-unsigned-integers
 
     Args:
         bytestr (bytes): bytes containing an unsigned integer to be
@@ -217,7 +217,7 @@ def unpack_var_str(b):
 
 def bits_to_target(bits):
     """ Decodes the full target from a compact representation.
-        See: https://bitcoin.org/en/developer-reference#target-nbits
+    See: https://bitcoin.org/en/developer-reference#target-nbits
 
     Args:
         bits (int): Compact target (32 bits)
@@ -232,7 +232,7 @@ def bits_to_target(bits):
 
 def bits_to_difficulty(bits):
     """ Determines the difficulty corresponding to bits.
-        See: https://en.bitcoin.it/wiki/Difficulty
+    See: https://en.bitcoin.it/wiki/Difficulty
 
     Args:
         bits (int): Compact target (32 bits)
@@ -292,7 +292,7 @@ def difficulty_to_bits(difficulty):
 
 def address_to_key_hash(s):
     """ Given a Bitcoin address decodes the version and
-        RIPEMD-160 hash of the public key.
+    RIPEMD-160 hash of the public key.
 
     Args:
         s (bytes): The Bitcoin address to decode
@@ -347,8 +347,8 @@ def hash160(b):
 
 def compute_reward(height):
     """ Computes the block reward for a block at the supplied height.
-        See: https://en.bitcoin.it/wiki/Controlled_supply for the reward
-        schedule.
+    See: https://en.bitcoin.it/wiki/Controlled_supply for the reward
+    schedule.
 
     Args:
         height (int): Block height

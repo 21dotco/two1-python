@@ -44,7 +44,7 @@ class Daemonizer(object):
     @classmethod
     def installed(self):
         """ Returns whether or not the daemon has been installed into
-            the init system.
+        the init system.
 
         Returns:
             bool: True if the daemon has been installed, False otherwise.
@@ -74,7 +74,7 @@ class Daemonizer(object):
     @classmethod
     def enabled(self):
         """ Returns whether or not the daemon has been enabled in
-            the init system.
+        the init system.
 
         Returns:
             bool: True if the daemon has been enabled, False otherwise.
@@ -104,7 +104,7 @@ class Daemonizer(object):
     @classmethod
     def started(self):
         """ Returns whether or not the daemon has been started and is
-            currently running.
+        currently running.
 
         Returns:
             bool: True if the daemon is running, False otherwise.
@@ -276,7 +276,7 @@ WantedBy=default.target
     @classmethod
     def installed(cls):
         """ Returns whether or not the daemon has been installed into
-            systemd's user config area.
+        systemd's user config area.
 
         Returns:
             bool: True if the daemon has been installed, False otherwise.
@@ -322,7 +322,7 @@ WantedBy=default.target
     @classmethod
     def uninstall(cls):
         """ Un-installs the daemon from systemd by removing the service
-            file from /etc/systemd/user.
+        file from /etc/systemd/user.
 
         Returns:
             bool: True if the daemon was successfully un-installed, False
@@ -393,7 +393,7 @@ WantedBy=default.target
     @classmethod
     def started(cls):
         """ Returns whether or not the daemon has been started and is
-            currently running.
+        currently running.
 
         Returns:
             bool: True if the daemon is running, False otherwise.
@@ -554,7 +554,7 @@ class Launchd(Daemonizer):
     @classmethod
     def installed(cls):
         """ Returns whether or not the daemon has been installed into
-            launchd.
+        launchd.
 
         Returns:
             bool: True if the daemon has been installed, False otherwise.
@@ -599,7 +599,7 @@ class Launchd(Daemonizer):
     @classmethod
     def uninstall(cls):
         """ Un-installs the agent from launchd by removing the PLIST
-            file from ~/Library/LaunchAgents.
+        file from ~/Library/LaunchAgents.
 
         Returns:
             bool: True if the daemon was successfully un-installed, False
@@ -614,7 +614,7 @@ class Launchd(Daemonizer):
     @classmethod
     def enabled(cls):
         """ Returns whether or not the agent has been enabled. For launchd,
-            this is equivalent to installing the PLIST file.
+        this is equivalent to installing the PLIST file.
 
         Returns:
             bool: True if the agent has been installed, False otherwise.
@@ -624,8 +624,8 @@ class Launchd(Daemonizer):
     @classmethod
     def enable(cls):
         """ Enables the agent within launchd. Since installing is the
-            equivalent of enabling in launchd, this simply returns whether
-            the agent has been installed or not.
+        equivalent of enabling in launchd, this simply returns whether
+        the agent has been installed or not.
 
         Returns:
             bool: True if the agent is installed, False otherwise.
@@ -645,7 +645,7 @@ class Launchd(Daemonizer):
     @classmethod
     def started(cls):
         """ Returns whether or not the agent has been started and is
-            currently running.
+        currently running.
 
         Returns:
             bool: True if the agent is running, False otherwise.

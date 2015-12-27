@@ -14,9 +14,9 @@ from two1.lib.crypto import openssl as ossl
 class ECPointAffine(object):
     """ An affine (2D) representation of an elliptic curve point.
 
-        In this implementation, only the minimum functionality
-        required for bitcoin crypto-API compatibility is provided.
-        All math operations make use of OpenSSL primitives.
+    In this implementation, only the minimum functionality
+    required for bitcoin crypto-API compatibility is provided.
+    All math operations make use of OpenSSL primitives.
 
     Args:
         curve (EllipticCurve): The curve the point is on.
@@ -59,8 +59,8 @@ class ECPointAffine(object):
     def compressed_bytes(self):
         """ Returns the compressed bytes for this point.
 
-            If pt.y is odd, 0x03 is pre-pended to pt.x.
-            If pt.y is even, 0x02 is pre-pended to pt.x.
+        If pt.y is odd, 0x03 is pre-pended to pt.x.
+        If pt.y is even, 0x02 is pre-pended to pt.x.
 
         Returns:
             bytes: Compressed byte representation.
@@ -78,7 +78,7 @@ class ECPointAffine(object):
 class EllipticCurve(EllipticCurveBase):
     """ A generic class for elliptic curves and operations on them.
 
-        The curves must be of the form: y^2 = x^3 + a*x + b.
+    The curves must be of the form: y^2 = x^3 + a*x + b.
 
     Args:
         hash_function (function): The function to use for hashing messages.
@@ -129,9 +129,9 @@ class EllipticCurve(EllipticCurveBase):
     def y_from_x(self, x):
         """ Computes the y component corresponding to x.
 
-            Since elliptic curves are symmetric about the x-axis,
-            the x component (and sign) is all that is required to determine
-            a point on the curve.
+        Since elliptic curves are symmetric about the x-axis,
+        the x component (and sign) is all that is required to determine
+        a point on the curve.
 
         Args:
             x (int): x component of the point.
@@ -196,11 +196,12 @@ class EllipticCurve(EllipticCurveBase):
 
     def recover_public_key(self, message, signature, recovery_id=None):
         """ Recovers possibilities for the public key associated with the
-            private key used to sign message and generate signature.
+        private key used to sign message and generate signature.
 
-            Since there are multiple possibilities (two for curves with
-            co-factor = 1), each possibility that successfully verifies the
-            signature is returned.
+        Since there are multiple possibilities (two for curves with
+        co-factor = 1), each possibility that successfully verifies the
+        signature is returned.
+
         Args:
            message (bytes): The message that was signed.
            signature (ECPointAffine): The point representing the signature.
@@ -209,7 +210,7 @@ class EllipticCurve(EllipticCurveBase):
 
         Returns:
            list(ECPointAffine): List of points representing valid public
-              keys that verify signature.
+           keys that verify signature.
         """
         r = signature.x
         s = signature.y
@@ -397,7 +398,7 @@ class EllipticCurve(EllipticCurveBase):
 
     def verify(self, message, signature, public_key, do_hash=True):
         """ Verifies that signature was generated with a private key corresponding
-            to public key, operating on message.
+        to public key, operating on message.
 
         Args:
             message (bytes): The message to be signed

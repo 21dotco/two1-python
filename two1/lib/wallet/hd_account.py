@@ -6,29 +6,29 @@ from two1.lib.wallet.wallet_txn import WalletTransaction
 
 class HDAccount(object):
     """ An implementation of a single HD account to be used in an HD
-        wallet.
+    wallet.
 
-        This class handles key generation/management for both internal
-        (change) and external (payout) purposes. If provided with only
-        a public key, it is only useful for public key
-        generation/management. If a private key is provided instead,
-        private keys can be generated for signing (spending) purposes.
+    This class handles key generation/management for both internal
+    (change) and external (payout) purposes. If provided with only
+    a public key, it is only useful for public key
+    generation/management. If a private key is provided instead,
+    private keys can be generated for signing (spending) purposes.
 
-        Transaction signing capability is NOT provided by this class.
-        This is a conscious design decision as the wallet is better
-        suited to signing & spending as there may be situations
-        requiring spending coins from multiple accounts in a single
-        transaction.
+    Transaction signing capability is NOT provided by this class.
+    This is a conscious design decision as the wallet is better
+    suited to signing & spending as there may be situations
+    requiring spending coins from multiple accounts in a single
+    transaction.
 
-        This relies on a data provider that derives from
-        TransactionDataProvider, which provides transaction data and
-        balance information for provided addresses.
+    This relies on a data provider that derives from
+    TransactionDataProvider, which provides transaction data and
+    balance information for provided addresses.
 
     Args:
         hd_key (HDKey): Either a HDPrivateKey (enables private key
            generation) or HDPublicKey which is the root of this account.
         name (str): Name of this account
-        index (int): child index of this account relative to the parent.
+        index (int): Child index of this account relative to the parent.
         data_provider (BaseProvider): A compatible data provider.
         testnet (bool): Whether or not this account will be used on testnet.
     """
@@ -170,7 +170,7 @@ class HDAccount(object):
 
     def has_txns(self):
         """ Returns whether or not there are any discovered transactions
-            associated with any address in the account.
+        associated with any address in the account.
 
         Returns:
             bool: True if there are discovered transactions, False otherwise.
@@ -179,7 +179,7 @@ class HDAccount(object):
 
     def find_addresses(self, addresses):
         """ Searches both the change and payout chains up to self.GAP_LIMIT
-            addresses beyond the last known index for the chain.
+        addresses beyond the last known index for the chain.
 
         Args:
             addresses (list(str)): List of Base58Check encoded addresses
@@ -209,7 +209,7 @@ class HDAccount(object):
                is created with index = self.last_[change|payout]_index + 1
 
         Returns:
-            HDPublicKey: a public key in this account's chain.
+            HDPublicKey: A public key in this account's chain.
         """
         # We only use public key derivation per BIP44
         c = int(change)
@@ -227,7 +227,7 @@ class HDAccount(object):
 
     def get_private_key(self, change, n):
         """ Returns a private key in the chain for use in signing messages
-            or transactions.
+        or transactions.
 
         Args:
             change (bool): If True, returns an address for change purposes,
@@ -235,7 +235,7 @@ class HDAccount(object):
             n (int): index of address in chain.
 
         Returns:
-            HDPrivateKey: a private key in this account's chain.
+            HDPrivateKey: A private key in this account's chain.
         """
         # We only use public key derivation per BIP44
         k = self._chain_priv_keys[change]
@@ -288,8 +288,8 @@ class HDAccount(object):
     def get_next_address(self, change):
         """ Returns the next public address in the specified chain.
 
-            A new address is only returned if there are transactions found
-            for the current address.
+        A new address is only returned if there are transactions found
+        for the current address.
 
         Args:
             change (bool): If True, returns an address for change purposes,
@@ -303,8 +303,8 @@ class HDAccount(object):
     def get_next_public_key(self, change):
         """ Returns the next public key in the specified chain.
 
-            A new key is only returned if there are transactions found
-            for the current key.
+        A new key is only returned if there are transactions found
+        for the current key.
 
         Args:
             change (bool): If True, returns a PublicKey for change purposes,
@@ -340,7 +340,7 @@ class HDAccount(object):
 
     def balances_by_address(self):
         """ Returns a dict with balances for each used
-            address in the account
+        address in the account
 
         Returns:
             dict: key/values are addresses and current balance
@@ -350,7 +350,7 @@ class HDAccount(object):
     @property
     def balance(self):
         """ Returns balances, both confirmed and total, for this
-            account.
+        account.
 
         Returns:
             dict: 'confirmed' and 'total' keys with balance values in
