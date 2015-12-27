@@ -46,8 +46,8 @@ class BlockHeader(object):
             b (bytes): bytes beginning with the (4-byte) version.
 
         Returns:
-            bh, b (tuple): A tuple containing two elements: 1. A BlockHeader object
-                           and 2. the remainder of the bytestream after deserialization.
+            bh, b (tuple): A tuple containing two elements - a BlockHeader object
+            and the remainder of the bytestream after deserialization.
         """
         version, b = unpack_u32(b)
         prev_block_hash, b = Hash(b[0:32]), b[32:]
@@ -152,7 +152,7 @@ class Block(object):
         
         Returns:
             block, b (tuple): A tuple. The first item is the deserialized block
-                              and the second is the remainder of the byte stream.
+            and the second is the remainder of the byte stream.
         """
         bh, b = BlockHeader.from_bytes(b)
         num_txns, b = unpack_compact_int(b)

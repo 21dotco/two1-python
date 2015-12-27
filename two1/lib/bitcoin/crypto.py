@@ -120,17 +120,17 @@ class PrivateKeyBase(object):
         Args:
             message (bytes or str): Message to be signed.
             compressed (bool): True if the corresponding public key will be
-                used in compressed format. False if the uncompressed version
-                is used.
+            used in compressed format. False if the uncompressed version
+            is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
-               The first byte of the encoded message contains information
-               about how to recover the public key. In bitcoind parlance,
-               this is the magic number containing the recovery ID and
-               whether or not the key was compressed or not. (This function
-               always processes full, uncompressed public-keys, so the magic
-               number will always be either 27 or 28).
+            The first byte of the encoded message contains information
+            about how to recover the public key. In bitcoind parlance,
+            this is the magic number containing the recovery ID and
+            whether or not the key was compressed or not. (This function
+            always processes full, uncompressed public-keys, so the magic
+            number will always be either 27 or 28).
         """
         raise NotImplementedError
 
@@ -233,13 +233,13 @@ class PublicKeyBase(object):
             message (bytes): The message to be verified.
             signature (Signature): A signature object.
             do_hash (bool): True if the message should be hashed prior
-               to signing, False if not. This should always be left as
-               True except in special situations which require doing
-               the hash outside (e.g. handling Bitcoin bugs).
+            to signing, False if not. This should always be left as
+            True except in special situations which require doing
+            the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             verified (bool): True if the signature is verified, False
-                otherwise.
+            otherwise.
         """
         raise NotImplementedError
 
@@ -442,15 +442,15 @@ class PrivateKey(PrivateKeyBase):
         Args:
             message (bytes or str): Message to be signed.
             compressed (bool): True if the corresponding public key will be
-                used in compressed format. False if the uncompressed version
-                is used.
+            used in compressed format. False if the uncompressed version
+            is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
-                The first byte of the encoded message contains information
-                about how to recover the public key. In bitcoind parlance,
-                this is the magic number containing the recovery ID and
-                whether or not the key was compressed or not.
+            The first byte of the encoded message contains information
+            about how to recover the public key. In bitcoind parlance,
+            this is the magic number containing the recovery ID and
+            whether or not the key was compressed or not.
         """
         if isinstance(message, str):
             msg_in = bytes(message, 'ascii')
@@ -725,13 +725,13 @@ class PublicKey(PublicKeyBase):
             message (bytes): The message to be verified.
             signature (Signature): A signature object.
             do_hash (bool): True if the message should be hashed prior
-                to signing, False if not. This should always be left as
-                True except in special situations which require doing
-                the hash outside (e.g. handling Bitcoin bugs).
+            to signing, False if not. This should always be left as
+            True except in special situations which require doing
+            the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
             verified (bool): True if the signature is verified, False
-                otherwise.
+            otherwise.
         """
         msg = get_bytes(message)
         return bitcoin_curve.verify(msg, signature, self.point, do_hash)
@@ -977,8 +977,9 @@ class HDKey(object):
     def from_b58check(key):
         """ Decodes a Base58Check encoded key.
 
-            The encoding must conform to the description in:
+        The encoding must conform to the description in:
             https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+            
         Args:
             key (str): A Base58Check encoded key.
 
@@ -993,8 +994,9 @@ class HDKey(object):
         """ Generates either a HDPrivateKey or HDPublicKey from the underlying
             bytes.
 
-            The serialization must conform to the description in:
+        The serialization must conform to the description in:
             https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+            
         Args:
             b (bytes): A byte stream conforming to the above.
 
@@ -1410,17 +1412,17 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         Args:
             message (bytes or str): Message to be signed.
             compressed (bool): True if the corresponding public key will be
-                used in compressed format. False if the uncompressed version
-                is used.
+            used in compressed format. False if the uncompressed version
+            is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
-               The first byte of the encoded message contains information
-               about how to recover the public key. In bitcoind parlance,
-               this is the magic number containing the recovery ID and
-               whether or not the key was compressed or not. (This function
-               always processes full, uncompressed public-keys, so the magic
-               number will always be either 27 or 28).
+            The first byte of the encoded message contains information
+            about how to recover the public key. In bitcoind parlance,
+            this is the magic number containing the recovery ID and
+            whether or not the key was compressed or not. (This function
+            always processes full, uncompressed public-keys, so the magic
+            number will always be either 27 or 28).
         """
         return self._key.sign_bitcoin(message, compressed)
 
@@ -1566,7 +1568,7 @@ class HDPublicKey(HDKey, PublicKeyBase):
 
         Returns:
             verified (bool): True if the signature is verified, False
-                otherwise.
+            otherwise.
         """
         return self._key.verify(message, signature, do_hash)
 

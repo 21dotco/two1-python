@@ -78,11 +78,11 @@ class Script(object):
 
         Args:
             b (bytes): A byte-stream containing the script, with the length
-                       of the script in bytes prepended.
+            of the script in bytes prepended.
 
         Returns:
             (scr, b) (tuple): A tuple with the deserialized Script object and
-                              the remainder of the byte stream.
+            the remainder of the byte stream.
         """
         raw_script, b = unpack_var_str(b)
 
@@ -113,11 +113,11 @@ class Script(object):
 
         Args:
             hash160_key (bytes): the RIPEMD-160 hash of the public key
-                in internal byte order.
+            in internal byte order.
 
         Returns:
             scr (Script): a serializable Script object containing the
-                p2pkh script.
+            p2pkh script.
         """
         return Script(['OP_DUP',
                        'OP_HASH160',
@@ -131,11 +131,11 @@ class Script(object):
 
         Args:
             hash160_key (bytes): the RIPEMD-160 hash of the script in
-                internal byte order.
+            internal byte order.
 
         Returns:
             scr (Script): a serializable Script object containing the
-                p2sh script.
+            p2sh script.
         """
 
         return Script(['OP_HASH160', hash160_key, 'OP_EQUAL'])
@@ -427,8 +427,7 @@ class Script(object):
             dict: Contains the following list of keys:
                'm' (int): Required number of signatures.
                'n' (int): Maximum number of signatures.
-               'public_keys' (list): List of byte strings
-                   corresponding to public keys.
+               'public_keys' (list): List of byte strings corresponding to public keys.
         """
         exc = TypeError("This script is not a multisig redeem script.")
 
@@ -473,8 +472,7 @@ class Script(object):
 
         Returns:
             dict: With the following key/value pairs:
-                'signatures' (list): List of DER-encoded signatures with
-                    hash_type appended at the end of the byte string.
+                'signatures' (list): List of DER-encoded signatures with hash_type appended at the end of the byte string.
                 'redeem_script' (Script): The associated redeem script.
         """
         # A signature script should start with OP_0
