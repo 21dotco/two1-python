@@ -5,11 +5,14 @@ from two1.lib.bitcoin.txn import CoinbaseInput, Transaction
 from two1.lib.bitcoin.utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
-""" merkle_hash: SHA-256 byte string (internal byte order)
-    left_child: MerkleNode object
-    right_child: MerkleNode object
-"""
 class MerkleNode:
+    """A MerkleNode object from which you can build a Merkle tree.
+
+       Args:
+           hash: SHA-256 byte string (internal byte order)
+           left_child: MerkleNode object
+           right_child: MerkleNode object
+    """
     def __init__(self, hash=None, left_child=None, right_child=None):
         self.left_child = left_child
         self.right_child = right_child
