@@ -16,12 +16,12 @@ from two1.lib.bitcoin.utils import render_int
 
 class Script(object):
     """ Handles all Bitcoin script-related needs.
-        Currently this means: parsing text scripts,
-        assembling/disassembling and serialization/deserialization.
+    Currently this means: parsing text scripts,
+    assembling/disassembling and serialization/deserialization.
 
-        If a raw byte stream is passed in, disassembly and parsing are
-        deferred until required. If parsing is immediately required,
-        call Script.parse() after constructing the object.
+    If a raw byte stream is passed in, disassembly and parsing are
+    deferred until required. If parsing is immediately required,
+    call Script.parse() after constructing the object.
 
     Args:
         script (bytes or str): Either a text or byte string containing
@@ -74,11 +74,11 @@ class Script(object):
     @staticmethod
     def from_bytes(b):
         """ Deserializes a byte stream containing a script into a Script object.
-            Assumes the first part contains the length of the script in bytes.
+        Assumes the first part contains the length of the script in bytes.
 
         Args:
             b (bytes): A byte-stream containing the script, with the length
-            of the script in bytes prepended.
+              of the script in bytes prepended.
 
         Returns:
             (scr, b) (tuple): A tuple with the deserialized Script object and
@@ -113,7 +113,7 @@ class Script(object):
 
         Args:
             hash160_key (bytes): the RIPEMD-160 hash of the public key
-            in internal byte order.
+              in internal byte order.
 
         Returns:
             scr (Script): a serializable Script object containing the
@@ -131,7 +131,7 @@ class Script(object):
 
         Args:
             hash160_key (bytes): the RIPEMD-160 hash of the script in
-            internal byte order.
+              internal byte order.
 
         Returns:
             scr (Script): a serializable Script object containing the
@@ -143,7 +143,7 @@ class Script(object):
     @staticmethod
     def build_multisig_redeem(m, pub_keys):
         """ Builds a multisig redeem script and corresponding
-            Pay-to-Script-Hash script.
+        Pay-to-Script-Hash script.
 
         Args:
             m (int): Number of signatures required. Must be <= len(pub_keys).
@@ -169,11 +169,11 @@ class Script(object):
     def build_multisig_sig(sigs, redeem_script):
         """ Builds a multisig signature script.
 
-            This script contains the signatures in order given
-            in sigs as well as the redeem script. It is not required
-            to have all required signatures in sigs. However, len(sigs)
-            may not be more than the max number indicated by the redeem
-            script.
+        This script contains the signatures in order given
+        in sigs as well as the redeem script. It is not required
+        to have all required signatures in sigs. However, len(sigs)
+        may not be more than the max number indicated by the redeem
+        script.
 
         Args:
             sigs (list(bytes)): A list of signatures (in DER encoding). The
@@ -206,14 +206,14 @@ class Script(object):
     @staticmethod
     def build_push_int(i):
         """ Creates a script to push i onto the stack using the least possible
-            number of bytes.
+        number of bytes.
 
         Args:
             i (int): integer to be pushed onto the stack.
 
         Returns:
             b (bytes): Serialized bytes containing the appropriate PUSHDATA
-                       op for i.
+            op for i.
         """
 
         if i >= 0 and i <= 16:
@@ -364,9 +364,9 @@ class Script(object):
 
     def hash160(self):
         """ Return the RIPEMD-160 hash of the SHA-256 hash of the
-            script.
+        script.
 
-        Returns
+        Returns:
             bytes: RIPEMD-160 byte string.
         """
         return hash160(bytes(self))
@@ -499,7 +499,7 @@ class Script(object):
 
     def is_p2pkh(self):
         """ Returns whether this script is a common Pay-to-Public-Key-Hash
-            script.
+        script.
 
         Returns:
             bool: True if it is a common P2PKH script, False otherwise.
@@ -512,7 +512,7 @@ class Script(object):
 
     def is_p2sh(self):
         """ Returns whether this script is a Pay-to-Script-Hash
-            script.
+        script.
 
         Returns:
             bool: True if it is a P2SH script, False otherwise.
@@ -525,7 +525,7 @@ class Script(object):
 
     def is_p2pkh_sig(self):
         """ Returns whether this script a Pay-to-Public-Key-Hash
-            signature script.
+        signature script.
 
         Returns:
             bool: True if it is a P2PKH signature script, False otherwise.
@@ -562,7 +562,7 @@ class Script(object):
 
     def get_hash160(self):
         """ Scans the script for OP_HASH160 and returns the data
-            immediately following it.
+        immediately following it.
 
         Returns:
             bytes: the hash160 or None.
@@ -582,16 +582,16 @@ class Script(object):
     def get_addresses(self, testnet=False):
         """ Returns all addresses found in this script
 
-            For output scripts, P2PKH scripts will return a single
-            address the funds are being sent to. P2SH scripts will
-            return a single address of the script the funds are being
-            sent to.
+        For output scripts, P2PKH scripts will return a single
+        address the funds are being sent to. P2SH scripts will
+        return a single address of the script the funds are being
+        sent to.
 
-            For input scripts, only standard signature and
-            multi-signature scripts will return results: the
-            address(es) used to sign. For standard signature scripts,
-            a single address is returned while for multi-sig scripts,
-            all n addresses in the redeem script are returned.
+        For input scripts, only standard signature and
+        multi-signature scripts will return results: the
+        address(es) used to sign. For standard signature scripts,
+        a single address is returned while for multi-sig scripts,
+        all n addresses in the redeem script are returned.
 
         Args:
             testnet (bool): True if the addresses are being used on testnet,
@@ -787,9 +787,9 @@ class Script(object):
 
     def __bytes__(self):
         """ Serializes the object into a byte stream.
-            It does *not* prepend the length of the script to the returned
-            bytes. To do so, call two1.bitcoin.utils.pack_var_str() passing
-            in the returned bytes.
+        It does *not* prepend the length of the script to the returned
+        bytes. To do so, call two1.bitcoin.utils.pack_var_str() passing
+        in the returned bytes.
 
         Returns:
             b (bytes): a serialized byte stream of this Script object.

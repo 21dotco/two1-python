@@ -1,6 +1,6 @@
-
 two1.lib.wallet.two1_wallet
 ---------------------------
+This submodule provides the main ``Two1Wallet`` and ``Wallet`` classes.
 
 .. automodule:: two1.lib.wallet.two1_wallet
     :members:
@@ -10,6 +10,7 @@ two1.lib.wallet.two1_wallet
 
 two1.lib.wallet.base_wallet module
 ----------------------------------
+This submodule provides abstract base classes implemented by `two1_wallet`.
 
 .. automodule:: two1.lib.wallet.base_wallet
     :members:
@@ -18,6 +19,8 @@ two1.lib.wallet.base_wallet module
        
 two1.lib.wallet.hd_account module
 ---------------------------------
+This submodule implements HDAccount, which provides a single HD account
+that is used in an HD ("hierarchical deterministic") wallet.
 
 .. automodule:: two1.lib.wallet.hd_account
     :members:
@@ -26,6 +29,8 @@ two1.lib.wallet.hd_account module
 
 two1.lib.wallet.exceptions module
 ---------------------------------
+This is a simple submodule that enumerates the different kinds
+of exceptions that the ``two1.lib.wallet`` module raises.
 
 .. automodule:: two1.lib.wallet.exceptions
     :members:
@@ -34,6 +39,8 @@ two1.lib.wallet.exceptions module
 
 two1.lib.wallet.account_types module
 ------------------------------------
+This is a simple submodule that stores the different kinds of
+account types and their corresponding derivation prefixes.
 
 .. automodule:: two1.lib.wallet.account_types
     :members:
@@ -42,6 +49,8 @@ two1.lib.wallet.account_types module
 
 two1.lib.wallet.utxo_selectors module
 -------------------------------------
+This is a simple submodule that provides functions to
+select UTXOs (unspent transaction outputs).
 
 .. automodule:: two1.lib.wallet.utxo_selectors
     :members:
@@ -50,6 +59,8 @@ two1.lib.wallet.utxo_selectors module
 
 two1.lib.wallet.daemonizer module
 ---------------------------------
+This submodule provides code for running aspects of the wallet
+in the background as a daemon.
 
 .. automodule:: two1.lib.wallet.daemonizer
     :members:
@@ -58,17 +69,10 @@ two1.lib.wallet.daemonizer module
 
 two1.lib.wallet.socket_rpc_server module
 ----------------------------------------
+This submodule handles RPC connections to shuttle data to and from
+the wallet daemon.
 
 .. automodule:: two1.lib.wallet.socket_rpc_server
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: two1.lib.wallet
     :members:
     :undoc-members:
     :show-inheritance:

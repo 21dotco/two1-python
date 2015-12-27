@@ -32,10 +32,10 @@ Point = namedtuple('Point', ['x', 'y'])
 
 def montgomery_ladder(k, p):
     """ Implements scalar multiplication via the Montgomery ladder
-        technique.
+    technique.
 
-        This technique is used to prevent against simple side-channel
-        attacks as well as certain kinds of cache attacks.
+    This technique is used to prevent against simple side-channel
+    attacks as well as certain kinds of cache attacks.
 
     Args:
         k (int): The scalar to multiply by.
@@ -67,14 +67,14 @@ def montgomery_ladder(k, p):
 class ECPoint(object):
     """ Base class for any elliptic curve point implementations.
 
-        Currently there are two implementations provided: 1)
-        ECPointAffine which is the standard affine coordinate system,
-        and 2) ECPointJacobian which is a 3-dimensional projected
-        coordinate system.
+    Currently there are two implementations provided: 1)
+    ECPointAffine which is the standard affine coordinate system,
+    and 2) ECPointJacobian which is a 3-dimensional projected
+    coordinate system.
 
-        The EllipticCurve class currently utilizes ECPointJacobian for
-        efficiency reasons. However, switching to the affine
-        implementation is trivial.
+    The EllipticCurve class currently utilizes ECPointJacobian for
+    efficiency reasons. However, switching to the affine
+    implementation is trivial.
 
     Args:
         curve (EllipticCurve): The curve the point is on.
@@ -139,14 +139,14 @@ class ECPoint(object):
 class ECPointJacobian(ECPoint):
     """ Encapsulates a point on an elliptic curve.
 
-        This class provides a Jacobian representation of a point
-        on an elliptic curve. It presents the standard addition and
-        scalar multiplication operations between two points as overloaded
-        '+' and '*' Python operators. Scalar multiplications are computed
-        via the Montgomery Ladder technique (same as OpenSSL).
+    This class provides a Jacobian representation of a point
+    on an elliptic curve. It presents the standard addition and
+    scalar multiplication operations between two points as overloaded
+    '+' and '*' Python operators. Scalar multiplications are computed
+    via the Montgomery Ladder technique (same as OpenSSL).
 
-        All math operations from:
-        https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
+    All math operations from:
+    https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
 
     Args:
         curve (EllipticCurve): The curve the point is on.
@@ -162,7 +162,7 @@ class ECPointJacobian(ECPoint):
     @staticmethod
     def from_affine(affine_point):
         """ Converts from an affine point to a Jacobian representation.
-            This is simplisticly done by using `Z = 1`.
+        This is simplisticly done by using `Z = 1`.
 
         Args:
             affine_point (ECPointAffine): The affine point to convert.
@@ -188,8 +188,8 @@ class ECPointJacobian(ECPoint):
     def from_int(curve, i):
         """ Creates a point from an integer.
 
-            Assumes that pt.y is the lower bits of i and pt.x is
-            the upper bits of i.
+        Assumes that pt.y is the lower bits of i and pt.x is
+        the upper bits of i.
 
         Args:
             curve (EllipticCurve): The curve to which the point belongs.
@@ -318,11 +318,11 @@ class ECPointJacobian(ECPoint):
 class ECPointAffine(ECPoint):
     """ Encapsulates a point on an elliptic curve.
 
-        This class provides an affine representation of a point
-        on an elliptic curve. It presents the standard addition and
-        scalar multiplication operations between two points as overloaded
-        '+' and '*' Python operators. Scalar multiplications are computed
-        via the Montgomery Ladder technique.
+    This class provides an affine representation of a point
+    on an elliptic curve. It presents the standard addition and
+    scalar multiplication operations between two points as overloaded
+    '+' and '*' Python operators. Scalar multiplications are computed
+    via the Montgomery Ladder technique.
 
     Args:
         curve (EllipticCurve): The curve the point is on.
@@ -361,8 +361,8 @@ class ECPointAffine(ECPoint):
     def from_int(curve, i):
         """ Creates a point from an integer.
 
-            Assumes that pt.y is the lower bits of i and pt.x is
-            the upper bits of i.
+        Assumes that pt.y is the lower bits of i and pt.x is
+        the upper bits of i.
 
         Args:
             curve (EllipticCurve): The curve to which the point belongs.
@@ -475,8 +475,8 @@ class ECPointAffine(ECPoint):
     def compressed_bytes(self):
         """ Returns the compressed bytes for this point.
 
-            If pt.y is odd, 0x03 is pre-pended to pt.x.
-            If pt.y is even, 0x02 is pre-pended to pt.x.
+        If pt.y is odd, 0x03 is pre-pended to pt.x.
+        If pt.y is even, 0x02 is pre-pended to pt.x.
 
         Returns:
             bytes: Compressed byte representation.
@@ -494,7 +494,7 @@ class ECPointAffine(ECPoint):
 class EllipticCurve(EllipticCurveBase):
     """ A generic class for elliptic curves and operations on them.
 
-        The curves must be of the form: y^2 = x^3 + a*x + b.
+    The curves must be of the form: y^2 = x^3 + a*x + b.
 
     Args:
         p (int): Prime that defines the field.
@@ -520,8 +520,8 @@ class EllipticCurve(EllipticCurveBase):
     def modinv(a, n):
         """ Provides the modular inverse of a wrt n.
 
-            This uses the extended Euclidean algorithm to compute the
-            the GCD of a, n.
+        This uses the extended Euclidean algorithm to compute the
+        the GCD of a, n.
 
         Args:
             a (int): number to find modular inverse of
@@ -583,9 +583,9 @@ class EllipticCurve(EllipticCurveBase):
     def y_from_x(self, x):
         """ Computes the y component corresponding to x.
 
-            Since elliptic curves are symmetric about the x-axis,
-            the x component (and sign) is all that is required to determine
-            a point on the curve.
+        Since elliptic curves are symmetric about the x-axis,
+        the x component (and sign) is all that is required to determine
+        a point on the curve.
 
         Args:
             x (int): x component of the point.
@@ -636,11 +636,12 @@ class EllipticCurve(EllipticCurveBase):
 
     def recover_public_key(self, message, signature, recovery_id=None):
         """ Recovers possibilities for the public key associated with the
-            private key used to sign message and generate signature.
+        private key used to sign message and generate signature.
 
-            Since there are multiple possibilities (two for curves with
-            co-factor = 1), each possibility that successfully verifies the
-            signature is returned.
+        Since there are multiple possibilities (two for curves with
+        co-factor = 1), each possibility that successfully verifies the
+        signature is returned.
+
         Args:
            message (bytes): The message that was signed.
            signature (ECPointAffine): The point representing the signature.
@@ -649,7 +650,7 @@ class EllipticCurve(EllipticCurveBase):
 
         Returns:
            list(ECPointAffine): List of points representing valid public
-              keys that verify signature.
+           keys that verify signature.
         """
         r = signature.x
         s = signature.y
@@ -716,7 +717,7 @@ class EllipticCurve(EllipticCurveBase):
 
     def verify(self, message, signature, public_key, do_hash=True):
         """ Verifies that signature was generated with a private key corresponding
-            to public key, operating on message.
+        to public key, operating on message.
 
         Args:
             message (bytes): The message to be signed

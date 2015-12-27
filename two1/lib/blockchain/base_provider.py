@@ -11,10 +11,10 @@ class BaseProvider(object):
     def get_balance(self, address_list):
         """ Provides the balance for each address.
 
-            The balance is computed by looking up the transactions associated
-            with each address in address_list, summing all received coins and
-            subtracting all coins payed out. It makes a distinction between
-            confirmed and unconfirmed transactions.
+        The balance is computed by looking up the transactions associated
+        with each address in address_list, summing all received coins and
+        subtracting all coins payed out. It makes a distinction between
+        confirmed and unconfirmed transactions.
 
         Args:
             address_list (list(str)): List of Base58Check encoded
@@ -53,7 +53,7 @@ class BaseProvider(object):
 
     def get_utxos(self, address_list):
         """ Provides all unspent transactions associated with each
-            address in address_list.
+        address in address_list.
 
         Args:
             address_list (list(str)): List of Base58Check encoded

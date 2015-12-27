@@ -11,9 +11,6 @@ from two1.lib.blockchain.chain_provider import ChainProvider
 
 class TwentyOneProvider(ChainProvider):
     """ Transaction data provider using the TwentyOne API
-
-        Args:
-            // TODO: Use the MachineAuth here to avoid spam
     """
     DEFAULT_HOST = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co")
 
@@ -35,7 +32,7 @@ class TwentyOneProvider(ChainProvider):
 
         Args:
             address_list (list(str)): List of Base58Check encoded Bitcoin
-            addresses.
+                addresses.
             limit (int): Maximum number of transactions to return.
             min_block (int): Block height from which to start getting
                 transactions. If None, will get transactions from the
@@ -43,8 +40,7 @@ class TwentyOneProvider(ChainProvider):
 
         Returns:
             dict: A dict keyed by address with each value being a list of
-            Transaction
-               objects.
+            Transaction objects.
         """
         ret = defaultdict(list)
         for addresses in self._list_chunks(address_list, 199):

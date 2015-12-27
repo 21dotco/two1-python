@@ -82,39 +82,39 @@ def _txn_dict_list_deserializer(txn_list):
 class Two1Wallet(BaseWallet):
     """ An HD wallet class capable of handling multiple types of wallets.
 
-        This wallet can implement a variety of account types, including:
-        pure BIP-32, pure BIP-44, Hive, and Mycelium variants.
+    This wallet can implement a variety of account types, including:
+    pure BIP-32, pure BIP-44, Hive, and Mycelium variants.
 
-        This class depends on pluggable elements which allow flexibility to use
-        different backend data providers (bitcoind, chain.com, etc.) as well
-        as different UTXO selection algorithms. In particular, these elements
-        are:
+    This class depends on pluggable elements which allow flexibility to use
+    different backend data providers (bitcoind, chain.com, etc.) as well
+    as different UTXO selection algorithms. In particular, these elements
+    are:
 
-        1. A bitcoin data provider class that implements the abstract
-           class found in two1.blockchain.BaseProvider.
-        2. A unspent transaction output selector (utxo_selector):
+    1. A bitcoin data provider class that implements the abstract
+       class found in two1.blockchain.BaseProvider.
+    2. A unspent transaction output selector (utxo_selector):
 
-        utxo_selector should be a filtering function with prototype:
-            selected, fees = utxo_selector_func(data_provider,
-                                                list(UnspentTransactionOutput),
-                                                int, int, fees=None)
+    utxo_selector should be a filtering function with prototype:
 
-        The job of the selector is to choose from the input list of UTXOs which
-        are to be used in a transaction such that there are sufficient coins
-        to pay the total amount (3rd passed argument) and transaction fees.
-        Since transaction fees are computed based on size of transaction, which
-        is in turn (partially) determined by number of inputs and number of
-        outputs (4th passed argument), the selector must determine the required
-        fees and return that amount as well, unless fees (5th passed argument)
-        is not None in which case the application is specifiying the fees.
+    selected, fees = utxo_selector_func(data_provider,
+    list(UnspentTransactionOutput),
 
-        The return value must be a tuple where the first item is a dict keyed
-        by address with a list of selected UnspentTransactionOutput objects and
-        the second item is the fee amount (in satoshis).
+    The job of the selector is to choose from the input list of UTXOs which
+    are to be used in a transaction such that there are sufficient coins
+    to pay the total amount (3rd passed argument) and transaction fees.
+    Since transaction fees are computed based on size of transaction, which
+    is in turn (partially) determined by number of inputs and number of
+    outputs (4th passed argument), the selector must determine the required
+    fees and return that amount as well, unless fees (5th passed argument)
+    is not None in which case the application is specifiying the fees.
 
-        This is pluggable to allow for different selection criteria,
-        i.e. fewest number of inputs, oldest UTXOs first, newest UTXOs
-        first, minimize change amount, etc.
+    The return value must be a tuple where the first item is a dict keyed
+    by address with a list of selected UnspentTransactionOutput objects and
+    the second item is the fee amount (in satoshis).
+
+    This is pluggable to allow for different selection criteria,
+    i.e. fewest number of inputs, oldest UTXOs first, newest UTXOs
+    first, minimize change amount, etc.
 
     Args:
         params (dict): A dict containing at minimum a "master_key" key
@@ -180,8 +180,8 @@ class Two1Wallet(BaseWallet):
     @staticmethod
     def check_wallet_file(wallet_path=DEFAULT_WALLET_PATH):
         """ Returns whether the specified wallet file exists and
-            contains the minimum set of parameters required to load
-            the wallet.
+        contains the minimum set of parameters required to load
+        the wallet.
 
         Returns:
             bool: True if the wallet file exists and is ready to use,
@@ -205,11 +205,11 @@ class Two1Wallet(BaseWallet):
     @staticmethod
     def is_configured():
         """ Returns the configuration/initialization status of the
-            wallet.
+        wallet.
 
         Returns:
             bool: True if the default wallet has been configured and
-                ready to use otherwise False
+                ready to use. Otherwise False.
         """
         return Two1Wallet.check_wallet_file()
 
@@ -217,9 +217,9 @@ class Two1Wallet(BaseWallet):
     def configure(config_options):
         """ Creates a wallet.
 
-            If 'wallet_path' is found in config_options, the wallet is
-            stored at that location. Otherwise, it is created in
-            ~/.two1/wallet/default_wallet.json.
+        If 'wallet_path' is found in config_options, the wallet is
+        stored at that location. Otherwise, it is created in
+        ~/.two1/wallet/default_wallet.json.
 
         Args:
             config_options (dict): A dict of config options, the keys
@@ -318,8 +318,8 @@ class Two1Wallet(BaseWallet):
                testnet=False):
         """ Creates a Two1Wallet using a random seed.
 
-            This will create a wallet using the default account type
-            (currently BIP32).
+        This will create a wallet using the default account type
+        (currently BIP32).
 
         Args:
             data_provider (BaseProvider): An instance of a derived
@@ -548,13 +548,13 @@ class Two1Wallet(BaseWallet):
         """ Creates an account.
 
         Note:
-            Account creation may fail if:
-            1. There is an existing account that has no transactions
-               associated with it as creating a new account would
-               violate the BIP-44 account discovery protocol:
-
-               https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#Account_discovery
-            2. There is an existing account with the same name.
+            Account creation may fail if
+            there is an existing account that has no transactions
+            associated with it as creating a new account would
+            violate the BIP-44 account discovery protocol:
+            https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#Account_discovery
+            or
+            There is an existing account with the same name.
 
         Args:
             name (str): The name of the account.
@@ -679,7 +679,7 @@ class Two1Wallet(BaseWallet):
                                deserializer=_private_key_deserializer)
     def get_private_key(self, address):
         """ Returns the private key corresponding to address, if it is
-            a part of this wallet.
+        a part of this wallet.
 
         Args:
             address (str): A Base58Check encoded bitcoin address
@@ -698,7 +698,7 @@ class Two1Wallet(BaseWallet):
                                deserializer=_private_key_deserializer)
     def get_private_for_public(self, public_key):
         """ Returns the private key for the given public_key, if it is
-            a part of this wallet.
+        a part of this wallet.
 
         Args:
             public_key (PublicKey): The public key object to retrieve
@@ -712,9 +712,9 @@ class Two1Wallet(BaseWallet):
     def find_addresses(self, addresses):
         """ Returns the paths to the address, if found.
 
-            All *discovered* accounts are checked. Within an account, all
-            addresses up to GAP_LIMIT (20) addresses beyond the last known
-            index for the chain are checked.
+        All *discovered* accounts are checked. Within an account, all
+        addresses up to GAP_LIMIT (20) addresses beyond the last known
+        index for the chain are checked.
 
         Args:
             addresses (list(str)): list of Base58Check encoded addresses.
@@ -740,7 +740,7 @@ class Two1Wallet(BaseWallet):
         return found
 
     def address_belongs(self, address):
-        """ Returns the full path for generating this address
+        """ Returns the full path for generating this address.
 
         Args:
             address (str): Base58Check encoded bitcoin address.
@@ -971,10 +971,10 @@ class Two1Wallet(BaseWallet):
                      key_index=0):
         """ Signs an arbitrary message.
 
-            This function signs the message using a specific key in a specific
-            account. By default, if account or key are not given, it will
-            use the first (default) account and the 0-th public key. In all
-            circumstances it uses keys from the payout (external) chain.
+        This function signs the message using a specific key in a specific
+        account. By default, if account or key are not given, it will
+        use the first (default) account and the 0-th public key. In all
+        circumstances it uses keys from the payout (external) chain.
 
         Note:
             This is different from `sign_bitcoin_message` as there is
@@ -1005,14 +1005,14 @@ class Two1Wallet(BaseWallet):
     def sign_bitcoin_message(self, message, address):
         """ Bitcoin signs an arbitrary message.
 
-            This function signs the message using a specific key in a specific
-            account. By default, if account or key are not given, it will
-            use the first (default) account and the 0-th public key. In all
-            circumstances it uses keys from the payout (external) chain.
+        This function signs the message using a specific key in a specific
+        account. By default, if account or key are not given, it will
+        use the first (default) account and the 0-th public key. In all
+        circumstances it uses keys from the payout (external) chain.
 
         Note:
-            b"\x18Bitcoin Signed Message:\n" + len(message) is prepended
-            to the message before signing.
+            0x18 + b\"Bitcoin Signed Message:" + newline + len(message) is
+            prepended to the message before signing.
 
         Args:
             message (bytes or str): Message to be signed.
@@ -1042,7 +1042,7 @@ class Two1Wallet(BaseWallet):
         Args:
             message(bytes or str): The message that the signature
                 corresponds to.
-            signature (bytes or str): A Base64 encoded signature
+            signature (bytes or str): A Base64 encoded signature.
             address (str): Base58Check encoded address corresponding to the
                 uncompressed key.
 
@@ -1065,8 +1065,8 @@ class Two1Wallet(BaseWallet):
                                        account_name_or_index=None,
                                        key_index=0):
         """ Retrieves the public key typically used for message
-            signing. The default is to use the first account and
-            the 0-th public key from the payout (external) chain.
+        signing. The default is to use the first account and
+        the 0-th public key from the payout (external) chain.
 
         Args:
             account_name_or_index (str or int): The account to retrieve the
@@ -1126,8 +1126,8 @@ class Two1Wallet(BaseWallet):
                                  accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
-            In the future, this function may create multiple transactions
-            if a single one would be too big.
+        In the future, this function may create multiple transactions
+        if a single one would be too big.
 
         Args:
             addresses_and_amounts (dict): A dict keyed by recipient address
@@ -1289,8 +1289,8 @@ class Two1Wallet(BaseWallet):
 
         Returns:
             list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            and raw transactions.  e.g.: [{"txid": txid0, "txn":
+            txn_hex0}, ...]
         """
         return self.make_signed_transaction_for_multiple(
             {address: amount},
@@ -1306,8 +1306,8 @@ class Two1Wallet(BaseWallet):
                                              accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
 
-            In the future, this function may create multiple transactions
-            if a single one would be too big.
+        In the future, this function may create multiple transactions
+        if a single one would be too big.
 
         Args:
             addresses_and_amounts (dict): A dict keyed by recipient address
@@ -1323,8 +1323,8 @@ class Two1Wallet(BaseWallet):
 
         Returns:
             list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            and raw transactions.  e.g.: [{"txid": txid0, "txn":
+            txn_hex0}, ...]
         """
 
         txns = self.build_signed_transaction(
@@ -1389,8 +1389,8 @@ class Two1Wallet(BaseWallet):
 
         Returns:
             list(dict): A list of dicts containing transaction names
-               and raw transactions.  e.g.: [{"txid": txid0, "txn":
-               txn_hex0}, ...]
+            and raw transactions.  e.g.: [{"txid": txid0, "txn":
+            txn_hex0}, ...]
         """
         return self.send_to_multiple(addresses_and_amounts={address: amount},
                                      use_unconfirmed=use_unconfirmed,
@@ -1444,7 +1444,7 @@ class Two1Wallet(BaseWallet):
 
     @daemonizable.method
     def sweep(self, address, accounts=[]):
-        """ Sweeps the entire balance to a single address
+        """ Sweeps the entire balance to a single address.
 
         Args:
             address (str): Bitcoin address to send entire balance to.
@@ -1494,7 +1494,7 @@ class Two1Wallet(BaseWallet):
     @daemonizable.method
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
-            of new change addresses.
+        of new change addresses.
 
         Args:
             threshold (int): UTXO value must be >= to this value.
@@ -1570,7 +1570,7 @@ class Two1Wallet(BaseWallet):
         """ Balance for the wallet.
 
         Returns:
-            dict: keys are 'confirmed' and 'total' with values being in
+            dict: Keys are 'confirmed' and 'total' with values being in
                 satoshis. The 'total' balance includes any unconfirmed
                 transactions.
         """
@@ -1621,7 +1621,7 @@ class Two1Wallet(BaseWallet):
     @daemonizable.method
     def unconfirmed_balance(self, account_name_or_index=None):
         """ Gets the current total balance of the wallet in Satoshi,
-            including unconfirmed transactions
+        including unconfirmed transactions
 
         Args:
             account_name_or_index (str or int): The account to retrieve the
@@ -1777,15 +1777,15 @@ class Two1Wallet(BaseWallet):
 class Wallet(object):
     """ Abstraction layer between wallet object and wallet daemon proxy.
 
-        This class abstracts away between usage of a wallet object
-        when a daemon is not found/running and a daemon proxy object
-        when a daemon is running.
+    This class abstracts away between usage of a wallet object
+    when a daemon is not found/running and a daemon proxy object
+    when a daemon is running.
 
-        Rather than using the Two1Wallet class, this class should be
-        used in the vast majority of cases. Examples of when the
-        Two1Wallet class should be used are: 1. creating/configuring a
-        wallet. 2. any application where running a daemon is not
-        possible or would cause problems.
+    Rather than using the Two1Wallet class, this class should be
+    used in the vast majority of cases. Examples of when the
+    Two1Wallet class should be used are: 1. creating/configuring a
+    wallet. 2. any application where running a daemon is not
+    possible or would cause problems.
 
     Args:
         wallet_path (str): Path to the wallet to be opened. If no path
@@ -1833,7 +1833,7 @@ class Wallet(object):
     @staticmethod
     def check_wallet_proxy_unlocked(w, passphrase):
         """ Checks if the wallet currently loaded by the daemon
-            is unlocked.
+        is unlocked.
 
         Args:
             w (UnixSocketServerProxy): The wallet proxy object to check.

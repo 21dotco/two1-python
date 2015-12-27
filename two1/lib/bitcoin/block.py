@@ -41,9 +41,9 @@ class BlockHeader(object):
     @staticmethod
     def from_bytes(b):
         """ Creates a BlockHeader object from a serialized
-            bytestream. This function "eats" the bytestream and
-            returns the remainder of the stream after deserializing
-            the fields of the BlockHeader.
+        bytestream. This function "eats" the bytestream and
+        returns the remainder of the stream after deserializing
+        the fields of the BlockHeader.
 
         Args:
             b (bytes): bytes beginning with the (4-byte) version.
@@ -129,11 +129,11 @@ class BlockHeader(object):
 class Block(object):
     """ A Bitcoin Block object.
 
-        The merkle root is automatically computed from the transactions
-        passed in during initialization.
+    The merkle root is automatically computed from the transactions
+    passed in during initialization.
     
-        Serialization and deserialization are done according to:
-        https://bitcoin.org/en/developer-reference#serialized-blocks
+    Serialization and deserialization are done according to:
+    https://bitcoin.org/en/developer-reference#serialized-blocks
 
     Args:
         height (uint): Block height
@@ -258,8 +258,8 @@ class Block(object):
 
     def get_merkle_edge(self):
         """ This function returns the merkle edge required for mining. Specifically,
-            the edge begins with the first transaction after the coinbase (self.txns[1])
-            and continues with all nodes in the tree, one-in from the left edge.
+        the edge begins with the first transaction after the coinbase (self.txns[1])
+        and continues with all nodes in the tree, one-in from the left edge.
 
         Returns:
             edge (List(bytes)): List of hashes corresponding to the merkle edge
