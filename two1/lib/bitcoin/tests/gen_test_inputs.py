@@ -7,8 +7,8 @@ import time
 
 from two1.lib.bitcoin.utils import *
 
-CHAIN_API_KEY = os.environ['CHAIN_API_KEY'] 
-CHAIN_API_SECRET = os.environ['CHAIN_API_SECRET']
+CHAIN_API_KEY = os.environ.get('CHAIN_API_KEY', None)
+CHAIN_API_SECRET = os.environ.get('CHAIN_API_SECRET', None)
 
 def get_from_chain(url_adder):
     url = 'https://api.chain.com/v2/bitcoin/%s' % (url_adder)
