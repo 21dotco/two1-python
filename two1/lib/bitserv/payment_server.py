@@ -1,4 +1,5 @@
 """Server-side implementation of payment channels."""
+import os
 import time
 import codecs
 import threading
@@ -6,7 +7,7 @@ import threading
 from two1.lib.bitcoin.utils import pack_u32
 from two1.lib.bitcoin import PublicKey, Transaction, Hash, Signature, Script
 from two1.lib.channels.statemachine import PaymentChannelRedeemScript
-from two1.lib.channels.blockchain import InsightBlockchain
+from two1.lib.channels.blockchain import TwentyOneBlockchain
 
 from .wallet import Two1WalletWrapper
 from .models import DatabaseSQLite3, ChannelSQLite3, Channel
@@ -45,10 +46,10 @@ class PaymentServer:
     server to redeem micropayments made within the channel.
     """
 
-    DEFAULT_INSIGHT_BLOCKCHAIN_URL = "https://blockexplorer.com/api"
+    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/bitcoin"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL = "https://testnet.blockexplorer.com/api"
+    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
     MIN_TX_FEE = 5000
@@ -96,7 +97,7 @@ class PaymentServer:
         if db is None:
             self._db = DatabaseSQLite3()
         if blockchain is None:
-            self._blockchain = InsightBlockchain(PaymentServer.DEFAULT_INSIGHT_BLOCKCHAIN_URL if not self._wallet._wallet.testnet else PaymentServer.DEFAULT_INSIGHT_TESTNET_BLOCKCHAIN_URL)
+            self._blockchain = TwentyOneBlockchain(PaymentServer.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not self._wallet._wallet.testnet else PaymentServer.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
         self._sync_stop = threading.Event()
         self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
         self._sync_thread.start()
