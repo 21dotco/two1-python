@@ -1,15 +1,15 @@
-two1.lib.blockchain.base_provider
----------------------------------
-This submodule provides an abstract base class for a Provider, which
-provides information about the blockchain and broadcasts transactions
-by contacting a server. It is possible to put this "server" on the
-same local machine if desired or to keep it remote to save space.
-
-.. automodule:: two1.lib.blockchain.base_provider
-    :members:
-    :undoc-members:
-	:special-members: __init__
-    :show-inheritance:
+.. NOT IMPLEMENTED two1.lib.blockchain.base_provider
+   ---------------------------------
+   This submodule provides an abstract base class for a Provider, which
+   provides information about the blockchain and broadcasts transactions
+   by contacting a server. It is possible to put this "server" on the
+   same local machine if desired or to keep it remote to save space.
+   
+   .. automodule:: two1.lib.blockchain.base_provider
+       :members:
+       :undoc-members:
+           :special-members: __init__
+       :show-inheritance:
 
 two1.lib.blockchain.twentyone_provider
 --------------------------------------
