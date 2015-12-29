@@ -21,8 +21,6 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 twentyone_provider = TwentyOneProvider()
-block_cypher_provider = BlockCypherProvider()
-#twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
 
 @pytest.mark.parametrize("provider, testnet",
@@ -60,7 +58,7 @@ def test_get_balance(provider, testnet):
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 twentyone_provider = TwentyOneProvider()
-#twentyone_provider = TwentyOneProvider("http://localhost:8000")
+
 
 @pytest.mark.parametrize("provider, testnet",
                          [
