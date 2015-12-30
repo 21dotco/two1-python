@@ -4,7 +4,7 @@ import codecs
 import threading
 
 from two1.lib.bitcoin.utils import pack_u32
-from two1.lib.bitcoin import PublicKey, Transaction, Hash, Signature
+from two1.lib.bitcoin import PublicKey, Transaction, Hash, Signature, Script
 from two1.lib.channels.statemachine import PaymentChannelRedeemScript
 from two1.lib.channels.blockchain import InsightBlockchain
 
@@ -202,6 +202,11 @@ class PaymentServer:
             if len(payment_tx.inputs[0].script) != 3:
                 raise BadTransactionError('Invalid payment channel transaction structure.')
 
+            # Verify the script template is valid for accepting a merchant signature
+            if (not Script.validate_template(payment_tx.inputs[0].script, [bytes, 'OP_1', bytes]) and
+                    not Script.validate_template(payment_tx.inputs[0].script, [bytes, 'OP_TRUE', bytes])):
+                raise BadTransactionError('Invalid payment channel transaction structure.')
+
             # Verify that the payment channel is ready
             if channel.state == ChannelSQLite3.CONFIRMING:
                 raise ChannelClosedError('Payment channel not ready.')
@@ -356,7 +361,7 @@ class PaymentServer:
 
                 # Skip sync if channel is closed
                 if pc.state == ChannelSQLite3.CLOSED:
-                    return
+                    continue
 
                 # Check for deposit confirmation
                 if pc.state == ChannelSQLite3.CONFIRMING and self._blockchain.check_confirmed(pc.deposit_txid):
@@ -373,7 +378,10 @@ class PaymentServer:
                 # Check for channel expiration
                 if pc.state != ChannelSQLite3.CLOSED:
                     if time.time() + PaymentServer.EXP_TIME_BUFFER > pc.expires_at:
+                        redeem_script = PaymentChannelRedeemScript.from_bytes(pc.payment_tx.inputs[0].script[-1])
+                        self._wallet.sign_half_signed_payment(pc.payment_tx, redeem_script)
                         self._blockchain.broadcast_tx(pc.payment_tx.to_hex())
+                        self._db.pc.update_payment(pc.deposit_txid, pc.payment_tx, pc.last_payment_amount)
                         self._db.pc.update_state(pc.deposit_txid, ChannelSQLite3.CLOSED)
 
     def _auto_sync(self, timeout, stop_event):
