@@ -68,7 +68,7 @@ class MockTwo1Wallet:
         sig = payment_tx.get_signature_for_input(0, Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
 
         # Update input script sig
-        script_sig = Script([sig.to_der() + utils.pack_compact_int(Transaction.SIG_HASH_ALL), b"\x00", bytes(redeem_script)])
+        script_sig = Script([sig.to_der() + utils.pack_compact_int(Transaction.SIG_HASH_ALL), 'OP_1', bytes(redeem_script)])
         payment_tx.inputs[0].script = script_sig
 
         return payment_tx
@@ -284,6 +284,12 @@ def test_channel_sync(monkeypatch):
     # Test that Channel B is `closed` after a sync
     test_state = channel_server._db.pc.lookup(deposit_txid_b).state
     assert test_state == ChannelSQLite3.CLOSED, 'Channel should be CLOSED'
+
+    # Test that Channel B payment is fully signed after a sync
+    test_payment = channel_server._db.pc.lookup(deposit_txid_b).payment_tx
+    goodsig_1 = Script.validate_template(test_payment.inputs[0].script, [bytes, bytes, 'OP_1', bytes])
+    goodsig_true = Script.validate_template(test_payment.inputs[0].script, [bytes, bytes, 'OP_TRUE', bytes])
+    assert goodsig_1 or goodsig_true, 'Payment should be in a fully signed format'
 
     # Test that Channel A remains `ready` after another sync
     channel_server.sync()
