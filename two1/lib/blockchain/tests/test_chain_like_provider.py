@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from two1.lib.bitcoin.crypto import HDPublicKey
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.chain_provider import ChainProvider
+from two1.lib.blockchain.insight_provider import InsightProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
@@ -21,6 +22,10 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 
 chain_provider = ChainProvider(API_KEY_ID, API_KEY_SECRET)
 twentyone_provider = TwentyOneProvider()
+block_cypher_provider = BlockCypherProvider()
+insight_provider = InsightProvider("http://insight.bitpay.com")
+testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
+#twentyone_provider = TwentyOneProvider("http://localhost:8000")
 
 
 @pytest.mark.parametrize("provider, testnet",
@@ -98,7 +103,9 @@ def test_utxo(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (block_cypher_provider, False),
-                             (block_cypher_provider, True)
+                             (block_cypher_provider, True),
+                             (insight_provider, False),
+                             (testnet_insight_provider, True)
                          ])
 def test_get_transactions(provider, testnet):
     cp = provider
@@ -123,7 +130,9 @@ def test_get_transactions(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (block_cypher_provider, False),
-                             (block_cypher_provider, True)
+                             (block_cypher_provider, True),
+                             (insight_provider, False),
+                             (testnet_insight_provider, True)
                          ])
 def test_get_transactions_by_id(provider, testnet):
     cp = provider
@@ -148,13 +157,17 @@ def test_get_transactions_by_id(provider, testnet):
                              (chain_provider, False),
                              (chain_provider, True),
                              (twentyone_provider, False),
-                             (twentyone_provider, True)
+                             (twentyone_provider, True),
+                             (insight_provider, False),
+                             (testnet_insight_provider, True)
                          ])
 def test_provider_json_error(provider, testnet):
     cp = provider
 
     cp._session.request = MagicMock(return_value=
-                                    type('obj', (object,), {'status_code': 400, "json": lambda: "Not Json"})
+                                    type('obj', (object,), {'status_code': 400,
+                                                            "json": lambda: "Not Json",
+                                                            'text': "Error"})
                                     )
     if testnet:
         txids = ["f19b101e3ede105b47c98dc54953f4dff195efb6654a168a22659585f92858b4"]
@@ -175,7 +188,9 @@ def test_provider_json_error(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (block_cypher_provider, False),
-                             (block_cypher_provider, True)
+                             (block_cypher_provider, True),
+                             (insight_provider, False),
+                             (testnet_insight_provider, True)
                          ])
 def test_transaction_send(provider, testnet):
     cp = provider
