@@ -247,13 +247,13 @@ class BlockCypherProvider(BaseProvider):
                 for txn in filter(lambda x: x["block_height"] >= min_block, txn_data["txs"]):
                     block_hash = None
 
-                    if txn['block_hash']:
+                    if "block_hash" in txn and txn['block_hash']:
                         block_hash = Hash(txn['block_hash'])
-                        metadata = dict(block=txn['block_height'],
-                                        block_hash=block_hash,
-                                        network_time=timegm(arrow.get(
-                                            txn['received']).datetime.timetuple()),
-                                        confirmations=txn['confirmations'])
+                    metadata = dict(block=txn['block_height'],
+                                    block_hash=block_hash,
+                                    network_time=timegm(arrow.get(
+                                    txn['received']).datetime.timetuple()),
+                                    confirmations=txn['confirmations'])
 
                     txn_obj, addr_keys = self.txn_from_json(txn)
                     for addr in addr_keys:
@@ -286,7 +286,7 @@ class BlockCypherProvider(BaseProvider):
             data = r.json()
 
             block_hash = None
-            if data['block_hash']:
+            if "block_hash" in data:
                 block_hash = Hash(data['block_hash'])
             metadata = dict(block=data['block_height'],
                             block_hash=block_hash,
