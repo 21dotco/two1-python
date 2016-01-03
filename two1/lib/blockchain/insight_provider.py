@@ -16,14 +16,23 @@ from two1.lib.bitcoin.script import Script
 
 class InsightProvider(BaseProvider):
     """ Transaction data provider using the insight API
+
+        Args:
+            insight_host_name (str): Host name (with port).
+            insight_api_path (str): Usually either "api" or "insight-api".
+            testnet (bool, optional): True for testnet, False for
+            mainnet (default)
+            connection_pool_size (int): Number of connections to pool.
     """
 
-    def __init__(self, insight_host_name, insight_api_path="api", testnet=False):
+    def __init__(self, insight_host_name, insight_api_path="api", testnet=False,
+                 connection_pool_size=0):
         self.host_name = insight_host_name
         self.api_path = insight_api_path
         self.testnet = testnet
         self.auth = None
         self._session = None
+        self._pool_size = connection_pool_size
         self.can_limit_by_height = True
 
     @property
@@ -42,6 +51,11 @@ class InsightProvider(BaseProvider):
     def _create_session(self):
         import requests
         self._session = requests.Session()
+        if self._pool_size > 0:
+            adapter = requests.adapters.HTTPAdapter(pool_connections=self._pool_size,
+                                                    pool_maxsize=self._pool_size)
+            self._session.mount('http://', adapter)
+            self._session.mount('https://', adapter)
         self._session.auth = self.auth
 
     @staticmethod
@@ -86,7 +100,7 @@ class InsightProvider(BaseProvider):
         import requests
         if self._session is None:
             self._create_session()
-        
+
         url = self.server_url + path
         result = None
         headers = {"Content-Type": "application/json; charset=utf-8"}
@@ -187,7 +201,7 @@ class InsightProvider(BaseProvider):
         for txid in ids:
             r = self._request("GET", "tx/%s" % txid)
             data = r.json()
-            
+
             if r.status_code == 200:
                 if "vin" not in data or "vout" not in data:
                     continue
@@ -201,7 +215,7 @@ class InsightProvider(BaseProvider):
                                 block_hash=block_hash,
                                 network_time=data['time'],
                                 confirmations=data['confirmations'])
-                
+
                 txn, _ = self.txn_from_json(data)
                 assert str(txn.hash) == txid
 
@@ -259,4 +273,3 @@ class InsightProvider(BaseProvider):
             ret = data['info']['blocks']
 
         return ret
-        
