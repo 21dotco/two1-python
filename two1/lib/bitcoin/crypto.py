@@ -349,7 +349,7 @@ class PrivateKey(PrivateKeyBase):
         Returns:
             PrivateKey: The object representing the private key.
         """
-        return PrivateKey(random.SystemRandom().randrange(1, bitcoin_curve.n - 1))
+        return PrivateKey(random.SystemRandom().randrange(1, bitcoin_curve.n))
 
     def __init__(self, k):
         self.key = k
