@@ -24,9 +24,15 @@ class InsightProvider(BaseProvider):
             mainnet (default)
             connection_pool_size (int): Number of connections to pool.
     """
+    DEFAULT_HOST = "https://insight.bitpay.com"
 
-    def __init__(self, insight_host_name, insight_api_path="api", testnet=False,
+    def __init__(self, insight_host_name=DEFAULT_HOST, insight_api_path="api",
+                 testnet=False,
                  connection_pool_size=0):
+        if insight_host_name is None:
+            insight_host_name = self.DEFAULT_HOST
+        if insight_api_path is None:
+            insight_api_path = "api"
         self.host_name = insight_host_name
         self.api_path = insight_api_path
         self.testnet = testnet

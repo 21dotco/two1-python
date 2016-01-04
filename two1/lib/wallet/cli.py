@@ -15,6 +15,7 @@ from jsonrpcclient.exceptions import ReceivedErrorResponse
 from path import Path
 from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.lib.blockchain.insight_provider import InsightProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.base_wallet import convert_to_btc
 from two1.lib.wallet.base_wallet import convert_to_satoshis
@@ -28,6 +29,7 @@ from two1.lib.wallet.daemonizer import get_daemonizer
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
+                                 'insight': [],
                                  'twentyone': []}
 
 logger = logging.getLogger('wallet')
@@ -137,6 +139,11 @@ def validate_data_provider(ctx, param, value):
             ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
 
         dp = ChainProvider(api_key_id=key, api_key_secret=secret)
+    elif value == 'insight':
+        url = ctx.params['insight_url']
+        api_path = ctx.params['insight_api_path']
+        dp = InsightProvider(insight_host_name=url,
+                             insight_api_path=api_path)
     elif value == 'twentyone':
         dp = TwentyOneProvider()
 
@@ -155,7 +162,7 @@ def validate_data_provider(ctx, param, value):
               help='Prompt for a passphrase.')
 @click.option('--blockchain-data-provider', '-b',
               default='twentyone',
-              type=click.Choice(['twentyone', 'chain']),
+              type=click.Choice(['twentyone', 'insight', 'chain']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
@@ -169,6 +176,16 @@ def validate_data_provider(ctx, param, value):
               envvar='CHAIN_API_KEY_SECRET',
               is_eager=True,
               help='Chain API Secret (only if -b chain)')
+@click.option('--insight-url', '-iu',
+              metavar='URL',
+              envvar='INSIGHT_URL',
+              is_eager=True,
+              help='Insight Host URL (only if -b insight)')
+@click.option('--insight-api-path', '-ip',
+              metavar='STRING',
+              envvar='INSIGHT_API_PATH',
+              is_eager=True,
+              help='Insight API path (only if -b insight)')
 @click.option('--debug', '-d',
               is_flag=True,
               help='Turns on debugging messages.')
@@ -176,6 +193,7 @@ def validate_data_provider(ctx, param, value):
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
          blockchain_data_provider, chain_api_key_id, chain_api_key_secret,
+         insight_url, insight_api_path,
          debug):
     """ Command-line Interface for the Two1 Wallet
     """
