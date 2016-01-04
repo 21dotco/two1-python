@@ -283,7 +283,7 @@ def wallet_path():
               help='Path to wallet file')
 @click.option('--blockchain-data-provider', '-b',
               default='twentyone',
-              type=click.Choice(['twentyone', 'chain']),
+              type=click.Choice(['twentyone', 'insight', 'chain']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
@@ -297,6 +297,16 @@ def wallet_path():
               envvar='CHAIN_API_KEY_SECRET',
               is_eager=True,
               help='Chain API Secret (only if -b chain)')
+@click.option('--insight-url', '-iu',
+              metavar='URL',
+              envvar='INSIGHT_URL',
+              is_eager=True,
+              help='Insight Host URL (only if -b insight)')
+@click.option('--insight-api-path', '-ip',
+              metavar='STRING',
+              envvar='INSIGHT_API_PATH',
+              is_eager=True,
+              help='Insight API path (only if -b insight)')
 @click.option('--data-update-interval', '-u',
               type=click.IntRange(min=10, max=30),
               default=DEF_WALLET_UPDATE_INTERVAL,
@@ -308,8 +318,9 @@ def wallet_path():
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, blockchain_data_provider,
-         chain_api_key_id, chain_api_key_secret, data_update_interval,
-         debug):
+         chain_api_key_id, chain_api_key_secret,
+         insight_url, insight_api_path,
+         data_update_interval, debug):
     """ Two1 Wallet daemon
     """
     global DEF_WALLET_UPDATE_INTERVAL
