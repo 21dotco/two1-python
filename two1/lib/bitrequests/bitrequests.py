@@ -274,8 +274,9 @@ class OnChainRequests(BitRequests):
 
 
 class ChannelRequests(BitRequests):
-
     """BitRequests for making channel payments."""
+
+    import two1.lib.channels as channels
 
     HTTP_BITCOIN_PRICE = 'price'
     HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER = 'bitcoin-payment-channel-server'
@@ -289,8 +290,7 @@ class ChannelRequests(BitRequests):
     def __init__(self, wallet, deposit_amount=DEFAULT_DEPOSIT_AMOUNT, duration=DEFAULT_DURATION):
         """Initialize the channel requests with a payment channel client."""
         super().__init__()
-        from two1.lib.channels import PaymentChannelClient
-        self._channelclient = PaymentChannelClient(wallet)
+        self._channelclient = ChannelRequests.channels.PaymentChannelClient(wallet)
         self._deposit_amount = deposit_amount
         self._duration = duration
 
@@ -345,7 +345,12 @@ class ChannelRequests(BitRequests):
 
         # Pay through the channel
         logger.debug("[ChannelRequests] Paying channel {} with amount {}.".format(channel_url, price))
-        token = self._channelclient.pay(channel_url, price)
+        try:
+            token = self._channelclient.pay(channel_url, price)
+        except ChannelRequests.channels.ClosedError:
+            # If the server closed the channel, restart payment process to
+            # negotiate a new channel.
+            return self.make_402_payment(response, max_price)
 
         return {ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token}
 
