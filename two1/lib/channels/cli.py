@@ -92,6 +92,8 @@ def cli_list(ctx):
 
     if ctx.obj['json']:
         print(json.dumps({'result': urls}))
+    elif len(urls) == 0:
+        print("No payment channels exist.")
     else:
         print()
         for url in urls[::-1]:
