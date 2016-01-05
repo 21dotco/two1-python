@@ -125,7 +125,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         deposit_amount = deposit_tx.outputs[deposit_utxo_index].value - fee
 
         # Build unsigned refund transaction
-        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0x0)]
+        inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0xfffffffe)]
         outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
         refund_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, expiration_time)
 
