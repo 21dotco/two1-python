@@ -13,6 +13,14 @@ import two1.lib.channels.tests.mock as mock
 paymentchannel.SupportedProtocols['mock'] = mock.MockPaymentChannelServer
 
 
+def assert_paymentchannel_status(expected, actual):
+    for attr in expected:
+        if callable(expected[attr]):
+            assert expected[attr](actual)
+        else:
+            assert expected[attr] == getattr(actual, attr)
+
+
 def test_paymentchannelclient():
     # Create mocked dependencies
     wallet = mock.MockTwo1Wallet()
@@ -42,31 +50,35 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
-    assert status.ready == False
-    assert status.balance == 100000
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    url1_expected_status = {}
+    url1_expected_status['url'] = lambda status: "mock://test/" + status.deposit_txid
+    url1_expected_status['state'] = statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
+    url1_expected_status['ready'] = False
+    url1_expected_status['balance'] = 100000
+    url1_expected_status['deposit'] = 100000
+    url1_expected_status['fee'] = 10000
+    url1_expected_status['creation_time'] = lambda status: status.creation_time > 0
+    url1_expected_status['expiration_time'] = int(status.creation_time + 86400)
+    url1_expected_status['expired'] = False
+    url1_expected_status['deposit_txid'] = lambda status: status.deposit_txid
+    url1_expected_status['spend_txid'] = None
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Check url2 properties
     status = pc.status(url2)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
-    assert status.balance == 300000
-    assert status.deposit == 300000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    url2_expected_status = {}
+    url2_expected_status['url'] = lambda status: "mock://test/" + status.deposit_txid
+    url2_expected_status['state'] = statemachine.PaymentChannelState.READY
+    url2_expected_status['ready'] = True
+    url2_expected_status['balance'] = 300000
+    url2_expected_status['deposit'] = 300000
+    url2_expected_status['fee'] = 20000
+    url2_expected_status['creation_time'] = lambda status: status.creation_time > 0
+    url2_expected_status['expiration_time'] = int(status.creation_time + 50000)
+    url2_expected_status['expired'] = False
+    url2_expected_status['deposit_txid'] = lambda status: status.deposit_txid
+    url2_expected_status['spend_txid'] = None
+    assert_paymentchannel_status(url2_expected_status, status)
 
     # Try premature close on url1
     with pytest.raises(paymentchannel.NotReadyError):
@@ -84,8 +96,9 @@ def test_paymentchannelclient():
 
     # Check url1 readiness
     status = pc.status(url1)
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
+    url1_expected_status['state'] = statemachine.PaymentChannelState.READY
+    url1_expected_status['ready'] = True
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Try to pay to an invalid channel
     with pytest.raises(paymentchannelclient.NotFoundError):
@@ -111,48 +124,23 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
-    assert status.balance == 97957
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    url1_expected_status['balance'] = 97957
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Check url2 properties
     status = pc.status(url2)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
-    assert status.balance == 283376
-    assert status.deposit == 300000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    url2_expected_status['balance'] = 283376
+    assert_paymentchannel_status(url2_expected_status, status)
 
     # Close url1
     pc.close(url1)
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert status.ready == False
-    assert status.balance == 97957
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    url1_expected_status['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    url1_expected_status['ready'] = False
+    url1_expected_status['spend_txid'] =  str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Confirm close
     bc.mock_confirm(status.spend_txid)
@@ -162,31 +150,12 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CLOSED
-    assert status.ready == False
-    assert status.balance == 97957
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    url1_expected_status['state'] = statemachine.PaymentChannelState.CLOSED
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Check url2 properties
     status = pc.status(url2)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
-    assert status.balance == 283376
-    assert status.deposit == 300000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    assert_paymentchannel_status(url2_expected_status, status)
 
     # Close url2 server-side
     bc.broadcast_tx(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].to_hex())
@@ -196,17 +165,7 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CLOSED
-    assert status.ready == False
-    assert status.balance == 97957
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Try pay after close on url1
     with pytest.raises(paymentchannel.ClosedError):
@@ -214,17 +173,10 @@ def test_paymentchannelclient():
 
     # Check url2 properties
     status = pc.status(url2)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert status.ready == False
-    assert status.balance == 283376
-    assert status.deposit == 300000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    url2_expected_status['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    url2_expected_status['ready'] = False
+    url2_expected_status['spend_txid'] = str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    assert_paymentchannel_status(url2_expected_status, status)
 
     # Confirm close
     bc.mock_confirm(status.spend_txid)
@@ -234,48 +186,31 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CLOSED
-    assert status.ready == False
-    assert status.balance == 97957
-    assert status.deposit == 100000
-    assert status.fee == 10000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 86400)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    assert_paymentchannel_status(url1_expected_status, status)
 
     # Check url2 properties
     status = pc.status(url2)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CLOSED
-    assert status.ready == False
-    assert status.balance == 283376
-    assert status.deposit == 300000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid == str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    url2_expected_status['state'] = statemachine.PaymentChannelState.CLOSED
+    assert_paymentchannel_status(url2_expected_status, status)
 
     # Open a payment channel with 400000 deposit, 50000 seconds expiration, and 20000 fee
     url3 = pc.open('mock://test', 400000, 50000, 20000, True)
 
     # Check url3 properties
     status = pc.status(url3)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.READY
-    assert status.ready == True
-    assert status.balance == 400000
-    assert status.deposit == 400000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == False
-    assert status.deposit_txid
-    assert status.spend_txid is None
+    url3_expected_status = {}
+    url3_expected_status['url'] = 'mock://test/' + status.deposit_txid
+    url3_expected_status['state'] = statemachine.PaymentChannelState.READY
+    url3_expected_status['ready'] = True
+    url3_expected_status['balance'] = 400000
+    url3_expected_status['deposit'] = 400000
+    url3_expected_status['fee'] = 20000
+    url3_expected_status['creation_time'] = lambda status: status.creation_time > 0
+    url3_expected_status['expiration_time'] = int(status.creation_time + 50000)
+    url3_expected_status['expired'] = False
+    url3_expected_status['deposit_txid'] = lambda status: status.deposit_txid
+    url3_expected_status['spend_txid'] = None
+    assert_paymentchannel_status(url3_expected_status, status)
 
     # Monkey-patch time.time() for expiration
     orig_time_time = time.time
@@ -286,17 +221,11 @@ def test_paymentchannelclient():
 
     # Check url3 properties
     status = pc.status(url3, include_txs=True)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert status.ready == False
-    assert status.balance == 400000
-    assert status.deposit == 400000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == True
-    assert status.deposit_txid
-    assert status.spend_txid == str(bitcoin.Transaction.from_hex(status.transactions.refund_tx).hash)
+    url3_expected_status['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    url3_expected_status['ready'] = False
+    url3_expected_status['expired'] = True
+    url3_expected_status['spend_txid'] = str(bitcoin.Transaction.from_hex(status.transactions.refund_tx).hash)
+    assert_paymentchannel_status(url3_expected_status, status)
 
     # Confirm refund
     bc.mock_confirm(status.spend_txid)
@@ -306,17 +235,8 @@ def test_paymentchannelclient():
 
     # Check url3 properties
     status = pc.status(url3, include_txs=True)
-    assert status.url == 'mock://test/' + status.deposit_txid
-    assert status.state == statemachine.PaymentChannelState.CLOSED
-    assert status.ready == False
-    assert status.balance == 400000
-    assert status.deposit == 400000
-    assert status.fee == 20000
-    assert status.creation_time > 0
-    assert status.expiration_time == int(status.creation_time + 50000)
-    assert status.expired == True
-    assert status.deposit_txid
-    assert status.spend_txid == str(bitcoin.Transaction.from_hex(status.transactions.refund_tx).hash)
+    url3_expected_status['state'] = statemachine.PaymentChannelState.CLOSED
+    assert_paymentchannel_status(url3_expected_status, status)
 
     # Restore time.time()
     time.time = orig_time_time

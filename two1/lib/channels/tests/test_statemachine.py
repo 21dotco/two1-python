@@ -42,6 +42,14 @@ def test_redeem_script():
         statemachine.PaymentChannelRedeemScript.from_bytes(bytes(scr))
 
 
+def assert_statemachine_state(expected, actual):
+    for attr in expected:
+        if callable(expected[attr]):
+            assert expected[attr](actual)
+        else:
+            assert expected[attr] == getattr(actual, attr)
+
+
 def test_statemachine_create():
     """Test state machine transitions from initial state OPENING.
 
@@ -64,22 +72,25 @@ def test_statemachine_create():
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
+    # Expected state machine state
+    expected_state = {}
+    expected_state['state'] = statemachine.PaymentChannelState.OPENING
+    expected_state['balance_amount'] = None
+    expected_state['deposit_amount'] = None
+    expected_state['fee_amount'] = None
+    expected_state['creation_time'] = None
+    expected_state['expiration_time'] = None
+    expected_state['deposit_tx_utxo_index'] = None
+    expected_state['deposit_tx'] = None
+    expected_state['deposit_txid'] = None
+    expected_state['deposit_txid_signature'] = None
+    expected_state['refund_tx'] = None
+    expected_state['refund_txid'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+
     # Assert state machine state
-    assert sm.state == statemachine.PaymentChannelState.OPENING
-    assert sm.balance_amount is None
-    assert sm.deposit_amount is None
-    assert sm.fee_amount is None
-    assert sm.creation_time is None
-    assert sm.expiration_time is None
-    assert sm.deposit_tx_utxo_index is None
-    assert sm.deposit_tx is None
-    assert sm.deposit_txid is None
-    assert sm.deposit_txid_signature is None
-    assert sm.refund_tx is None
-    assert sm.refund_txid is None
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    assert_statemachine_state(expected_state, sm)
 
     # Check invalid transition OPENING -> READY via confirm()
     with pytest.raises(statemachine.StateTransitionError):
@@ -110,21 +121,19 @@ def test_statemachine_create():
     (deposit_tx, redeem_script) = sm.create(merchant_public_key, deposit_amount, expiration_time, fee_amount, zeroconf=False)
     assert deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
     assert redeem_script == "63210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac"
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009d483045022100d00fb043ab32361c4e574e4f7f59ba0b3d1c2fbe758c3d26555cb3748e3270050220729cb95327245aa6f428f87b1e13cbc9c82dfa6dbc2bac0fc4641fc720dc0b220101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacfeffffff01888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "11e4aa126c61ef5b31b68b5c79aac1fa1313aa1f255229b54fb237b1c0fc701c"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
+    expected_state['balance_amount'] = 100000
+    expected_state['deposit_amount'] = 100000
+    expected_state['fee_amount'] = 10000
+    expected_state['creation_time'] = lambda sm: sm.creation_time > 0
+    expected_state['expiration_time'] = 1450223410
+    expected_state['deposit_tx_utxo_index'] = 0
+    expected_state['deposit_tx'] = "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
+    expected_state['deposit_txid'] = "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
+    expected_state['deposit_txid_signature'] = "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
+    expected_state['refund_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009d483045022100d00fb043ab32361c4e574e4f7f59ba0b3d1c2fbe758c3d26555cb3748e3270050220729cb95327245aa6f428f87b1e13cbc9c82dfa6dbc2bac0fc4641fc720dc0b220101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacfeffffff01888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['refund_txid'] = "11e4aa126c61ef5b31b68b5c79aac1fa1313aa1f255229b54fb237b1c0fc701c"
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -134,21 +143,8 @@ def test_statemachine_create():
     (deposit_tx, redeem_script) = sm.create(merchant_public_key, deposit_amount, expiration_time, fee_amount, zeroconf=True)
     assert deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
     assert redeem_script == "63210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009d483045022100d00fb043ab32361c4e574e4f7f59ba0b3d1c2fbe758c3d26555cb3748e3270050220729cb95327245aa6f428f87b1e13cbc9c82dfa6dbc2bac0fc4641fc720dc0b220101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacfeffffff01888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "11e4aa126c61ef5b31b68b5c79aac1fa1313aa1f255229b54fb237b1c0fc701c"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    assert_statemachine_state(expected_state, sm)
 
 
 def test_statemachine_confirm():
@@ -181,21 +177,23 @@ def test_statemachine_confirm():
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
     # Assert state machine state
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state = {}
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
+    expected_state['balance_amount'] = 100000
+    expected_state['deposit_amount'] = 100000
+    expected_state['fee_amount'] = 10000
+    expected_state['creation_time'] = lambda sm: sm.creation_time > 0
+    expected_state['expiration_time'] = 1450223410
+    expected_state['deposit_tx_utxo_index'] = 0
+    expected_state['deposit_tx'] = "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
+    expected_state['deposit_txid'] = "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
+    expected_state['deposit_txid_signature'] = "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
+    expected_state['refund_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['refund_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_statemachine_state(expected_state, sm)
 
     # Check invalid transition CONFIRMING_DEPOSIT -> OUTSTANDING via pay()
     with pytest.raises(statemachine.StateTransitionError):
@@ -209,21 +207,8 @@ def test_statemachine_confirm():
 
     # Check valid transition CONFIRMING_DEPOSIT -> READY via confirm()
     sm.confirm()
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -231,21 +216,9 @@ def test_statemachine_confirm():
 
     # Check valid transition CONFIRMING_DEPOSIT -> CONFIRMING_SPEND via close()
     sm.close("2654e56291a542e99d26e1d2ba34d455031517453b6c7ae256c62e151ddc41cc")
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is "2654e56291a542e99d26e1d2ba34d455031517453b6c7ae256c62e151ddc41cc"
+    expected_state['spend_txid'] = "2654e56291a542e99d26e1d2ba34d455031517453b6c7ae256c62e151ddc41cc"
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -253,21 +226,10 @@ def test_statemachine_confirm():
 
     # Check valid transition OPENING -> CLOSED via finalize()
     sm.finalize("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056")
-    assert sm.state == statemachine.PaymentChannelState.CLOSED
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
-    assert sm.spend_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.spend_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['spend_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['spend_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    assert_statemachine_state(expected_state, sm)
 
 
 def test_statemachine_pay():
@@ -291,131 +253,91 @@ def test_statemachine_pay():
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
     # Assert state machine state
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state = {}
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 100000
+    expected_state['deposit_amount'] = 100000
+    expected_state['fee_amount'] = 10000
+    expected_state['creation_time'] = lambda sm: sm.creation_time > 0
+    expected_state['expiration_time'] = 1450223410
+    expected_state['deposit_tx_utxo_index'] = 0
+    expected_state['deposit_tx'] = "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
+    expected_state['deposit_txid'] = "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
+    expected_state['deposit_txid_signature'] = "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
+    expected_state['refund_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['refund_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_statemachine_state(expected_state, sm)
 
-    # Test initial payment with amount 1, but nack it
+    # Test initial payment with amount 1
     payment_tx = sm.pay(1)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_nack()
     assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100e0758baae39dfb1c4402c37a3382ae96a34786734265ea2bc94977299dfd2573022047957838a067ad0bbd575ec219e71c1c750685f6a70da3baa9d294c8a8202d7b01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e8030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488aca0860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx is None
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
 
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    # But nack it
+    sm.pay_nack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    assert_statemachine_state(expected_state, sm)
 
     # Test initial payment with amount 1, and acknowledge it
     payment_tx = sm.pay(1)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_ack()
     assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100e0758baae39dfb1c4402c37a3382ae96a34786734265ea2bc94977299dfd2573022047957838a067ad0bbd575ec219e71c1c750685f6a70da3baa9d294c8a8202d7b01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e8030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488aca0860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 99000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100e0758baae39dfb1c4402c37a3382ae96a34786734265ea2bc94977299dfd2573022047957838a067ad0bbd575ec219e71c1c750685f6a70da3baa9d294c8a8202d7b01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e8030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488aca0860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # Acknowledge it
+    sm.pay_ack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 99000
+    expected_state['payment_tx'] = payment_tx
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
-    # Test initial payment with amount PAYMENT_TX_MIN_OUTPUT_AMOUNT + 1
-    payment_tx = sm.pay(1001)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_ack()
-    assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b47304402201638d4ca0760ce75d9aaf514f870076f2d68c43bcfcbed308ffe983b9d6f062e022036a5b377f2e32810bc235aaab2a885055fb6ff0348e25a8720b1c48ec228d3a301514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e9030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac9f860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 98999
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b47304402201638d4ca0760ce75d9aaf514f870076f2d68c43bcfcbed308ffe983b9d6f062e022036a5b377f2e32810bc235aaab2a885055fb6ff0348e25a8720b1c48ec228d3a301514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e9030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac9f860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['balance_amount'] = 100000
+    expected_state['payment_tx'] = None
 
-    # Test subsequent payment of 20000, but nack it
-    payment_tx = sm.pay(20000)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_nack()
-    assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c4830450221009d19b49f540af728a3ce978bad1c4bf6d162a6f24f74dd11bde72e706521c08a02200ce0dd828018741434f74ee7a4c7bfb9e74c56d20246966b3a893d8bb13c871101514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff0209520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7f380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 98999
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b47304402201638d4ca0760ce75d9aaf514f870076f2d68c43bcfcbed308ffe983b9d6f062e022036a5b377f2e32810bc235aaab2a885055fb6ff0348e25a8720b1c48ec228d3a301514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e9030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac9f860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    # Test initial payment with amount PAYMENT_TX_MIN_OUTPUT_AMOUNT + 2
+    payment_tx = sm.pay(1001)
+    assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b47304402201638d4ca0760ce75d9aaf514f870076f2d68c43bcfcbed308ffe983b9d6f062e022036a5b377f2e32810bc235aaab2a885055fb6ff0348e25a8720b1c48ec228d3a301514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02e9030000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac9f860100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # Acknowledge it
+    sm.pay_ack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 98999
+    expected_state['payment_tx'] = payment_tx
+    assert_statemachine_state(expected_state, sm)
 
     # Test subsequent payment of 20000
     payment_tx = sm.pay(20000)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_ack()
     assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c4830450221009d19b49f540af728a3ce978bad1c4bf6d162a6f24f74dd11bde72e706521c08a02200ce0dd828018741434f74ee7a4c7bfb9e74c56d20246966b3a893d8bb13c871101514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff0209520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7f380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 78999
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c4830450221009d19b49f540af728a3ce978bad1c4bf6d162a6f24f74dd11bde72e706521c08a02200ce0dd828018741434f74ee7a4c7bfb9e74c56d20246966b3a893d8bb13c871101514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff0209520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7f380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # But nack it
+    sm.pay_nack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    assert_statemachine_state(expected_state, sm)
+
+    # Test subsequent payment of 20000
+    payment_tx = sm.pay(20000)
+    assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c4830450221009d19b49f540af728a3ce978bad1c4bf6d162a6f24f74dd11bde72e706521c08a02200ce0dd828018741434f74ee7a4c7bfb9e74c56d20246966b3a893d8bb13c871101514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff0209520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7f380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # Acknowledge it
+    sm.pay_ack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 78999
+    expected_state['payment_tx'] = payment_tx
+    assert_statemachine_state(expected_state, sm)
 
     # Test excess payment of 80000
     with pytest.raises(statemachine.InsufficientBalanceError):
@@ -427,45 +349,29 @@ def test_statemachine_pay():
 
     # Test subsequent payment of 1
     payment_tx = sm.pay(1)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_ack()
     assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # Acknowledge it
+    sm.pay_ack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 78998
+    expected_state['payment_tx'] = payment_tx
+    assert_statemachine_state(expected_state, sm)
 
     # Test remainder payment
     payment_tx = sm.pay(78998)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
-    sm.pay_ack()
     assert payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b4730440220064f50737f894e97d8f1c49b07f9206caacfeeb5f6fd0ff4a0fe1cce5668cdbf02207bbe2a71627d38c1c524c7b68b4c77ffb7b5edb78c0cb1dd8516ddf7d766acfc01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02a0860100000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ace8030000000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 0
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009b4730440220064f50737f894e97d8f1c49b07f9206caacfeeb5f6fd0ff4a0fe1cce5668cdbf02207bbe2a71627d38c1c524c7b68b4c77ffb7b5edb78c0cb1dd8516ddf7d766acfc01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff02a0860100000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ace8030000000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
+
+    # Acknowledge it
+    sm.pay_ack()
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 0
+    expected_state['payment_tx'] = payment_tx
+    assert_statemachine_state(expected_state, sm)
 
 
 def test_statemachine_close():
@@ -493,39 +399,29 @@ def test_statemachine_close():
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
     # Assert state machine state
-    assert sm.state == statemachine.PaymentChannelState.READY
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state = {}
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['balance_amount'] = 78998
+    expected_state['deposit_amount'] = 100000
+    expected_state['fee_amount'] = 10000
+    expected_state['creation_time'] = lambda sm: sm.creation_time > 0
+    expected_state['expiration_time'] = 1450223410
+    expected_state['deposit_tx_utxo_index'] = 0
+    expected_state['deposit_tx'] = "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
+    expected_state['deposit_txid'] = "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
+    expected_state['deposit_txid_signature'] = "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
+    expected_state['refund_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['refund_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['payment_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_statemachine_state(expected_state, sm)
 
     # Valid transition READY -> CONFIRMING_SPEND via close(None)
     sm.close(None)
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['spend_txid'] = None
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -533,45 +429,25 @@ def test_statemachine_close():
 
     # Valid transition READY -> CONFIRMING_SPEND via close(<txid>)
     sm.close("afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968")
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is "afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968"
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['spend_txid'] = "afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968"
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['spend_txid'] = None
+
     # Valid transition OUTSTANDING -> CONFIRMING_SPEND via close(<txid>)
     sm.pay(1)
-    assert sm.state == statemachine.PaymentChannelState.OUTSTANDING
+    expected_state['state'] = statemachine.PaymentChannelState.OUTSTANDING
+    assert_statemachine_state(expected_state, sm)
     sm.close("afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968")
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is "afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968"
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['spend_txid'] = "afb48fb7c8f09a846b44df91f0704464785e61ef14da34e8a9b95cb0c1866968"
+    assert_statemachine_state(expected_state, sm)
 
 
 def test_statemachine_finalize():
@@ -599,39 +475,31 @@ def test_statemachine_finalize():
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
     # Assert state machine state
-    assert sm.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx is None
-    assert sm.spend_txid is None
+    expected_state = {}
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['balance_amount'] = 78998
+    expected_state['deposit_amount'] = 100000
+    expected_state['fee_amount'] = 10000
+    expected_state['creation_time'] = lambda sm: sm.creation_time > 0
+    expected_state['expiration_time'] = 1450223410
+    expected_state['deposit_tx_utxo_index'] = 0
+    expected_state['deposit_tx'] = "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
+    expected_state['deposit_txid'] = "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
+    expected_state['deposit_txid_signature'] = "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
+    expected_state['refund_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['refund_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['payment_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_statemachine_state(expected_state, sm)
 
     # Valid finalize with refund tx
     sm.finalize("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056")
-    assert sm.state == statemachine.PaymentChannelState.CLOSED
-    assert sm.balance_amount == 100000
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.spend_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['balance_amount'] = 100000
+    expected_state['spend_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['spend_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -639,21 +507,11 @@ def test_statemachine_finalize():
 
     # Valid finalize with payment tx
     sm.finalize("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000")
-    assert sm.state == statemachine.PaymentChannelState.CLOSED
-    assert sm.balance_amount == 78998
-    assert sm.deposit_amount == 100000
-    assert sm.fee_amount == 10000
-    assert sm.creation_time != 0
-    assert sm.expiration_time == 1450223410
-    assert sm.deposit_tx_utxo_index == 0
-    assert sm.deposit_tx == "010000000119de54dd7043927219cca4c06cc8b94c7c862b6486b0f989ea4c6569fb34383d010000006b483045022100c45e5bd8d00caa1cd3ad46e078ec132c9c505b3168d1d1ffe6285cf054f54ed302203ea12c4203ccee8a9de616cc22f081eed47a78660ce0a01cb3a97e302178a573012103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dffffffff0198b101000000000017a9149bc3354ccfd998cf16628449b940e6914210f1098700000000"
-    assert sm.deposit_txid == "7e1a558c84abd5aaf57999557f4a7205d4b69241b7c9cab6c0795fdd663a51ef"
-    assert sm.deposit_txid_signature == "30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27"
-    assert sm.refund_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.refund_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
-    assert sm.payment_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_txid == "247412297242f1849a9fd8ef7b1acabdb07465da32ab5240d8ba425876a43104"
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['balance_amount'] = 78998
+    expected_state['spend_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['spend_txid'] = "247412297242f1849a9fd8ef7b1acabdb07465da32ab5240d8ba425876a43104"
+    assert_statemachine_state(expected_state, sm)
 
     # Reset state machine
     model = statemachine.PaymentChannelModel(**model_data)
@@ -678,16 +536,18 @@ def test_statemachine_finalize():
     # Valid transition CLOSED -> CLOSED via finalize()
     # Finalize with valid payment
     sm.finalize("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000")
-    assert sm.state == statemachine.PaymentChannelState.CLOSED
-    assert sm.balance_amount == 78998
-    assert sm.spend_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
-    assert sm.spend_txid == "247412297242f1849a9fd8ef7b1acabdb07465da32ab5240d8ba425876a43104"
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['balance_amount'] = 78998
+    expected_state['spend_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e00000000e5483045022100bd2a89446c9d5985ee711747f35b8e367a90eb13970aec1b3a3ad11e01da7ac602205405fe99d5fe590fb13f0b7698e306e3bbcdd83855e156eb8e9a8901f887229f01483045022100ee02cd312b33e78d7dd6d9044f47577a224038fa731ad34ca0ea4870575d6223022073124ecd6c63042ec6a99b34ba6d926524c6491fb1440eaa21177329f542e97501514c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dacffffffff020a520000000000001976a914a5f30391271dfccc133d321960ffe1dccc88e1b488ac7e380100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac00000000"
+    expected_state['spend_txid'] = "247412297242f1849a9fd8ef7b1acabdb07465da32ab5240d8ba425876a43104"
+    assert_statemachine_state(expected_state, sm)
     # Finalize with refund
     sm.finalize("0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056")
-    assert sm.state == statemachine.PaymentChannelState.CLOSED
-    assert sm.balance_amount == 100000
-    assert sm.spend_tx == "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
-    assert sm.spend_txid == "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['balance_amount'] = 100000
+    expected_state['spend_tx'] = "0100000001ef513a66dd5f79c0b6cac9b74192b6d405724a7f559979f5aad5ab848c551a7e000000009c47304402207c866a5d8d46c767975c95b9fa65051578898445c85f367c4d6b56c6b795491102202db45315bfd27aa19bd7156aa70aed48ebe331c88297711ff675da5ff069f7b90101004c5063210316f5d704b828c3252432886a843649730e08ae01bbbd5c6bde63756d7f54f961ad670432a77056b175682103ee071c95cb772e57a6d8f4f987e9c61b857e63d9f3b5be7a84bdba0b5847099dac0000000001888a0100000000001976a914b42fb00f78266bba89feee86036df44401320fba88ac32a77056"
+    expected_state['spend_txid'] = "e49cef2fbaf7b6590eb502e4b143f24d5d95ca2e255b166f3b40bef786a32bba"
+    assert_statemachine_state(expected_state, sm)
 
     # Invalid transition CLOSED -> OUTSTANDING via pay()
     with pytest.raises(statemachine.StateTransitionError):

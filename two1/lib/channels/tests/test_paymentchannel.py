@@ -12,6 +12,14 @@ import two1.lib.channels.tests.mock as mock
 paymentchannel.SupportedProtocols['mock'] = mock.MockPaymentChannelServer
 
 
+def assert_paymentchannel_state(expected, actual):
+    for attr in expected:
+        if callable(expected[attr]):
+            assert expected[attr](actual)
+        else:
+            assert expected[attr] == getattr(actual, attr)
+
+
 def test_paymentchannel_typical():
     # Create mocked dependencies
     wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
@@ -27,23 +35,25 @@ def test_paymentchannel_typical():
     # Open a payment channel with 100000 deposit, 86400 seconds expiration, and 10000 fee
     pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, 86400, 10000, False)
 
-    # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
-    assert pc.ready == False
-    assert pc.balance == 100000
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx is None
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    # Assert payment channel properties
+    expected_state = {}
+    expected_state['url'] = "mock://test/" + pc.deposit_txid
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
+    expected_state['ready'] = False
+    expected_state['balance'] = 100000
+    expected_state['deposit'] = 100000
+    expected_state['fee'] = 10000
+    expected_state['creation_time'] = lambda pc: pc.creation_time > 0
+    expected_state['expiration_time'] = int(pc.creation_time + 86400)
+    expected_state['expired'] = False
+    expected_state['refund_tx'] = lambda pc: pc.refund_tx
+    expected_state['refund_txid'] = lambda pc: pc.refund_txid
+    expected_state['deposit_tx'] = lambda pc: pc.deposit_tx
+    expected_state['deposit_txid'] = lambda pc: pc.deposit_txid
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_paymentchannel_state(expected_state, pc)
 
     # Check database
     with db:
@@ -64,16 +74,18 @@ def test_paymentchannel_typical():
 
     # Sync payment channel
     pc.sync()
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
-    assert pc.ready == False
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_DEPOSIT
+    expected_state['ready'] = False
+    assert_paymentchannel_state(expected_state, pc)
 
     # Confirm deposit
     bc.mock_confirm(pc.deposit_txid)
 
     # Sync payment channel
     pc.sync()
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['ready'] = True
+    assert_paymentchannel_state(expected_state, pc)
 
     # Try excess payment
     with pytest.raises(paymentchannel.InsufficientBalanceError):
@@ -85,46 +97,43 @@ def test_paymentchannel_typical():
 
     # Make regular payments
     assert pc.pay(1500)
-    assert pc.balance == 98500
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    expected_state['balance'] = 98500
+    assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(1)
-    assert pc.balance == 98499
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    expected_state['balance'] = 98499
+    assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(15)
-    assert pc.balance == 98484
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    expected_state['balance'] = 98484
+    assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(20000)
-    assert pc.balance == 78484
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    expected_state['balance'] = 78484
+    assert_paymentchannel_state(expected_state, pc)
 
     # Close payment channel
     pc.close()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert pc.ready == False
-    assert pc.balance == 78484
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid == str(mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].hash)
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['ready'] = False
+    expected_state['spend_txid'] = str(mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].hash)
+    assert_paymentchannel_state(expected_state, pc)
 
     # Sync payment channel
     pc.sync()
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
+    assert_paymentchannel_state(expected_state, pc)
 
     # Confirm spend
     bc.mock_confirm(pc.spend_txid)
 
     # Sync payment channel
     pc.sync()
-    assert pc.state == statemachine.PaymentChannelState.CLOSED
-    assert pc.spend_tx == mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].to_hex()
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['spend_tx'] = mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].to_hex()
+    assert_paymentchannel_state(expected_state, pc)
 
     # Try payment on closed channel
     with pytest.raises(paymentchannel.ClosedError):
@@ -146,23 +155,25 @@ def test_paymentchannel_typical_zeroconf():
     # Open a payment channel with 100000 deposit, 86400 seconds expiration, and 10000 fee
     pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, 86400, 10000, True)
 
-    # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
-    assert pc.balance == 100000
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx is None
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    # Assert payment channel properties
+    expected_state = {}
+    expected_state['url'] = "mock://test/" + pc.deposit_txid
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['ready'] = True
+    expected_state['balance'] = 100000
+    expected_state['deposit'] = 100000
+    expected_state['fee'] = 10000
+    expected_state['creation_time'] = lambda pc: pc.creation_time > 0
+    expected_state['expiration_time'] = int(pc.creation_time + 86400)
+    expected_state['expired'] = False
+    expected_state['refund_tx'] = lambda pc: pc.refund_tx
+    expected_state['refund_txid'] = lambda pc: pc.refund_txid
+    expected_state['deposit_tx'] = lambda pc: pc.deposit_tx
+    expected_state['deposit_txid'] = lambda pc: pc.deposit_txid
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_paymentchannel_state(expected_state, pc)
 
     # Make a few payments and close the channel
     pc.pay(1)
@@ -171,22 +182,12 @@ def test_paymentchannel_typical_zeroconf():
     pc.close()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert pc.ready == False
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['ready'] = False
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    expected_state['balance'] = 98998
+    expected_state['spend_txid'] = lambda pc: pc.spend_txid
+    assert_paymentchannel_state(expected_state, pc)
 
 
 def test_paymentchannel_expiration():
@@ -208,23 +209,25 @@ def test_paymentchannel_expiration():
     bc.mock_confirm(pc.deposit_txid)
     pc.sync()
 
-    # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
-    assert pc.balance == 100000
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx is None
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    # Assert payment channel properties
+    expected_state = {}
+    expected_state['url'] = "mock://test/" + pc.deposit_txid
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['ready'] = True
+    expected_state['balance'] = 100000
+    expected_state['deposit'] = 100000
+    expected_state['fee'] = 10000
+    expected_state['creation_time'] = lambda pc: pc.creation_time > 0
+    expected_state['expiration_time'] = int(pc.creation_time + 86400)
+    expected_state['expired'] = False
+    expected_state['refund_tx'] = lambda pc: pc.refund_tx
+    expected_state['refund_txid'] = lambda pc: pc.refund_txid
+    expected_state['deposit_tx'] = lambda pc: pc.deposit_tx
+    expected_state['deposit_txid'] = lambda pc: pc.deposit_txid
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_paymentchannel_state(expected_state, pc)
 
     # Make a few payments
     pc.pay(1)
@@ -232,50 +235,28 @@ def test_paymentchannel_expiration():
     pc.pay(1)
 
     # Check payment channel properties
-    assert pc.expired == False
+    expected_state['balance'] = 98998
+    expected_state['expired'] = False
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    assert_paymentchannel_state(expected_state, pc)
 
     # Monkey-patch time.time() for expiration
     orig_time_time = time.time
     time.time = lambda: pc.expiration_time + paymentchannel.PaymentChannel.REFUND_BROADCAST_TIME_OFFSET + 1
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == True
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    expected_state['expired'] = True
+    assert_paymentchannel_state(expected_state, pc)
 
     # Sync to trigger a refund
     pc.sync()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert pc.ready == False
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == True
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid == pc.refund_txid
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['ready'] = False
+    expected_state['expired'] = True
+    expected_state['spend_txid'] = lambda pc: pc.refund_txid
+    assert_paymentchannel_state(expected_state, pc)
 
     # Confirm refund tx
     bc.mock_confirm(pc.refund_txid)
@@ -284,22 +265,8 @@ def test_paymentchannel_expiration():
     pc.sync()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CLOSED
-    assert pc.ready == False
-    assert pc.balance == 100000
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == True
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx == pc.refund_tx
-    assert pc.spend_txid == pc.refund_txid
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['spend_tx'] = lambda pc: pc.refund_tx
 
     # Restore time.time()
     time.time = orig_time_time
@@ -326,23 +293,25 @@ def test_paymentchannel_serverside_close():
     bc.mock_confirm(pc.deposit_txid)
     pc.sync()
 
-    # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
-    assert pc.balance == 100000
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx is None
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    # Assert payment channel properties
+    expected_state = {}
+    expected_state['url'] = "mock://test/" + pc.deposit_txid
+    expected_state['state'] = statemachine.PaymentChannelState.READY
+    expected_state['ready'] = True
+    expected_state['balance'] = 100000
+    expected_state['deposit'] = 100000
+    expected_state['fee'] = 10000
+    expected_state['creation_time'] = lambda pc: pc.creation_time > 0
+    expected_state['expiration_time'] = int(pc.creation_time + 86400)
+    expected_state['expired'] = False
+    expected_state['refund_tx'] = lambda pc: pc.refund_tx
+    expected_state['refund_txid'] = lambda pc: pc.refund_txid
+    expected_state['deposit_tx'] = lambda pc: pc.deposit_tx
+    expected_state['deposit_txid'] = lambda pc: pc.deposit_txid
+    expected_state['payment_tx'] = None
+    expected_state['spend_tx'] = None
+    expected_state['spend_txid'] = None
+    assert_paymentchannel_state(expected_state, pc)
 
     # Make a few payments
     pc.pay(1)
@@ -350,22 +319,10 @@ def test_paymentchannel_serverside_close():
     pc.pay(1)
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.READY
-    assert pc.ready == True
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid is None
+    expected_state['balance'] = 98998
+    expected_state['expired'] = False
+    expected_state['payment_tx'] = lambda pc: pc.payment_tx
+    assert_paymentchannel_state(expected_state, pc)
 
     # Close the channel server-side by broadcasting the last payment tx
     bc.broadcast_tx(mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].to_hex())
@@ -374,22 +331,10 @@ def test_paymentchannel_serverside_close():
     pc.sync()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CONFIRMING_SPEND
-    assert pc.ready == False
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx is None
-    assert pc.spend_txid == str(mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].hash)
+    expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
+    expected_state['ready'] = False
+    expected_state['spend_txid'] = lambda pc: pc.spend_txid
+    assert_paymentchannel_state(expected_state, pc)
 
     # Confirm payment tx
     bc.mock_confirm(pc.spend_txid)
@@ -398,19 +343,6 @@ def test_paymentchannel_serverside_close():
     pc.sync()
 
     # Check payment channel properties
-    assert pc.url == "mock://test/" + pc.deposit_txid
-    assert pc.state == statemachine.PaymentChannelState.CLOSED
-    assert pc.ready == False
-    assert pc.balance == 98998
-    assert pc.deposit == 100000
-    assert pc.fee == 10000
-    assert pc.creation_time > 0
-    assert pc.expiration_time == int(pc.creation_time + 86400)
-    assert pc.expired == False
-    assert pc.refund_tx
-    assert pc.refund_txid
-    assert pc.deposit_tx
-    assert pc.deposit_txid
-    assert pc.payment_tx
-    assert pc.spend_tx == mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].to_hex()
-    assert pc.spend_txid == str(mock.MockPaymentChannelServer.channels[pc.deposit_txid]['payment_tx'].hash)
+    expected_state['state'] = statemachine.PaymentChannelState.CLOSED
+    expected_state['spend_tx'] = lambda pc: pc.spend_tx
+    assert_paymentchannel_state(expected_state, pc)
