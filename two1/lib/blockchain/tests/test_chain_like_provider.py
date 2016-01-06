@@ -103,7 +103,6 @@ def test_utxo(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (block_cypher_provider, False),
-                             (block_cypher_provider, True),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
@@ -130,7 +129,6 @@ def test_get_transactions(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (block_cypher_provider, False),
-                             (block_cypher_provider, True),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
