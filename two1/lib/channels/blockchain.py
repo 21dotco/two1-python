@@ -303,4 +303,4 @@ class TwentyOneBlockchain(BlockchainBase):
         if r.status_code != 200:
             raise BlockchainServerError("Broadcasting transaction: Status Code {}, {}".format(r.status_code, r.text))
 
-        return r.json()['hash']
+        return r.json()['transaction_hash']
