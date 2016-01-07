@@ -17,6 +17,7 @@ from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
 from two1.lib.util.uxstring import UxString
 from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
 from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
+from two1.lib.channels.statemachine import PaymentChannelStateMachine
 
 
 # Two UTXO with one Output
@@ -184,6 +185,14 @@ def _buy(config, resource, data, method, data_file, output_file,
             bit_req = OnChainRequests(config.wallet)
         elif payment_method == 'channel':
             bit_req = ChannelRequests(config.wallet)
+            channel_list = bit_req._channelclient.list()
+            if not channel_list:
+                confirmed = click.confirm(UxString.buy_channel_warning.format(
+                    bit_req.DEFAULT_DEPOSIT_AMOUNT,
+                    PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT), default=True)
+                if not confirmed:
+                    raise Exception(UxString.buy_channel_aborted)
+
         else:
             raise Exception('Payment method does not exist.')
 
