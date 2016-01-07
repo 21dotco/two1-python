@@ -55,6 +55,12 @@ class PaymentChannel:
     MIN_EXPIRATION_TIMEOUT = 12*3600
     """Minimum channel duration."""
 
+    REFUND_BROADCAST_TIME_OFFSET = 90*60
+    """Refund broadcast time offset to take into account the effect of Median
+    time-past (MTP) or BIP113. Broadcasting before this offset to the locktime
+    may result in a non-final transaction classification and error from a
+    blockchain data provider."""
+
     def __init__(self, url, database, wallet, blockchain):
         """Instantiate a payment channel object with the specified url.
 
@@ -244,7 +250,7 @@ class PaymentChannel:
 
             # Check for channel expiration
             if sm.state != PaymentChannelState.CLOSED:
-                if time.time() > sm.expiration_time:
+                if time.time() > (sm.expiration_time + PaymentChannel.REFUND_BROADCAST_TIME_OFFSET):
                     self._blockchain.broadcast_tx(sm.refund_tx)
                     sm.close(sm.refund_txid)
 
