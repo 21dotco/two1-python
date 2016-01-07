@@ -236,7 +236,7 @@ def test_paymentchannel_expiration():
 
     # Monkey-patch time.time() for expiration
     orig_time_time = time.time
-    time.time = lambda: pc.expiration_time + 1
+    time.time = lambda: pc.expiration_time + paymentchannel.PaymentChannel.REFUND_BROADCAST_TIME_OFFSET + 1
 
     # Check payment channel properties
     assert pc.url == "mock://test/" + pc.deposit_txid
