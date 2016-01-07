@@ -235,7 +235,17 @@ def _buy(config, resource, data, method, data_file, output_file,
                                                  config.machine_auth,
                                                  config.username)
         user_balances = _get_balances(config, client)
-        config.log("You spent: %s Satoshis. Remaining 21.co balance: %s Satoshis." % (res.amount_paid, user_balances.twentyone))
+        if payment_method == 'offchain':
+            balance_amount = user_balances.twentyone
+            balance_type = '21.co'
+        elif payment_method == 'onchain':
+            balance_amount = user_balances.onchain
+            balance_type = 'blockchain'
+        elif payment_method == 'channel':
+            balance_amount = user_balances.channels
+            balance_type = 'payment channels'
+        config.log("You spent: %s Satoshis. Remaining %s balance: %s Satoshis." % (
+            res.amount_paid, balance_type, balance_amount))
 
     # Record the transaction if it was a payable request
     if hasattr(res, 'paid_amount'):
