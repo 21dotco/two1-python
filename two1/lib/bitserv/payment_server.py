@@ -55,7 +55,7 @@ class PaymentServer:
     MIN_TX_FEE = 5000
     """Minimum transaction fee for payment channel deposit/payment."""
 
-    DUST_LIMIT = 546
+    DUST_LIMIT = 3000
     """Minimum payment amount (dust limit) for any transaction output."""
 
     MIN_EXP_TIME = 12 * 3600
