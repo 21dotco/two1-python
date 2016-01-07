@@ -128,10 +128,11 @@ def create_username(config, username=None):
             username = click.prompt(UxString.enter_username, type=Username())
             click.echo("")
             click.echo(UxString.creating_account % username)
+            password = get_password(username)
 
         rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, username)
         try:
-            r = rest_client.account_post(bitcoin_payout_address, email)
+            r = rest_client.account_post(bitcoin_payout_address, email, password)
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.update_key("username", username)
             config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)

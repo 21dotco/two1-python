@@ -103,7 +103,7 @@ class TwentyOneRestClient(object):
 
     # PUT /users/{username}
     def update_password(self, new_password):
-        path = "/users/{}/".format(self.username)
+        path = "/users/{}/configs/".format(self.username)
         encoded_password = base64.encodebytes(bytes(new_password, 'utf-8')).decode()
         update_body = {"password": encoded_password}
         data = json.dumps(update_body)
@@ -111,10 +111,12 @@ class TwentyOneRestClient(object):
         return ret
 
     # POST /pool/account
-    def account_post(self, payout_address, email):
+    def account_post(self, payout_address, email, password):
         path = "/pool/account/%s/" % self.username
+        encoded_password = base64.encodebytes(bytes(password, 'utf-8')).decode()
         body = {
             "email": email,
+            "password": encoded_password,
             "payout_address": payout_address,
             "public_key": self._wallet_pk,
             "device_uuid": self._device_id
