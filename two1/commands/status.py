@@ -1,6 +1,7 @@
 import click
 import urllib.parse
 import collections
+import two1.lib.channels as channels
 from two1.lib.channels.cli import format_expiration_time
 from tabulate import tabulate
 from two1.lib.server import rest_client
@@ -215,7 +216,7 @@ def _get_balances(config, client):
     flushed_earnings = data["flushed_amount"]
 
     config.channel_client.sync()
-    channel_urls = []
+    channel_urls = config.channel_client.list()
     channels_balance = sum(s.balance for s in (config.channel_client.status(url) for url in channel_urls)
                            if s.state == channels.PaymentChannelState.READY)
 
