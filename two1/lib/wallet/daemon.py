@@ -283,20 +283,10 @@ def wallet_path():
               help='Path to wallet file')
 @click.option('--blockchain-data-provider', '-b',
               default='twentyone',
-              type=click.Choice(['twentyone', 'insight', 'chain']),
+              type=click.Choice(['twentyone', 'insight']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
-@click.option('--chain-api-key-id', '-ck',
-              metavar='STRING',
-              envvar='CHAIN_API_KEY_ID',
-              is_eager=True,
-              help='Chain API Key (only if -b chain)')
-@click.option('--chain-api-key-secret', '-cs',
-              metavar='STRING',
-              envvar='CHAIN_API_KEY_SECRET',
-              is_eager=True,
-              help='Chain API Secret (only if -b chain)')
 @click.option('--insight-url', '-iu',
               metavar='URL',
               envvar='INSIGHT_URL',
@@ -318,7 +308,6 @@ def wallet_path():
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, blockchain_data_provider,
-         chain_api_key_id, chain_api_key_secret,
          insight_url, insight_api_path,
          data_update_interval, debug):
     """ Two1 Wallet daemon

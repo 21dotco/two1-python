@@ -1,45 +1,38 @@
-import os
-import pytest
-from two1.lib.bitcoin.crypto import HDPublicKey
-from two1.lib.blockchain.chain_provider import ChainProvider
+import random
+
+from two1.lib.bitcoin.txn import UnspentTransactionOutput
+from two1.lib.bitcoin.hash import Hash
+from two1.lib.bitcoin.script import Script
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 
 
-acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
-API_KEY_ID = os.environ.get("CHAIN_API_KEY_ID", None)
-API_KEY_SECRET = os.environ.get("CHAIN_API_KEY_SECRET", None)
-chain_key_present = pytest.mark.skipif(API_KEY_ID is None or API_KEY_SECRET is None,
-                                       reason="CHAIN_API_KEY_ID or CHAIN_API_KEY_SECRET\
-                                       is not available in env")
-
-
-@chain_key_present
 def test_smallest_first():
-    cp = ChainProvider(API_KEY_ID, API_KEY_SECRET)
+    utxos_by_addr = {}
 
-    payout_key = HDPublicKey.from_parent(acct_pub_key, 0)
-    change_key = HDPublicKey.from_parent(acct_pub_key, 1)
-
-    addrs = [HDPublicKey.from_parent(payout_key, i).address(True) for i in range(10)]
-    addrs += [HDPublicKey.from_parent(change_key, i).address(True) for i in range(10)]
-
-    utxos_by_addr = cp.get_utxos(addrs)
+    addr_base = "1LQ1TjCKJN8GXsYtsqnREqs5Z4eaPCu5p"
+    h = Hash("a2972893f1be1f54d68a9228d9706ff8f202bb80f488f4dd46c0fe37c1e42415")
+    for i in range(10):
+        addr = addr_base + str(i)
+        utxos_by_addr[addr] = [UnspentTransactionOutput(
+            transaction_hash=h,
+            outpoint_index=random.randint(0, 10),
+            value=i*20000,
+            scr=Script(""),
+            confirmations=10)]
 
     utxos = []
     for addr, addr_utxos in utxos_by_addr.items():
         utxos += addr_utxos
 
     amount = 1000000
-    selected, fees = utxo_selector_smallest_first(data_provider=cp,
-                                                  utxos_by_addr=utxos_by_addr,
+    selected, fees = utxo_selector_smallest_first(utxos_by_addr=utxos_by_addr,
                                                   amount=amount,
                                                   num_outputs=2)
     assert not selected
 
     amount = 100000
-    selected, fees = utxo_selector_smallest_first(data_provider=cp,
-                                                  utxos_by_addr=utxos_by_addr,
+    selected, fees = utxo_selector_smallest_first(utxos_by_addr=utxos_by_addr,
                                                   amount=amount,
                                                   num_outputs=2)
 

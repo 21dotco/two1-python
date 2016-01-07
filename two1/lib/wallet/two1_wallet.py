@@ -96,15 +96,15 @@ class Two1Wallet(BaseWallet):
 
     utxo_selector should be a filtering function with prototype:
 
-    selected, fees = utxo_selector_func(data_provider,
-    list(UnspentTransactionOutput),
+    selected, fees = utxo_selector_func(list(UnspentTransactionOutput),
+    amount, num_outputs, fees)
 
     The job of the selector is to choose from the input list of UTXOs which
     are to be used in a transaction such that there are sufficient coins
-    to pay the total amount (3rd passed argument) and transaction fees.
+    to pay the total amount (2nd passed argument) and transaction fees.
     Since transaction fees are computed based on size of transaction, which
     is in turn (partially) determined by number of inputs and number of
-    outputs (4th passed argument), the selector must determine the required
+    outputs (3rd passed argument), the selector must determine the required
     fees and return that amount as well, unless fees (5th passed argument)
     is not None in which case the application is specifiying the fees.
 
@@ -1177,8 +1177,7 @@ class Two1Wallet(BaseWallet):
         utxos_by_addr = self.get_utxos(include_unconfirmed=use_unconfirmed,
                                        accounts=accts)
 
-        selected_utxos, fees = self.utxo_selector(data_provider=self.data_provider,
-                                                  utxos_by_addr=utxos_by_addr,
+        selected_utxos, fees = self.utxo_selector(utxos_by_addr=utxos_by_addr,
                                                   amount=total_amount,
                                                   num_outputs=len(addresses_and_amounts),
                                                   fees=fees)
@@ -1478,7 +1477,7 @@ class Two1Wallet(BaseWallet):
         fees = num_utxos * DEFAULT_INPUT_FEE + DEFAULT_OUTPUT_FEE
 
         curr_utxo_selector = self.utxo_selector
-        s = lambda data_provider, utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
+        s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
 
         self.utxo_selector = s
         tx_list = self.send_to(address=address,
