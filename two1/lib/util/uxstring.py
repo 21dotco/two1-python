@@ -55,7 +55,7 @@ class UxString:
     login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
                                 "corresponding username"
     login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet/device.\n"
-    
+
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
@@ -95,6 +95,16 @@ class UxString:
     Search Queries        : {buyable_searches:<4} ({search_unit_price} Satoshis per search)
     SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per SMS)
     """
+
+    # buy
+    buy_channel_warning = "Note: The default payment channel size is " + \
+        "{} Satoshis. \nIn order to open this channel you’ll need to " + \
+        "spend a small amount extra to cover transaction fees and costs.\n" + \
+        "In addition, your *first* purchase will spend {} of your " + \
+        "outstanding balance in the channel for merchant insurance.\n" + \
+        "Read more at (https://21.co/micropayments/)\n" + \
+        "Proceed?"
+    buy_channel_aborted = "Payment aborted."
 
     # doctor
     doctor_start = click.style("21.co Doctor", fg='green') + "\n\n" + \
