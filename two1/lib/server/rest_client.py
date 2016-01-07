@@ -101,6 +101,15 @@ class TwentyOneRestClient(object):
         path = "/pool/accounts/"
         return self._request(sign_username=None, method="GET", path=path)
 
+    # PUT /users/{username}
+    def update_password(self, new_password):
+        path = "/users/{}/".format(self.username)
+        encoded_password = base64.encodebytes(bytes(new_password, 'utf-8')).decode()
+        update_body = {"password": encoded_password}
+        data = json.dumps(update_body)
+        ret = self._request(sign_username=self.username, method="PUT", path=path, data=data)
+        return ret
+
     # POST /pool/account
     def account_post(self, payout_address, email):
         path = "/pool/account/%s/" % self.username
