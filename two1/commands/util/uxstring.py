@@ -80,7 +80,7 @@ class UxString:
             fg="red") + click.style("21 login -u {}", bold=True, fg="red") + click.style(
         " to login.", fg="red")
 
-    set_new_password = "Please enter the new password for" + click.style(
+    set_new_password = "Please set a password for" + click.style(
             " {}.", bold=True) + click.style(" (typing will be hidden)")
 
     no_account_found = "You have not created any accounts yet. Use " + click.style(
