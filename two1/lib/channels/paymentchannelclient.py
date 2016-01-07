@@ -1,10 +1,14 @@
 import os.path
 import collections
+import logging
 
 from . import walletwrapper
 from . import database
 from . import blockchain
 from . import paymentchannel
+
+
+logger = logging.getLogger('channels')
 
 
 PaymentChannelStatus = collections.namedtuple('PaymentChannelStatus', ['url', 'state', 'ready', 'balance', 'deposit', 'fee', 'creation_time', 'expiration_time', 'expired', 'deposit_txid', 'spend_txid', 'transactions'])
@@ -129,7 +133,10 @@ class PaymentChannelClient:
             else:
                 # Sync all channels
                 for channel in self._channels.values():
-                    channel.sync()
+                    try:
+                        channel.sync()
+                    except Exception:
+                        logger.exception("Error while syncing channel {}:".format(channel.url))
 
     def pay(self, url, amount):
         """Pay to the payment channel.
