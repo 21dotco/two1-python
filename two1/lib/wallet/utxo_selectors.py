@@ -24,7 +24,7 @@ def _get_utxos_addr_tuple_list(utxos_by_addr):
     return utxo_tuple_list
 
 
-def utxo_selector_smallest_first(data_provider, utxos_by_addr, amount,
+def utxo_selector_smallest_first(utxos_by_addr, amount,
                                  num_outputs, fees=None):
     # Order the utxos by amount
     utxo_tuple_list = _get_utxos_addr_tuple_list(utxos_by_addr)

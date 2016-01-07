@@ -13,7 +13,6 @@ import click
 from mnemonic import Mnemonic
 from jsonrpcclient.exceptions import ReceivedErrorResponse
 from path import Path
-from two1.lib.blockchain.chain_provider import ChainProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.insight_provider import InsightProvider
 from two1.lib.wallet.account_types import account_types
@@ -28,8 +27,7 @@ from two1.lib.wallet.daemonizer import get_daemonizer
 
 WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-REQUIRED_DATA_PROVIDER_PARAMS = {'chain': ['chain_api_key_id', 'chain_api_key_secret'],
-                                 'insight': [],
+REQUIRED_DATA_PROVIDER_PARAMS = {'insight': [],
                                  'twentyone': []}
 
 logger = logging.getLogger('wallet')
@@ -129,17 +127,7 @@ def validate_data_provider(ctx, param, value):
         ctx.fail("One or more required arguments are missing.")
 
     dp = None
-    if value == 'chain':
-        key = ctx.params['chain_api_key_id']
-        secret = ctx.params['chain_api_key_secret']
-
-        # validate key and secret for chain data provider
-        if len(key) != 32 or len(secret) != 32 or \
-           not key.isalnum() or not secret.isalnum():
-            ctx.fail("Invalid chain_api_key_id or chain_api_key_secret")
-
-        dp = ChainProvider(api_key_id=key, api_key_secret=secret)
-    elif value == 'insight':
+    if value == 'insight':
         url = ctx.params['insight_url']
         api_path = ctx.params['insight_api_path']
         dp = InsightProvider(insight_host_name=url,
@@ -162,20 +150,10 @@ def validate_data_provider(ctx, param, value):
               help='Prompt for a passphrase.')
 @click.option('--blockchain-data-provider', '-b',
               default='twentyone',
-              type=click.Choice(['twentyone', 'insight', 'chain']),
+              type=click.Choice(['twentyone', 'insight']),
               show_default=True,
               callback=validate_data_provider,
               help='Blockchain data provider service to use')
-@click.option('--chain-api-key-id', '-ck',
-              metavar='STRING',
-              envvar='CHAIN_API_KEY_ID',
-              is_eager=True,
-              help='Chain API Key (only if -b chain)')
-@click.option('--chain-api-key-secret', '-cs',
-              metavar='STRING',
-              envvar='CHAIN_API_KEY_SECRET',
-              is_eager=True,
-              help='Chain API Secret (only if -b chain)')
 @click.option('--insight-url', '-iu',
               metavar='URL',
               envvar='INSIGHT_URL',
@@ -192,7 +170,7 @@ def validate_data_provider(ctx, param, value):
 @click.version_option(WALLET_VERSION)
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
-         blockchain_data_provider, chain_api_key_id, chain_api_key_secret,
+         blockchain_data_provider,
          insight_url, insight_api_path,
          debug):
     """ Command-line Interface for the Two1 Wallet
@@ -291,11 +269,6 @@ def startdaemon(ctx):
     if not d.installed():
         if isinstance(ctx.obj['data_provider'], TwentyOneProvider):
             dpo = dict(provider='twentyone')
-        elif isinstance(ctx.obj['data_provider'], ChainProvider):
-            dp_params = ctx.obj['data_provider_params']
-            dpo = dict(provider='chain',
-                       api_key_id=dp_params['chain_api_key_id'],
-                       api_key_secret=dp_params['chain_api_key_secret'])
 
         try:
             d.install(dpo)
