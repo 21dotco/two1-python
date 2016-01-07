@@ -38,6 +38,29 @@ class Username(click.ParamType):
         self.fail(UxString.Error.invalid_username)
 
 
+class Password(click.ParamType):
+    name = "Password"
+
+    def __init__(self):
+        click.ParamType.__init__(self)
+
+    def convert(self, value, param, ctx):
+        if len(value) < 5:
+            self.fail(UxString.short_password)
+        if not any(x.isupper() for x in value) or not any(x.islower() for x in value):
+            self.fail(UxString.capitalize_password)
+        if not any(x.isdigit() for x in value):
+            self.fail(UxString.numbers_in_password)
+
+        return value
+
+
+def get_password(username):
+    password = click.prompt(UxString.set_new_password.format(username),
+                            hide_input=True, confirmation_prompt=True, type=Password())
+    return password
+
+
 def check_setup_twentyone_account(config):
     """ Checks for a working wallet and a 21 a/c.
     Sets up the a/c and configures a wallet if needed.

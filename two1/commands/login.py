@@ -18,17 +18,58 @@ from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
+from two1.lib.server.login import get_password
 
 
 @click.command()
 @click.option('-u', '--user', default=None, help='The user to log in with.')
+@click.option('-sp', '--setpassword', is_flag=True, default=False,
+              help='Set/update your 21 password')
 @json_output
-def login(config, user):
+def login(config, user, setpassword):
     """Log in to your different 21 accounts."""
-    return _login(config, user)
+    if setpassword:
+        return _set_password(config, user)
+    else:
+        return _login(config, user)
 
 
 @check_notifications
+@capture_usage
+def _set_password(config, user):
+    try:
+        if not hasattr(config, "username"):
+            click.secho(UxString.no_account_found)
+            return
+
+        password = get_password(config.username)
+        machine_auth = get_machine_auth(config)
+        client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                                 machine_auth,
+                                                 config.username)
+        client.update_password(password)
+
+    except click.exceptions.Abort:
+        pass
+
+
+def get_machine_auth(config):
+    if hasattr(config, "machine_auth"):
+        machine_auth = config.machine_auth
+    else:
+        dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
+        wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
+        if not Two1Wallet.check_wallet_file(wallet_path):
+            create_wallet_and_account()
+            return
+
+        wallet = Wallet(wallet_path=wallet_path,
+                        data_provider=dp)
+        machine_auth = MachineAuthWallet(wallet)
+
+    return machine_auth
+
+
 @capture_usage
 def _login(config, user):
     """ Logs into a two1 user account

@@ -64,6 +64,16 @@ class UxString:
             fg="red") + click.style("21 login -u {}", bold=True, fg="red") + click.style(
         " to login.", fg="red")
 
+    set_new_password = "Please enter the new password for" + click.style(
+            " {}.", bold=True) + click.style(" (typing will be hidden)")
+
+    no_account_found = "You have not created any accounts yet. Use " + click.style(
+            "21 login", bold=True) + " to create an account first."
+
+    short_password = "Password must be at least 5 characters long."
+    capitalize_password = "Password must contain mix of uppercase or lowercase letters."
+    numbers_in_password = "Password must contain at least a digit."
+
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
