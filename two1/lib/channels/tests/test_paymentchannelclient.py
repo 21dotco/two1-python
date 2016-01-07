@@ -124,7 +124,7 @@ def test_paymentchannelclient():
 
     # Check url1 properties
     status = pc.status(url1)
-    url1_expected_status['balance'] = 97957
+    url1_expected_status['balance'] = 96457
     assert_paymentchannel_status(url1_expected_status, status)
 
     # Check url2 properties
