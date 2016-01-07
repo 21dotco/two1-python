@@ -106,7 +106,7 @@ class OnChain(PaymentBase):
     http_payment_data = 'Bitcoin-Transaction'
     http_402_price = 'Price'
     http_402_address = 'Bitcoin-Address'
-    DUST_LIMIT = 546  # dust limit in satoshi
+    DUST_LIMIT = 3000  # dust limit in satoshi
 
     def __init__(self, wallet, db=None):
         """Initialize payment handling for on-chain payments."""
