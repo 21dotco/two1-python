@@ -98,19 +98,19 @@ def test_paymentchannel_typical():
     # Make regular payments
     assert pc.pay(1500)
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
-    expected_state['balance'] = 98500
+    expected_state['balance'] = 97000
     assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(1)
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
-    expected_state['balance'] = 98499
+    expected_state['balance'] = 96999
     assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(15)
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
-    expected_state['balance'] = 98484
+    expected_state['balance'] = 96984
     assert_paymentchannel_state(expected_state, pc)
     assert pc.pay(20000)
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
-    expected_state['balance'] = 78484
+    expected_state['balance'] = 76984
     assert_paymentchannel_state(expected_state, pc)
 
     # Close payment channel
@@ -185,7 +185,7 @@ def test_paymentchannel_typical_zeroconf():
     expected_state['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
     expected_state['ready'] = False
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
-    expected_state['balance'] = 98998
+    expected_state['balance'] = 96998
     expected_state['spend_txid'] = lambda pc: pc.spend_txid
     assert_paymentchannel_state(expected_state, pc)
 
@@ -235,7 +235,7 @@ def test_paymentchannel_expiration():
     pc.pay(1)
 
     # Check payment channel properties
-    expected_state['balance'] = 98998
+    expected_state['balance'] = 96998
     expected_state['expired'] = False
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
     assert_paymentchannel_state(expected_state, pc)
@@ -319,7 +319,7 @@ def test_paymentchannel_serverside_close():
     pc.pay(1)
 
     # Check payment channel properties
-    expected_state['balance'] = 98998
+    expected_state['balance'] = 96998
     expected_state['expired'] = False
     expected_state['payment_tx'] = lambda pc: pc.payment_tx
     assert_paymentchannel_state(expected_state, pc)

@@ -154,7 +154,7 @@ class PaymentChannelRedeemScript(bitcoin.Script):
 class PaymentChannelStateMachine:
     """Customer payment channel state machine interface."""
 
-    PAYMENT_TX_MIN_OUTPUT_AMOUNT = 1000
+    PAYMENT_TX_MIN_OUTPUT_AMOUNT = 3000
     """Minimum payment transaction output (above dust limit)."""
 
     def __init__(self, model, wallet):
