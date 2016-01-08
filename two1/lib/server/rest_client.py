@@ -190,12 +190,6 @@ class TwentyOneRestClient(object):
             path += "?detailed=True"
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # POST pool/jwt/{scope}/
-    def pair(self, requested_scopes):
-        data = json.dumps({"scopes": requested_scopes})
-        path = "/pool/auth/jwt/generate_token/"
-        return self._request(sign_username=self.username, method="POST", path=path, data=data)
-
     # GET /pool/coinbase/me/
     def get_coinbase_status(self):
         path = "/pool/coinbase/me/"
