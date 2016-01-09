@@ -52,9 +52,7 @@ def _search(config, search_string):
         click.secho(UxString.list_all, fg="green")
 
     current_page = 0
-    row_id_to_model_id = {}
-    total_pages = get_search_results(client, search_string, current_page,
-                                     row_id_to_model_id)
+    total_pages = get_search_results(client, search_string, current_page)
     if total_pages < 1:
         return
 
@@ -62,30 +60,21 @@ def _search(config, search_string):
         try:
             prompt_resp = click.prompt(UxString.pagination,
                                        type=str)
-            try:
-                index = int(prompt_resp)
-                if index not in row_id_to_model_id:
-                    raise ValueError
-
-                model_id = row_id_to_model_id[index]
+            next_page = get_next_page(prompt_resp, current_page)
+            if next_page == -1:
+                model_id = prompt_resp
                 display_search_info(config, client, model_id)
-
-            except ValueError:
-
-                next_page = get_next_page(prompt_resp, current_page)
-
-                if next_page >= total_pages or next_page < 0:
-                    continue
-                else:
-                    get_search_results(client, search_string, next_page,
-                                       row_id_to_model_id)
-                    current_page = next_page
+            elif next_page >= total_pages or next_page < 0:
+                continue
+            else:
+                get_search_results(client, search_string, next_page)
+                current_page = next_page
 
         except click.exceptions.Abort:
             return
 
 
-def get_search_results(rest_client, search_string, page, row_id_to_model_id):
+def get_search_results(rest_client, search_string, page):
     resp = rest_client.search(search_string, page)
     if resp.ok:
         resp_json = resp.json()
@@ -96,7 +85,7 @@ def get_search_results(rest_client, search_string, page, row_id_to_model_id):
 
         total_pages = resp_json["total_pages"]
         click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        content = market_search_formatter(search_results, page, row_id_to_model_id)
+        content = market_search_formatter(search_results, page)
         click.echo(content)
         return total_pages
     else:
@@ -106,11 +95,11 @@ def get_search_results(rest_client, search_string, page, row_id_to_model_id):
 MAX_PAGE_SIZE = 10
 
 
-def market_search_formatter(search_results, current_page, row_id_to_model_id):
+def market_search_formatter(search_results, current_page):
     headers = ["id", "Details", "Creator", "price range", "category"]
     rows = []
     for i, item in enumerate(search_results):
-        id = click.style(str((current_page * MAX_PAGE_SIZE) + i + 1), fg="blue")
+        id = item["id"]
         price_range = click.style("{} - {} Satoshis".format(item["min_price"],
                                                             item["max_price"]), fg="blue")
 
@@ -124,6 +113,8 @@ def market_search_formatter(search_results, current_page, row_id_to_model_id):
         rows.append(["", "", "", "", ""])
 
     return tabulate(rows, headers=headers, tablefmt="psql")
+
+
 def get_next_page(prompt_response, current_page):
     if prompt_response.lower() in ["n", "next", "f", "forward"]:
         return current_page + 1
@@ -140,32 +131,32 @@ def display_search_info(config, client, listing_id):
     if resp.ok:
         result_json = resp.json()
         title = click.style("App Name     : ", fg="blue") + click.style(
-            "{}".format(result_json["title"]))
+                "{}".format(result_json["title"]))
         created_by = click.style("Created By   : ", fg="blue") + click.style(
-            "{}".format(result_json["username"]))
+                "{}".format(result_json["username"]))
 
         desc = click.style("Description  : ", fg="blue") + click.style(
-            "{}".format(result_json["description"]))
+                "{}".format(result_json["description"]))
         price = click.style("Price Range  : ", fg="blue") + click.style(
                 "{} - {} Satoshis").format(result_json["min_price"],
                                            result_json["max_price"])
 
         doc_url = click.style("Docs URL     : ", fg="blue") + click.style(
-            "{}".format(result_json["website_url"]))
+                "{}".format(result_json["website_url"]))
         app_url = click.style("App URL      : ", fg="blue") + click.style(
-            "{}".format(result_json["app_url"]))
+                "{}".format(result_json["app_url"]))
         category = click.style("Category     : ", fg="blue") + click.style(
-            "{}".format(result_json["category"]))
+                "{}".format(result_json["category"]))
         keywords = click.style("Keywords     : ", fg="blue") + click.style(
-            "{}".format(', '.join(result_json["keywords"])))
+                "{}".format(', '.join(result_json["keywords"])))
         version = click.style("Version      : ", fg="blue") + click.style(
-            "{}".format(result_json["version"]))
+                "{}".format(result_json["version"]))
         last_updated_str = datetime.datetime.fromtimestamp(
-            result_json["updated"]).strftime("%Y-%m-%d %H:%M")
+                result_json["updated"]).strftime("%Y-%m-%d %H:%M")
         last_update = click.style("Last Update  : ", fg="blue") + click.style(
-            "{}".format(last_updated_str))
+                "{}".format(last_updated_str))
         quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
-            result_json["quick_buy"]
+                result_json["quick_buy"]
         )
         is_active = click.style("Status       : ", fg="blue")
         if result_json["is_active"] and result_json["is_up"] and result_json[
@@ -178,10 +169,10 @@ def display_search_info(config, client, listing_id):
                 "{:.2f}%".format(result_json["average_uptime"] * 100))
 
         usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-            result_json["usage_docs"])
+                result_json["usage_docs"])
 
         final_str = "\n".join(
-                [title, desc, created_by, price,"\n",
+                [title, desc, created_by, price, "\n",
                  is_active, availability, "\n",
                  doc_url, app_url, "\n",
                  category, keywords, version, last_update, "\n",
