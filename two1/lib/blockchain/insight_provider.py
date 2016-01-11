@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 from collections import defaultdict
 from two1.lib.blockchain import exceptions
 from two1.lib.blockchain.base_provider import BaseProvider
+from two1.lib.bitcoin.txn import CoinbaseInput
 from two1.lib.bitcoin.txn import TransactionInput
 from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin.txn import Transaction
@@ -71,11 +72,17 @@ class InsightProvider(BaseProvider):
         addr_keys = set()
 
         for i in sorted(txn_json["vin"], key=lambda i: i["n"]):
-            script = Script.from_hex(i["scriptSig"]["hex"])
-            inputs.append(TransactionInput(Hash(i["txid"]),
-                                           i["vout"],
-                                           script,
-                                           i["sequence"]))
+            if 'coinbase' in i:
+                inputs.append(CoinbaseInput(height=0,
+                                            raw_script=bytes.fromhex(i['coinbase']),
+                                            sequence=i['sequence'],
+                                            block_version=1))
+            else:
+                script = Script.from_hex(i["scriptSig"]["hex"])
+                inputs.append(TransactionInput(Hash(i["txid"]),
+                                               i["vout"],
+                                               script,
+                                               i["sequence"]))
             if "addr" in i:
                 addr_keys.add(i["addr"])
 

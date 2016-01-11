@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 from two1.lib.blockchain import exceptions
 from two1.lib.blockchain.base_provider import BaseProvider
 from two1.lib.bitcoin.hash import Hash
+from two1.lib.bitcoin.txn import CoinbaseInput
 from two1.lib.bitcoin.txn import TransactionInput
 from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin.txn import Transaction
@@ -104,14 +105,22 @@ class TwentyOneProvider(BaseProvider):
         outputs = []
         addr_keys = set()
         for i in txn_json["inputs"]:
-            # Script length etc. are not returned so we need to
-            # prepend that.
-            script, _ = Script.from_bytes(
-                pack_var_str(bytes.fromhex(i["script_signature_hex"])))
-            inputs.append(TransactionInput(Hash(i["output_hash"]),
-                                           i["output_index"],
-                                           script,
-                                           i["sequence"]))
+            if 'coinbase' in i:
+                inputs.append(
+                    CoinbaseInput(
+                        height=txn_json["block_height"] or 0,
+                        raw_script=bytes.fromhex(i['coinbase']),
+                        sequence=i['sequence'],
+                        block_version=1))
+            else:
+                # Script length etc. are not returned so we need to
+                # prepend that.
+                script, _ = Script.from_bytes(
+                    pack_var_str(bytes.fromhex(i["script_signature_hex"])))
+                inputs.append(TransactionInput(Hash(i["output_hash"]),
+                                               i["output_index"],
+                                               script,
+                                               i["sequence"]))
             if "addresses" in i:
                 addr_keys.add(i["addresses"][0])
 
