@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('refund_tx', models.TextField()),
                 ('merchant_pubkey', models.TextField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('expires_at', models.DateTimeField()),
+                ('expires_at', models.IntegerField()),
                 ('amount', models.IntegerField(null=True, blank=True)),
                 ('last_payment_amount', models.IntegerField(null=True, blank=True)),
             ],

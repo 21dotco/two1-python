@@ -17,11 +17,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='paymentchannel',
-            name='expires_at',
-            field=models.IntegerField(),
-        ),
-        migrations.AlterField(
-            model_name='paymentchannel',
             name='last_payment_amount',
             field=models.IntegerField(default=0),
         ),
