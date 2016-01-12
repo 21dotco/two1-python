@@ -29,8 +29,7 @@ from two1.lib.wallet.base_wallet import BaseWallet
 from two1.lib.wallet.cache_manager import CacheManager
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.wallet_txn import WalletTransaction
-from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
-from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
+from two1.lib.wallet import fees as txn_fees
 from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 
@@ -130,7 +129,6 @@ class Two1Wallet(BaseWallet):
     Returns:
         Two1Wallet: The wallet instance.
     """
-    DUST_LIMIT = 546  # Satoshis - should this be somewhere else?
     AES_BLOCK_SIZE = 16
     DEFAULT_ACCOUNT_TYPE = 'BIP32'
     DEFAULT_WALLET_PATH = os.path.join(os.path.expanduser('~'),
@@ -1148,7 +1146,7 @@ class Two1Wallet(BaseWallet):
         # Add up total amount & check for any outputs that are below
         # the dust limit as they would make the transaction non-standard
         for addr, amount in addresses_and_amounts.items():
-            if amount <= Two1Wallet.DUST_LIMIT:
+            if amount <= txn_fees.DUST_LIMIT:
                 raise ValueError(
                     "Can't send %d satoshis to %s: amount is below dust limit!" %
                     (amount, addr))
@@ -1224,7 +1222,7 @@ class Two1Wallet(BaseWallet):
 
         # one more output for the change, if the change is above the dust limit
         change = total_utxo_amount - total_with_fees
-        if change > self.DUST_LIMIT:
+        if change > txn_fees.DUST_LIMIT:
             _, change_key_hash = utils.address_to_key_hash(accts[0].get_next_address(True))
             # Pick a random location to put the change output in
             insert_index = random.randint(0, len(outputs))
@@ -1468,13 +1466,15 @@ class Two1Wallet(BaseWallet):
                                        accounts=accts)
         total_value, num_utxos = self._sum_utxos(utxos_by_addr)
 
-        if total_value < self.DUST_LIMIT:
+        if total_value < txn_fees.DUST_LIMIT:
             raise exceptions.WalletBalanceError(
                 "Total balance (%d satoshis) is less than the dust limit. Not sweeping." %
                 (total_value))
 
         # Compute an approximate fee
-        fees = num_utxos * DEFAULT_INPUT_FEE + DEFAULT_OUTPUT_FEE
+        fee_amounts = txn_fees.get_fees()
+        fees = num_utxos * (fee_amounts['per_input'] +
+                            fee_amounts['per_output'])
 
         curr_utxo_selector = self.utxo_selector
         s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
@@ -1534,19 +1534,20 @@ class Two1Wallet(BaseWallet):
                                 for i in range(num_addresses)]
 
             # Compute an approximate fee
-            fees = num_utxos * DEFAULT_INPUT_FEE + \
-                   num_addresses * DEFAULT_OUTPUT_FEE
+            fee_amounts = txn_fees.get_fees()
+            fees = num_utxos * fee_amounts['per_input'] + \
+                   num_addresses * fee_amounts['per_output']
 
             spread_amount = total_value - fees
             per_addr_amount = int(spread_amount / num_addresses)
-            if per_addr_amount <= self.DUST_LIMIT:
+            if per_addr_amount <= txn_fees.DUST_LIMIT:
                 self.logger.error(
                     "Amount to each address (%d satoshis) would be less than the dust limit. Choose a smaller number of addresses." %
                     per_addr_amount)
                 break
 
             curr_utxo_selector = self.utxo_selector
-            s = lambda data_provider, utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
+            s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
 
             self.utxo_selector = s
 
