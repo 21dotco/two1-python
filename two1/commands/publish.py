@@ -198,13 +198,29 @@ def get_search_results(config, client, page):
 
         total_pages = resp_json["total_pages"]
         click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        headers = ["id", "Title", "Url", "Is up", "Is healthy", "Average Uptime",
+        headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime",
                    "Last Update"]
-        rows = [[r["id"], r["title"], r["app_url"], str(r["is_up"]), str(r["is_healthy"]),
-                 "{:.2f}%".format(r["average_uptime"] * 100),
-                 datetime.datetime.fromtimestamp(r["last_update"]).strftime(
-                         "%Y-%m-%d %H:%M")] for r in search_results]
+        rows = []
+        for r in search_results:
+            rating = "Not yet Rated"
+            if r["rating_count"] > 0 :
+                rating = "{:.1f} ({} rating".format(r["average_rating"],
+                                                    int(r["rating_count"]))
+                if r["rating_count"] > 1:
+                    rating += "s"
+                rating += ")"
+            rows.append([r["id"],
+                         r["title"],
+                         r["app_url"],
+                         rating,
+                         str(r["is_up"]),
+                         str(r["is_healthy"]),
+                         "{:.2f}%".format(r["average_uptime"] * 100),
+                         datetime.datetime.fromtimestamp(r["last_update"]).strftime(
+                             "%Y-%m-%d %H:%M")])
+
         click.echo(tabulate(rows, headers, tablefmt="grid"))
+
         return total_pages
     else:
         raise ServerRequestError()
@@ -217,14 +233,26 @@ def display_app_info(config, client, app_id):
         app_info = result["app_info"]
         title = click.style("App Name        : ", fg="blue") + click.style(
                 "{}".format(app_info["title"]))
+
+        if app_info["rating_count"] == 0:
+            rating = "Not yet rated"
+        else:
+            rating = "{:.1f} ({} rating".format(app_info["average_rating"],
+                                                int(app_info["rating_count"]))
+            if app_info["rating_count"] > 1:
+                rating += "s"
+            rating += ")"
+        rating_row = click.style("Rating          : ", fg="blue") + click.style("{}".format(rating))
         up_status = click.style("Status          : ", fg="blue")
         if app_info["is_up"]:
             up_status += click.style("Up")
         else:
             up_status += click.style("Down")
 
-        last_crawl_str = datetime.datetime.fromtimestamp(
-                app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
+        last_crawl_str = "Not yet crawled"
+        if "last_crawl" in app_info:
+            last_crawl_str = datetime.datetime.fromtimestamp(
+                    app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
 
         last_crawl = click.style("Last Crawl Time : ", fg="blue") + click.style(
                 "{}".format(last_crawl_str))
@@ -263,7 +291,7 @@ def display_app_info(config, client, app_id):
 
         final_str = "\n".join(
                 [title, "\n",
-                 up_status, availability, last_crawl, last_update, version, "\n",
+                 rating_row, up_status, availability, last_crawl, last_update, version, "\n",
                  desc, app_url, doc_url, manifest_url, "\n",
                  category, keywords, price, "\n", quick_start, "\n", usage_docs, "\n\n"])
         config.echo_via_pager(final_str)

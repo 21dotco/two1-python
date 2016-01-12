@@ -304,12 +304,14 @@ refer to 21.co/app for futher instructions.", fg="red")
     empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n",
                                 fg='blue')
     # rate
-    rate_stub = """%s
-- Rating functionality will be available in a forthcoming 21 update
-- In the meantime, please visit the 21 Developer Community at %s
-- There, you can find machine-payable endpoints to buy from other 21 developers
-For further information, please contact %s""" % \
-  (coming_soon, slack_21_co, support_21_co)
+    bad_rating = "an app rating must be between 1 to 5"
+    rating_success = click.style("Giving a ") + click.style("{}/5", bold=True) + click.style(
+            " rating to the app with id ") + click.style("{}", bold=True)
+
+    rating_app_not_found = click.style("App with id {} does not exist in 21 marketplace. Use ",
+                                       fg="red") + click.style("21 search", bold=True,
+                                                               fg="red") + click.style(
+        " to verify the id of the app", fg="red")
 
     class Error:
         # network errors

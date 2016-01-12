@@ -198,6 +198,11 @@ class TwentyOneRestClient(object):
         path = "/market/users/{}/apps/{}/".format(self.username, app_id)
         return self._request(sign_username=self.username, method="DELETE", path=path)
 
+    def rate_app(self, app_id, rating):
+        path = "/market/apps/{}/rating/".format(app_id)
+        data = json.dumps({"rating" : rating})
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self):
         path = "/pool/statistics/%s/earnings/" % self.username
