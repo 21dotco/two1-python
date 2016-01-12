@@ -96,7 +96,7 @@ MAX_PAGE_SIZE = 10
 
 
 def market_search_formatter(search_results, current_page):
-    headers = ["id", "Details", "Creator", "price range", "category"]
+    headers = ["id", "Details", "Creator", "price range", "category", "rating"]
     rows = []
     for i, item in enumerate(search_results):
         id = item["id"]
@@ -106,11 +106,18 @@ def market_search_formatter(search_results, current_page):
         category = click.style("{}".format(item["category"]), fg="blue")
         creator = click.style("{}".format(item["username"]), fg="blue")
         title = click.style(item["title"], fg="blue")
-        rows.append([id, title, creator, price_range, category])
-        rows.append(["", "", "", "", ""])
+        rating = "Not yet rated"
+        if item["rating_count"] != 0:
+            rating = "{:.1f} ({} rating".format(item["average_rating"], int(item["rating_count"]))
+            if item["rating_count"] > 1:
+                rating += "s"
+            rating += ")"
+        rating = click.style(rating, fg="blue")
+        rows.append([id, title, creator, price_range, category, rating])
+        rows.append(["", "", "", "", "", ""])
         for indx, l in enumerate(wrap(item["description"])):
-            rows.append(["", l, "", "", ""])
-        rows.append(["", "", "", "", ""])
+            rows.append(["", l, "", "", "", ""])
+        rows.append(["", "", "", "", "", ""])
 
     return tabulate(rows, headers=headers, tablefmt="psql")
 
@@ -140,6 +147,16 @@ def display_search_info(config, client, listing_id):
         price = click.style("Price Range  : ", fg="blue") + click.style(
                 "{} - {} Satoshis").format(result_json["min_price"],
                                            result_json["max_price"])
+
+        if result_json["rating_count"] == 0:
+            rating_str = "Not yet rated"
+        else:
+            rating_str = "{:.1f} ({} rating".format(result_json["average_rating"],
+                                                    int(result_json["rating_count"]))
+            if result_json["rating_count"] > 1:
+                rating_str += "s"
+            rating_str += ")"
+        rating = click.style("Rating       : ", fg="blue") + click.style("{}".format(rating_str))
 
         doc_url = click.style("Docs URL     : ", fg="blue") + click.style(
                 "{}".format(result_json["website_url"]))
@@ -172,7 +189,7 @@ def display_search_info(config, client, listing_id):
                 result_json["usage_docs"])
 
         final_str = "\n".join(
-                [title, desc, created_by, price, "\n",
+                [title, desc, created_by, price, rating, "\n",
                  is_active, availability, "\n",
                  doc_url, app_url, "\n",
                  category, keywords, version, last_update, "\n",

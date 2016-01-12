@@ -21,6 +21,12 @@ def capture_usage(func):
         version = app_config.TWO1_VERSION
         try:
             if config.collect_analytics:
+                func_name = func.__name__[1:]
+                username = config.username
+                user_platform = platform.system() + platform.release()
+                # we can separate between updates
+                version = app_config.TWO1_VERSION
+                username = username or "unknown"
                 data = {
                     "channel": "cli",
                     "level": "info",
