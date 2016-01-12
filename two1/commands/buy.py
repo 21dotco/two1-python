@@ -15,13 +15,9 @@ from two1.lib.bitrequests import BitTransferRequests
 from two1.lib.bitrequests import ChannelRequests
 from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
 from two1.lib.util.uxstring import UxString
-from two1.lib.wallet.utxo_selectors import DEFAULT_INPUT_FEE
-from two1.lib.wallet.utxo_selectors import DEFAULT_OUTPUT_FEE
+from two1.lib.wallet.fees import get_fees
 from two1.lib.channels.statemachine import PaymentChannelStateMachine
 
-
-# Two UTXO with one Output
-DEFAULT_ONCHAIN_BUY_FEE = (DEFAULT_INPUT_FEE * 2) + DEFAULT_OUTPUT_FEE
 
 URL_REGEXP = re.compile(
     r'^(?:http)s?://'  # http:// or https://
@@ -207,9 +203,11 @@ def _buy(config, resource, data, method, data_file, output_file,
         config.log(UxString.Error.resource_price_greater_than_max_price.format(e))
         return
     except Exception as e:
+        f = get_fees()
+        buy_fee = 2 * f['per_input'] + f['per_output']
         if 'Insufficient funds.' in str(e):
             config.log(UxString.Error.insufficient_funds_mine_more.format(
-                DEFAULT_ONCHAIN_BUY_FEE
+                buy_fee
             ))
         else:
             config.log(str(e), fg="red")
