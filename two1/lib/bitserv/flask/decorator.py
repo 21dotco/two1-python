@@ -1,4 +1,5 @@
 """Flask bitserv payment library for selling 402 API endpoints."""
+import re
 from functools import wraps
 from urllib.parse import urlparse
 from flask import jsonify, request, views
@@ -36,7 +37,7 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600):
+    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600, endpoint='/payment'):
         """Configure bitserv settings.
 
         Args:
@@ -45,7 +46,7 @@ class Payment:
         """
         if allowed_methods is None:
             self.allowed_methods = [
-                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet, zeroconf=zeroconf, sync_period=sync_period))),
+                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet, zeroconf=zeroconf, sync_period=sync_period), endpoint=endpoint)),
                 OnChain(wallet),
                 BitTransfer(wallet)]
             # Sync payment channels server on startup
@@ -100,15 +101,19 @@ class Payment:
         return False
 
 
-def flask_channel_adapter(app, server):
+def flask_channel_adapter(app, server, endpoint='/payment'):
     """Initialize the Flask views with RESTful access to the Channel."""
     pmt_view = Channel.as_view('channel', server)
-    app.add_url_rule('/payment', defaults={'deposit_txid': None},
+
+    # Verify endpoint format
+    if not re.search('^\/\w+$', endpoint):
+        raise BadParametersError('Invalid flask endpoint provided to payment decorator.')
+    app.add_url_rule(endpoint, defaults={'deposit_txid': None},
                      view_func=pmt_view, methods=('GET',))
-    app.add_url_rule('/payment', view_func=pmt_view, methods=('POST',))
-    app.add_url_rule('/payment/<deposit_txid>', view_func=pmt_view,
+    app.add_url_rule(endpoint, view_func=pmt_view, methods=('POST',))
+    app.add_url_rule(endpoint + '/<deposit_txid>', view_func=pmt_view,
                      methods=('GET', 'PUT', 'DELETE'))
-    return server, '/payment'
+    return server, endpoint
 
 
 class Channel(views.MethodView):
