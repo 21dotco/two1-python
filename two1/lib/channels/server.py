@@ -2,6 +2,7 @@ import codecs
 import os.path
 import requests
 import json
+import functools
 
 import two1.lib.bitcoin as bitcoin
 from two1.lib.wallet import Wallet
@@ -17,6 +18,11 @@ class PaymentChannelServerError(Exception):
 
 class PaymentChannelNotFoundError(PaymentChannelServerError):
     """Payment Channel Not Found error."""
+    pass
+
+
+class PaymentChannelConnectionError(PaymentChannelServerError):
+    """Payment Channel Connection Error"""
     pass
 
 
@@ -90,6 +96,25 @@ class PaymentChannelServerBase:
         raise NotImplementedError()
 
 
+class RequestsWrapper(object):
+    """Wrapper to use `requests` and deliberately handle errors."""
+
+    def __init__(self):
+        pass
+
+    def __getattr__(self, method):
+        request = getattr(requests, method)
+
+        @functools.wraps(request)
+        def _requests(*args, **kwargs):
+            try:
+                response = request(*args, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                raise PaymentChannelConnectionError("Connecting to payment channel server: {}".format(e.request.url)) from None
+            return response
+        return _requests
+
+
 class HTTPPaymentChannelServer(PaymentChannelServerBase):
     """RESTful HTTP Payment Channel Server interface. Protocol documented in
     docs/rest-handshake-402.txt."""
@@ -109,9 +134,10 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         """
         super().__init__()
         self._url = url
+        self._requests = RequestsWrapper()
 
     def get_public_key(self):
-        r = requests.get(self._url)
+        r = self._requests.get(self._url)
         if r.status_code != 200:
             raise PaymentChannelServerError("Getting merchant public key: Status Code {}, {}".format(r.status_code, r.text))
 
@@ -124,12 +150,12 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         return channel_info['public_key']
 
     def open(self, deposit_tx, redeem_script):
-        r = requests.post(self._url, data={'deposit_tx': deposit_tx, 'redeem_script': redeem_script})
+        r = self._requests.post(self._url, data={'deposit_tx': deposit_tx, 'redeem_script': redeem_script})
         if r.status_code != 200:
             raise PaymentChannelServerError("Opening payment channel: Status Code {}, {}".format(r.status_code, r.text))
 
     def pay(self, deposit_txid, payment_tx):
-        r = requests.put(self._url + "/" + deposit_txid, data={'payment_tx': payment_tx})
+        r = self._requests.put(self._url + "/" + deposit_txid, data={'payment_tx': payment_tx})
         if r.status_code == 404:
             raise PaymentChannelNotFoundError()
         elif r.status_code != 200:
@@ -139,14 +165,14 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         return payment_tx_info['payment_txid']
 
     def status(self, deposit_txid):
-        r = requests.get(self._url + "/" + deposit_txid)
+        r = self._requests.get(self._url + "/" + deposit_txid)
         if r.status_code != 200:
             raise PaymentChannelServerError("Getting payment channel status: Status Code {}, {}".format(r.status_code, r.text))
 
         return r.json()
 
     def close(self, deposit_txid, deposit_txid_signature):
-        r = requests.delete(self._url + "/" + deposit_txid, data={'signature': deposit_txid_signature})
+        r = self._requests.delete(self._url + "/" + deposit_txid, data={'signature': deposit_txid_signature})
         if r.status_code != 200:
             raise PaymentChannelServerError("Closing payment channel: Status Code {}, {}".format(r.status_code, r.text))
 
