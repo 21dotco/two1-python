@@ -378,7 +378,7 @@ class PaymentServer:
 
                 # Check for channel expiration
                 if pc.state != ChannelSQLite3.CLOSED:
-                    if time.time() + PaymentServer.EXP_TIME_BUFFER > pc.expires_at:
+                    if time.time() + PaymentServer.EXP_TIME_BUFFER > pc.expires_at and pc.payment_tx:
                         redeem_script = PaymentChannelRedeemScript.from_bytes(pc.payment_tx.inputs[0].script[-1])
                         self._wallet.sign_half_signed_payment(pc.payment_tx, redeem_script)
                         self._blockchain.broadcast_tx(pc.payment_tx.to_hex())
