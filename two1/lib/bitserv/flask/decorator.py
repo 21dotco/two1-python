@@ -43,6 +43,13 @@ class Payment:
         Args:
             app (flask.Flask): A flask app to wrap payment handling around.
             wallet (two1.lib.Wallet): The merchant's wallet instance.
+            allowed_methods (list): A custom set of bitserv.payment_methods.py
+                instances to allow clients to use for payment.
+            zeroconf (bool): Whether to allow zero-confirmation transactions.
+            sync_period (int): The interval (in seconds) at which to sync
+                outstanding payment channel statuses.
+            endpoint (str): Custom endpoint name where the payment channel
+                server operates.
         """
         if allowed_methods is None:
             self.allowed_methods = [
