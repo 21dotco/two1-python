@@ -129,7 +129,10 @@ class PaymentChannel:
             payment_server = protocol(url)
 
             # Call get_public_key() on server
-            pubkey = payment_server.get_public_key()
+            try:
+                pubkey = payment_server.get_public_key()
+            except server.PaymentChannelServerError as e:
+                raise PaymentChannelError("Server: " + str(e))
 
             # Call create() on state machine
             try:
@@ -138,7 +141,10 @@ class PaymentChannel:
                 raise InsufficientBalanceError(str(e))
 
             # Call open(deposit_tx, redeem_script) on server
-            payment_server.open(deposit_tx, redeem_script)
+            try:
+                payment_server.open(deposit_tx, redeem_script)
+            except server.PaymentChannelServerError as e:
+                raise PaymentChannelError("Server: " + str(e))
 
             # Form the complete payment channel deposit URL
             deposit_url = url + ("/" if url[-1] != "/" else "") + sm.deposit_txid
@@ -279,10 +285,15 @@ class PaymentChannel:
             if not sm.payment_tx:
                 raise NoPaymentError("Channel has no payments.")
 
-            # Call close() on server
+            # Create server instance
             protocol = SupportedProtocols[model.url.split(":")[0]]
             payment_server = protocol(model.url[:model.url.rfind("/")])
-            payment_txid = payment_server.close(sm.deposit_txid, sm.deposit_txid_signature)
+
+            # Call close() on server
+            try:
+                payment_txid = payment_server.close(sm.deposit_txid, sm.deposit_txid_signature)
+            except server.PaymentChannelServerError as e:
+                raise PaymentChannelError("Server: " + str(e))
 
             # Call close() on state machine
             sm.close(payment_txid)
