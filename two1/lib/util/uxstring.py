@@ -312,6 +312,10 @@ refer to 21.co/app for futher instructions.", fg="red")
                                        fg="red") + click.style("21 search", bold=True,
                                                                fg="red") + click.style(
         " to verify the id of the app", fg="red")
+    rating_list = click.style("Listing all the apps that you have rated. \nNote that you can "
+                              "always change your ratings by using ") + click.style("21 rate.\n",
+                                                                                    bold=True)
+    no_ratings = click.style("You haven't rated any apps yet.", fg="blue")
 
     class Error:
         # network errors

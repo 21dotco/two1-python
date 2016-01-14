@@ -203,6 +203,10 @@ class TwentyOneRestClient(object):
         data = json.dumps({"rating" : rating})
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
+    def get_ratings(self):
+        path = "/market/users/{}/ratings/".format(self.username)
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self):
         path = "/pool/statistics/%s/earnings/" % self.username
