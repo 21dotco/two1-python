@@ -3,7 +3,6 @@ from textwrap import wrap
 
 import click
 from tabulate import tabulate
-from two1.commands import formatters
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server.rest_client import ServerRequestError
@@ -134,67 +133,71 @@ def get_next_page(prompt_response, current_page):
 
 
 def display_search_info(config, client, listing_id):
-    resp = client.get_listing_info(listing_id)
-    if resp.ok:
-        result_json = resp.json()
-        title = click.style("App Name     : ", fg="blue") + click.style(
-                "{}".format(result_json["title"]))
-        created_by = click.style("Created By   : ", fg="blue") + click.style(
-                "{}".format(result_json["username"]))
-
-        desc = click.style("Description  : ", fg="blue") + click.style(
-                "{}".format(result_json["description"]))
-        price = click.style("Price Range  : ", fg="blue") + click.style(
-                "{} - {} Satoshis").format(result_json["min_price"],
-                                           result_json["max_price"])
-
-        if result_json["rating_count"] == 0:
-            rating_str = "Not yet rated"
+    try:
+        resp = client.get_listing_info(listing_id)
+    except ServerRequestError as e:
+        if e.status_code == 404:
+            click.secho(UxString.app_does_not_exist.format(listing_id))
+            return
         else:
-            rating_str = "{:.1f} ({} rating".format(result_json["average_rating"],
-                                                    int(result_json["rating_count"]))
-            if result_json["rating_count"] > 1:
-                rating_str += "s"
-            rating_str += ")"
-        rating = click.style("Rating       : ", fg="blue") + click.style("{}".format(rating_str))
+            raise e
+    result_json = resp.json()
+    title = click.style("App Name     : ", fg="blue") + click.style(
+            "{}".format(result_json["title"]))
+    created_by = click.style("Created By   : ", fg="blue") + click.style(
+            "{}".format(result_json["username"]))
 
-        doc_url = click.style("Docs URL     : ", fg="blue") + click.style(
-                "{}".format(result_json["website_url"]))
-        app_url = click.style("App URL      : ", fg="blue") + click.style(
-                "{}".format(result_json["app_url"]))
-        category = click.style("Category     : ", fg="blue") + click.style(
-                "{}".format(result_json["category"]))
-        keywords = click.style("Keywords     : ", fg="blue") + click.style(
-                "{}".format(', '.join(result_json["keywords"])))
-        version = click.style("Version      : ", fg="blue") + click.style(
-                "{}".format(result_json["version"]))
-        last_updated_str = datetime.datetime.fromtimestamp(
-                result_json["updated"]).strftime("%Y-%m-%d %H:%M")
-        last_update = click.style("Last Update  : ", fg="blue") + click.style(
-                "{}".format(last_updated_str))
-        quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
-                result_json["quick_buy"]
-        )
-        is_active = click.style("Status       : ", fg="blue")
-        if result_json["is_active"] and result_json["is_up"] and result_json[
-            "is_healthy"]:
-            is_active += click.style("Active")
-        else:
-            is_active += click.style("Inactive")
+    desc = click.style("Description  : ", fg="blue") + click.style(
+            "{}".format(result_json["description"]))
+    price = click.style("Price Range  : ", fg="blue") + click.style(
+            "{} - {} Satoshis").format(result_json["min_price"],
+                                       result_json["max_price"])
 
-        availability = click.style("Availability : ", fg="blue") + click.style(
-                "{:.2f}%".format(result_json["average_uptime"] * 100))
-
-        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-                result_json["usage_docs"])
-
-        final_str = "\n".join(
-                [title, desc, created_by, price, rating, "\n",
-                 is_active, availability, "\n",
-                 doc_url, app_url, "\n",
-                 category, keywords, version, last_update, "\n",
-                 quick_start, "\n",
-                 usage_docs, "\n\n"])
-        config.echo_via_pager(final_str)
+    if result_json["rating_count"] == 0:
+        rating_str = "Not yet rated"
     else:
-        raise ServerRequestError()
+        rating_str = "{:.1f} ({} rating".format(result_json["average_rating"],
+                                                int(result_json["rating_count"]))
+        if result_json["rating_count"] > 1:
+            rating_str += "s"
+        rating_str += ")"
+    rating = click.style("Rating       : ", fg="blue") + click.style("{}".format(rating_str))
+
+    doc_url = click.style("Docs URL     : ", fg="blue") + click.style(
+            "{}".format(result_json["website_url"]))
+    app_url = click.style("App URL      : ", fg="blue") + click.style(
+            "{}".format(result_json["app_url"]))
+    category = click.style("Category     : ", fg="blue") + click.style(
+            "{}".format(result_json["category"]))
+    keywords = click.style("Keywords     : ", fg="blue") + click.style(
+            "{}".format(', '.join(result_json["keywords"])))
+    version = click.style("Version      : ", fg="blue") + click.style(
+            "{}".format(result_json["version"]))
+    last_updated_str = datetime.datetime.fromtimestamp(
+            result_json["updated"]).strftime("%Y-%m-%d %H:%M")
+    last_update = click.style("Last Update  : ", fg="blue") + click.style(
+            "{}".format(last_updated_str))
+    quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
+            result_json["quick_buy"]
+    )
+    is_active = click.style("Status       : ", fg="blue")
+    if result_json["is_active"] and result_json["is_up"] and result_json[
+        "is_healthy"]:
+        is_active += click.style("Active")
+    else:
+        is_active += click.style("Inactive")
+
+    availability = click.style("Availability : ", fg="blue") + click.style(
+            "{:.2f}%".format(result_json["average_uptime"] * 100))
+
+    usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
+            result_json["usage_docs"])
+
+    final_str = "\n".join(
+            [title, desc, created_by, price, rating, "\n",
+             is_active, availability, "\n",
+             doc_url, app_url, "\n",
+             category, keywords, version, last_update, "\n",
+             quick_start, "\n",
+             usage_docs, "\n\n"])
+    config.echo_via_pager(final_str)
