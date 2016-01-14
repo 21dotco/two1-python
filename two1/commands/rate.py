@@ -1,7 +1,7 @@
-"""
-Rate the seller of a machine-payable endpoint
-"""
+import datetime
+
 import click
+from tabulate import tabulate
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.util.uxstring import UxString
 from two1.lib.server import rest_client
@@ -41,7 +41,31 @@ $ 21 rate --list
 
 
 def _list(config):
-    print("listing all the rated apps")
+    click.secho(UxString.rating_list)
+
+    client = rest_client.TwentyOneRestClient(TWO1_HOST,
+                                             config.machine_auth,
+                                             config.username)
+    try:
+        ratings = client.get_ratings()
+        headers = ["id", "App title", "Creator", "Rating", "Rating Date"]
+        ratings = ratings.json()["ratings"]
+        rows = []
+        for rating in ratings:
+            rating_date = datetime.datetime.fromtimestamp(
+                    rating["rating_date"]).strftime("%Y-%m-%d %H:%M")
+            rating_score = "{}/5".format(rating["rating"])
+            rows.append([rating["app_id"], rating["app_title"], rating["app_creator"],
+                         rating_score, rating_date])
+
+        click.echo(tabulate(rows, headers, tablefmt="grid"))
+
+    except ServerRequestError as e:
+        if e.status_code == 404:
+            click.secho(UxString.no_ratings)
+            return
+        else:
+            raise e
 
 
 def _rate(config, app_id, rating):
