@@ -59,6 +59,16 @@ def _private_key_deserializer(priv_key_ser):
         if priv_key_ser is not None else None
 
 
+def _txn_serializer(txn):
+    # If it's a string or bytes, just return it as-is.
+    rv = txn
+
+    if isinstance(txn, Transaction):
+        rv = txn.to_hex()
+
+    return rv
+
+
 def _txn_list_serializer(txn_list):
     return [t._serialize() for t in txn_list]
 
@@ -1083,6 +1093,10 @@ class Two1Wallet(BaseWallet):
         # Return the PrivateKey object, not the HDPrivateKey object
         return acct.get_public_key(change=False, n=key_index)._key
 
+    @daemonizable.method
+    @daemonizable.arg(arg_name="tx",
+                      serializer=_txn_serializer,
+                      deserializer=lambda a: a)
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.
 
