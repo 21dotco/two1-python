@@ -346,7 +346,7 @@ class PaymentServerAuthentication(BaseBitcoinAuthentication):
             # Redeem the transaction in its payment channel
             paid_amount = payment_server.redeem(request.META[payment_header])
             # Verify the amount of the payment against the resource price
-            if paid_amount == int(get_price_for_request(request)):
+            if paid_amount >= int(get_price_for_request(request)):
                 validation = (self.pc_user, paid_amount)
         finally:
             return validation
