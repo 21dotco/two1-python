@@ -1,6 +1,7 @@
 import inspect
 import pytest
 import os.path
+import time
 
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.bitcoin.hash import Hash
@@ -216,9 +217,20 @@ def test_txns():
     txn_hex = "01000000021ef63ad4dab2c227c7ffcb063916e824bd54c2f463a5ce4b48b6a70a9f3b4fd2000000006a473044022051008f06f1fc5783364712c7bf175c383ebb92c1001ba9f744f5170d5af00bb9022012baa83b3611b2c0e637d2f5e62dd3f6f4debfca805f8a42df6719a67614824d0121027fc10ccde9240463a86c983d2c8d1301311c9debf510119418b0da7b6fdb7ee7ffffffff8ebe0ae5e97c1b3b5742ab7a0253a9e711c27650ce58c25a43bccd817af27937000000006a473044022076fd5835628d4867b489c4c7afa885de33417a3536276b3f7066155b1bd79c15022030a218c2ca35b27e2beefb2298a0bf6fc9eabe93e07f388a1a3aee878025a7b6012102bed99adff9710dbc3e9f7966037d5824ffb134aeba70aec70e34e7eeb6547a94ffffffff0240420f00000000001976a914952e023bf19047e9a014af4ec067667695d8c99488acf8340f00000000001976a914743281d388add04da28e10a12af09c853f98609888ac00000000"
 
     txn = WalletTransaction.from_hex(txn_hex)
-    cm.insert_txn(txn, mark_provisional=True)
+
+    # First test with a very short expiration
+    cm.insert_txn(txn, mark_provisional=True, expiration=1)
 
     txid = "6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c"
+    assert txid in cm._txn_cache
+    assert cm._txn_cache[txid].provisional
+    time.sleep(1.5)
+    cm.prune_provisional_txns()
+    assert txid not in cm._txn_cache
+
+    # Now do default expiration
+    cm.insert_txn(txn, mark_provisional=True)
+
     assert txid in cm._txn_cache
 
     in_addrs = ["15hyvVXH2eJnakwhpqKBf5oTCa3o2bp8m8",

@@ -23,8 +23,8 @@ class CacheManager(object):
     UNSPENT = 0x2
     UNKNOWN = 0x3
 
-    PROVISIONAL_TXN_TIMEOUT = 24 * 60  # 24 hours
-    CACHE_VERSION = "0.2.0"
+    PROVISIONAL_MAX_DURATION = 60*60  # 60 minutes
+    CACHE_VERSION = "0.3.0"
 
     def __init__(self, testnet=False):
         self._address_cache = {}
@@ -133,13 +133,14 @@ class CacheManager(object):
 
         if "txns" in d:
             now = time.time()
-            _age_seconds = 60 * self.PROVISIONAL_TXN_TIMEOUT
             for txid in d['txns']:
                 t = WalletTransaction._deserialize(d['txns'][txid])
                 if t.provisional:
                     if not prune_provisional or \
-                       now - t.provisional < _age_seconds:
-                        self.insert_txn(t, mark_provisional=True)
+                       t.provisional > now:
+                        self.insert_txn(t,
+                                        mark_provisional=True,
+                                        expiration=t.provisional)
                 else:
                     self.insert_txn(t, mark_provisional=False)
 
@@ -248,7 +249,7 @@ class CacheManager(object):
 
         return rv
 
-    def insert_txn(self, wallet_txn, mark_provisional=False):
+    def insert_txn(self, wallet_txn, mark_provisional=False, expiration=0):
         """ Inserts a transaction into the cache and updates the
             relevant dicts based on the addresses found in the
             transaction.
@@ -261,6 +262,11 @@ class CacheManager(object):
                 marked as provisional are automatically pruned if they
                 are not also seen by normal transaction
                 updates/insertions within a certain time period.
+            expiration (int): Time, in seconds from epoch, when a provisional
+                transaction should be automatically pruned. This is invalid
+                unless mark_provisional=True. If expiration == 0, it is set
+                to time.time() + PROVISIONAL_MAX_DURATION. This cannot be
+                greater than PROVISIONAL_MAX_DURATION seconds in the future.
         """
         txid = str(wallet_txn.hash)
 
@@ -270,7 +276,14 @@ class CacheManager(object):
             return
 
         if mark_provisional and not wallet_txn.provisional:
-            wallet_txn.provisional = int(time.time())
+            now = time.time()
+            if expiration < 0:
+                raise ValueError("expiration cannot be negative.")
+
+            if expiration == 0 or \
+               expiration > now + self.PROVISIONAL_MAX_DURATION:
+                expiration = now + self.PROVISIONAL_MAX_DURATION
+            wallet_txn.provisional = expiration
 
         if not mark_provisional and wallet_txn.provisional:
             wallet_txn.provisional = False
@@ -441,19 +454,15 @@ class CacheManager(object):
 
         self._dirty = True
 
-    def prune_provisional_txns(self, age):
-        """ Removes transactions marked as provisional if they are older
-            than age.
-
-        Args:
-            age (int): Number of minutes old the transaction must be
-                to be pruned.
+    def prune_provisional_txns(self):
+        """ Removes transactions marked as provisional if they are past
+            their expiration time.
         """
         now = time.time()
-        _age_seconds = 60 * age
-        for txid in self._txn_cache.keys():
+        txids = list(self._txn_cache.keys())
+        for txid in txids:
             txn = self._txn_cache[txid]
-            if txn.provisional and now - txn.provisional >= _age_seconds:
+            if txn.provisional and txn.provisional < now:
                 self._delete_txn(txid)
 
     def has_txns(self, account_index=None):
