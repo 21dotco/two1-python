@@ -190,21 +190,21 @@ class TwentyOneRestClient(object):
             path += "?detailed=True"
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # GET /pool/coinbase/me/
+    # GET /integrations/coinbase/{username}/status
     def get_coinbase_status(self):
-        path = "/pool/coinbase/me/"
+        path = "/integrations/coinbase/{}/status/".format(self.username)
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # POST /pool/coinbase/buy/
+    # POST /integrations/coinbase/buys/
     def buy_bitcoin_from_exchange(self, amount, unit):
-        data = json.dumps({"amount" : amount, "unit": unit})
-        path = "/pool/coinbase/buy/"
+        data = json.dumps({"amount": amount, "unit": unit})
+        path = "/integrations/coinbase/buys/"
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
-    # POST /pool/coinbase/send/
+    # POST /integrations/coinbase/sends/
     def send_bitcoin_from_exchange(self, amount):
-        data = json.dumps({"amount" : amount})
-        path = "/pool/coinbase/send/"
+        data = json.dumps({"amount": amount})
+        path = "/integrations/coinbase/sends/"
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     # GET /mmm/v1/search
