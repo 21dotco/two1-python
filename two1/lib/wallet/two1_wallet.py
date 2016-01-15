@@ -655,7 +655,10 @@ class Two1Wallet(BaseWallet):
 
         return accts
 
-    def _sync_accounts(self):
+    def sync_accounts(self):
+        """ Syncs all accounts with the blockchain and prunes all
+        expired provisional transactions.
+        """
         for a in self._accounts:
             a._sync_txns()
             a._update_balance()

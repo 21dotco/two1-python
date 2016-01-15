@@ -97,7 +97,7 @@ def do_update(block_on_acquire=True):
             if wallet_dict_lock.acquire(block_on_acquire):
                 lock_acquired = True
                 logger.debug("Starting wallet update ...")
-                wallet['obj']._sync_accounts()
+                wallet['obj'].sync_accounts()
                 wallet['update_info']['last_update'] = time.time()
                 logger.debug("Completed update.")
 
@@ -273,6 +273,14 @@ def wallet_path():
         str: The path to the currently loaded wallet.
     """
     return wallet['path']
+
+
+@local_daemon_method
+def sync_accounts():
+    """ RPC method to trigger an update
+    """
+    _check_wallet_loaded()
+    do_update()
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
