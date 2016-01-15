@@ -655,14 +655,12 @@ class Two1Wallet(BaseWallet):
 
         return accts
 
-    def _sync_accounts(self,
-                       provisional_txn_timeout=CacheManager.PROVISIONAL_TXN_TIMEOUT):
+    def _sync_accounts(self):
         for a in self._accounts:
             a._sync_txns()
             a._update_balance()
 
-        self._cache_manager.prune_provisional_txns(
-            age=provisional_txn_timeout)
+        self._cache_manager.prune_provisional_txns()
 
         self._cache_manager.last_block = self.data_provider.get_block_height()
         self.sync_wallet_file()
@@ -1134,6 +1132,7 @@ class Two1Wallet(BaseWallet):
     def build_signed_transaction(self, addresses_and_amounts,
                                  use_unconfirmed=False,
                                  insert_into_cache=False,
+                                 expiration=0,
                                  fees=None,
                                  accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
@@ -1148,6 +1147,13 @@ class Two1Wallet(BaseWallet):
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             insert_into_cache (bool): Insert the transaction into the
                 wallet's cache and mark it as provisional.
+            expiration (int): Time, in seconds from epoch, when a
+                provisional transaction should be automatically
+                pruned. This is invalid unless insert_into_cache=True.
+                If expiration == 0, it is set to time.time() +
+                CacheManager.PROVISIONAL_MAX_DURATION.  This cannot be
+                greater than CacheManager.PROVISIONAL_MAX_DURATION
+                seconds in the future.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
@@ -1273,7 +1279,9 @@ class Two1Wallet(BaseWallet):
                 i += 1
 
         if insert_into_cache:
-            self._cache_manager.insert_txn(txn, mark_provisional=True)
+            self._cache_manager.insert_txn(txn,
+                                           mark_provisional=True,
+                                           expiration=expiration)
 
         return [txn]
 
@@ -1283,6 +1291,7 @@ class Two1Wallet(BaseWallet):
     def make_signed_transaction_for(self, address, amount,
                                     use_unconfirmed=False,
                                     insert_into_cache=False,
+                                    expiration=0,
                                     fees=None,
                                     accounts=[]):
         """ Makes a raw signed unbroadcasted transaction for the specified amount.
@@ -1293,6 +1302,13 @@ class Two1Wallet(BaseWallet):
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             insert_into_cache (bool): Insert the transaction(s) into
                 the wallet's cache and mark it as provisional.
+            expiration (int): Time, in seconds from epoch, when a
+                provisional transaction should be automatically
+                pruned. This is invalid unless insert_into_cache=True.
+                If expiration == 0, it is set to time.time() +
+                CacheManager.PROVISIONAL_MAX_DURATION.  This cannot be
+                greater than CacheManager.PROVISIONAL_MAX_DURATION
+                seconds in the future.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
@@ -1307,12 +1323,14 @@ class Two1Wallet(BaseWallet):
             {address: amount},
             use_unconfirmed=use_unconfirmed,
             insert_into_cache=insert_into_cache,
+            expiration=expiration,
             fees=fees,
             accounts=accounts)
 
     def make_signed_transaction_for_multiple(self, addresses_and_amounts,
                                              use_unconfirmed=False,
                                              insert_into_cache=False,
+                                             expiration=0,
                                              fees=None,
                                              accounts=[]):
         """ Makes raw signed unbroadcasted transaction(s) for the specified amount.
@@ -1327,6 +1345,13 @@ class Two1Wallet(BaseWallet):
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             insert_into_cache (bool): Insert the transaction(s) into
                 the wallet's cache and mark it as provisional.
+            expiration (int): Time, in seconds from epoch, when a
+                provisional transaction should be automatically
+                pruned. This is invalid unless insert_into_cache=True.
+                If expiration == 0, it is set to time.time() +
+                CacheManager.PROVISIONAL_MAX_DURATION.  This cannot be
+                greater than CacheManager.PROVISIONAL_MAX_DURATION
+                seconds in the future.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If
                not provided, all discovered accounts may be used based
@@ -1342,6 +1367,7 @@ class Two1Wallet(BaseWallet):
             addresses_and_amounts,
             use_unconfirmed=use_unconfirmed,
             insert_into_cache=insert_into_cache,
+            expiration=expiration,
             fees=fees,
             accounts=accounts)
         return [{"txid": str(txn.hash), "txn": txn} for txn in txns]
