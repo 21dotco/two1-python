@@ -50,7 +50,7 @@ def buybitcoin_show_status(config, client, exchange):
         payment_method_string = click.style("No Payment Method linked yet.", fg="red", bold=True)
         if coinbase["payment_method"] is not None:
             payment_method_string = "Linked Payment Method: {}".format(
-                click.style(coinbase["payment_method"]["name"], fg="magenta", bold=True))
+                    click.style(coinbase["payment_method"]["name"], fg="magenta", bold=True))
         config.log(UxString.buybitcoin_exchange_status.format(
                 click.style(exchange.capitalize(), fg="yellow"),
                 click.style(coinbase["name"], fg="cyan", bold=True),
@@ -84,12 +84,14 @@ def buybitcoin_buy(config, client, exchange, amount, unit):
     buy_result = resp.json()
     if "err" in buy_result:
         config.log(
-            UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
+                UxString.buybitcoin_error.format(
+                    click.style(buy_result["err"], bold=True, fg="red")))
         return buy_result
 
     if buy_result["status"] == "canceled":
         config.log(
-            UxString.buybitcoin_error.format(click.style("Buy was canceled.", bold=True, fg="red")))
+                UxString.buybitcoin_error.format(
+                    click.style("Buy was canceled.", bold=True, fg="red")))
         return buy_result
 
     # success
