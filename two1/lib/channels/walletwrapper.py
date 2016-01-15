@@ -94,6 +94,9 @@ class WalletWrapperBase:
 class Two1WalletWrapper(WalletWrapperBase):
     """Wallet interface to a two1 Wallet."""
 
+    DEPOSIT_CACHE_TIMEOUT = 30
+    """Number of seconds the deposit should remain in the cache before expiring."""
+
     def __init__(self, wallet):
         """Instantiate a wallet wrapper interface with the specified Wallet.
 
@@ -113,7 +116,7 @@ class Two1WalletWrapper(WalletWrapperBase):
     def create_deposit_tx(self, script_address, amount, fee, use_unconfirmed=False):
         # Sign deposit transaction to script address
         try:
-            return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True)[0]
+            return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True, expiration=Two1WalletWrapper.DEPOSIT_CACHE_TIMEOUT)[0]
         except wallet.exceptions.WalletBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
