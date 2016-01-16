@@ -90,6 +90,15 @@ class WalletWrapperBase:
         """
         raise NotImplementedError()
 
+    def broadcast_transaction(self, transaction):
+        """Broadcast a signed transaction to the bitcoin network.
+
+        Args:
+            transaction (str): Hex-encoded signed transaction to be broadcast.
+
+        """
+        raise NotImplementedError()
+
 
 class Two1WalletWrapper(WalletWrapperBase):
     """Wallet interface to a two1 Wallet."""
@@ -97,11 +106,13 @@ class Two1WalletWrapper(WalletWrapperBase):
     DEPOSIT_CACHE_TIMEOUT = 30
     """Number of seconds the deposit should remain in the cache before expiring."""
 
-    def __init__(self, wallet):
+    def __init__(self, wallet, blockchain):
         """Instantiate a wallet wrapper interface with the specified Wallet.
 
         Args:
             wallet (two1.lib.wallet.Wallet): Wallet instance.
+            blockchain (two1.lib.channels.blockchain.Blockchain): Blockchain
+                data provider.
 
         Returns:
             Two1WalletWrapper: instance of Two1WalletWrapper.
@@ -109,6 +120,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         """
         super().__init__()
         self._wallet = wallet
+        self._blockchain = blockchain
 
     def get_public_key(self):
         return self._wallet.get_change_public_key()
@@ -171,3 +183,9 @@ class Two1WalletWrapper(WalletWrapperBase):
     def sign(self, message, public_key):
         private_key = self._wallet.get_private_for_public(public_key)
         return private_key.sign(message)
+
+    def broadcast_transaction(self, transaction):
+        # Verify that transaction has not already been broadcast
+        txid = str(bitcoin.Transaction.from_hex(transaction).hash)
+        if not self._blockchain.lookup_tx(txid):
+            self._wallet.broadcast_transaction(transaction)

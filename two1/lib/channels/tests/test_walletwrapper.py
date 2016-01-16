@@ -8,7 +8,7 @@ import two1.lib.channels.tests.mock as mock
 
 
 @pytest.fixture(params=[
-    walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
 ])
 def wallet(request):
     return request.param

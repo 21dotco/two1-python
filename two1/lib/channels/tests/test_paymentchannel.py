@@ -22,9 +22,9 @@ def assert_paymentchannel_state(expected, actual):
 
 def test_paymentchannel_typical():
     # Create mocked dependencies
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
-    db = database.Sqlite3Database(":memory:")
     bc = mock.MockBlockchain()
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), bc)
+    db = database.Sqlite3Database(":memory:")
 
     # Link the mock blockchain to the mock payment channel server as it is a
     # non-injected dependency.
@@ -142,9 +142,9 @@ def test_paymentchannel_typical():
 
 def test_paymentchannel_typical_zeroconf():
     # Create mocked dependencies
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
-    db = database.Sqlite3Database(":memory:")
     bc = mock.MockBlockchain()
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), bc)
+    db = database.Sqlite3Database(":memory:")
 
     # Link the mock blockchain to the mock payment channel server as it is a
     # non-injected dependency.
@@ -192,9 +192,9 @@ def test_paymentchannel_typical_zeroconf():
 
 def test_paymentchannel_expiration():
     # Create mocked dependencies
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
-    db = database.Sqlite3Database(":memory:")
     bc = mock.MockBlockchain()
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), bc)
+    db = database.Sqlite3Database(":memory:")
 
     # Link the mock blockchain to the mock payment channel server as it is a
     # non-injected dependency.
@@ -276,9 +276,9 @@ def test_paymentchannel_expiration():
 
 def test_paymentchannel_serverside_close():
     # Create mocked dependencies
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
-    db = database.Sqlite3Database(":memory:")
     bc = mock.MockBlockchain()
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), bc)
+    db = database.Sqlite3Database(":memory:")
 
     # Link the mock blockchain to the mock payment channel server as it is a
     # non-injected dependency.

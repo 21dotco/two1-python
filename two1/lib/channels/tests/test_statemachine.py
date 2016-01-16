@@ -68,7 +68,7 @@ def test_statemachine_create():
     model_data = {
         'url': 'test',
     }
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
@@ -172,7 +172,7 @@ def test_statemachine_confirm():
         'spend_txid': None,
         'min_output_amount': 1000,
     }
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
@@ -248,7 +248,7 @@ def test_statemachine_pay():
         'spend_txid': None,
         'min_output_amount': 1000,
     }
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
@@ -394,7 +394,7 @@ def test_statemachine_close():
         'spend_txid': None,
         'min_output_amount': 1000,
     }
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
@@ -470,7 +470,7 @@ def test_statemachine_finalize():
         'spend_txid': None,
         'min_output_amount': 1000,
     }
-    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet())
+    wallet = walletwrapper.Two1WalletWrapper(mock.MockTwo1Wallet(), mock.MockBlockchain())
     model = statemachine.PaymentChannelModel(**model_data)
     sm = statemachine.PaymentChannelStateMachine(model, wallet)
 
