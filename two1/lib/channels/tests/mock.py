@@ -21,7 +21,7 @@ class MockTwo1Wallet:
     def get_change_public_key(self):
         return self.PRIVATE_KEY.public_key
 
-    def build_signed_transaction(self, addresses_and_amounts, use_unconfirmed=False, insert_into_cache=False, fees=None):
+    def build_signed_transaction(self, addresses_and_amounts, use_unconfirmed=False, insert_into_cache=False, fees=None, expiration=0):
         address = list(addresses_and_amounts.keys())[0]
         amount = addresses_and_amounts[address]
 
@@ -35,6 +35,9 @@ class MockTwo1Wallet:
     def get_private_for_public(self, public_key):
         assert bytes(public_key) == bytes(self.PRIVATE_KEY.public_key)
         return self.PRIVATE_KEY
+
+    def broadcast_transaction(self, transaction):
+        return MockBlockchain.broadcast_tx(MockBlockchain, transaction)
 
     @property
     def testnet(self):
@@ -142,6 +145,9 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
 class MockBlockchain(blockchain.BlockchainBase):
     """Mock Blockchain interface for unit testing."""
 
+    _blockchain = {}
+    """Global blockchain state accessible by other mock objects."""
+
     def __init__(self):
         """Instantiate a Mock blockchain interface.
 
@@ -149,8 +155,9 @@ class MockBlockchain(blockchain.BlockchainBase):
             MockBlockchain: instance of MockBlockchain.
 
         """
-        self._blockchain = {}
-
+        # Reset blockchain state
+        for key in list(MockBlockchain._blockchain.keys()):
+            del MockBlockchain._blockchain[key]
         # Stores transactions as
         #   {
         #       "<txid>": {

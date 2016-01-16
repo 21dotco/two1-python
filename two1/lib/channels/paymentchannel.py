@@ -153,8 +153,8 @@ class PaymentChannel:
             # Add to the database
             database.create(model)
 
-        # Call broadcast(deposit_tx) on blockchain
-        blockchain.broadcast_tx(sm.deposit_tx)
+            # Call broadcast(deposit_tx) on blockchain
+            wallet.broadcast_transaction(sm.deposit_tx)
 
         return PaymentChannel(deposit_url, database, wallet, blockchain)
 
