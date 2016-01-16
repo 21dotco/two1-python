@@ -32,10 +32,15 @@ class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,
             poller.register(self.request.fileno(), select.POLLIN | select.POLLPRI | select.POLLERR)
             while True:
                 if poller.poll(500):
-                    self.data = self.request.recv(1024).strip().decode()
+                    self.data = self.request.recv(8192).decode()
 
                     if not self.data:
                         break
+
+                    while self.data[-1] != '\n':
+                        self.data += self.request.recv(8192).decode()
+
+                    self.data = self.data.strip()
                 else:
                     if self.server.STOP_EVENT.is_set():
                         break
