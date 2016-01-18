@@ -196,9 +196,9 @@ class TwentyOneRestClient(object):
         return self._request(sign_username=self.username, method="GET", path=path)
 
     # POST /integrations/coinbase/buys/
-    def buy_bitcoin_from_exchange(self, amount, unit):
+    def buy_bitcoin_from_exchange(self, amount, unit, commit=False):
         data = json.dumps({"amount": amount, "unit": unit})
-        path = "/integrations/coinbase/buys/"
+        path = "/integrations/coinbase/buys/?commit={}".format(commit)
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     # POST /integrations/coinbase/sends/
