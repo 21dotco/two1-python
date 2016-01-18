@@ -137,23 +137,34 @@ class UxString:
     doctor_total = click.style("Summary", fg='yellow')
 
     # buybitcoin
+    exchange_info_header = click.style("\nExchange Info", fg="magenta")
+    exchange_info = "    Exchange Name          : {}\n" \
+                    "    Exchange Username      : {}\n" \
+                    "    Linked Exchange Wallet : {}\n" \
+                    "    Linked Payment Method  : {}\n"
+    buybitcoin_instruction_header = click.style("Buying Bitcoin:", fg="magenta")
+    buybitcoin_instructions = "    Use " + click.style(
+            "21 buybitcoin k satoshi",
+            bold=True) + " to buy k satoshis from {}.\n    The bought Bitcoins will automatically " \
+                         "appear into your 21 wallet\n\n"
     buybitcoin_pairing = \
         "To buy bitcoin, you first need to pair your 21 and {} account.\n\n" + \
         "First, if you already haven't, create a password for your account by " \
         "doing " + click.style("21 login -setpassword",
                                bold=True) + "\nThen go to http://21.co/{}/buybitcoin in your " \
                                             "browser to complete the pairing\n"
-    buybitcoin_exchange_status = "Bitcoins will be bought from {} account {}.\nLinked wallet: {}\n{}\n"
-    buybitcoin_instructions = \
-        "To buy some bitcoin, use " + click.style("21 buybitcoin k satoshi", bold=True, fg="green") + \
-        " to buy k satoshi of bitcoin\nfrom {} and have it automatically deposited into your 21 wallet.\n\n" + \
-        "To edit account details, use " + click.style("21 buybitcoin --config", bold=True, fg="white") + "."
     buybitcoin_no_payment_method = \
         "To add a payment method to {}, go to {}."
-    buybitcoin_buying = "Buying {} {}.."
+    buybitcoin_confirmation = "\nYou are about to withdraw {} from the bank connected to your " \
+                              "Coinbase account to buy {}.\n" \
+                              "From {}, {} will be spent on fees. \n"
+    buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase ?"
     buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
-    buybitcoin_success = click.style("Successfully", bold=True, fg="green") + " bought {} for {}."
-    buybitcoin_success_payout_time = "The funds will arrive in your 21 account at {}."
+    buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") + click.style(
+            "{} ", fg="magenta", bold=True) + click.style("for", fg="magenta") + click.style(
+        " {}.\n", bold=True, fg="magenta")
+
+    buybitcoin_success_payout_time = "The funds will be deposited to your 21 wallet on {}."
     buybitcoin_success_instant = "The bitcoin has been transferred to your 21 wallet."
 
     # mining
