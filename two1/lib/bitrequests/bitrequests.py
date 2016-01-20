@@ -1,27 +1,7 @@
-""""BitRequests, or requests with 402 ability.
-
-BitTransfer Protocol:
-
-An instant off chain approach to transfering Bitcoin.
-
-Flow from clients perspective (user 1):
-
-1. user 1 does a 21 mine
-    - user 1 has 100k satohsi in earnings
-2. user 1 does a 21 status
-    - CLI displays earnings (aggregated shares) as their balance
-3. User does a 21 buy endpoint/current-weather from user 2
-    - Here user 1 does a call to user 2's server
-        - user 2 responds with a 402 of their price / and their 21 username
-    if user 1 decides to pay for that endpoint:
-        - user 1 sends to user 2 the message (u1, pay, u2, price) (the transfer)
-          signed with their private key (aka: machine auth)
-            - user 2 sends this to the server
-            - server checks if u1 has enough money to pay u2 (balance table).
-                - if not, check earnings table.
-                    - if earnings table, transfer from earnings -> balance.
-            - server updates u2 & u1's balance to reflect the payment price.
-            - server sends 200 OK to u2, who then sends data to u1 in 200
+"""This module provides various BitRequests methods, including:
+`BitTransferRequests`, `OnChainRequests`, and `ChannelRequests`. These objects
+can be used to make 402-enabled, paid HTTP requests to servers that
+support the 402-protocol and those specific payment methods.
 """
 import time
 import json
