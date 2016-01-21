@@ -196,15 +196,10 @@ class TwentyOneRestClient(object):
         return self._request(sign_username=self.username, method="GET", path=path)
 
     # POST /integrations/coinbase/buys/
-    def buy_bitcoin_from_exchange(self, amount, unit, commit=False):
-        data = json.dumps({"amount": amount, "unit": unit})
-        path = "/integrations/coinbase/buys/?commit={}".format(commit)
-        return self._request(sign_username=self.username, method="POST", path=path, data=data)
-
-    # POST /integrations/coinbase/sends/
-    def send_bitcoin_from_exchange(self, amount):
-        data = json.dumps({"amount": amount})
-        path = "/integrations/coinbase/sends/"
+    def buy_bitcoin_from_exchange(self, amount, unit, commit=False, deposit_type="WALLET"):
+        data = json.dumps({"amount": amount, "unit": unit, "deposit_type": deposit_type,
+                           "commit": commit})
+        path = "/integrations/coinbase/buys/"
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     # GET /mmm/v1/search

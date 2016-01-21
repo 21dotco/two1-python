@@ -2,7 +2,7 @@ import click
 from datetime import datetime
 
 from two1.commands.config import TWO1_HOST, TWO1_WEB_HOST
-from two1.lib.util.exceptions import TwoOneError
+from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.server import rest_client
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.decorators import json_output
@@ -78,15 +78,28 @@ def buybitcoin_config(config, client, exchange):
 
 def buybitcoin_buy(config, client, exchange, amount, unit):
 
-    resp = client.buy_bitcoin_from_exchange(amount, unit)
+    deposit_type = get_deposit_info()
+    get_price_quote(client, amount, unit, deposit_type)
+
+    try:
+        buy_bitcoin(client, amount, unit, deposit_type)
+    except click.exceptions.Abort:
+        click.secho("\nPurchase canceled", fg="magenta")
+
+
+def get_price_quote(client, amount, unit, deposit_type):
+    # first get a quote
+    resp = client.buy_bitcoin_from_exchange(amount, unit, commit=False)
+
     if not resp.ok:
         raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, unit))
+
     buy_result = resp.json()
     if "err" in buy_result:
-        config.log(
+        click.secho(
                 UxString.buybitcoin_error.format(
                     click.style(buy_result["err"], bold=True, fg="red")))
-        return buy_result
+        raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, unit))
 
     fees = buy_result["fees"]
     total_fees = ["{} {}".format(float(f["amount"]["amount"]), f["amount"]["currency"]) for f in
@@ -95,45 +108,73 @@ def buybitcoin_buy(config, client, exchange, amount, unit):
     total_amount = buy_result["total"]
     total = click.style("{} {}".format(total_amount["amount"], total_amount["currency"]), bold=True)
     bitcoin_amount = click.style("{} {}".format(amount, unit), bold=True)
-    click.secho(UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees))
-    try:
-        if click.confirm(UxString.buybitcoin_confirmation_prompt):
-            resp = client.buy_bitcoin_from_exchange(amount, unit, commit=True)
-            buy_result = resp.json()
-            if buy_result["status"] == "canceled":
-                config.log(
-                        UxString.buybitcoin_error.format(
-                                click.style("Buy was canceled.", bold=True, fg="red")))
-                return buy_result
 
-            btc_bought = "{} {}".format(buy_result["amount"]["amount"],
-                                        buy_result["amount"]["currency"])
+    deposit_type = {"TO_BALANCE": "21.co balance", "WALLET": "Blockchain balance"}[deposit_type]
+    click.secho(UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees,
+                                                        deposit_type))
 
-            dollars_paid = "{} {}".format(buy_result["total"]["amount"],
-                                          buy_result["total"]["currency"])
 
-            click.secho(UxString.buybitcoin_success.format(btc_bought, dollars_paid))
+def buy_bitcoin(client, amount, unit, deposit_type):
+    if click.confirm(UxString.buybitcoin_confirmation_prompt):
+        click.secho(UxString.coinbase_purchase_in_progress)
+        resp = client.buy_bitcoin_from_exchange(amount, unit, commit=True, deposit_type=deposit_type)
+        buy_result = resp.json()
+        if buy_result["status"] == "canceled":
+            click.secho(UxString.buybitcoin_error.format(
+                click.style("Buy was canceled.", bold=True, fg="red")))
 
+            return buy_result
+
+        btc_bought = "{} {}".format(buy_result["amount"]["amount"],
+                                    buy_result["amount"]["currency"])
+
+        dollars_paid = "{} {}".format(buy_result["total"]["amount"],
+                                      buy_result["total"]["currency"])
+
+        click.secho(UxString.buybitcoin_success.format(btc_bought, dollars_paid))
+
+        if deposit_type == "TO_BALANCE":
+            click.secho(UxString.buybitcoin_21_balance_success)
             if "payout_at" in buy_result:
                 payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
                                                                                        "%H:%M:%S")
 
-                config.log(UxString.buybitcoin_success_payout_time.format(payout_time))
-        else:
-            click.secho("\nPurchase canceled", fg="magenta")
-    except click.exceptions.Abort:
+                click.secho(UxString.buybitcoin_21_balance_time.format(payout_time, amount, unit))
+
+        elif "instant" in buy_result and buy_result["instant"]:
+            click.secho(UxString.buybitcoin_success_instant)
+        elif "payout_at" in buy_result:
+            payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
+                                                                                   "%H:%M:%S")
+
+            click.secho(UxString.buybitcoin_success_payout_time.format(payout_time))
+    else:
         click.secho("\nPurchase canceled", fg="magenta")
 
 
-    #
-    # # if instant buy, transfer the funds into your bitcoin account now
-    # if buy_result["instant"] and buy_result["amount"]["currency"] == "BTC":
-    #     resp = client.send_bitcoin_from_exchange(buy_result["amount"]["amount"])
-    #     if not resp.ok:
-    #         raise TwoOneError("Failed to send bitcoin from {} to your 21 wallet.".format(exchange))
-    #     send_result = resp.json()
-    #     # print(send_result)
-    #     config.log(UxString.buybitcoin_success_instant)
-    #     buy_result["send"] = send_result
+def get_deposit_info():
 
-    return buy_result
+    click.secho(UxString.deposit_type_question)
+    deposit_types = [{"msg": UxString.deposit_type_off_chain, "value": "TO_BALANCE"},
+                     {"msg": UxString.deposit_type_on_chain, "value": "WALLET"}]
+    index_to_deposit = {}
+    for i, deposit_type in enumerate(deposit_types):
+        click.secho("{}. {}".format(i + 1, deposit_type["msg"]))
+        index_to_deposit[i] = deposit_types[i]["value"]
+
+    click.secho(UxString.deposit_type_explanation)
+    try:
+        deposit_index = -1
+        while deposit_index <= 0 or deposit_index > len(deposit_types):
+            deposit_index = click.prompt(UxString.deposit_type_prompt, type=int)
+            if deposit_index <= 0 or deposit_index > len(deposit_types):
+                click.secho(UxString.deposit_type_invalid_index.format(1, len(deposit_types)))
+
+        deposit_type = index_to_deposit[deposit_index - 1]
+        return deposit_type
+
+    except click.exceptions.Abort:
+        click.secho("\nPurchase canceled", fg="magenta")
+        raise UnloggedException()
+
+
