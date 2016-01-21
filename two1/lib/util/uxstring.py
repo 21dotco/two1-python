@@ -137,6 +137,20 @@ class UxString:
     doctor_total = click.style("Summary", fg='yellow')
 
     # buybitcoin
+    deposit_type_question = "\nWhere do you want your Bitcoins to be deposited to ?"
+    deposit_type_on_chain = "Your balance on the Blockchain [2]"
+    deposit_type_off_chain = "Your balance at 21.co [1]"
+    deposit_type_explanation = "\n[1] Available for off-chain transactions. " \
+                               "\n[2] Available for on-chain and payment channel transactions." \
+                               "\nYou can always move your balance at 21.co to the Blockchain by " \
+                               "issuing the" + click.style(" 21 flush ", bold=True) + "command"
+
+    deposit_type_invalid_index = "Please select a number between {} and {} to select the " \
+                                 "corresponding deposit type"
+
+    deposit_type_prompt = "\nPlease select the number associated with the deposit option you " \
+                          "would like to use"
+
     exchange_info_header = click.style("\nExchange Info", fg="magenta")
     exchange_info = "    Exchange Name          : {}\n" \
                     "    Exchange Username      : {}\n" \
@@ -157,16 +171,24 @@ class UxString:
         "To add a payment method to {}, go to {}."
     buybitcoin_confirmation = "\nYou are about to withdraw {} from the bank connected to your " \
                               "Coinbase account to buy {}.\n" \
-                              "From {}, {} will be spent on fees. \n"
+                              "From {}, {} will be spent on fees. \n" \
+                              "Your Bitcoins will be deposited to your {}.\n"
     buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase ?"
     buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
     buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") + click.style(
             "{} ", fg="magenta", bold=True) + click.style("for", fg="magenta") + click.style(
         " {}.\n", bold=True, fg="magenta")
 
-    buybitcoin_success_payout_time = "The funds will be deposited to your 21 wallet on {}."
-    buybitcoin_success_instant = "The bitcoin has been transferred to your 21 wallet."
+    buybitcoin_success_payout_time = "The Bitcoins will be deposited to your 21 wallet on {}."
+    buybitcoin_success_instant = "The Bitcoins will be deposited to your 21 wallet in the next " \
+                                 "couple of minutes."
 
+    buybitcoin_21_balance_success = "The Bitcoins will be deposited to your 21.co balance in the " \
+                                    "next couple of minutes."
+    buybitcoin_21_balance_time = "\nOn {}, {} {} will be withdrawn from your Coinbase wallet " \
+                                 "for this purchase."
+
+    coinbase_purchase_in_progress = "\nPurchasing Bitcoins From Coinbase...\n"
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \
