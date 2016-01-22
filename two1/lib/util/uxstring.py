@@ -158,8 +158,8 @@ class UxString:
                     "    Linked Payment Method  : {}\n"
     buybitcoin_instruction_header = click.style("Buying Bitcoin:", fg="magenta")
     buybitcoin_instructions = "    Use " + click.style(
-            "21 buybitcoin k satoshi",
-            bold=True) + " to buy k satoshis from {}.\n    The bought Bitcoins will automatically " \
+            "21 buybitcoin k",
+            bold=True) + " to buy k Satoshis from {}.\n    The bought Bitcoins will automatically " \
                          "appear into your 21 wallet\n\n"
     buybitcoin_pairing = \
         "To buy bitcoin, you first need to pair your 21 and {} account.\n\n" + \
@@ -236,7 +236,9 @@ class UxString:
                         "Blockchain",
         "earning_payout": "This is a periodic payout of your mining earnings to "
                           "the Blockchain.",
-        "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer."
+        "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer.",
+        "coinbase_purchase": "You bought and transferred Bitcoins to your account through "
+                             "Coinbase."
     }
 
     empty_logs = "[No events yet]"
