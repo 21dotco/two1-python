@@ -18,16 +18,15 @@ from two1.lib.util.uxstring import UxString
 @click.option('--status', is_flag=True, default=False,
               help="Shows the current status of your exchange integrations")
 @click.argument('amount', default=0, type=click.FLOAT)
-@click.argument('unit', default='satoshi', type=click.Choice(['usd', 'btc', 'satoshi']))
 @json_output
-def buybitcoin(click_config, pair, status, exchange, amount, unit):
+def buybitcoin(click_config, pair, status, exchange, amount):
     """Buy Bitcoins from an exchange
     """
-    return _buybitcoin(click_config, pair, status, exchange, amount, unit)
+    return _buybitcoin(click_config, pair, status, exchange, amount)
 
 
 @capture_usage
-def _buybitcoin(click_config, pair, status, exchange, amount, unit):
+def _buybitcoin(click_config, pair, status, exchange, amount):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              click_config.machine_auth,
                                              click_config.username)
@@ -38,7 +37,7 @@ def _buybitcoin(click_config, pair, status, exchange, amount, unit):
         if amount <= 0 or status:
             return buybitcoin_show_status(click_config, client, exchange)
         else:
-            return buybitcoin_buy(click_config, client, exchange, amount, unit)
+            return buybitcoin_buy(click_config, client, exchange, amount)
 
 
 def buybitcoin_show_status(config, client, exchange):
@@ -76,30 +75,29 @@ def buybitcoin_config(config, client, exchange):
                                                   config.username))
 
 
-def buybitcoin_buy(config, client, exchange, amount, unit):
-
+def buybitcoin_buy(config, client, exchange, amount):
     deposit_type = get_deposit_info()
-    get_price_quote(client, amount, unit, deposit_type)
+    get_price_quote(client, amount, deposit_type)
 
     try:
-        buy_bitcoin(client, amount, unit, deposit_type)
+        buy_bitcoin(client, amount, deposit_type)
     except click.exceptions.Abort:
         click.secho("\nPurchase canceled", fg="magenta")
 
 
-def get_price_quote(client, amount, unit, deposit_type):
+def get_price_quote(client, amount, deposit_type):
     # first get a quote
-    resp = client.buy_bitcoin_from_exchange(amount, unit, commit=False)
+    resp = client.buy_bitcoin_from_exchange(amount, "Satoshis", commit=False)
 
     if not resp.ok:
-        raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, unit))
+        raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
     buy_result = resp.json()
     if "err" in buy_result:
         click.secho(
                 UxString.buybitcoin_error.format(
-                    click.style(buy_result["err"], bold=True, fg="red")))
-        raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, unit))
+                        click.style(buy_result["err"], bold=True, fg="red")))
+        raise TwoOneError("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
     fees = buy_result["fees"]
     total_fees = ["{} {}".format(float(f["amount"]["amount"]), f["amount"]["currency"]) for f in
@@ -107,25 +105,27 @@ def get_price_quote(client, amount, unit, deposit_type):
     total_fees = click.style(" + ".join(total_fees), bold=True)
     total_amount = buy_result["total"]
     total = click.style("{} {}".format(total_amount["amount"], total_amount["currency"]), bold=True)
-    bitcoin_amount = click.style("{} {}".format(amount, unit), bold=True)
+    bitcoin_amount = click.style("{} {}".format(int(amount), "Satoshis"), bold=True)
 
     deposit_type = {"TO_BALANCE": "21.co balance", "WALLET": "Blockchain balance"}[deposit_type]
     click.secho(UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees,
                                                         deposit_type))
 
 
-def buy_bitcoin(client, amount, unit, deposit_type):
+def buy_bitcoin(client, amount, deposit_type):
     if click.confirm(UxString.buybitcoin_confirmation_prompt):
         click.secho(UxString.coinbase_purchase_in_progress)
-        resp = client.buy_bitcoin_from_exchange(amount, unit, commit=True, deposit_type=deposit_type)
+        resp = client.buy_bitcoin_from_exchange(amount, "satoshi", commit=True,
+                                                deposit_type=deposit_type)
         buy_result = resp.json()
         if buy_result["status"] == "canceled":
             click.secho(UxString.buybitcoin_error.format(
-                click.style("Buy was canceled.", bold=True, fg="red")))
+                    click.style("Buy was canceled.", bold=True, fg="red")))
 
             return buy_result
 
-        btc_bought = "{} {}".format(buy_result["amount"]["amount"],
+        amount_bought = int(float(buy_result["amount"]["amount"]) * 1e8)
+        btc_bought = "{} {}".format(amount_bought,
                                     buy_result["amount"]["currency"])
 
         dollars_paid = "{} {}".format(buy_result["total"]["amount"],
@@ -139,7 +139,8 @@ def buy_bitcoin(client, amount, unit, deposit_type):
                 payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
                                                                                        "%H:%M:%S")
 
-                click.secho(UxString.buybitcoin_21_balance_time.format(payout_time, amount, unit))
+                click.secho(
+                    UxString.buybitcoin_21_balance_time.format(payout_time, int(amount_bought), "Satoshis"))
 
         elif "instant" in buy_result and buy_result["instant"]:
             click.secho(UxString.buybitcoin_success_instant)
@@ -153,7 +154,6 @@ def buy_bitcoin(client, amount, unit, deposit_type):
 
 
 def get_deposit_info():
-
     click.secho(UxString.deposit_type_question)
     deposit_types = [{"msg": UxString.deposit_type_off_chain, "value": "TO_BALANCE"},
                      {"msg": UxString.deposit_type_on_chain, "value": "WALLET"}]
@@ -176,5 +176,3 @@ def get_deposit_info():
     except click.exceptions.Abort:
         click.secho("\nPurchase canceled", fg="magenta")
         raise UnloggedException()
-
-
