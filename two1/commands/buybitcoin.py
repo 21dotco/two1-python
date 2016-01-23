@@ -10,9 +10,7 @@ from two1.lib.util.uxstring import UxString
 
 
 @click.group(invoke_without_command=True)
-@click.option('-e', '--exchange', default='coinbase', type=click.Choice(['coinbase']),
-              help="Select the exchange to buy Bitcoins from")
-@click.option('--pair', is_flag=True, default=False,
+@click.option('--info', is_flag=True, default=False,
               help="Shows instructions on how to connect you Bitcoin Computer to an exchange "
                    "account")
 @click.option('--status', is_flag=True, default=False,
@@ -21,19 +19,46 @@ from two1.lib.util.uxstring import UxString
               help="Shows your history of Bitcoin purchases")
 @click.argument('amount', default=0, type=click.FLOAT)
 @json_output
-def buybitcoin(click_config, pair, status, exchange, amount, history):
-    """Buy Bitcoins from an exchange
+def buybitcoin(click_config, info, status, amount, history):
+    """Buy Bitcoins from Coinbase
+
+To use this command, you need to connect your 21 account with your Coinbase account.
+Use 21 buybitcoin --info to see instructions on how to do so.
+
+\b
+Buy 100000 Satoshis from Coinbase
+$ 21 buybitcoin 100000
+
+\b
+See history of your purchases
+$ 21 buybitcoin --history
+
+\b
+See the status of your 21 and Coinbase account integration
+$ 21 buybitcoin --status
+
+\b
+See instructions on how to integrate your 21 and Coinbase account
+$ 21 buybitcoin --info
+
+
+When you buy Bitcoins through this command, you can decide where the Bitcoins will be deposited to.
+
+    1- 21.co balance: The Bitcoins will be immediately deposited to your 21.co balance which is available for off chain purchases.\n
+    2- Blockchain balance: The Bitcoins will be deposited to the wallet on your 21 Bitcoin Computer once your purchase completes on Coinbase. If you have Instant Buy enabled on your Coinbase account the purchase will be immediate. If you don't have Instant Buy, it may take up to 5 days for the purchase to be completed.
+\b
     """
-    return _buybitcoin(click_config, pair, status, exchange, amount, history)
+    exchange = "coinbase"
+    return _buybitcoin(click_config, info, status, exchange, amount, history)
 
 
 @capture_usage
-def _buybitcoin(click_config, pair, status, exchange, amount, history):
+def _buybitcoin(click_config, info, status, exchange, amount, history):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              click_config.machine_auth,
                                              click_config.username)
 
-    if pair:
+    if info:
         return buybitcoin_config(click_config, client, exchange)
     elif history:
         return buybitcoin_history(click_config, client)
@@ -52,7 +77,7 @@ def buybitcoin_show_status(config, client, exchange):
     coinbase = resp.json()["coinbase"]
 
     if not coinbase:
-        # Not linked, prompt user to pair
+        # Not linked, prompt user to info
         return buybitcoin_config(config, client, exchange)
     else:
         payment_method_string = click.style("No Payment Method linked yet.", fg="red", bold=True)
