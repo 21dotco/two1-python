@@ -17,22 +17,26 @@ from two1.lib.util.uxstring import UxString
                    "account")
 @click.option('--status', is_flag=True, default=False,
               help="Shows the current status of your exchange integrations")
+@click.option('--history', is_flag=True, default=False,
+              help="Shows your history of Bitcoin purchases")
 @click.argument('amount', default=0, type=click.FLOAT)
 @json_output
-def buybitcoin(click_config, pair, status, exchange, amount):
+def buybitcoin(click_config, pair, status, exchange, amount, history):
     """Buy Bitcoins from an exchange
     """
-    return _buybitcoin(click_config, pair, status, exchange, amount)
+    return _buybitcoin(click_config, pair, status, exchange, amount, history)
 
 
 @capture_usage
-def _buybitcoin(click_config, pair, status, exchange, amount):
+def _buybitcoin(click_config, pair, status, exchange, amount, history):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              click_config.machine_auth,
                                              click_config.username)
 
     if pair:
         return buybitcoin_config(click_config, client, exchange)
+    elif history:
+        return buybitcoin_history(click_config, client)
     else:
         if amount <= 0 or status:
             return buybitcoin_show_status(click_config, client, exchange)
@@ -68,6 +72,40 @@ def buybitcoin_show_status(config, client, exchange):
             click.secho(UxString.buybitcoin_instruction_header)
             config.log(UxString.buybitcoin_instructions.format(exchange.capitalize()))
         return coinbase
+
+
+def buybitcoin_history(config, client):
+    resp = client.get_coinbase_history()
+    history = resp.json()["history"]
+
+    lines = [UxString.coinbase_history_title]
+
+    for entry in history:
+        amount = entry["amount"]
+        deposit_status = entry["deposit_status"]
+        payout_time = datetime.fromtimestamp(entry["payout_time"]).strftime("%Y-%m-%d %H:%M:%S")
+
+        description = "N/A"
+        if deposit_status == "COMPLETED":
+            if entry["payout_type"] == "WALLET":
+                description = UxString.coinbase_wallet_completed.format(payout_time)
+            elif entry["payout_type"] == "TO_BALANCE":
+                description = UxString.coinbase_21_completed.format(payout_time, amount)
+        else:
+            if entry["payout_type"] == "WALLET":
+                description = UxString.coinbase_wallet_pending.format(payout_time)
+            elif entry["payout_type"] == "TO_BALANCE":
+                description = UxString.coinbase_21_pending.format(payout_time, amount)
+
+        created = datetime.fromtimestamp(entry["created"]).strftime("%Y-%m-%d %H:%M:%S")
+        payout_type = UxString.coinbase_deposit_type_mapping[entry["payout_type"]]
+        lines.append(UxString.coinbase_history.format(created, amount, payout_type, description))
+
+    if len(history) == 0:
+        lines.append(UxString.coinbase_no_bitcoins_purchased)
+
+    prints = "\n\n".join(lines)
+    click.echo_via_pager(prints)
 
 
 def buybitcoin_config(config, client, exchange):
@@ -140,7 +178,8 @@ def buy_bitcoin(client, amount, deposit_type):
                                                                                        "%H:%M:%S")
 
                 click.secho(
-                    UxString.buybitcoin_21_balance_time.format(payout_time, int(amount_bought), "Satoshis"))
+                        UxString.buybitcoin_21_balance_time.format(payout_time, int(amount_bought),
+                                                                   "Satoshis"))
 
         elif "instant" in buy_result and buy_result["instant"]:
             click.secho(UxString.buybitcoin_success_instant)
