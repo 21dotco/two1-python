@@ -162,8 +162,8 @@ class UxString:
             bold=True) + " to buy k Satoshis from {}.\n    The bought Bitcoins will automatically " \
                          "appear into your 21 wallet\n\n"
     buybitcoin_pairing = \
-        "To buy bitcoin, you first need to pair your 21 and {} account.\n\n" + \
-        "First, if you already haven't, create a password for your account by " \
+        "To buy bitcoin, you need to pair your 21 and {} account.\n\n" + \
+        "If you already haven't, create a password for your account by " \
         "doing " + click.style("21 login -setpassword",
                                bold=True) + "\nThen go to http://21.co/{}/buybitcoin in your " \
                                             "browser to complete the pairing\n"
