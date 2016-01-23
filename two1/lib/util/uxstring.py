@@ -189,6 +189,24 @@ class UxString:
                                  "for this purchase."
 
     coinbase_purchase_in_progress = "\nPurchasing Bitcoins From Coinbase...\n"
+
+    coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance on the Bitcoin Computer",
+                                      "TO_BALANCE": "your 21.co balance"}
+    coinbase_wallet_completed = "The Bitcoins were deposited to your wallet on {}"
+    coinbase_21_completed = "The Bitcoins were added to your balance immediately. " \
+                            "Around {}, {} BTC amount were withdrawn from your " \
+                            "Coinbase wallet for this purchase."
+
+    coinbase_wallet_pending = "The Bitcoins will be deposited to your wallet around {}"
+    coinbase_21_pending = "The Bitcoins were added to your balance immediately. " \
+                          "Around {}, {} BTC will be withdrawn from your Coinbase wallet for this " \
+                          "purchase."
+
+    coinbase_history_title = "Your Bitcoin Purchase History. \n"
+    coinbase_no_bitcoins_purchased = "[No purchases yet]"
+    coinbase_history = click.style(
+        "{} : {} Satoshis from your Coinbase wallet to {}\n", fg="cyan") + "Description: {}"
+
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
         "Hit any key to launch the dashboard. " + \

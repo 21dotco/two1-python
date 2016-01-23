@@ -195,6 +195,11 @@ class TwentyOneRestClient(object):
         path = "/integrations/coinbase/{}/status/".format(self.username)
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    # GET /integrations/coinbase/{username}/status
+    def get_coinbase_history(self):
+        path = "/integrations/coinbase/{}/history/".format(self.username)
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # POST /integrations/coinbase/buys/
     def buy_bitcoin_from_exchange(self, amount, unit, commit=False, deposit_type="WALLET"):
         data = json.dumps({"amount": amount, "unit": unit, "deposit_type": deposit_type,
