@@ -1,4 +1,4 @@
-"""Server-side implementation of payment channels."""
+"""This module implements the server side of payment channels."""
 import os
 import time
 import codecs

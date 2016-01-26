@@ -1,4 +1,4 @@
-"""Allowed payment methods."""
+"""This module contains methods for making paid HTTP requests to 402-enabled servers."""
 import json
 import logging
 import requests
@@ -66,12 +66,10 @@ class PaymentBase:
 
         Args:
             price: Endpoint price in satoshis
-            (**kwargs):
         Returns:
             (dict): Dict of headers that the server uses to inform the client
                 how to remit payment for the resource.
-                Example: {'address': '1MDxJYsp4q4P46RiigaGzrdyi3dsNWCTaR',
-                          'price': 500}
+                Example: {'address': '1MDxJYsp4q4P46RiigaGzrdyi3dsNWCTaR', 'price': 500}
         """
         raise NotImplementedError()
 
