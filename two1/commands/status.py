@@ -178,7 +178,7 @@ def status_account(config):
         "username": config.username,
         "address": config.wallet.current_address
     }
-    config.log(UxString.status_account.format(**status_account))
+    config.log(UxString.status_account.format(status_account["username"]))
     return status_account
 
 SEARCH_UNIT_PRICE = 3500
@@ -266,9 +266,8 @@ def _get_balances(config, client):
     spendable_balance = min(balance_c, balance_u)
 
     data = client.get_earnings()
-    twentyone_balance = data["total_earnings"]
+    twentyone_balance = [b["total_earnings"] for b in data["detailed_balances"] if b["username"] == config.username][0]
     flushed_earnings = data["flushed_amount"]
-
     config.channel_client.sync()
     channel_urls = config.channel_client.list()
     channels_balance = sum(s.balance for s in (config.channel_client.status(url) for url in channel_urls)
