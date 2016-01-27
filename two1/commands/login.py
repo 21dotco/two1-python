@@ -42,7 +42,7 @@ def _login(config, user):
         user (str): username
     """
     if config.username:
-        click.secho("currently logged in as: {}".format(config.username), fg="blue")
+        click.secho("Currently logged in as: {}".format(config.username), fg="blue")
 
     # get machine auth
     if hasattr(config, "machine_auth"):
@@ -73,6 +73,7 @@ def _login(config, user):
             # interactively select the username
             counter = 1
             click.secho(UxString.registered_usernames_title)
+
             for user in usernames:
                 click.secho("{}- {}".format(counter, user))
                 counter += 1

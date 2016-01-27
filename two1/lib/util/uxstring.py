@@ -63,8 +63,7 @@ class UxString:
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
 
-    status_account = click.style("21.co Account", fg='magenta') + "\n"\
-        "    Username        : {username}\n"\
+    status_account = click.style("Logged in as: ", fg='magenta') + "{}\n"
 
     status_mining = mining=click.style("Mining", fg='magenta') + "\n"\
        "    Status           : {is_mining}\n"\
@@ -72,7 +71,7 @@ class UxString:
        "    Mined (all time) : {mined} Satoshis\n\n"\
        "Type " + click.style("21 mine --dashboard", bold=True) + " to see a detailed view. Hit q to exit.\n"
 
-    status_wallet = click.style("Balance", fg='magenta') + """
+    status_wallet = click.style("Total Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
     Your spendable balance on the Blockchain [2]              : {onchain} Satoshis
     Your spendable balance in Payment Channels                : {channels_balance} Satoshis
@@ -83,6 +82,9 @@ class UxString:
     (See 21.co/micropayments for more details)
     """
 
+    status_balance_by_username_header = "Off-chain Balances by Username \n"
+    status_balance_by_username_table_headers = ["Username", "Balance"]
+    status_balance_by_username_total_footer = "\n    Total Balance: {}\n"
     status_wallet_detail_off = """\
     To see all wallet addresses/payment channels, use '21 status --detail'\n"""
 
