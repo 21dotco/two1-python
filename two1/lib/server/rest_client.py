@@ -27,7 +27,7 @@ class TwentyOneRestClient(object):
         self.version = version
         self.username = username
         self._session = None
-        self._device_id = TWO1_DEVICE_ID or "local"
+        self._device_id = TWO1_DEVICE_ID or "FREE_CLIENT"
         cb = self.auth.public_key.compressed_bytes
         self._wallet_pk = base64.b64encode(cb).decode()
 
@@ -114,12 +114,18 @@ class TwentyOneRestClient(object):
     def account_post(self, payout_address, email, password):
         path = "/pool/account/%s/" % self.username
         encoded_password = base64.encodebytes(bytes(password, 'utf-8')).decode()
+        if self._device_id == "FREE_CLIENT":
+            scope = "FREE_CLIENT"
+        else:
+            scope = "BC"
+
         body = {
             "email": email,
             "password": encoded_password,
             "payout_address": payout_address,
             "public_key": self._wallet_pk,
-            "device_uuid": self._device_id
+            "device_uuid": self._device_id,
+            "scope": scope
         }
 
         data = json.dumps(body)

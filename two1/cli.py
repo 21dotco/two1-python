@@ -42,7 +42,6 @@ from two1.commands.flush import flush
 from two1.commands.send import send
 from two1.commands.search import search
 from two1.commands.rate import rate
-from two1.commands.sell import sell
 from two1.commands.publish import publish
 from two1.commands.join import join
 
@@ -110,8 +109,6 @@ main.add_command(help)
 main.add_command(send)
 main.add_command(search)
 main.add_command(rate)
-main.add_command(inbox)
-#main.add_command(sell)
 main.add_command(publish)
 main.add_command(login)
 main.add_command(join)
