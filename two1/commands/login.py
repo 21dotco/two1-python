@@ -22,19 +22,44 @@ from two1.lib.server.login import get_password
 
 
 @click.command()
-@click.option('-u', '--user', default=None, help='The user to log in with.')
+@click.option('-a', '--accounts', is_flag=True, default=False,
+              help='Shows a list of your 21 accounts')
+@click.option('-su', '--switchuser', default=None, help='Switch the active user')
 @click.option('-sp', '--setpassword', is_flag=True, default=False,
               help='Set/update your 21 password')
+@click.option('-u', '--username', default=None, help='The username to login with')
+@click.option('-p', '--password', default=None, help='The password to login with')
 @json_output
-def login(config, user, setpassword):
+def login(config, accounts, switchuser, setpassword, username, password):
     """Log in to your different 21 accounts."""
     if setpassword:
-        return _set_password(config, user)
+        return _set_password(config, switchuser)
+    elif switchuser or accounts:
+        return _switch_user(config, switchuser)
     else:
-        return _login(config, user)
+        username = username or get_username_interactive()
+        password = password or get_password_interactive()
+        login_with_username_password(config, username, password)
 
 
 @check_notifications
+@capture_usage
+def login_with_username_password(config, username, password):
+    print("-----")
+    print(username)
+    print(password)
+
+
+def get_username_interactive():
+    username = click.prompt(UxString.login_username, type=str)
+    return username
+
+
+def get_password_interactive():
+    password = click.prompt(UxString.login_password, hide_input=True, type=str)
+    return password
+
+
 @capture_usage
 def _set_password(config, user):
     try:

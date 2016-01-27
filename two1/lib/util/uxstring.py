@@ -51,6 +51,9 @@ class UxString:
         "To check progress:  https://blockexplorer.com/address/{}\n"\
         "To get more bitcoin, use {}."
 
+    # username
+    login_username = "\nUsername (Case sensitive)"
+    login_password = "Password (Typing will be hidden)"
     # account recovery
     registered_usernames_title = "\nRegistered usernames: \n"
     login_prompt = "\nPlease select the number associated with the username you want to " \
@@ -230,6 +233,13 @@ class UxString:
 
     mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
                            "Please try again in a few hours"
+
+    mining_bitcoin_computer_needed = click.style(
+            "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ",
+            fg="red") + click.style("21 buybitcoin", bold=True, fg="red") + click.style(
+        " to add Bitcoins to your account instead. \nIf you believe you have received this "
+        "message in error, please contact support@21.co.",
+        fg="red")
 
     # updater
     update_check = "Checking for application updates..."

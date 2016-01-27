@@ -24,9 +24,11 @@ from two1.commands.status import has_bitcoinkit
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.util.decorators import check_notifications
-from two1.lib.util.exceptions import MiningDisabledError
+from two1.lib.util.exceptions import MiningDisabledError, BitcoinComputerNeededError
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
+import two1.commands.config as app_config
+from two1.commands.config import TWO1_DEVICE_ID
 
 
 @click.command()
@@ -55,19 +57,16 @@ See a mining dashboard for low-level mining details.
 $ 21 mine --dashboard
 """
     config = ctx.obj['config']
+
     _mine(config, dashboard=dashboard)
 
 
 @check_notifications
 @capture_usage
 def _mine(config, dashboard=False):
-    """ Starts the mining ASIC if not mining and cpu mines if already mining
-
-    Args:
-        config (Config): config object used for getting .two1 information
-        dashboard (bool): shows minertop dashboard if True
-    """
-
+    if TWO1_DEVICE_ID is None:
+        click.secho(UxString.mining_bitcoin_computer_needed)
+        return
     if has_bitcoinkit():
         if not is_minerd_running():
             start_minerd(config, dashboard)
@@ -174,7 +173,6 @@ def start_cpu_mining(config):
     config.log(UxString.mining_start.format(config.username, reward))
 
 
-
     work = get_work(config, client)
 
     found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
@@ -262,7 +260,10 @@ def get_work(config, client):
     try:
         work_msg = client.get_work()
     except ServerRequestError as e:
-        if e.status_code == 404 or e.status_code == 403:
+        if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
+            click.secho(UxString.mining_bitcoin_computer_needed, fg="red")
+            raise BitcoinComputerNeededError()
+        elif e.status_code == 404 or e.status_code == 403:
             click.echo(UxString.mining_limit_reached)
             raise MiningDisabledError(UxString.mining_limit_reached)
         else:

@@ -70,7 +70,6 @@ def check_setup_twentyone_account(config):
     """
     # check if a/c has been setup with a proper username
     if not config.mining_auth_pubkey:
-        click.echo(UxString.missing_account)
         username = create_twentyone_account(config)
         if not username:
             click.echo(UxString.account_failed)
@@ -110,6 +109,8 @@ def create_username(config, username=None):
     # can hit a few random keystrokes to generate a private
     # key
     # check if a key already exists and use it
+
+    click.echo(UxString.missing_account)
     machine_auth = config.machine_auth
     if not machine_auth:
         raise ValueError("Error: Auth is not initialized.")
