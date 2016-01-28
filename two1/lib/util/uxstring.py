@@ -59,6 +59,11 @@ class UxString:
                                 "corresponding username"
     login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet/device.\n"
 
+    existing_account = click.style(
+            "There is already a username associated with your current wallet. Use ",
+            fg="red") + click.style("21 login -u {}", bold=True, fg="red") + click.style(
+        " to login.", fg="red")
+
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
     status_empty_wallet = "\nUse {} to get some bitcoin from 21.co."
