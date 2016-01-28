@@ -5,7 +5,8 @@ import click
 import datetime
 import requests
 from simplejson import JSONDecodeError
-from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError
+from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
+    UnloggedException
 from two1.lib.util.uxstring import UxString
 from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
 
@@ -111,8 +112,15 @@ class TwentyOneRestClient(object):
         }
 
         data = json.dumps(body)
-        ret = self._request(sign_username=self.username, method="POST", path=path,
-                            data=data)
+        try:
+            ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
+        except ServerRequestError as e:
+            if e.status_code == 409:
+                username = e.data["username"]
+                click.secho(UxString.existing_account.format(username), fg="red")
+                raise UnloggedException()
+            else:
+                raise e
         return ret
 
     # GET /pool/work/{username}
