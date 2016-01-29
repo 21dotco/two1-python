@@ -14,7 +14,7 @@ Payment channels consist of negotiating an ``open`` stage, an active
 ``ready`` stage where many payments can be made, and a ``closing`` stage
 where a final transaction is broadcast.
 
-.. figure:: https://github.com/21dotco/two1/blob/devel/two1/lib/channels/docs/PCs.png
+.. figure:: https://assets.21.co/two1docs/PCs.png
    :alt: Payment Channels Protocol
 
 Channel open
