@@ -10,7 +10,7 @@ adding a simple API for users to pay for resources. It enables a client
 (also referred to as a customer) to pay a server (also referred to as a
 merchant) for a resource.
 
-.. figure:: https://github.com/21dotco/two1/blob/devel/two1/lib/bitrequests/docs/bitrequests.png
+.. figure:: https://assets.21.co/two1docs/bitrequests.png
    :alt: 402 flow
 
 The 402 payment-resource exchange adds an intermediary negotiation step
