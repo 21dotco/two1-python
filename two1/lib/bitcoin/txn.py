@@ -137,6 +137,17 @@ class CoinbaseInput(TransactionInput):
                          scr,
                          sequence)
 
+    def get_addresses(self, testnet=False):
+        """ Returns all addresses associated with the script in this input.
+
+        Args:
+            testnet (bool): True if the transaction is a testnet transaction.
+
+        Returns:
+            list (str): A list of all addresses found in the script.
+        """
+        return []
+
     def __str__(self):
         """ Returns a human readable formatting of this input.
 

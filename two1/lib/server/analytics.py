@@ -14,14 +14,13 @@ from two1.lib.server.rest_client import ServerConnectionError
 
 def capture_usage(func):
     def _capture_usage(config, *args, **kw):
-
+        func_name = func.__name__[1:]
+        username = config.username
+        user_platform = platform.system() + platform.release()
+        # we can separate between updates
+        version = app_config.TWO1_VERSION
         try:
             if config.collect_analytics:
-                func_name = func.__name__[1:]
-                username = config.username
-                user_platform = platform.system() + platform.release()
-                # we can separate between updates
-                version = app_config.TWO1_VERSION
                 data = {
                     "channel": "cli",
                     "level": "info",
@@ -51,14 +50,15 @@ def capture_usage(func):
         except Exception as e:
             is_debug = str2bool(os.environ.get("TWO1_DEBUG", False))
             tb = traceback.format_exc()
-            data = {
-                "channel": "cli",
-                "level": "error",
-                "username": username,
-                "command": func_name,
-                "platform": user_platform,
-                "exception": tb}
             if config.collect_analytics:
+                data = {
+                    "channel": "cli",
+                    "level": "error",
+                    "username": username,
+                    "command": func_name,
+                    "platform": user_platform,
+                    "version": version,
+                    "exception": tb}
                 log_message(data)
             click.echo(UxString.Error.server_err)
             if is_debug:

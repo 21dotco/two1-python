@@ -4,6 +4,7 @@ import time
 
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.bitcoin.script import Script
+from two1.lib.bitcoin.txn import CoinbaseInput
 from two1.lib.bitcoin.txn import TransactionInput
 from two1.lib.bitcoin.txn import TransactionOutput
 from two1.lib.bitcoin.txn import Transaction
@@ -312,7 +313,7 @@ class CacheManager(object):
         for i, inp in enumerate(wallet_txn.inputs):
             self._inputs_cache[txid][i] = inp
 
-            if inp.script.is_multisig_sig():
+            if not isinstance(inp, CoinbaseInput) and inp.script.is_multisig_sig():
                 # Only keep the P2SH address
                 sig_info = inp.script.extract_multisig_sig_info()
                 redeem_version = Script.P2SH_TESTNET_VERSION if self.testnet \
