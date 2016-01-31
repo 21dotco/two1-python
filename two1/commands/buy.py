@@ -1,3 +1,6 @@
+"""
+Buy from a machine-payable endpoint
+"""
 import json
 import click
 import datetime

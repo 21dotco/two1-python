@@ -1,3 +1,6 @@
+"""
+Strings for the two1 CLI user interface
+"""
 import click
 
 

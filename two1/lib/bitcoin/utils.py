@@ -1,3 +1,6 @@
+"""
+Utility functions, mostly related to serializing and difficulty
+"""
 # -*- Mode: Python -*-
 
 import base58

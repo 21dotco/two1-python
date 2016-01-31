@@ -1,3 +1,6 @@
+"""
+Assist with ordering hashes properly for consumption by block.py
+"""
 import hashlib
 
 from two1.lib.bitcoin.utils import bytes_to_str

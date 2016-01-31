@@ -1,3 +1,6 @@
+"""
+Bitcoin Block header calculation and Merkle tree API
+"""
 from sha256 import sha256 as sha256_midstate
 
 from two1.lib.bitcoin.hash import Hash

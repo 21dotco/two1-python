@@ -1,3 +1,6 @@
+"""
+Parse scripts and assemble/disassemble.
+"""
 import base58
 import copy
 import re

@@ -1,3 +1,6 @@
+"""
+View the status of mining and machine-payable purchases
+"""
 import click
 import urllib.parse
 import collections

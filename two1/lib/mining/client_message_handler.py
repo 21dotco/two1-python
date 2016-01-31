@@ -1,3 +1,6 @@
+"""
+Encode and send to server. Receive and parse messages from server.
+"""
 import asyncio
 import logging
 

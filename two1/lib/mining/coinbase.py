@@ -1,3 +1,6 @@
+"""
+Builds the coinbase transaction
+"""
 from two1.lib.bitcoin.txn import CoinbaseInput, Transaction
 
 
