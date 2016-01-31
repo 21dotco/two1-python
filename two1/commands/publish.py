@@ -1,3 +1,6 @@
+"""
+Publish that machine-payable endpoint to the MMM
+"""
 import click
 from two1.lib.util.uxstring import UxString
 

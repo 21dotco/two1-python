@@ -1,3 +1,6 @@
+"""
+Mine Bitcoin locally via a CPU or built-in mining chip
+"""
 import json
 import subprocess
 import time

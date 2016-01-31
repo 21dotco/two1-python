@@ -1,3 +1,6 @@
+"""
+Find machine-payable endpoints on the MMM
+"""
 import click
 from two1.lib.util.uxstring import UxString
 

@@ -1,3 +1,6 @@
+"""
+Generate private keys, sign messages, serialize/deserialize data
+"""
 import math
 
 import base58

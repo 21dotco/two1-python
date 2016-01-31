@@ -1,0 +1,52 @@
+{WATERMARK}
+# `two1`: buy/sell anything on the internet with Bitcoin.
+
+`two1` is a command line tool and library that allows users to mine
+Bitcoin, use it to buy and sell API calls, set up world-readable
+machine-payable endpoints, and publish them to the Many Machine Market
+from any Unix command line.
+
+# Developer Installation
+
+Here's how to install the command line app for development purposes:
+
+```bash
+# Install homebrew and Python3
+$ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+$ brew install python3
+
+# Download repo, set up virtualenv,  install requirements
+$ git clone git@github.com:21dotco/two1.git
+$ cd two1
+$ pyvenv venv
+$ source venv/bin/activate
+$ pip3 install --upgrade pip
+$ pip3 install -r requirements.txt
+
+# By using the --editable flag, pip symbolically links an egg file
+# You can then edit locally and rerun ``two1`` to see changes.
+# http://click.pocoo.org/4/setuptools/#setuptools-integration
+# pip.pypa.io/en/latest/reference/pip_install.html#editable-installs
+$ pip3 install --editable .
+
+# Start the walletd daemon
+$ walletd
+
+# Verify installation and create wallet
+$ two1 --help
+$ two1 status
+```
+
+If you follow these steps, you will have the ``two1`` command line app in your
+path, and will also be able to edit the files in the ``two1`` directory and see
+those changes reflected in the command line app in realtime.
+
+# Running Tests
+
+Unit tests can be run with `pytest <http://pytest.org/latest/>`_:
+
+```bash
+$ py.test
+```
+
+{CODEBASE}

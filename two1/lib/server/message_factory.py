@@ -1,3 +1,6 @@
+"""
+Protobuf and Laminar message factory classes
+"""
 import asyncio
 import logging
 

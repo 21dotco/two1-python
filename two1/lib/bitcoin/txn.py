@@ -1,3 +1,6 @@
+"""
+Represent transactions: input, output, and coinbases.
+"""
 import copy
 import hashlib
 import struct

@@ -1,3 +1,8 @@
+"""
+Exceptions thrown in bitcoin-related code
+"""
+
+
 class DeserializationError(Exception):
     pass
 

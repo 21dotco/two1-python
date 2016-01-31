@@ -1,3 +1,6 @@
+"""
+Rate the seller of a machine-payable endpoint
+"""
 import click
 from two1.lib.util.uxstring import UxString
 

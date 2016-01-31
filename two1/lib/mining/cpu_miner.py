@@ -1,3 +1,6 @@
+"""
+CPU-based miner
+"""
 import asyncio
 from collections import namedtuple
 import logging

@@ -1,3 +1,6 @@
+"""
+Mining client that communicates with the pool.
+"""
 import logging.config
 import asyncio
 import argparse

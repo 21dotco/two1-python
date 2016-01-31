@@ -1,3 +1,6 @@
+"""
+Manages configuration variables for the `two1` CLI
+"""
 import sys
 import json
 from os.path import join, dirname

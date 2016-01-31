@@ -1,3 +1,6 @@
+"""
+Launch a machine-payable endpoint on the current machine
+"""
 import os
 import click
 from tabulate import tabulate
