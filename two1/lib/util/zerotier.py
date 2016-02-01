@@ -172,12 +172,14 @@ def leave_network(network_id):
 
 
 def get_address_for_network(network_name):
-    all_networks = list_networks()
-    networks = [n for n in all_networks if n['name'] == network_name]
-    if len(networks) != 1:
-        raise ValueError
-    else:
-        network = networks[0]
+    all_addresses = get_all_addresses()
+    return all_addresses[network_name]
+
+
+def get_all_addresses():
+    result = {}
+    for network in list_networks():
         address_and_mask = network["assignedAddresses"][0]
         address = address_and_mask.split("/")[0]
-        return address
+        result[network["name"]] = address
+    return result
