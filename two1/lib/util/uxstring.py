@@ -271,6 +271,9 @@ class UxString:
     # publish delete
     delete_confirmation = "Are you sure that you want to delete the app with id '{}' ?"
     delete_success = "App {} ({}) was successfully removed from the marketplace."
+    delete_app_not_exist = "The app with id '{}' does not exist in the marketplace."
+    delete_app_no_permissions = "You don't have permission to delete the app with id '{}'. You " \
+                                "can only delete apps that you have published."
 
     # sell
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")

@@ -146,10 +146,16 @@ def _delete_app(config, app_id):
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                                  config.machine_auth,
                                                  config.username)
-        resp = client.delete_app(config.username, app_id)
-        resp_json = resp.json()
-        deleted_title = resp_json["deleted_title"]
-        click.secho(UxString.delete_success.format(app_id, deleted_title))
+        try:
+            resp = client.delete_app(config.username, app_id)
+            resp_json = resp.json()
+            deleted_title = resp_json["deleted_title"]
+            click.secho(UxString.delete_success.format(app_id, deleted_title))
+        except ServerRequestError as e:
+            if e.status_code == 404:
+                click.secho(UxString.delete_app_not_exist.format(app_id), fg="red")
+            elif e.status_code == 403:
+                click.secho(UxString.delete_app_no_permissions.format(app_id), fg="red")
 
 
 @check_notifications

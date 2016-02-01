@@ -4,6 +4,7 @@ import json
 import click
 import datetime
 import requests
+from simplejson import JSONDecodeError
 from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError
 from two1.lib.util.uxstring import UxString
 from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
@@ -71,10 +72,16 @@ class TwentyOneRestClient(object):
             raise UpdateRequiredError()
 
         if result.status_code == 403:
-            r = result.json()
-            if "detail" in r and "TO100" in r["detail"]:
-                click.secho(UxString.bitcoin_computer_needed, fg="red")
-                raise BitcoinComputerNeededError()
+            try:
+                r = result.json()
+                if "detail" in r and "TO100" in r["detail"]:
+                    click.secho(UxString.bitcoin_computer_needed, fg="red")
+                    raise BitcoinComputerNeededError()
+            # in case the response does not have json raise generic server exception
+            except JSONDecodeError:
+                x = ServerRequestError()
+                x.status_code = result.status_code
+                raise x
 
         if result.status_code > 299:
             x = ServerRequestError()
