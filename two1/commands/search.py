@@ -79,7 +79,11 @@ def get_search_results(rest_client, search_string, page):
         resp_json = resp.json()
         search_results = resp_json["results"]
         if search_results is None or len(search_results) == 0:
-            click.secho(UxString.empty_listing.format(search_string))
+            if search_string:
+                click.secho(UxString.empty_listing.format(search_string))
+            else:
+                click.secho(UxString.no_app_in_marketplace)
+
             return 0
 
         total_pages = resp_json["total_pages"]

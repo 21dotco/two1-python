@@ -326,6 +326,8 @@ refer to 21.co/app for futher instructions.", fg="red")
 
     empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n",
                                 fg='blue')
+    no_app_in_marketplace = click.style("\nThere are currently no apps in the marketplace.",
+                                        fg="blue")
     # rate
     bad_rating = "an app rating must be between 1 to 5"
     rating_success = click.style("Giving a ") + click.style("{}/5", bold=True) + click.style(
