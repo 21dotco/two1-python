@@ -201,13 +201,13 @@ class UxString:
     coming_soon = click.style("Coming soon", bold=True)
     slack_21_co = click.style("slack.21.co", bold=True)
     support_21_co = click.style("support@21.co", bold=True)
-    publish_docs_url = click.style("https://21.co/publish", bold=True)
+    publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
 
     manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
                        "how to create one, please refer to {}"
 
-    bad_manifest = "Field '{}' is missing from your manifest file at {}." \
-                   " For instructions on publishing your app, please refer to {}"
+    bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\nFor " \
+                   "instructions on publishing your app, please refer to {}"
 
     large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
                      "2MB.\nFor instructions on publishing your app, please refer to {}"
@@ -237,6 +237,24 @@ class UxString:
     publish_success = click.style(
         "{} successfully published to {}. It may take a couple of minutes for your app "
         "to show up in the marketplace.", fg="magenta")
+
+    valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities'}
+
+    valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path",
+                                       "x-21-healthcheck-path", "info"]
+    top_level_manifest_field_missing = "Field '{}' is missing from the manifest file."
+    manifest_info_fields = ["contact", "x-21-total-price", "description", "x-21-usage",
+                            "x-21-quick-buy", "version", "x-21-category", "x-21-keywords"]
+    manifest_info_field_missing = "Field '{}' is missing from the manifest file under the 'info' " \
+                                  "section."
+
+    price_fields = ["min", "max"]
+    price_fields_missing = "Field '{}' is missing from the manifest file under the " \
+                           "'x-21-total-price' section."
+    scheme_missing = "You have to specify either HTTP or HTTPS for your endpoint under the " \
+                     "`schemes` section."
+    invalid_category = "'{}' is not a valid category for the 21 marketplace. Valid categories are " \
+                       "{}."
 
     # publish-list
     my_apps = "Listing all the published apps by {}: "
