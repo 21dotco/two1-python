@@ -16,15 +16,17 @@ from two1.commands.config import TWO1_HOST
 @click.argument('rating', required=False, type=click.INT)
 def rate(ctx, list, app_id, rating):
     """Rate a marketplace app.
+
 \b
 Usage
------
+_____
 Rate an app
 $ 21 rate XYZ 3
     - XYZ is the id of the app you want to rate and can be found when searching for the app in the
       marketplace.
     - 3 is your rating. Ratings should be numbers between 1 to 5.
 You can always change the rating for your app by doing another 21 rate.
+
 
 \b
 See all the apps that you have rates:
