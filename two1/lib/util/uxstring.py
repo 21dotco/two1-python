@@ -192,10 +192,12 @@ class UxString:
             " to view your notifications.", fg="blue")
 
     # join
-    successful_join = "Joined network {}. It might take a couple of seconds for joining " \
+    successful_join = "joined network {}. it might take a couple of seconds for joining " \
                       "to take effect."
     invalid_network = "Invalid network specified, please verify the network name"
     join_cmd = click.style("21 join", bold=True)
+
+    no_network = click.style("You are not part of any network.", fg="blue")
 
     # publish
     coming_soon = click.style("Coming soon", bold=True)
