@@ -263,7 +263,7 @@ class UxString:
     no_published_apps = click.style(
         "You haven't published any apps to the marketplace yet. Use ",
         fg="blue") + click.style(
-            "21 publish -a {YOUR_APP_DIRECTORY}", bold=True, fg="blue") + click.style(
+            "21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") + click.style(
             " to publish your apps to the marketplace.", fg="blue")
 
     app_does_not_exist = "The specified id for the app ({}) does not match any app."
