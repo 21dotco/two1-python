@@ -173,8 +173,8 @@ def _publish(config, manifest_path, marketplace):
         return
     except KeyError as e:
         click.secho(
-                UxString.bad_manifest.format(e.args[0], manifest_path, UxString.publish_docs_url),
-                fg="red")
+            UxString.bad_manifest.format(manifest_path, e.args[0], UxString.publish_docs_url),
+            fg="red")
         return
 
     click.secho(UxString.publish_start.format(app_name, app_endpoint, marketplace))
@@ -203,7 +203,7 @@ def get_search_results(config, client, page):
         rows = []
         for r in search_results:
             rating = "Not yet Rated"
-            if r["rating_count"] > 0 :
+            if r["rating_count"] > 0:
                 rating = "{:.1f} ({} rating".format(r["average_rating"],
                                                     int(r["rating_count"]))
                 if r["rating_count"] > 1:
@@ -232,7 +232,7 @@ def display_app_info(config, client, app_id):
         result = resp.json()
         app_info = result["app_info"]
         title = click.style("App Name        : ", fg="blue") + click.style(
-                "{}".format(app_info["title"]))
+            "{}".format(app_info["title"]))
 
         if app_info["rating_count"] == 0:
             rating = "Not yet rated"
@@ -252,48 +252,48 @@ def display_app_info(config, client, app_id):
         last_crawl_str = "Not yet crawled"
         if "last_crawl" in app_info:
             last_crawl_str = datetime.datetime.fromtimestamp(
-                    app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
+                app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
 
         last_crawl = click.style("Last Crawl Time : ", fg="blue") + click.style(
-                "{}".format(last_crawl_str))
+            "{}".format(last_crawl_str))
         version = click.style("Version         : ", fg="blue") + click.style(
-                "{}".format(app_info["version"]))
+            "{}".format(app_info["version"]))
 
         last_updated_str = datetime.datetime.fromtimestamp(
-                app_info["updated"]).strftime("%Y-%m-%d %H:%M")
+            app_info["updated"]).strftime("%Y-%m-%d %H:%M")
         last_update = click.style("Last Update     : ", fg="blue") + click.style(
-                "{}".format(last_updated_str))
+            "{}".format(last_updated_str))
 
         availability = click.style("Availability    : ", fg="blue") + click.style(
-                "{:.2f}%".format(app_info["average_uptime"] * 100))
+            "{:.2f}%".format(app_info["average_uptime"] * 100))
 
         app_url = click.style("App URL         : ", fg="blue") + click.style(
-                "{}".format(app_info["app_url"]))
+            "{}".format(app_info["app_url"]))
         category = click.style("Category        : ", fg="blue") + click.style(
-                "{}".format(app_info["category"]))
+            "{}".format(app_info["category"]))
         keywords = click.style("Keywords        : ", fg="blue") + click.style(
-                "{}".format(', '.join(app_info["keywords"])))
+            "{}".format(', '.join(app_info["keywords"])))
         desc = click.style("Description     : ", fg="blue") + click.style(
-                "{}".format(app_info["description"]))
+            "{}".format(app_info["description"]))
         price = click.style("Price Range     : ", fg="blue") + click.style(
-                "{} - {} Satoshis").format(
-                app_info["min_price"], app_info["max_price"])
+            "{} - {} Satoshis").format(
+            app_info["min_price"], app_info["max_price"])
         doc_url = click.style("Docs URL        : ", fg="blue") + click.style(
-                "{}".format(app_info["docs_url"]))
+            "{}".format(app_info["docs_url"]))
         manifest_url = click.style("Manifest URL    : ", fg="blue") + click.style(
-                "{}".format(app_info["manifest_url"]))
+            "{}".format(app_info["manifest_url"]))
 
         quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
-                app_info["quick_buy"])
+            app_info["quick_buy"])
 
         usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-                app_info["usage_docs"])
+            app_info["usage_docs"])
 
         final_str = "\n".join(
-                [title, "\n",
-                 rating_row, up_status, availability, last_crawl, last_update, version, "\n",
-                 desc, app_url, doc_url, manifest_url, "\n",
-                 category, keywords, price, "\n", quick_start, "\n", usage_docs, "\n\n"])
+            [title, "\n",
+             rating_row, up_status, availability, last_crawl, last_update, version, "\n",
+             desc, app_url, doc_url, manifest_url, "\n",
+             category, keywords, price, "\n", quick_start, "\n", usage_docs, "\n\n"])
         config.echo_via_pager(final_str)
 
     except ServerRequestError as e:
@@ -311,26 +311,48 @@ def check_app_manifest(api_docs_path):
             file_size = os.path.getsize(api_docs_path) / 1e6
             if file_size > 2:
                 click.secho(
-                        UxString.large_manifest.format(api_docs_path,
-                                                       UxString.publish_docs_url),
-                        fg="red")
+                    UxString.large_manifest.format(api_docs_path,
+                                                   UxString.publish_docs_url),
+                    fg="red")
                 raise ValueError()
 
             with open(api_docs_path, "r") as f:
                 manifest_json = json.loads(f.read())
+                validate_manifest(manifest_json)
                 return manifest_json
-        except ValueError:
+        except ValueError as e:
             click.secho(
-                    UxString.bad_manifest.format(api_docs_path,
-                                                 UxString.publish_docs_url),
-                    fg="red")
+                UxString.bad_manifest.format(api_docs_path, e.args[0],
+                                             UxString.publish_docs_url), fg="red")
             raise ValueError()
     else:
         click.secho(
-                UxString.manifest_missing.format(api_docs_path,
-                                                 UxString.publish_docs_url),
-                fg="red")
+            UxString.manifest_missing.format(api_docs_path,
+                                             UxString.publish_docs_url),
+            fg="red")
         raise ValueError()
+
+
+def validate_manifest(manifest_json):
+    for field in UxString.valid_top_level_manifest_fields:
+        if field not in manifest_json:
+            raise ValueError(UxString.top_level_manifest_field_missing.format(field))
+
+    for field in UxString.manifest_info_fields:
+        if field not in manifest_json["info"]:
+            raise ValueError(UxString.manifest_info_field_missing.format(field))
+
+        for field in UxString.price_fields:
+            if field not in manifest_json["info"]["x-21-total-price"]:
+                raise ValueError(UxString.price_fields_missing.format(field))
+
+        if len(manifest_json["schemes"]) == 0:
+            raise ValueError(UxString.scheme_missing)
+
+        if manifest_json["info"]["x-21-category"].lower() not in UxString.valid_app_categories:
+            valid_categories = ", ".join(UxString.valid_app_categories)
+            raise ValueError(UxString.invalid_category.format(
+                manifest_json["info"]["x-21-category"], valid_categories))
 
 
 def get_zerotier_address(marketplace):
