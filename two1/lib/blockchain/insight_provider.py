@@ -168,35 +168,47 @@ class InsightProvider(BaseProvider):
         """
         last_block_index = self.get_block_height()
         ret = defaultdict(list)
+        total_items = limit
         for addresses in self._list_chunks(address_list, 199):
-            req = "addrs/" + ",".join(addresses) + \
-                  "/txs?from=0&to=%d" % (limit)
-            r = self._request("GET", req)
-            txn_data = r.json()
+            fr = 0
+            to = min(100, limit)
 
-            for data in txn_data['items']:
-                if "vin" not in data or "vout" not in data:
-                    continue
-                block_hash = None
-                block = None
-                if data['confirmations'] > 0:
-                    block = last_block_index - data['confirmations'] + 1
-                    block_hash = Hash(data['blockhash'])
+            while fr < total_items:
+                req = "addrs/" + ",".join(addresses) + \
+                      "/txs?from=%d&to=%d" % (fr, to)
 
-                metadata = dict(block=block,
-                                block_hash=block_hash,
-                                network_time=data['time'],
-                                confirmations=data['confirmations'])
+                r = self._request("GET", req)
+                txn_data = r.json()
 
-                if min_block and block:
-                    if block < min_block:
+                if "totalItems" in txn_data:
+                    total_items = txn_data["totalItems"]
+
+                fr = txn_data["to"]
+                to = fr + 100
+
+                for data in txn_data['items']:
+                    if "vin" not in data or "vout" not in data:
                         continue
+                    block_hash = None
+                    block = None
+                    if data['confirmations'] > 0:
+                        block = last_block_index - data['confirmations'] + 1
+                        block_hash = Hash(data['blockhash'])
 
-                txn, addr_keys = self.txn_from_json(data)
-                for addr in addr_keys:
-                    if addr in addresses:
-                        ret[addr].append(dict(metadata=metadata,
-                                              transaction=txn))
+                    metadata = dict(block=block,
+                                    block_hash=block_hash,
+                                    network_time=data.get("time", None),
+                                    confirmations=data['confirmations'])
+
+                    if min_block and block:
+                        if block < min_block:
+                            continue
+
+                    txn, addr_keys = self.txn_from_json(data)
+                    for addr in addr_keys:
+                        if addr in addresses:
+                            ret[addr].append(dict(metadata=metadata,
+                                                  transaction=txn))
 
         return ret
 
