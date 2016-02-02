@@ -16,6 +16,10 @@ from two1.commands.config import TWO1_HOST
 from two1.commands.search import get_next_page
 
 
+class ValidationError(Exception):
+    pass
+
+
 @click.group()
 def publish():
     """Publish/Manage your marketplace apps.
@@ -163,26 +167,24 @@ def _delete_app(config, app_id):
 def _publish(config, manifest_path, marketplace):
     try:
         manifest_json = check_app_manifest(manifest_path)
-        app_name = manifest_json["info"]["title"]
-        app_url = urlparse(manifest_json["host"])
-        app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
-                                          manifest_json["host"],
-                                          manifest_json["basePath"])
-        app_ip = app_url.path.split(":")[0]
-        address = get_zerotier_address(marketplace)
-
-        if address != app_ip:
-            if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
-                click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
-                return
-
-    except ValueError:
-        return
-    except KeyError as e:
+    except ValidationError as e:
         click.secho(
             UxString.bad_manifest.format(manifest_path, e.args[0], UxString.publish_docs_url),
             fg="red")
         return
+
+    app_name = manifest_json["info"]["title"]
+    app_url = urlparse(manifest_json["host"])
+    app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
+                                      manifest_json["host"],
+                                      manifest_json["basePath"])
+    app_ip = app_url.path.split(":")[0]
+    address = get_zerotier_address(marketplace)
+
+    if address != app_ip:
+        if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
+            click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
+            return
 
     click.secho(UxString.publish_start.format(app_name, app_endpoint, marketplace))
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
@@ -312,57 +314,49 @@ def display_app_info(config, client, app_id):
 
 def check_app_manifest(api_docs_path):
     if not os.path.exists(api_docs_path):
-        click.secho(
-            UxString.manifest_missing.format(api_docs_path,
-                                             UxString.publish_docs_url),
-            fg="red")
-        raise ValueError()
+        raise ValidationError(
+            UxString.manifest_missing.format(
+                api_docs_path, UxString.publish_docs_url))
 
     if os.path.isdir(api_docs_path):
-        click.secho(UxString.manifest_is_directory.format(api_docs_path), fg="red")
-        raise ValueError()
+        raise ValidationError(
+            UxString.manifest_is_directory.format(api_docs_path), fg="red")
 
     click.secho(UxString.reading_manifest.format(api_docs_path))
-    try:
 
-        file_size = os.path.getsize(api_docs_path) / 1e6
-        if file_size > 2:
-            click.secho(
-                UxString.large_manifest.format(api_docs_path,
-                                               UxString.publish_docs_url),
-                fg="red")
-            raise ValueError()
-
-        with open(api_docs_path, "r") as f:
+    file_size = os.path.getsize(api_docs_path) / 1e6
+    if file_size > 2:
+        raise ValidationError(
+            UxString.large_manifest.format(api_docs_path,
+                                           UxString.publish_docs_url))
+    with open(api_docs_path, "r") as f:
+        try:
             manifest_json = json.loads(f.read())
-            validate_manifest(manifest_json)
-            return manifest_json
-    except ValueError as e:
-        click.secho(
-            UxString.bad_manifest.format(api_docs_path, e.args[0],
-                                         UxString.publish_docs_url), fg="red")
-        raise ValueError()
+        except json.JSONDecodeError:
+            raise ValidationError("Invalid JSON.")
+        validate_manifest(manifest_json)
+        return manifest_json
 
 
 def validate_manifest(manifest_json):
     for field in UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
-            raise ValueError(UxString.top_level_manifest_field_missing.format(field))
+            raise ValidationError(UxString.top_level_manifest_field_missing.format(field))
 
     for field in UxString.manifest_info_fields:
         if field not in manifest_json["info"]:
-            raise ValueError(UxString.manifest_info_field_missing.format(field))
+            raise ValidationError(UxString.manifest_info_field_missing.format(field))
 
         for field in UxString.price_fields:
             if field not in manifest_json["info"]["x-21-total-price"]:
-                raise ValueError(UxString.price_fields_missing.format(field))
+                raise ValidationError(UxString.price_fields_missing.format(field))
 
         if len(manifest_json["schemes"]) == 0:
-            raise ValueError(UxString.scheme_missing)
+            raise ValidationError(UxString.scheme_missing)
 
         if manifest_json["info"]["x-21-category"].lower() not in UxString.valid_app_categories:
             valid_categories = ", ".join(UxString.valid_app_categories)
-            raise ValueError(UxString.invalid_category.format(
+            raise ValidationError(UxString.invalid_category.format(
                 manifest_json["info"]["x-21-category"], valid_categories))
 
 
