@@ -216,6 +216,7 @@ class UxString:
 
     reading_manifest = "Reading app manifest from {}"
 
+    manifest_is_directory = "{} is a directory. Please enter the direct path to the manifest file."
     no_zt_network = click.style("You are not part of the {}. Use {}",
                                 fg="red") + click.style(" to join the market.", fg="red")
 

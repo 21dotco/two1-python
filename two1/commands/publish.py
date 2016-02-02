@@ -311,32 +311,36 @@ def display_app_info(config, client, app_id):
 
 
 def check_app_manifest(api_docs_path):
-    if os.path.exists(api_docs_path):
-        click.secho(UxString.reading_manifest.format(api_docs_path))
-        try:
-
-            file_size = os.path.getsize(api_docs_path) / 1e6
-            if file_size > 2:
-                click.secho(
-                    UxString.large_manifest.format(api_docs_path,
-                                                   UxString.publish_docs_url),
-                    fg="red")
-                raise ValueError()
-
-            with open(api_docs_path, "r") as f:
-                manifest_json = json.loads(f.read())
-                validate_manifest(manifest_json)
-                return manifest_json
-        except ValueError as e:
-            click.secho(
-                UxString.bad_manifest.format(api_docs_path, e.args[0],
-                                             UxString.publish_docs_url), fg="red")
-            raise ValueError()
-    else:
+    if not os.path.exists(api_docs_path):
         click.secho(
             UxString.manifest_missing.format(api_docs_path,
                                              UxString.publish_docs_url),
             fg="red")
+        raise ValueError()
+
+    if os.path.isdir(api_docs_path):
+        click.secho(UxString.manifest_is_directory.format(api_docs_path), fg="red")
+        raise ValueError()
+
+    click.secho(UxString.reading_manifest.format(api_docs_path))
+    try:
+
+        file_size = os.path.getsize(api_docs_path) / 1e6
+        if file_size > 2:
+            click.secho(
+                UxString.large_manifest.format(api_docs_path,
+                                               UxString.publish_docs_url),
+                fg="red")
+            raise ValueError()
+
+        with open(api_docs_path, "r") as f:
+            manifest_json = json.loads(f.read())
+            validate_manifest(manifest_json)
+            return manifest_json
+    except ValueError as e:
+        click.secho(
+            UxString.bad_manifest.format(api_docs_path, e.args[0],
+                                         UxString.publish_docs_url), fg="red")
         raise ValueError()
 
 
