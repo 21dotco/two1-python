@@ -241,7 +241,7 @@ class UxString:
         "{} successfully published to {}. It may take a couple of minutes for your app "
         "to show up in the marketplace.", fg="magenta")
 
-    valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities'}
+    valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
 
     valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path",
                                        "x-21-healthcheck-path", "info"]
