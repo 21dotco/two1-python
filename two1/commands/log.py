@@ -3,6 +3,7 @@ from datetime import date, datetime
 import click
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
+from two1.commands.config import utc_to_local
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.decorators import json_output
 from two1.lib.util.uxstring import UxString
@@ -66,7 +67,7 @@ def get_bc_logs(client, debug):
 
 def get_headline(entry):
     # headline
-    local_date = datetime.fromtimestamp(entry["date"]).strftime("%Y-%m-%d %H:%M:%S")
+    local_date = utc_to_local(datetime.fromtimestamp(entry["date"])).strftime("%Y-%m-%d %H:%M:%S")
     if entry["amount"] > 0:
         headline = UxString.debit_message.format(local_date, entry["amount"])
     elif entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout":
