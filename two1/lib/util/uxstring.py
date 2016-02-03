@@ -246,7 +246,8 @@ class UxString:
     valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path",
                                        "x-21-healthcheck-path", "info"]
     top_level_manifest_field_missing = "Field '{}' is missing from the manifest file."
-    manifest_info_fields = ["contact", "x-21-total-price", "description", "x-21-usage",
+    manifest_info_fields = ["contact", "x-21-github-profile-url", "x-21-github-project-url",
+                            "x-21-total-price", "description", "x-21-usage",
                             "x-21-quick-buy", "version", "x-21-category", "x-21-keywords"]
     manifest_info_field_missing = "Field '{}' is missing from the manifest file under the 'info' " \
                                   "section."
