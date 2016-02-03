@@ -19,6 +19,10 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.channels import PaymentChannelClient
 from two1.lib.wallet import test_wallet
 from two1.lib.util.uxstring import UxString
+from datetime import timezone
+import pytz
+import subprocess
+import re
 
 # if there is a .env in the root directory, use the endpoints that are specified in there
 
@@ -51,6 +55,17 @@ def get_device_uuid():
         pass
     return uuid
 
+def get_timezone():
+    timezone = 'UTC'
+    tzupdate = subprocess.getoutput('tzupdate -p')
+    if 'Detected timezone' in tzupdate:
+        m = re.search('Detected timezone is (.*)\.', tzupdate)
+        timezone = m.group(1)
+    return timezone
+
+def utc_to_local(utc_dt):
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=pytz.timezone(TWO1_TIMEZONE))
+
 base_dir = str(Path(__file__).parents[2])
 dotenv_path = join(base_dir, '.env')
 
@@ -70,6 +85,7 @@ TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21.co:21006")
 TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST", "http://market.21.co")
 TWO1_VERSION = two1.__version__
 TWO1_DEVICE_ID = os.environ.get("TWO1_DEVICE_ID") or get_device_uuid()
+TWO1_TIMEZONE = os.environ.get("TWO1_TIMEZONE") or get_timezone()
 
 try:
     TWO1_PATH = os.path.dirname(sys.argv[0])
