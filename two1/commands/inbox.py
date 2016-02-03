@@ -3,7 +3,6 @@ from datetime import date, datetime
 import click
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
-from two1.commands.config import utc_to_local
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.decorators import json_output
 from two1.lib.util.uxstring import UxString
@@ -63,7 +62,7 @@ def get_notifications(config, client):
 
 
 def create_notification_line(msg):
-    local_time = utc_to_local(datetime.fromtimestamp(msg["time"])).strftime("%Y-%m-%d %H:%M")
+    local_time = datetime.fromtimestamp(msg["time"]).strftime("%Y-%m-%d %H:%M")
     message_line = click.style("{} : {} from {}\n".format(local_time, msg["type"],
                                                           msg["from"]),
                                fg="cyan")
