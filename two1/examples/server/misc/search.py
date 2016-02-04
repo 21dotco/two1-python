@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view
 from bing_search_api import BingSearchAPI
 
 
-@api_price(800)
+@api_price(3500)
 @api_view(["POST"])
 def bing(request):
     """
