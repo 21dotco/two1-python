@@ -136,8 +136,8 @@ def status_account(config):
     config.log(UxString.status_account.format(**status_account))
     return status_account
 
-SEARCH_UNIT_PRICE = 800
-SMS_UNIT_PRICE = 1000
+SEARCH_UNIT_PRICE = 3500
+SMS_UNIT_PRICE = 3000
 
 
 def status_wallet(config, client, detail=False):
