@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view
 from two1.examples.bitcoin_auth.pricing import api_price
 
 
-@api_price(1000)
+@api_price(3000)
 @api_view(['POST'])
 def send_sms(request):
     """
