@@ -64,9 +64,6 @@ $ 21 mine --dashboard
 @check_notifications
 @capture_usage
 def _mine(config, dashboard=False):
-    if TWO1_DEVICE_ID is None:
-        click.secho(UxString.mining_bitcoin_computer_needed)
-        return
     if has_bitcoinkit():
         if not is_minerd_running():
             start_minerd(config, dashboard)
