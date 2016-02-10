@@ -1,8 +1,7 @@
-"""
-Generate private keys, sign messages, serialize/deserialize data
-"""
+"""This submodule provides the PublicKey, PrivateKey, and Signature classes.
+It also provides HDPublicKey and HDPrivateKey classes for working with HD
+wallets."""
 import math
-
 import base58
 import base64
 import hashlib
@@ -20,6 +19,7 @@ bitcoin_curve = secp256k1()
 
 
 def get_bytes(s):
+    """Returns the byte representation of a hex- or byte-string."""
     if isinstance(s, bytes):
         b = s
     elif isinstance(s, str):
@@ -1000,7 +1000,7 @@ class HDKey(object):
 
         The serialization must conform to the description in:
         https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
-            
+
         Args:
             b (bytes): A byte stream conforming to the above.
 
@@ -1063,8 +1063,6 @@ class HDKey(object):
 
     @staticmethod
     def from_path(root_key, path):
-        """
-        """
         p = HDKey.parse_path(path)
 
         if p[0] == "m":
@@ -1160,7 +1158,7 @@ class HDKey(object):
             bytes: A 20-byte RIPEMD-160 hash.
         """
         raise NotImplementedError
-    
+
     @property
     def fingerprint(self):
         """ Returns the key's fingerprint, which is the first 4 bytes

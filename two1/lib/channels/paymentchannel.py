@@ -1,3 +1,4 @@
+"""Provides and object to represent and manage a payment channel."""
 import time
 
 from . import server

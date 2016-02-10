@@ -6,29 +6,32 @@ from two1.lib.bitcoin import Transaction
 
 
 class WalletError(Exception):
-    pass
-
-
-class NoMerchantPublicKeyError(WalletError):
+    """Generic exception for wallet errors."""
     pass
 
 
 class InvalidPaymentError(WalletError):
+    """Raised when a transaction provided is incorrect or malformed."""
     pass
 
 
 class WalletWrapperBase:
 
+    """Abstract base class for a payment channel server wallet wrapper."""
+
     def __init__(self):
         pass
 
     def get_public_key(self):
+        """Get a public key for use in a payment channel."""
         raise NotImplementedError()
 
     def sign_half_signed_payment(self):
+        """Sign a half-signed payment transaction."""
         raise NotImplementedError()
 
     def validate_merchant_public_key(self):
+        """Validate that a public key exists in the merchants wallet."""
         raise NotImplementedError()
 
 ###############################################################################
@@ -47,7 +50,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         """Get a public key for use in a payment channel.
 
         Returns:
-            public_key (string): a string representation of a public key's hex.
+            string: a string representation of a public key's hex.
         """
         # Get preferred address from our wallet
         pubkey = self._wallet.get_payout_public_key().compressed_bytes
@@ -57,14 +60,13 @@ class Two1WalletWrapper(WalletWrapperBase):
         """Sign a half-signed payment transaction.
 
         Args:
-            payment_tx (two1.lib.bitcoin.txn.Transaction): an object that
+            payment_tx (two1.lib.bitcoin.Transaction): an object that
                 contains a transaction from a customer, whether for a refund
                 or general payment, to be signed by the merchant.
 
         Returns:
-            signed_tx (two1.lib.bitcoin.txn.Transaction): an object that
-                contains a transaction that has been signed by both the
-                customer and the merchant.
+            two1.lib.bitcoin.Transaction: an object that contains a transaction
+                that has been signed by both the customer and the merchant.
         """
         # Verify that the deposit spend has only one input
         if len(payment_tx.inputs) != 1:
@@ -84,5 +86,13 @@ class Two1WalletWrapper(WalletWrapperBase):
         return payment_tx
 
     def validate_merchant_public_key(self, public_key):
+        """Validate that a public key exists in the merchants wallet.
+
+        Args:
+            public_key (two1.lib.bitcoin.PublicKey): the public key to test.
+
+        Returns:
+            bool: True if the merchant owns the public key, False otherwise.
+        """
         private_key = self._wallet.get_private_for_public(public_key)
         return private_key is not None

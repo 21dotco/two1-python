@@ -1,6 +1,6 @@
-"""
-Bitcoin Block header calculation and Merkle tree API
-"""
+"""This submodule provides the MerkleNode, Block, BlockHeader, and CompactBlock
+classes. It allows you to work programmatically with the individual blocks in
+the Bitcoin blockchain."""
 from sha256 import sha256 as sha256_midstate
 
 from two1.lib.bitcoin.hash import Hash
@@ -103,11 +103,11 @@ class BlockHeader(object):
             str: hex-encoded string.
         """
         return bytes_to_str(bytes(self))
-    
+
     def __bytes__(self):
         """ Serializes the BlockHeader object.
 
-        Returns: 
+        Returns:
             byte_str (bytes): The serialized byte stream.
         """
         return (
@@ -134,7 +134,7 @@ class Block(object):
 
     The merkle root is automatically computed from the transactions
     passed in during initialization.
-    
+
     Serialization and deserialization are done according to:
     https://bitcoin.org/en/developer-reference#serialized-blocks
 
@@ -155,7 +155,7 @@ class Block(object):
 
         Args:
             b (bytes): The byte stream, starting with the block version.
-        
+
         Returns:
             block, b (tuple): A tuple. The first item is the deserialized block
             and the second is the remainder of the byte stream.
@@ -173,13 +173,13 @@ class Block(object):
     def from_blockheader(cls, bh, txns):
         """ Creates a Block from an existing BlockHeader object and transactions.
 
-        Args: 
+        Args:
             bh (BlockHeader): A BlockHeader object.
             txns (list): List of all transactions to be included in the block.
 
         Returns:
             block (Block): A Block object.
-            
+
         """
         self = cls.__new__(cls)
         self.block_header = bh
@@ -365,7 +365,7 @@ class CompactBlock(object):
     @property
     def coinbase_transaction(self):
         """cb_txn (Transaction): The coinbase transaction.
-           The setter takes care of recomputing the merkle edge and 
+           The setter takes care of recomputing the merkle edge and
            midstate.
         """
         return self._cb_txn

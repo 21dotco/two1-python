@@ -1,3 +1,5 @@
+"""This submodule provides a concrete `MockProvider` class that provides
+information about a blockchain by contacting a server."""
 import math
 from unittest.mock import MagicMock
 

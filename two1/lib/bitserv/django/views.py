@@ -1,3 +1,4 @@
+"""Added views for a bitserv server."""
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -6,14 +7,18 @@ from . import payment
 
 
 class PaymentAPIError(Exception):
+    """Generic error for exceptions encountered during payment negotiation."""
     pass
 
 
 class BadParametersError(PaymentAPIError):
+    """Raised when a client provides incorrect endpoint parameters."""
     pass
 
 
 class ChannelViewSet(ViewSet):
+
+    """REST interface for managing payment channels."""
 
     def list(self, request, format='json'):
         """Return the merchant's public key."""

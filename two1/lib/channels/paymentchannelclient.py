@@ -1,3 +1,4 @@
+"""A high-level client that can open, close, and pay across many channels."""
 import os.path
 import collections
 import logging

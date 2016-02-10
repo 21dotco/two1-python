@@ -1,3 +1,5 @@
+"""Wraps various blockchain data sources to provide convenience methods for
+payment channel management."""
 import requests
 
 import two1.lib.bitcoin as bitcoin

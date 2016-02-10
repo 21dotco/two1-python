@@ -1,6 +1,6 @@
-"""
-Represent transactions: input, output, and coinbases.
-"""
+"""This submodule provides Transaction, Coinbase, TransactionInput,
+TransactionOutput, and UnspentTransactionOutput classes for building and
+parsing Bitcoin transactions and their constituent inputs and outputs."""
 import copy
 import hashlib
 import struct
@@ -266,6 +266,14 @@ class UnspentTransactionOutput(object):
 
     @property
     def confirmed(self):
+        """ Returns whether the unspect transaction output is confirmed.
+
+        This method uses six (6) blocks as a threshhold to determine whether
+        the transaction is considered 'confirmed'.
+
+        Returns:
+            bool: True if confirmed, False otherwise.
+        """
         return self.num_confirmations >= 6
 
 

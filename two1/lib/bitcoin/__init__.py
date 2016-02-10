@@ -1,3 +1,20 @@
+"""The bitcoin module within the 21 Bitcoin Library (``two1.lib.bitcoin``) provides
+the following functionality:
+
+1. Serialization/deserialization of all Bitcoin data structures:
+   blocks and block headers, transactions, scripts, public/private
+   keys, and digital signatures. Serialization is achieved via the
+   ``bytes()`` method and deserialization is achieved via the
+   ``from_bytes()`` static method of each class.
+2. Creation of standard scripts: Pay-to-Public-Key-Hash (P2PKH) and
+   Pay-to-Script-Hash (P2SH) as well multi-sig script support.
+3. Transaction creation, signing, and verification, including multi-sig
+   transactions.
+4. Standard public/private key generation as well as HD key generation.
+
+In short, you should be able to programmatically manipulate most major
+Bitcoin data structures after learning the functions in this module.
+"""
 from .block import BlockHeader
 from .block import Block
 from .block import CompactBlock

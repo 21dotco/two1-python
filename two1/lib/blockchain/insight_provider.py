@@ -1,3 +1,5 @@
+"""This submodule provides a concrete `InsightProvider` class that provides
+information about a blockchain by contacting a server."""
 import decimal
 import json
 
@@ -44,6 +46,7 @@ class InsightProvider(BaseProvider):
 
     @property
     def testnet(self):
+        """ Returns whether or not the data provider is on testnet."""
         return self._testnet
 
     @testnet.setter
@@ -67,6 +70,59 @@ class InsightProvider(BaseProvider):
 
     @staticmethod
     def txn_from_json(txn_json):
+        """ Returns a new Transaction from a JSON-serialized transaction
+
+        Args:
+            txn_json: JSON with the following format:
+
+        {
+        "hash": "0bf0de38c26195919179f...",
+        "block_hash": "000000000000000...",
+        "block_height": 303404,
+        "block_time": "2014-05-30T23:54:55Z",
+        "chain_received_at": "2015-08-13T10:52:21.718Z",
+        "confirmations": 69389,
+        "lock_time": 0,
+        "inputs": [
+          {
+            "transaction_hash": "0bf0de38c2619...",
+            "output_hash": "b84a66c46e24fe71f9...",
+            "output_index": 0,
+            "value": 300000,
+            "addresses": [
+              "3L7dKYQGNoZub928CJ8NC2WfrM8U8GGBjr"
+            ],
+            "script_signature": "03046022100de7b67b9...",
+            "script_signature_hex": "00493046022100de7b...",
+            "sequence": 4294967295
+          }
+        ],
+        "outputs": [
+          {
+            "transaction_hash": "0bf0de38c261959...",
+            "output_index": 0,
+            "value": 290000,
+            "addresses": [
+              "1K4nPxBMy6sv7jssTvDLJWk1ADHBZEoUVb"
+            ],
+            "script": "OP_DUP OP_HASH160 c629680b8d...",
+            "script_hex": "76a914c629680b8d13...",
+            "script_type": "pubkeyhash",
+            "required_signatures": 1,
+            "spent": false,
+            "spending_transaction": null
+          }
+        ],
+        "fees": 10000,
+        "amount": 290000
+        },
+        Transaction.DEFAULT_TRANSACTION_VERSION
+
+        Returns:
+            two1.lib.bitcoin.Transaction: a deserialized transaction derived
+                from the provided json.
+
+        """
         inputs = []
         outputs = []
         addr_keys = set()

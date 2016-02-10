@@ -5,20 +5,24 @@ support the 402-protocol and those specific payment methods.
 """
 import time
 import json
-import requests
 import logging
+import requests
 
 logger = logging.getLogger('bitrequests')
 
+
 class BitRequestsError(Exception):
+    """Generic exception for BitRequests modules."""
     pass
 
 
 class UnsupportedPaymentMethodError(BitRequestsError):
+    """Raised when using a payment method that is not supported by a server."""
     pass
 
 
 class ResourcePriceGreaterThanMaxPriceError(BitRequestsError):
+    """Raised when paying for a resource whose price exceeds the client's maximum allowable price."""
     pass
 
 
@@ -81,7 +85,7 @@ class BitRequests(object):
         response = requests.request(method, url, **kwargs)
 
         # Return if we receive a status code other than 402: payment required
-        if (response.status_code != requests.codes.payment_required):
+        if response.status_code != requests.codes.payment_required:
             return response
 
         # Pass the response to the main method for handling payment

@@ -14,26 +14,32 @@ from .models import DatabaseSQLite3, ChannelSQLite3, Channel
 
 
 class PaymentServerError(Exception):
+    """Generic exception for payment channel processing errors."""
     pass
 
 
 class RedeemPaymentError(PaymentServerError):
+    """Raised when the payment server fails to redeem a payment."""
     pass
 
 
 class ChannelClosedError(PaymentServerError):
+    """Raised when attempting to access a channel that has been closed."""
     pass
 
 
 class PaymentChannelNotFoundError(PaymentServerError):
+    """Raised when attempting to access a channel that does not exist."""
     pass
 
 
 class BadTransactionError(PaymentServerError):
+    """Raised when an incorrect or malformed transaction is provided by a client."""
     pass
 
 
 class TransactionVerificationError(PaymentServerError):
+    """Raised when the server fails to verify the validity of a transaction."""
     pass
 
 

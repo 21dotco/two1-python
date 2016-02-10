@@ -1,3 +1,7 @@
+"""This submodule provides an abstract base class for a Provider, which
+provides information about the blockchain and broadcasts transactions by
+contacting a server. It is possible to put this "server" on the same local
+machine if desired or to keep it remote to save space."""
 
 
 class BaseProvider(object):

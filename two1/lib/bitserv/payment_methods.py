@@ -15,30 +15,37 @@ logger = logging.getLogger('bitserv')
 
 
 class PaymentError(Exception):
+    """Generic error for exceptions encountered during payment validation."""
     pass
 
 
 class InsufficientPaymentError(PaymentError):
+    """Raised when the amount paid is less than the payment required."""
     pass
 
 
 class InvalidPaymentParameterError(PaymentError):
+    """Raised when an incorrect or malformed payment parameter is provided."""
     pass
 
 
 class DuplicatePaymentError(PaymentError):
+    """Raised when attempting to re-use a payment token to purchase a resource."""
     pass
 
 
 class TransactionBroadcastError(PaymentError):
+    """Raised when broadcasting a transaction to the bitcoin network fails."""
     pass
 
 
 class PaymentBelowDustLimitError(PaymentError):
+    """Raised when the paid amount is less than the bitcoin network dust limit."""
     pass
 
 
 class ServerError(Exception):
+    """Raised when an error is received from a remote server on a request."""
     pass
 
 

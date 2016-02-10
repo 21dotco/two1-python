@@ -1,6 +1,8 @@
-"""
-Parse scripts and assemble/disassemble.
-"""
+"""This submodule provides a single Script class that has knowledge of all
+Bitcoin opcodes. At the simplest level, it can read in the raw bytes of a
+Bitcoin script, parse it, and determine what type of script it is (P2PKH, P2SH,
+multi-sig, etc). It also provides capabilities for building more complex
+scripts programmatically."""
 import base58
 import copy
 import re
@@ -360,6 +362,12 @@ class Script(object):
 
     @property
     def ast(self):
+        """ Returns the script's abstract syntax tree.
+
+        Returns:
+            list: a nested list of opcodes which follow the flow of a script's
+                conditional if/else branching.
+        """
         if not self._ast:
             self._parse()
 
