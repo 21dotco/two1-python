@@ -1,3 +1,5 @@
+"""This submodule provides a concrete `BlockCypherProvider` class that provides
+information about a blockchain by contacting a server."""
 import arrow
 import json
 import time
@@ -43,6 +45,7 @@ class BlockCypherProvider(BaseProvider):
 
     @property
     def testnet(self):
+        """ Returns whether or not the data provider is on testnet."""
         return self._testnet
 
     @testnet.setter
@@ -68,9 +71,11 @@ class BlockCypherProvider(BaseProvider):
 
     @staticmethod
     def txn_from_json(txn_json):
-        """
+        """ Returns a new Transaction from a JSON-serialized transaction.
+
         Args:
-            txn_json: Json with the following format:
+            txn_json: JSON with the following format:
+
         {
         "block_hash": "0000000000000000af64802c79...",
         "block_height": 292586,
@@ -120,7 +125,9 @@ class BlockCypherProvider(BaseProvider):
         }
         ]...
 
-        Returns: An Object of type Transaction
+        Returns:
+            two1.lib.bitcoin.Transaction: a deserialized transaction derived
+                from the provided json.
 
         """
 

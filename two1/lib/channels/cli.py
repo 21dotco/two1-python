@@ -1,3 +1,4 @@
+"""Command-line interface for managing client-side payment channel management."""
 import click
 import collections
 import json
@@ -73,6 +74,7 @@ def format_expiration_time(expires):
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
 @click.pass_context
 def main(ctx, json):
+    """Top-level command line call that configures the command context."""
     client = PaymentChannelClient(Wallet(WALLET_PATH), CHANNELS_DB_PATH)
     ctx.obj = {'client': client, 'json': json}
 

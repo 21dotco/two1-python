@@ -44,6 +44,7 @@ class Payment:
         payment is successfully accepted.
         """
         def decorator(fn):
+            """Validates payment and returns the original API route."""
             @wraps(fn)
             def _fn(request, *fn_args, **fn_kwargs):
                 # Calculate resource cost

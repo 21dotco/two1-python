@@ -1,3 +1,4 @@
+"""Payment models for a bitserv server."""
 from django.db import models
 
 
@@ -9,6 +10,7 @@ class BlockchainTransaction(models.Model):
     amount = models.IntegerField()
 
     class Meta:
+        """Associate the model with the bitserv django app."""
         app_label = 'django'
 
 
@@ -33,6 +35,7 @@ class PaymentChannel(models.Model):
                     self.expires_at, self.last_payment_amount))
 
     class Meta:
+        """Associate the model with the bitserv django app."""
         app_label = 'django'
 
 
@@ -53,4 +56,5 @@ class PaymentChannelSpend(models.Model):
                     self.deposit_txid))
 
     class Meta:
+        """Associate the model with the bitserv django app."""
         app_label = 'django'

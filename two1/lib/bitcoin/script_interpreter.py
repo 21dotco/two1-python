@@ -1,3 +1,5 @@
+"""This submodule provides a single ScriptInterpreter class to be used in
+conjunciton with a Script class for deserialization and validation."""
 from collections import deque
 import copy
 import hashlib
@@ -215,7 +217,7 @@ class ScriptInterpreter(object):
 
         Returns:
             bool: The top stack element casted to a boolean.
-        """        
+        """
         x = self._stack[-1]
         if pop:
             self._stack.pop()

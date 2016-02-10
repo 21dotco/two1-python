@@ -1,3 +1,4 @@
+"""Handles usage and error statistics and communication """
 import click
 import json
 import platform
@@ -13,6 +14,7 @@ from two1.lib.server.rest_client import ServerConnectionError
 
 
 def capture_usage(func):
+    """Wraps a 21 CLI command in a function that logs usage statistics."""
     def _capture_usage(config, *args, **kw):
         func_name = func.__name__[1:]
         username = config.username
@@ -74,10 +76,12 @@ def capture_usage(func):
 
 
 def str2bool(v):
+    """Convenience method for converting from string to boolean."""
     return str(v).lower() == "true"
 
 
 def log_message(message):
+    """Send the payload to the logging server."""
     url = app_config.TWO1_LOGGER_SERVER + "/logs"
     message_str = json.dumps(message)
     requests.request("post", url, data=message_str)

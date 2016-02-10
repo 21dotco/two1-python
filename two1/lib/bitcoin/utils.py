@@ -1,19 +1,12 @@
-"""
-Utility functions, mostly related to serializing and difficulty
-"""
-# -*- Mode: Python -*-
-
+"""This submodule provides functions for accomplishing common tasks encountered
+in creating and parsing Bitcoin objects, like turning difficulties into targets
+or deserializing and serializing various kinds of packed byte formats."""
 import base58
 import codecs
 import hashlib
 import random
 import struct
 import os
-
-""" This module provides a number of utility/helper functions that are
-    commonly used with Bitcoin related objects. Primarily, the module
-    provides functionality for serializing and deserializing various
-    data types according to Bitcoin serialization rules.  """
 
 MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000
 

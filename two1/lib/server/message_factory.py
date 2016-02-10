@@ -1,6 +1,4 @@
-"""
-Protobuf and Laminar message factory classes
-"""
+"""Generates new swirl messages."""
 import asyncio
 import logging
 
@@ -12,6 +10,8 @@ decode_hex = codecs.getdecoder("hex_codec")
 
 
 class SwirlMessageFactory():
+    """Contains static methods for formatting data over swirl."""
+
     @staticmethod
     def _encode_object(obj):
         msg_str = obj.SerializeToString()

@@ -1,4 +1,4 @@
-""""""
+"""This module provides data management for payment servers."""
 import os
 import time
 import codecs
@@ -20,23 +20,9 @@ Payment = collections.namedtuple('Payment', [
 # *************************** Base Data Models ****************************** #
 
 
-class ChannelError(Exception):
-    pass
-
-
-class ModelNotFound(ChannelError):
-    pass
-
-
-class DuplicateRequestError(ChannelError):
-    pass
-
-
-class InvalidPaymentError(ChannelError):
-    pass
-
-
 class ChannelDataManager:
+
+    """Manages payment channel data for specific channels and payments."""
 
     def __init__(self):
         """Provides an interface to the two payment channel data models.
@@ -50,6 +36,8 @@ class ChannelDataManager:
 
 
 class ChannelDatabase:
+
+    """Model that contains all payment channels."""
 
     def __init__(self):
         pass
@@ -101,6 +89,8 @@ class ChannelDatabase:
 
 class PaymentDatabase:
 
+    """Model that contains all payments made within channels."""
+
     def __init__(self):
         pass
 
@@ -149,6 +139,8 @@ class DatabaseDjango(ChannelDataManager):
 
 
 class ChannelDjango(ChannelDatabase):
+
+    """Django binding for the payment channel model."""
 
     CONFIRMING = 'confirming'
     READY = 'ready'
@@ -202,6 +194,8 @@ class ChannelDjango(ChannelDatabase):
 
 class PaymentDjango(ChannelDatabase):
 
+    """Django binding for the payment model."""
+
     def __init__(self, PaymentModel):
         """Initialize the payment data handler with a Payment django model."""
         self.Payment = PaymentModel
@@ -246,6 +240,8 @@ class DatabaseSQLite3(ChannelDataManager):
 
 
 class ChannelSQLite3(ChannelDatabase):
+
+    """SQLite3 binding for the payment channel model."""
 
     CONFIRMING = 'confirming'
     READY = 'ready'
@@ -310,6 +306,8 @@ class ChannelSQLite3(ChannelDatabase):
 
 class PaymentSQLite3(PaymentDatabase):
 
+    """SQLite3 binding for the payment model."""
+
     NOT_REDEEMED = 0
     WAS_REDEEMED = 1
 
@@ -355,28 +353,32 @@ class PaymentSQLite3(PaymentDatabase):
 
 # *************************** Base Data Models ****************************** #
 
-class OnChainError(Exception):
-    pass
-
 
 class OnChainDatabase:
+
+    """Model that contains all on-chain payment transactions."""
 
     def __init__(self):
         pass
 
     def create(txid):
+        """Create a transaction entry."""
         pass
 
     def lookup(txid):
+        """Look up a transaction entry."""
         pass
 
     def delete(txid):
+        """Delete a transaction entry."""
         pass
 
 # *************************** Django Data ORM ****************************** #
 
 
 class OnChainDjango(OnChainDatabase):
+
+    """Django binding for the on-chain transaction model."""
 
     def __init__(self, BlockchainTransaction):
         self.BlockchainTransaction = BlockchainTransaction
@@ -407,6 +409,8 @@ class OnChainDjango(OnChainDatabase):
 
 
 class OnChainSQLite3(OnChainDatabase):
+
+    """SQLite3 binding for the on-chain transaction model."""
 
     DEFAULT_PAYMENT_DB_DIR = os.path.expanduser('~/.two1/payment/')
     DEFAULT_PAYMENT_DB_PATH = DEFAULT_PAYMENT_DB_DIR + 'payment.sqlite3'

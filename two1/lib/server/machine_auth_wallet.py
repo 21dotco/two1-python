@@ -1,8 +1,8 @@
+"""Wraps a Wallet object and adds signing capabilities for authentication."""
 
 
 class MachineAuthWallet(object):
-    """ Uses Wallet's message signing capability for Auth
-    """
+    """Uses Wallet's message signing capability for Auth"""
 
     def __init__(self, wallet):
         """ Initialize using the provided private_key.
@@ -19,10 +19,11 @@ class MachineAuthWallet(object):
 
     @property
     def public_key(self):
+        """Convenience property to retrieve the signing public key."""
         return self.get_public_key()
 
     def get_public_key(self):
-        """ Gets the public key that is used for Signing
+        """Gets the public key that is used for Signing
 
         Returns:
             PublicKey: PublibKey object
@@ -30,7 +31,7 @@ class MachineAuthWallet(object):
         return self.wallet.get_message_signing_public_key()
 
     def sign_message(self, message):
-        """ Signs in provided message using the wallet object.
+        """Signs in provided message using the wallet object.
 
         Args:
             message (str): Encodes the provided message into UTF-8 before \

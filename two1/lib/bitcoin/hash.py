@@ -1,9 +1,9 @@
-"""
-Assist with ordering hashes properly for consumption by block.py
-"""
+"""this submodule provides a Hash class for interacting with SHA-256 hashes
+in a user-friendly way."""
 import hashlib
 
 from two1.lib.bitcoin.utils import bytes_to_str
+
 
 class Hash(object):
     """ Wrapper around a byte string for handling SHA-256 hashes used
@@ -25,7 +25,7 @@ class Hash(object):
     @staticmethod
     def dhash(b):
         """ Computes the double SHA-256 hash of b.
-        
+
         Args:
             b (bytes): The bytes to double-hash.
 
@@ -33,7 +33,7 @@ class Hash(object):
             Hash: a hash object containing the double-hash of b.
         """
         return Hash(hashlib.sha256(hashlib.sha256(b).digest()).digest())
-        
+
     def __init__(self, h):
         if isinstance(h, bytes):
             if len(h) != 32:
@@ -58,13 +58,20 @@ class Hash(object):
             return self._bytes == Hash(b)._bytes
         else:
             raise TypeError("b must be either a Hash object or bytes")
-    
+
     def __str__(self):
         """ Returns a hex string in RPC order
         """
         return bytes_to_str(self._bytes[::-1])
 
     def to_int(self, endianness='big'):
+        """ Returns an integer representation of the Hash.
+
+        Args:
+            endianness (Optional[int]): whether to interpret the underlying
+                byte string as little- or big-endian before converting it to an
+                integer. Defaults to 'big'.
+        """
         if endianness in ['big', 'little']:
             return int.from_bytes(bytes(self), endianness)
         else:

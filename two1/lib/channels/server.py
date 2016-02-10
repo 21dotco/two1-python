@@ -1,3 +1,4 @@
+"""Interfaces with a payment channel server over `http` and `mock` protocols."""
 import codecs
 import os.path
 import requests

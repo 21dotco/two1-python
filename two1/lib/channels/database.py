@@ -1,3 +1,4 @@
+"""Provides persistent storage and retrieval of payment channel state."""
 import os
 import fcntl
 import sqlite3

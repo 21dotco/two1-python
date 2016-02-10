@@ -1,3 +1,4 @@
+"""Handles client-side user account setup and authentication."""
 import base64
 import click
 import re
@@ -10,6 +11,7 @@ from two1.lib.util.uxstring import UxString
 
 
 class EmailAddress(click.ParamType):
+    """Represents a email address parameter."""
     name = "Email address"
 
     def __init__(self):
@@ -23,6 +25,7 @@ class EmailAddress(click.ParamType):
 
 
 class Username(click.ParamType):
+    """Represents a username parameter."""
     name = "Username"
 
     def __init__(self):

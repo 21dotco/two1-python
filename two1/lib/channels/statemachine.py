@@ -1,3 +1,4 @@
+"""Manages state transitions for PaymentChannel objects."""
 import codecs
 import time
 import enum

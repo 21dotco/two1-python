@@ -26,10 +26,12 @@ class PaymentRequiredException(HTTPException):
 
 
 class PaymentAPIError(Exception):
+    """Generic error for exceptions encountered during payment negotiation."""
     pass
 
 
 class BadParametersError(PaymentAPIError):
+    """Raised when a client provides incorrect endpoint parameters."""
     pass
 
 
@@ -67,6 +69,7 @@ class Payment:
         payment is successfully accepted.
         """
         def decorator(fn):
+            """Validates payment and returns the original API route."""
             @wraps(fn)
             def _fn(*fn_args, **fn_kwargs):
                 # Calculate resource cost
@@ -124,6 +127,8 @@ def flask_channel_adapter(app, server, endpoint='/payment'):
 
 
 class Channel(views.MethodView):
+
+    """REST interface for managing payment channels."""
 
     def __init__(self, server):
         """Initialize the channel view with a PaymentServer object."""
