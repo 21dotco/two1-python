@@ -243,8 +243,7 @@ class UxString:
 
     valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
 
-    valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path",
-                                       "x-21-healthcheck-path", "info"]
+    valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path", "info"]
     top_level_manifest_field_missing = "Field '{}' is missing from the manifest file."
     manifest_info_fields = ["contact", "x-21-github-profile-url", "x-21-github-project-url",
                             "x-21-total-price", "description", "x-21-usage",
