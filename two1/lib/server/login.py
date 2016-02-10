@@ -122,6 +122,21 @@ def create_username(config, username=None):
     # this will come from the wallet
     bitcoin_payout_address = config.wallet.current_address
     click.echo("")
+
+    # if the user is on a bitcoin computer create the account for them
+    # otherwise login
+    if TWO1_DEVICE_ID:
+        return _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
+                               bitcoin_payout_address)
+    else:
+        return signin_account(config, machine_auth, machine_auth_pubkey_b64,
+                               bitcoin_payout_address)
+
+
+def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
+                    bitcoin_payout_address):
+
+    click.echo(UxString.missing_account)
     email = click.prompt(UxString.enter_email, type=EmailAddress())
     while True:
         if username == "" or username is None:
@@ -155,6 +170,49 @@ def create_username(config, username=None):
                 click.echo(UxString.Error.account_failed)
             username = None
     return username
+
+
+def signin_account(config, machine_auth, machine_auth_pubkey_b64, bitcoin_payout_address,
+                   username=None, password=None, show_analytics_prompt=True):
+    click.secho(UxString.signin_title)
+    username = username or get_username_interactive()
+    password = password or get_password_interactive()
+    login_with_username_password(config, username, password, machine_auth,
+                                            bitcoin_payout_address)
+
+    click.echo(UxString.payout_address % bitcoin_payout_address)
+    config.update_key("username", username)
+    config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
+    config.save()
+    if show_analytics_prompt:
+        analytics_optin(config)
+    return username
+
+
+def login_with_username_password(config, username, password, machine_auth, payout_address):
+    click.secho(UxString.login_in_progress.format(username))
+    rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth=machine_auth, username=username)
+    try:
+        r = rest_client.login(payout_address=payout_address, password=password)
+    except ServerRequestError as e:
+        if e.status_code == 401:
+            click.secho(UxString.incorrect_password)
+            raise UnloggedException("Unauthorized Login")
+        else:
+            click.secho("Error: " + str(next(iter(e.data.values()))) + "({})".format(e.status_code),
+                        fg="red")
+            raise UnloggedException(e)
+
+
+def get_username_interactive():
+    username = click.prompt(UxString.login_username, type=str)
+    return username
+
+
+def get_password_interactive():
+    password = click.prompt(UxString.login_password, hide_input=True, type=str)
+    return password
+
 
 
 def analytics_optin(config):

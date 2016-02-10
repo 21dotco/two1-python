@@ -1,6 +1,8 @@
 # standard python imports
 import base64
 import sys
+from two1.lib.server.login import check_setup_twentyone_account, get_username_interactive, \
+    get_password_interactive, signin_account
 
 # 3rd party imports
 import click
@@ -37,27 +39,25 @@ def login(config, accounts, switchuser, setpassword, username, password):
     elif switchuser or accounts:
         return _switch_user(config, switchuser)
     else:
-        username = username or get_username_interactive()
-        password = password or get_password_interactive()
-        login_with_username_password(config, username, password)
+        _login(config, username, password)
 
 
 @check_notifications
 @capture_usage
-def login_with_username_password(config, username, password):
-    print("-----")
-    print(username)
-    print(password)
-
-
-def get_username_interactive():
-    username = click.prompt(UxString.login_username, type=str)
-    return username
-
-
-def get_password_interactive():
-    password = click.prompt(UxString.login_password, hide_input=True, type=str)
-    return password
+def _login(config, username, password):
+    cfg = Config()
+    machine_auth = cfg.machine_auth
+    machine_auth_pubkey_b64 = base64.b64encode(
+        machine_auth.public_key.compressed_bytes
+    ).decode()
+    bitcoin_payout_address = cfg.wallet.current_address
+    signin_account(config=cfg,
+                   machine_auth=machine_auth,
+                   machine_auth_pubkey_b64=machine_auth_pubkey_b64,
+                   bitcoin_payout_address=bitcoin_payout_address,
+                   username=username,
+                   password=password,
+                   show_analytics_prompt=False)
 
 
 @capture_usage
