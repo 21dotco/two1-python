@@ -18,6 +18,7 @@ from two1.commands.search import get_next_page
 
 
 class ValidationError(Exception):
+    """ Manifest validation error occurs when parsing manifest file """
     pass
 
 
@@ -117,6 +118,11 @@ Before publishing, make sure that you've joined the 21 marketplace by running th
 
 @capture_usage
 def _list_apps(config):
+    """ Lists all apps that have been published to the 21 marketplace
+
+    Args:
+        config (Config): config object used for getting .two1 information
+    """
     click.secho(UxString.my_apps.format(config.username), fg="green")
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
@@ -149,6 +155,12 @@ def _list_apps(config):
 @check_notifications
 @capture_usage
 def _delete_app(config, app_id):
+    """ Deletes an app that has been published to the 21 marketplace
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        app_id (str): a unique string that identifies the application
+    """
     if click.confirm(UxString.delete_confirmation.format(app_id)):
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                                  config.machine_auth,
@@ -168,6 +180,14 @@ def _delete_app(config, app_id):
 @check_notifications
 @capture_usage
 def _publish(config, manifest_path, marketplace, skip):
+    """ Publishes application by uploading the manifest to the given marketplace
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        manifest_path (str): the path to the manifest file
+        marketplace (str): the zerotier marketplace name
+        skip (bool): skips strict checking of manifest file
+    """
     try:
         manifest_json = check_app_manifest(manifest_path)
         app_url = urlparse(manifest_json["host"])
@@ -205,6 +225,16 @@ def _publish(config, manifest_path, marketplace, skip):
 
 
 def get_search_results(config, client, page):
+    """ Queries the marketplace for published apps
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+        page (int): the page number used in querying the paginated marketplace api
+
+    Returns:
+        int: the total number of pages returned by the server
+    """
     resp = client.get_published_apps(config.username, page)
     if resp.ok:
         resp_json = resp.json()
@@ -244,6 +274,15 @@ def get_search_results(config, client, page):
 
 
 def display_app_info(config, client, app_id):
+    """ Displays info about the application selected
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Raises:
+        ServerRequestError: if server returns an error code other than 404
+    """
     try:
         resp = client.get_app_full_info(config.username, app_id)
         result = resp.json()
@@ -321,6 +360,15 @@ def display_app_info(config, client, app_id):
 
 
 def check_app_manifest(api_docs_path):
+    """ Runs validate_manifest and handles any errors that could occur
+
+    Args:
+        api_docs_path (str): path to the manifest file
+
+    Raises:
+        ValidationError: If manifest is missing, is a directory, or too large
+        ValueError: If the manifest is not valid or bad
+    """
     if not os.path.exists(api_docs_path):
         raise ValidationError(
             UxString.manifest_missing.format(
@@ -341,17 +389,27 @@ def check_app_manifest(api_docs_path):
             validate_manifest(manifest_dict)
             return manifest_dict
     except YAMLError:
-            click.secho(UxString.malformed_yaml.format(api_docs_path, UxString.publish_docs_url),
-                        fg="red")
-            raise ValueError()
+        click.secho(UxString.malformed_yaml.format(api_docs_path, UxString.publish_docs_url), fg="red")
+        raise ValueError()
     except ValueError as e:
-            click.secho(
-                UxString.bad_manifest.format(api_docs_path, e.args[0],
-                                             UxString.publish_docs_url), fg="red")
-            raise ValueError()
+        click.secho(UxString.bad_manifest.format(
+            api_docs_path,
+            e.args[0],
+            UxString.publish_docs_url), fg="red")
+        raise ValueError()
 
 
 def validate_manifest(manifest_json):
+    """ Validates the manifest file
+
+        Ensures that the required fields in the manifest are present and valid
+
+    Args:
+        manifest_json (dict): a json dict of the entire manifest
+
+    Raises:
+        ValueError: if a required field is not valid or present in the manifest
+    """
     for field in UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
             raise ValidationError(UxString.top_level_manifest_field_missing.format(field))
@@ -374,6 +432,17 @@ def validate_manifest(manifest_json):
 
 
 def get_zerotier_address(marketplace):
+    """ Gets the zerotier IP address from the given marketplace name
+
+    Args:
+        marketplace (str): name of the marketplace network to lookup ip
+
+    Returns:
+        str: a string representation of the zerotier IP address
+
+    Raises:
+        UnloggedException: if the zt network doesn't exist
+    """
     click.secho(UxString.update_superuser)
     try:
         return zerotier.get_address_for_network(marketplace)

@@ -23,7 +23,8 @@ from two1.lib.util.uxstring import UxString
 # if there is a .env in the root directory, use the endpoints that are specified in there
 
 
-def parse_dotenv(dotenv_path):
+def _parse_dotenv(dotenv_path):
+    """ parses dotenv file """
     with open(dotenv_path, "rt") as f:
         for line in f:
             line = line.strip()
@@ -35,14 +36,31 @@ def parse_dotenv(dotenv_path):
 
 
 def load_dotenv(dotenv_path):
+    """ Read a .env file and load environment variables into os.environ
+
+    Args:
+        dotenv_path (str): Path to the two1 config file
+
+    Returns:
+        bool: True
     """
-    Read a .env file and load into os.environ.
-    """
-    for k, v in parse_dotenv(dotenv_path):
+    for k, v in _parse_dotenv(dotenv_path):
         os.environ.setdefault(k, v)
     return True
 
+
 def get_device_uuid():
+    """ Reads the uuid from the device by checking device tree
+
+    Todo:
+        throw the FileNotFound exception instead of returning None
+
+    Returns:
+        str: full uuid of device
+
+    Raises:
+        FileNotFoundError: if uuid file doesn't exist on the device
+    """
     uuid = None
     try:
         with open("/proc/device-tree/hat/uuid", "r") as f:
@@ -83,6 +101,12 @@ except:
 
 
 class Config(object):
+    """ Config object stores information required to run the various two1 commands
+
+        Config is the interface to the file in .two1 which is commonly referred
+        to as the .env (dot-env) file.
+    """
+
     def __init__(self, config_file=TWO1_CONFIG_FILE, config=None, create_wallet=True):
         if not os.path.exists(TWO1_USER_FOLDER):
             os.makedirs(TWO1_USER_FOLDER)
@@ -157,6 +181,7 @@ class Config(object):
 
     # pulls attributes from the self.defaults dict
     def __getattr__(self, name):
+        """ Enables dict-like attribute lookup capabiliy """
         if name in self.defaults:
             return self.defaults[name]
         else:
@@ -164,7 +189,11 @@ class Config(object):
             raise AttributeError
 
     def save(self):
-        """Save config file, handling various edge cases."""
+        """ Saves config file, handling various edge cases
+
+        Returns:
+            Config: config object
+        """
         if not self.dir.exists():
             self.dir.mkdir()
         if self.file.isdir():
@@ -177,7 +206,11 @@ class Config(object):
         return self
 
     def load(self):
-        """Load config from (1) self.file if extant or (2) from defaults."""
+        """ Loads config from either a known file or from a set of defaults
+
+        Returns:
+            Config: config object
+        """
         if self.file.exists() and self.file.isfile():
             try:
                 with open(self.file, mode="r", encoding='utf-8') as fh:
@@ -214,14 +247,31 @@ class Config(object):
         return self
 
     def update_key(self, key, value):
+        """ Updates the config value in memory
+
+        Todo:
+            This function should be named update_value
+
+        Args:
+            key (str): key of the value you wish to update
+            value (any): value being updated
+        """
         self.defaults[key] = value
         # might be better to switch to local sqlite for persisting
         # the config
         # self.save()
 
-    # kwargs is styling parameters
     def log(self, msg, *args, nl=True, **kwargs):
-        """Logs a message to stdout only if json is disabled."""
+        """ Logs a message to stdout using the click styling and echo functions
+
+            If json only is enabled this function will not print anything
+
+        Args:
+            msg (str): the message to print
+            args (list, tuple): message arguments when using a string formatter
+            nl (bool): if set to true a newline is printed after the msg
+            kwargs (dict): extra keyword args is used as syling params
+        """
         if self.json_output:
             return
         if args:
@@ -233,29 +283,55 @@ class Config(object):
         click.echo(out, nl=nl)
 
     def vlog(self, msg, *args):
-        """Logs a message to stdout only if verbose is enabled and json is disabled."""
+        """ Logs a message to stdout if the verbose flag is set
+
+            If json only is enabled this function will not print anything
+
+        Args:
+            msg (str): message to print verbosely
+            args (list): message arguments when using a string formatter
+        """
         if self.verbose:
             self.log(msg, *args)
 
     def echo_via_pager(self, msg, color=None):
-        """Takes a text and shows it via an environment specific pager
-           on stdout only if json is disabled."""
+        """ Takes a message and shows it via an environment specific pager
+
+            If json only is enabled this function will not print anything
+
+        Args:
+            msg (str): message to be shown  on pager
+            color (str): controls if the pager shows ANSI colors or not
+        """
         if not self.json_output:
             click.echo_via_pager(msg, color)
 
     def log_purchase(self, **kwargs):
+        """
+        Todo:
+            remove this function... it does nothing
+        """
         # simple logging to file
         # this can be replaced with pickle/sqlite
         return
 
     def get_purchases(self):
+        """
+        Todo:
+            remove this function, it does nothing
+        """
         # read all right now. TODO: read the most recent ones only
         return []
 
     def set_json_output(self, value):
+        """ Sets the json output which is printed after the command is finished
+
+        Args:
+            value (dict):
+        """
         self.json_output = value
 
-    def fmt(self):
+    def _fmt(self):
         pairs = []
         for key in sorted(self.defaults.keys()):
             pairs.append("%s: %s" % (key, self.defaults[key]))
@@ -263,7 +339,7 @@ class Config(object):
         return out
 
     def __repr__(self):
-        return "<Config\n%s>" % self.fmt()
+        return "<Config\n%s>" % self._fmt()
 
 # IMPORTANT: Suppose you want to invoke a command as a function
 # for the purpose of testing, eg:
