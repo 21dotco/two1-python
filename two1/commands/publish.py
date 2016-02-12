@@ -96,8 +96,10 @@ $ 21 publish list
 @click.argument('manifest_path', type=click.Path(exists=False))
 @click.option('-m', '--marketplace', default='21market',
               help="Selects the marketplace for publishing")
+@click.option('-s', '--skip', is_flag=True, default=False,
+              help='Skips the strict checking of the manifest against your current ip.')
 @click.pass_context
-def submit(ctx, manifest_path, marketplace):
+def submit(ctx, manifest_path, marketplace, skip):
     """
 Submits an app to the Marketplace.
 
@@ -109,7 +111,7 @@ https://21.co/publish
 
 Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
     """
-    _publish(ctx.obj["config"], manifest_path, marketplace)
+    _publish(ctx.obj["config"], manifest_path, marketplace, skip)
 
 
 @capture_usage
@@ -164,9 +166,24 @@ def _delete_app(config, app_id):
 
 @check_notifications
 @capture_usage
-def _publish(config, manifest_path, marketplace):
+def _publish(config, manifest_path, marketplace, skip):
     try:
         manifest_json = check_app_manifest(manifest_path)
+        app_name = manifest_json["info"]["title"]
+        app_url = urlparse(manifest_json["host"])
+        app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
+                                          manifest_json["host"],
+                                          manifest_json["basePath"])
+        app_ip = app_url.path.split(":")[0]
+
+        if not skip:
+            address = get_zerotier_address(marketplace)
+
+            if address != app_ip:
+                if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
+                    click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
+                    return
+
     except ValidationError as e:
         click.secho(
             UxString.bad_manifest.format(manifest_path, e.args[0], UxString.publish_docs_url),
