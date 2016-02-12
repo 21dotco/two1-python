@@ -1,7 +1,11 @@
+# standard python imports
 import datetime
 
+# 3rd party imports
 import click
 from tabulate import tabulate
+
+# two1 imports
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.util.uxstring import UxString
 from two1.lib.server import rest_client
@@ -32,6 +36,7 @@ You can always change the rating for your app by doing another 21 rate.
 See all the apps that you have rates:
 $ 21 rate --list
     """
+    #pylint: disable=redefined-builtin
     if list:
         _list(ctx.obj["config"])
     else:
@@ -65,7 +70,7 @@ def _list(config):
         rows = []
         for rating in ratings:
             rating_date = datetime.datetime.fromtimestamp(
-                    rating["rating_date"]).strftime("%Y-%m-%d %H:%M")
+                rating["rating_date"]).strftime("%Y-%m-%d %H:%M")
             rating_score = "{}/5".format(rating["rating"])
             rows.append([rating["app_id"], rating["app_title"], rating["app_creator"],
                          rating_score, rating_date])
@@ -107,4 +112,3 @@ def _rate(config, app_id, rating):
         raise e
 
     click.secho(UxString.rating_success.format(rating, app_id))
-    pass

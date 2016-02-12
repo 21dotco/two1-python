@@ -1,6 +1,10 @@
-from collections import deque
-from datetime import date, datetime
+# standard python imports
+from datetime import datetime
+
+# 3rd party imports
 import click
+
+# two1 imports
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage

@@ -1,11 +1,15 @@
+# standard python imports
+import os
 import datetime
 from urllib.parse import urlparse
 
-import os
+# 3rd partyimports
 import click
 import yaml
 from yaml.error import YAMLError
 from tabulate import tabulate
+
+# two1 imports
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
 from two1.lib.server.rest_client import ServerRequestError
@@ -73,6 +77,7 @@ Use 'n' to move to the next page and 'p' to move to the previous page.
 You can view detailed admin information about an app by specifying it's id
 at the prompt.
     """
+    #pylint: disable=redefined-builtin
     config = ctx.obj["config"]
     _list_apps(config)
 
@@ -333,7 +338,7 @@ def display_app_info(config, client, app_id):
             "{}".format(app_info["description"]))
         price = click.style("Price Range     : ", fg="blue") + click.style(
             "{} - {} Satoshis").format(
-            app_info["min_price"], app_info["max_price"])
+                app_info["min_price"], app_info["max_price"])
         doc_url = click.style("Docs URL        : ", fg="blue") + click.style(
             "{}".format(app_info["docs_url"]))
         manifest_url = click.style("Manifest URL    : ", fg="blue") + click.style(

@@ -1,18 +1,22 @@
+# standard python imports
 import sys
+import re
+import os
 import subprocess
 from urllib.parse import urljoin
 from datetime import date
 from datetime import datetime
 from distutils.version import LooseVersion
-import re
-import os
+
+# 3rd party imports
 import click
+
+# two1 imports
 from two1.commands.config import TWO1_VERSION
 from two1.commands.config import TWO1_PYPI_HOST
 from two1.commands.config import TWO1_PACKAGE_NAME
 from two1.lib.server.analytics import capture_usage
 from two1.lib.util.uxstring import UxString
-from two1.commands.config import pass_config
 
 
 @click.command()
@@ -166,8 +170,7 @@ def lookup_pypi_version(version='latest'):
                       "api/package/{}/".format(TWO1_PACKAGE_NAME))
         r = requests.get(url)
         data = r.json()
-    except (requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError):
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         raise click.ClickException(UxString.Error.update_server_connection)
 
     pypi_version = None
@@ -281,8 +284,7 @@ def perform_apt_based_update():
 
     update_command = ["sudo",
                       "apt-get",
-                      "update"
-                      ]
+                      "update"]
     upgrade_command = ["sudo",
                        "apt-get",
                        "-y",
@@ -290,8 +292,7 @@ def perform_apt_based_update():
                        "--only-upgrade",
                        TWO1_PACKAGE_NAME,
                        "minerd",
-                       "zerotier-one"
-                       ]
+                       "zerotier-one"]
     ret = False
     try:
         subprocess.check_call(update_command)

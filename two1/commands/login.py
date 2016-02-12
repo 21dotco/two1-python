@@ -1,8 +1,12 @@
+# standard python imports
 import base64
-import click
 import sys
-from two1.lib.server.login import check_setup_twentyone_account
 
+# 3rd party imports
+import click
+
+# two1 imports
+from two1.lib.server.login import check_setup_twentyone_account
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError, DataProviderError
 from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.util.uxstring import UxString
@@ -14,7 +18,6 @@ from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
-import two1.lib.server.login as server_login
 
 
 @click.command()

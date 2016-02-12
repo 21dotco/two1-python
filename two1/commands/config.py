@@ -1,15 +1,19 @@
 """
 Manages configuration variables for the `two1` CLI
 """
+# standard python imports
 import sys
 import json
-from os.path import join, dirname
 import os
-import two1
-import click
 from codecs import open
-from path import path
 from pathlib import Path
+
+# 3rd party imports
+import click
+from path import path
+
+# two1 imports
+import two1
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import daemonizer
 from two1.lib.wallet.exceptions import DaemonizerError
@@ -70,7 +74,7 @@ def get_device_uuid():
     return uuid
 
 base_dir = str(Path(__file__).parents[2])
-dotenv_path = join(base_dir, '.env')
+dotenv_path = os.path.join(base_dir, '.env')
 
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
@@ -94,17 +98,14 @@ try:
 except:
     TWO1_PATH = None
 
-'''Primary use case for the following class is the singleton that holds
-   all the state & config data required to run commands and subcommands
-   for two1 app
-'''
-
 
 class Config(object):
     """ Config object stores information required to run the various two1 commands
 
-        Config is the interface to the file in .two1 which is commonly referred
-        to as the .env (dot-env) file.
+        Primary use case for the following class is the singleton that holds
+        all the state & config data required to run commands and subcommands
+        for two1 app
+
     """
 
     def __init__(self, config_file=TWO1_CONFIG_FILE, config=None, create_wallet=True):
@@ -232,8 +233,7 @@ class Config(object):
                         mining_auth_pubkey=None,
                         auto_update=False,
                         wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
-                        collect_analytics=False,
-                        )
+                        collect_analytics=False)
 
         save_config = False
         for key, default_value in defaults.items():

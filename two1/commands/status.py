@@ -2,11 +2,17 @@
 View the status of mining and machine-payable purchases
 """
 import click
+# standard python imports
 import urllib.parse
 import collections
+
+# 3rd party imports
+import click
+from tabulate import tabulate
+
+# two1 imports
 import two1.lib.channels as channels
 from two1.lib.channels.cli import format_expiration_time
-from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
@@ -283,19 +289,13 @@ def status_earnings(config, client):
     total_earnings = data["total_earnings"]
     total_payouts = data["total_payouts"]
     config.log('\nMining Proceeds', fg='magenta')
-    config.log('''\
+    config.log('''
     Total Earnings           : {}
-    Total Payouts            : {}'''
-               .format(none2zero(total_earnings),
-                       none2zero(total_payouts))
-               )
+    Total Payouts            : {}''' .format(none2zero(total_earnings), none2zero(total_payouts)))
 
     if "flush_amount" in data and data["flush_amount"] > 0:
         flush_amount = data["flush_amount"]
-        config.log('''\
-    Flushed Earnings         : {}'''
-                   .format(none2zero(flush_amount)),
-                   )
+        config.log("Flushed Earnings         : {}" .format(none2zero(flush_amount)))
         config.log("\n" + UxString.flush_status % flush_amount, fg='green')
 
 

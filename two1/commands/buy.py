@@ -1,11 +1,15 @@
 """
 Buy from a machine-payable endpoint
 """
+# standard python
 import json
-import click
 import datetime
 import re
 
+# 3rd party
+import click
+
+# two1 imports
 from two1.commands.status import _get_balances
 from two1.commands.config import TWO1_MERCHANT_HOST
 from two1.commands.config import TWO1_HOST
@@ -101,8 +105,7 @@ $ 21 buy search "First Bitcoin Computer"
          None,
          ctx.obj["payment_method"],
          ctx.obj["maxprice"],
-         ctx.obj["info_only"]
-         )
+         ctx.obj["info_only"])
 
 
 @click.argument('body')
@@ -125,8 +128,7 @@ $ 21 buy sms +15005550002 "I just paid for this SMS with BTC"
          None,
          ctx.obj["payment_method"],
          ctx.obj["maxprice"],
-         ctx.obj["info_only"]
-         )
+         ctx.obj["info_only"])
 
 
 @click.argument('resource', nargs=1)
@@ -152,8 +154,7 @@ $ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"+15005550002"
          output_file,
          ctx.obj["payment_method"],
          ctx.obj["maxprice"],
-         ctx.obj["info_only"]
-         )
+         ctx.obj["info_only"])
 
 
 @capture_usage

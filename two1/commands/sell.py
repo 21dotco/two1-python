@@ -1,9 +1,14 @@
 """
 Launch a machine-payable endpoint on the current machine
 """
+# standard python imports
 import os
+
+# 3rd party imports
 import click
 from tabulate import tabulate
+
+# two1 imports
 from two1.lib.util.uxstring import UxString
 from two1.commands.helpers.sell_helpers import install_requirements
 from two1.commands.helpers.sell_helpers import validate_directory
@@ -99,6 +104,7 @@ def list(ctx):
 \b
 (as seen in /etc/nginx/site-includes/)
     """
+    #pylint: disable=redefined-builtin
     config = ctx.obj["config"]
     if os.path.isdir("/etc/nginx/site-includes/") \
             and len(os.listdir("/etc/nginx/site-includes/")) > 0:
@@ -115,9 +121,7 @@ def list(ctx):
         config.log(tabulate(
             enabled_apps_table,
             headers=headers,
-            tablefmt="psql",
-        )
-        )
+            tablefmt="psql",))
     else:
         config.log(UxString.no_apps_currently_running)
 
@@ -133,6 +137,7 @@ def destroy(ctx, appname):
 \b
 Stop worker processes and disable site from sites-enabled
     """
+    #pylint: disable=redefined-builtin
     config = ctx.obj["config"]
     if appname in os.listdir("/etc/nginx/site-includes/"):
         if destroy_app(appname):
