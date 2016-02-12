@@ -42,6 +42,11 @@ Shows the status of all the networks that you have joined
 @check_notifications
 @capture_usage
 def show_network_status(config):
+    """ Prints the network status of the zerotier networks
+
+    Args:
+        config (Config): config object used for getting .two1 information
+    """
     networks_info = zerotier.get_all_addresses()
     if len(networks_info) == 0:
         click.secho(UxString.no_network)
@@ -58,7 +63,15 @@ def show_network_status(config):
 @check_notifications
 @capture_usage
 def _join(config, network):
-    """Perform the rest_client join"""
+    """ Joins the given zerotier network
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        network (str): the name of the network being joined. Defaults to 21market
+
+    Raises:
+        ServerRequestError: if server returns an error code other than 401
+    """
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)

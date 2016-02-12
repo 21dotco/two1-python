@@ -44,6 +44,15 @@ at the prompt.
 
 @capture_usage
 def _search(config, search_string):
+    """ Searches the marketplace for apps by the given search_string
+
+        Apps are then displayed in a pager in which the user can get more
+        info on a selected app.
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        search_string (str): string used to search for apps
+    """
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -74,6 +83,15 @@ def _search(config, search_string):
 
 
 def get_search_results(rest_client, search_string, page):
+    """ Uses the rest client to get search results in a paginated format
+
+    Args:
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+        search_string (str): string used to search for apps
+
+    Returns:
+        int: the total number of pages returned by the server
+    """
     resp = rest_client.search(search_string, page)
     if resp.ok:
         resp_json = resp.json()
@@ -99,7 +117,17 @@ MAX_PAGE_SIZE = 10
 
 
 def market_search_formatter(search_results, current_page):
+    """ Formats the search results into a tabular paginated format
+
+    Args:
+        search_results (list): a list of results in dict format returned from the REST API
+        current_page (int): current page used to go to next or previous pages
+
+    Returs:
+        str: formatted results in tabular format
+    """
     headers = ["id", "Details", "Creator", "price range", "category", "rating"]
+    import pdb; pdb.set_trace()
     rows = []
     for i, item in enumerate(search_results):
         id = item["id"]
@@ -126,6 +154,16 @@ def market_search_formatter(search_results, current_page):
 
 
 def get_next_page(prompt_response, current_page):
+    """ Parses user input and determines what page is next to search for
+
+    Args:
+        prompt_response (str): user response text
+        current_page (int): current page used to determine what the next page is
+
+    Returns:
+        int: next page, relative to the current page depending upon user response,
+            otherwise -1 if response is unknown
+    """
     if prompt_response.lower() in ["n", "next", "f", "forward"]:
         return current_page + 1
     elif prompt_response.lower() in ["p", "previous", 'b', "back"]:
@@ -137,6 +175,16 @@ def get_next_page(prompt_response, current_page):
 
 
 def display_search_info(config, client, listing_id):
+    """ Given a listing id, format and print detailed information to the command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+        listing_id (str): unique marketplace listing id
+
+    Raises:
+        ServerRequestError: If server returns an error code other than a 404
+    """
     try:
         resp = client.get_listing_info(listing_id)
     except ServerRequestError as e:
@@ -146,6 +194,7 @@ def display_search_info(config, client, listing_id):
         else:
             raise e
     result_json = resp.json()
+
     title = click.style("App Name     : ", fg="blue") + click.style(
             "{}".format(result_json["title"]))
     created_by = click.style("Created By   : ", fg="blue") + click.style(

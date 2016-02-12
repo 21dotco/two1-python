@@ -11,12 +11,20 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @json_output
 def inbox(config):
-    """Shows a list of notifications for your account"""
+    """ Shows a list of notifications for your account """
     return _inbox(config)
 
 
 @capture_usage
 def _inbox(config):
+    """ Shows a list of notifications on a click pager
+
+    Args:
+        config (Config): config object used for getting .two1 information
+
+    Returns:
+        list: list of notifications in users inbox
+    """
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -38,6 +46,16 @@ def _inbox(config):
 
 
 def get_notifications(config, client):
+    """ Uses the rest client to get the inbox notifications and sorts by unread messages first
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Returns:
+        (list, bool): tuple of a list of notifications sorted by unread first and True if there
+            are unreads, False otherwise
+    """
     resp = client.get_notifications(config.username, detailed=True)
     resp_json = resp.json()
     notifications = []
@@ -62,6 +80,14 @@ def get_notifications(config, client):
 
 
 def create_notification_line(msg):
+    """ creates a formatted notification line from a message dict
+
+    Args:
+        msg (dict): a raw inbox notification in dict format
+
+    Returns:
+        str: a formatted notification message
+    """
     local_time = datetime.fromtimestamp(msg["time"]).strftime("%Y-%m-%d %H:%M")
     message_line = click.style("{} : {} from {}\n".format(local_time, msg["type"],
                                                           msg["from"]),

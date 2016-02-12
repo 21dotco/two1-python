@@ -10,9 +10,7 @@ from two1.lib.util.uxstring import UxString
 @click.command()
 @click.pass_context
 def flush(ctx):
-    """Flush your 21.co buffer to the blockchain.
-
-"""
+    """ Flush your 21.co buffer to the blockchain."""
     config = ctx.obj['config']
     _flush(config)
 
@@ -20,6 +18,10 @@ def flush(ctx):
 @check_notifications
 @capture_usage
 def _flush(config):
+    """
+    Todo:
+        Why keep this function? Just put the logic in flush()
+    """
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -30,6 +32,16 @@ def _flush(config):
 
 
 def flush_earnings(config, client):
+    """ Flushes current off-chain balance to the blockchain
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Raises:
+        ServerRequestError: if server returns an error code other than 401
+    """
+
     try:
         response = client.flush_earnings()
         if response.ok:

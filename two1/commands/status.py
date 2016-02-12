@@ -17,13 +17,18 @@ Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending'
 
 
 def has_bitcoinkit():
-    """Quick check for presence of mining chip via file presence.
+    """ Check for presence of mining chip via file presence
 
     The full test is to actually try to boot the chip, but we
     only try that if this file exists.
 
     We keep this file in two1/commands/status to avoid a circular
     import.
+    Todo:
+        Move out of status
+
+    Returns:
+        bool: True if device is a bitcoin computer, false otherwise
     """
     try:
         with open("/proc/device-tree/hat/product", "r") as f:
@@ -34,7 +39,10 @@ def has_bitcoinkit():
 
 
 def get_hashrate():
-    """Return hashrate of mining chip on current system.
+    """ Uses unix socks to get hashrate of mining chip on current system
+
+    Returns:
+        str: A formatted string showing the mining hashrate
     """
     hashrate = None
 
@@ -81,6 +89,15 @@ def get_hashrate():
 
 
 def status_mining(config, client):
+    """ Prints the mining status if the device has a mining chip
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Returns:
+        dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
+    """
     has_chip = has_bitcoinkit()
     if has_chip:
         bk = "21 mining chip running (/run/minerd.pid)"
@@ -115,6 +132,16 @@ def status(config, detail):
 @capture_usage
 @check_notifications
 def _status(config, detail):
+    """ Reports two1 stataus including balances, username, and mining hashrate
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        detail (bool): Lists all balance details in status report
+
+    Returns:
+        dict: a dictionary of 'account', 'mining', and 'wallet' items with formatted
+            strings for each value
+    """
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
@@ -133,6 +160,14 @@ def _status(config, detail):
     return status
 
 def status_account(config):
+    """ Logs a formatted string displaying account status to the command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+
+    Returns:
+        str: formatted string displaying account status
+    """
     status_account = {
         "username": config.username,
         "address": config.wallet.current_address
@@ -145,7 +180,16 @@ SMS_UNIT_PRICE = 3000
 
 
 def status_wallet(config, client, detail=False):
-    """Print wallet status to the command line.
+    """ Logs a formatted string displaying wallet status to the command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+        detail (bool): Lists all balance details in status report
+
+    Returns:
+        dict: a dictionary of 'wallet' and 'buyable' items with formatted
+            strings for each value
     """
     user_balances = _get_balances(config, client)
 
@@ -229,6 +273,12 @@ def _get_balances(config, client):
 
 
 def status_earnings(config, client):
+    """ Logs a formatted string displaying earnings status to the command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+    """
     data = client.get_earnings()
     total_earnings = data["total_earnings"]
     total_payouts = data["total_payouts"]
@@ -250,6 +300,12 @@ def status_earnings(config, client):
 
 
 def status_shares(config, client):
+    """ Logs a formatted string displaying shares status to the command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+    """
     try:
         share_data = client.get_shares()
     except:
@@ -274,5 +330,5 @@ def status_shares(config, client):
 
 
 def none2zero(x):
-    # function to map None values of shares to 0
+    """ function to map None values of shares to 0 """
     return 0 if x is None else x

@@ -159,6 +159,27 @@ $ 21 buy url https://market.21.co/phone/send-sms --data '{"phone":"+15005550002"
 @capture_usage
 def _buy(config, resource, data, method, data_file, output_file,
          payment_method, max_price, info_only):
+    """
+    Buys bitcoin payable content over http
+
+    Todo:
+        reduce number of input args
+        Exception is too general, raise a different exception when user cannot pay
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        resource (str): resource or content to purchase
+        method (str): HTTP request method, defaults to GET
+        data_file (str): name of the data file to send in HTTP body
+        output_file (str): Output file name
+        payment_method (str): Type of payment used in the purchase: offchain, onchain, channel
+        max_price (int): Max price of resource
+        info_only (bool): Flag which will only get info and not  purcahase the resource
+
+    Raises:
+        NotImplementedError: if endpoint or resource is not valid
+        ResourcePriceGreaterThanMaxPriceError: If the resource price is greater than the max price
+    """
     # If resource is a URL string, then bypass seller search
     if URL_REGEXP.match(resource):
         target_url = resource

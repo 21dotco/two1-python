@@ -28,6 +28,16 @@ def login(config, user):
 @check_notifications
 @capture_usage
 def _login(config, user):
+    """ Logs into a two1 user account
+
+        Using the rest api and wallet machine auth, _login
+        will log into your account and set your authentication credientails
+        for all further api calls.
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        user (str): username
+    """
     if config.username:
         click.secho("currently logged in as: {}".format(config.username), fg="blue")
 
@@ -84,6 +94,10 @@ def _login(config, user):
 
 
 def save_config(config, machine_auth, username):
+    """
+    Todo:
+        Merge this function into _login
+    """
     machine_auth_pubkey_b64 = base64.b64encode(
         machine_auth.public_key.compressed_bytes
     ).decode()
@@ -96,6 +110,11 @@ def save_config(config, machine_auth, username):
 
 
 def create_wallet_and_account():
+    """ Creates a wallet and two1 account
+
+    Raises:
+        TwoOneError: if the data provider is unavailable or an error occurs
+    """
     try:
         cfg = Config()
         check_setup_twentyone_account(cfg)

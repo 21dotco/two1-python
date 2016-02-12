@@ -61,6 +61,13 @@ $ 21 mine --dashboard
 @check_notifications
 @capture_usage
 def _mine(config, dashboard=False):
+    """ Starts the mining ASIC if not mining and cpu mines if already mining
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        dashboard (bool): shows minertop dashboard if True
+    """
+
     if has_bitcoinkit():
         if not is_minerd_running():
             start_minerd(config, dashboard)
@@ -76,6 +83,13 @@ def _mine(config, dashboard=False):
 
 
 def is_minerd_running():
+    """ Checks if minerd id already running and mining
+
+        minerd is the miner client daemon.
+
+    Returns:
+        bool: True if minerd is already mining, False otherwise
+    """
     rc = True
     import socket
     try:
@@ -88,6 +102,11 @@ def is_minerd_running():
 
 
 def show_minertop(show_dashboard):
+    """ Fires up minertop, the mining dashboard
+
+    Args:
+        show_dashboard (bool): shows the dashboard if True
+    """
     if show_dashboard:
         click.pause(UxString.mining_show_dashboard_prompt)
         subprocess.call("minertop")
@@ -96,6 +115,12 @@ def show_minertop(show_dashboard):
 
 
 def start_minerd(config, show_dashboard=False):
+    """ Starts minerd, a bitcoin mining client
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        show_dashboard (bool): shows the dashboard if True
+    """
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
     config.log(UxString.mining_chip_start)
@@ -130,10 +155,13 @@ def start_minerd(config, show_dashboard=False):
 
 
 def start_cpu_mining(config):
-    """Mine at the CPU.
-    >>> from two1.commands.config import Config
-    >>> config = Config()
-    >>> start_cpu_mining(config)
+    """ Mines bitcoin on the command line by using the CPU of the system
+
+    CPU mining, or foreground mining, is when the pool sets the difficulty
+    very low and the CPU finds a valid solution.
+
+    Args:
+        config (Config): config object used for getting .two1 information
     """
 
     client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
@@ -168,7 +196,17 @@ def start_cpu_mining(config):
 
 
 def set_payout_address(config, client):
-    # set a new address from the HD wallet for payouts
+    """ Set a new address from the HD wallet for payouts
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Returns:
+        bytes: extra nonce 1 which is required for computing the coinbase transaction
+        int: the size in bytes of the extra nonce 2
+        int: reward amount given upon sucessfull solution found
+    """
     payout_address = config.wallet.current_address
     auth_resp = client.account_payout_address_post(payout_address)
 
@@ -181,9 +219,15 @@ def set_payout_address(config, client):
     return enonce1, enonce2_size, reward
 
 
-# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a
-# -process-with-a-given-pid
 def check_pid(pid):
+    """ Makes a few checks to see if the given pid is valid
+
+    Args:
+        pid (int): a pid number
+
+    Returns:
+        bool: True if the PID is valid, False otherwise
+    """
     if pid < 0:
         return False
     if pid == 0:
@@ -206,6 +250,15 @@ def check_pid(pid):
 
 
 def get_work(config, client):
+    """ Gets work from the pool using the rest client
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Returns:
+        WorkNotification: a Swirl work notification message
+    """
     try:
         work_msg = client.get_work()
     except ServerRequestError as e:
@@ -226,6 +279,19 @@ Work = namedtuple('Work', ['work_id', 'enonce2', 'cb'])
 
 
 def mine_work(work_msg, enonce1, enonce2_size):
+    """ Mines the work using a CPU to find a valid solution
+
+        Loops until the CPU finds a valid solution of the given work.
+
+    Todo:
+        slow down the click echo when on a 21BC
+
+    Args:
+        work_msg (WorkNotification): the work given by the pool API
+        enonce1 (bytes): extra nonce required to make the coinbase transaction
+        enonce2_size (int): size of the extra nonce 2 in bytes
+
+    """
     pool_target = utils.bits_to_target(work_msg.bits_pool)
     for enonce2_num in range(0, 2 ** (enonce2_size * 8)):
         enonce2 = enonce2_num.to_bytes(enonce2_size, byteorder="big")
@@ -266,6 +332,15 @@ def mine_work(work_msg, enonce1, enonce2_size):
 
 
 def save_work(client, share, username):
+    """ Submits the share to the pool using the rest client
+
+    Args:
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+        share (Share): namedtuple Share object which had the enonce2, nonce, work_if, and otime
+
+    Returns:
+        int: payout amount
+    """
     message_id = random.randint(1, 1e5)
     msg_factory = message_factory.SwirlMessageFactory()
     req_msg = msg_factory.create_submit_share_request(message_id=message_id,

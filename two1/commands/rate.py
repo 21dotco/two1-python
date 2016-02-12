@@ -43,6 +43,16 @@ $ 21 rate --list
 
 
 def _list(config):
+    """ Lists all of the apps that the user has rated
+
+    If no apps have been rated, then an empty formatted list is printed
+
+    Args:
+        config (Config): Config object used for user specific information
+
+    Raises:
+        ServerRequestError: If server error occurs other than a 404
+    """
     click.secho(UxString.rating_list)
 
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
@@ -71,6 +81,16 @@ def _list(config):
 
 
 def _rate(config, app_id, rating):
+    """ Rate an app listed in the marketplace
+
+    Args:
+        config (Config): Config object used for user specific information
+        app_id (str): Unique app id used to identify which app to rate
+        rating (int): rating number (1-5)
+
+    Raises:
+        ServerRequestError: If any other server error occurs other than a 404
+    """
     if rating < 1 or rating > 5:
         click.secho(UxString.bad_rating, fg="red")
         return
