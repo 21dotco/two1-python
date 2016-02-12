@@ -19,7 +19,7 @@ def search_formatter(res, maxresults=4):
             formatted_search_results.append([i, title])
             formatted_search_results.append(["", "-----------------"])
             formatted_search_results.append(["", url])
-            for k, l in enumerate(wrap(desc, 80)):
+            for _, l in enumerate(wrap(desc, 80)):
                 formatted_search_results.append(["", l])
             formatted_search_results.append(["", ""])
     return(
@@ -36,6 +36,4 @@ def sms_formatter(res):
     data = res.json()
     return 'The following SMS is queued to be sent to: {} \nMessage: "{}"\n'.format(
         data["to"],
-        data["body"],
-        data["from"]
-    )
+        data["body"])

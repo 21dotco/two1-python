@@ -1,8 +1,11 @@
 """Helper methods for the 21 sell command."""
+# standard python imports
 import os
-import requests
 import tempfile
 import subprocess
+
+# 3rd party imports
+import requests
 
 
 def dir_to_absolute(dirname):
@@ -77,8 +80,7 @@ def check_or_create_manifest(dirname):
                     cp = True
                 except subprocess.CalledProcessError as e:
                     raise subprocess.CalledProcessError(
-                        "Failed to copy manifest to your local directory: {}".format(e)
-                    )
+                        "Failed to copy manifest to your local directory: {}".format(e))
                 try:
                     subprocess.check_call([
                         "editor",
@@ -144,10 +146,10 @@ def create_site_includes():
             ])
     if not os.path.isdir("/etc/nginx/site-includes"):
         subprocess.check_output([
-                "sudo",
-                "mkdir",
-                "-p",
-                "/etc/nginx/site-includes"
+            "sudo",
+            "mkdir",
+            "-p",
+            "/etc/nginx/site-includes"
             ])
         rv = True
     return rv
@@ -282,9 +284,7 @@ def create_nginx_config(dirname):
         proxy_pass http://unix:%s%s.sock;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-}""" % (
-            appname, appname, appdir, appname
-        )
+}""" % (appname, appname, appdir, appname)
         tf.write(nginx_site_includes_file.encode())
         tf.flush()
         try:

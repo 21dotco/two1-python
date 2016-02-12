@@ -1,8 +1,11 @@
+# standard python imports
 import platform
-
-import click
 import subprocess
 
+# 3rd party imports
+import click
+
+# two1 imports
 from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
@@ -92,10 +95,7 @@ def _join(config, network):
                 response.json().get("networkid")
             ]
             subprocess.check_output(join_command)
-            config.log(UxString.successful_join.format(
-                click.style(network, fg="magenta")
-                )
-            )
+            config.log(UxString.successful_join.format(click.style(network, fg="magenta")))
     except ServerRequestError as e:
         if e.status_code == 401:
             config.log(UxString.invalid_network)

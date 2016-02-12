@@ -1,5 +1,7 @@
+# 3rd party imports
 import click
 
+# two1 imports
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.util.decorators import json_output
@@ -66,7 +68,6 @@ UTXOs to send coins. To use unconfirmed transactions, use the
         if "rejected" in str(e):
             raise click.ClickException("Transaction rejected.\n"
                                        "You may have to wait for other transactions to confirm.\n")
-            txids = []
         else:
             raise click.ClickException(str(e))
     return txids

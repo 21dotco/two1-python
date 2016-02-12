@@ -1,21 +1,22 @@
 """
 Mine Bitcoin locally via a CPU or built-in mining chip
 """
+# standard python imports
 import json
 import subprocess
 import time
-
-import sys
-
-import base64
-import click
 import os
 import random
 from collections import namedtuple
-from two1.commands.config import pass_config
+import base64
+
+# 3rd party imports
+import click
+
+# two1 imports
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
-from two1.lib.server import rest_client, message_factory, login
+from two1.lib.server import rest_client, message_factory
 from two1.lib.server.analytics import capture_usage
 import two1.commands.config as cmd_config
 from two1.commands import status
@@ -26,7 +27,6 @@ from two1.lib.util.decorators import check_notifications
 from two1.lib.util.exceptions import MiningDisabledError
 from two1.lib.util.uxstring import UxString
 import two1.lib.bitcoin.utils as utils
-import two1.commands.config as app_config
 
 
 @click.command()
@@ -144,7 +144,7 @@ def start_minerd(config, show_dashboard=False):
     # TODO: make sure config exists in /etc
     # TODO: replace with sys-ctrl command
     minerd_cmd = ["sudo", "minerd", "-u", config.username,
-                  app_config.TWO1_POOL_URL]
+                  cmd_config.TWO1_POOL_URL]
     try:
         o = subprocess.check_output(minerd_cmd, universal_newlines=True)
     except subprocess.CalledProcessError as e:

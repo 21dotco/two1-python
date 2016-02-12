@@ -1,4 +1,7 @@
+# 3rd party importss
 import click
+
+# two1 imports
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
@@ -48,8 +51,7 @@ def flush_earnings(config, client):
             success_msg = UxString.flush_success.format(
                 click.style("Flush to Blockchain", fg='magenta'),
                 config.wallet.current_address,
-                click.style("21 mine", bold=True)
-                )
+                click.style("21 mine", bold=True))
             config.log(success_msg, nl=False)
     except ServerRequestError as e:
         if e.status_code == 401:
