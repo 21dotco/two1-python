@@ -364,17 +364,17 @@ def validate_manifest(manifest_json):
         if field not in manifest_json["info"]:
             raise ValidationError(UxString.manifest_info_field_missing.format(field))
 
-        for field in UxString.price_fields:
-            if field not in manifest_json["info"]["x-21-total-price"]:
-                raise ValidationError(UxString.price_fields_missing.format(field))
+    for field in UxString.price_fields:
+        if field not in manifest_json["info"]["x-21-total-price"]:
+            raise ValidationError(UxString.price_fields_missing.format(field))
 
-        if len(manifest_json["schemes"]) == 0:
-            raise ValidationError(UxString.scheme_missing)
+    if len(manifest_json["schemes"]) == 0:
+        raise ValidationError(UxString.scheme_missing)
 
-        if manifest_json["info"]["x-21-category"].lower() not in UxString.valid_app_categories:
-            valid_categories = ", ".join(UxString.valid_app_categories)
-            raise ValidationError(UxString.invalid_category.format(
-                manifest_json["info"]["x-21-category"], valid_categories))
+    if manifest_json["info"]["x-21-category"].lower() not in UxString.valid_app_categories:
+        valid_categories = ", ".join(UxString.valid_app_categories)
+        raise ValidationError(UxString.invalid_category.format(
+            manifest_json["info"]["x-21-category"], valid_categories))
 
 
 def get_zerotier_address(marketplace):
