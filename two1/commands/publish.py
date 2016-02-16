@@ -1,9 +1,10 @@
 import datetime
-import json
 from urllib.parse import urlparse
 
 import os
 import click
+import yaml
+from yaml.error import YAMLError
 from tabulate import tabulate
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
@@ -169,11 +170,7 @@ def _delete_app(config, app_id):
 def _publish(config, manifest_path, marketplace, skip):
     try:
         manifest_json = check_app_manifest(manifest_path)
-        app_name = manifest_json["info"]["title"]
         app_url = urlparse(manifest_json["host"])
-        app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
-                                          manifest_json["host"],
-                                          manifest_json["basePath"])
         app_ip = app_url.path.split(":")[0]
 
         if not skip:
@@ -184,6 +181,8 @@ def _publish(config, manifest_path, marketplace, skip):
                     click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
                     return
 
+    except ValueError:
+        return
     except ValidationError as e:
         click.secho(
             UxString.bad_manifest.format(manifest_path, e.args[0], UxString.publish_docs_url),
@@ -191,17 +190,9 @@ def _publish(config, manifest_path, marketplace, skip):
         return
 
     app_name = manifest_json["info"]["title"]
-    app_url = urlparse(manifest_json["host"])
     app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
                                       manifest_json["host"],
                                       manifest_json["basePath"])
-    app_ip = app_url.path.split(":")[0]
-    address = get_zerotier_address(marketplace)
-
-    if address != app_ip:
-        if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
-            click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
-            return
 
     click.secho(UxString.publish_start.format(app_name, app_endpoint, marketplace))
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
@@ -339,20 +330,25 @@ def check_app_manifest(api_docs_path):
         raise ValidationError(
             UxString.manifest_is_directory.format(api_docs_path), fg="red")
 
-    click.secho(UxString.reading_manifest.format(api_docs_path))
-
     file_size = os.path.getsize(api_docs_path) / 1e6
     if file_size > 2:
         raise ValidationError(
             UxString.large_manifest.format(api_docs_path,
                                            UxString.publish_docs_url))
-    with open(api_docs_path, "r") as f:
-        try:
-            manifest_json = json.loads(f.read())
-        except json.JSONDecodeError:
-            raise ValidationError("Invalid JSON.")
-        validate_manifest(manifest_json)
-        return manifest_json
+    try:
+        with open(api_docs_path, "r") as f:
+            manifest_dict = yaml.load(f.read())
+            validate_manifest(manifest_dict)
+            return manifest_dict
+    except YAMLError:
+            click.secho(UxString.malformed_yaml.format(api_docs_path, UxString.publish_docs_url),
+                        fg="red")
+            raise ValueError()
+    except ValueError as e:
+            click.secho(
+                UxString.bad_manifest.format(api_docs_path, e.args[0],
+                                             UxString.publish_docs_url), fg="red")
+            raise ValueError()
 
 
 def validate_manifest(manifest_json):

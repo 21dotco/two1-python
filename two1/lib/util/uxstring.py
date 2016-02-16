@@ -211,8 +211,10 @@ class UxString:
     bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\nFor " \
                    "instructions on publishing your app, please refer to {}"
 
+    malformed_yaml = "Your manifest file at {} is not in valid YAML. For instructions on " \
+                     "publishing your app, please refer to {}."
     large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
-                     "2MB.\nFor instructions on publishing your app, please refer to {}"
+                     "2MB.\nFor instructions on publishing your app, please refer to {}."
 
     reading_manifest = "Reading app manifest from {}"
 
