@@ -1,325 +1,620 @@
-import click
-import errno
+""" When you are not feeling well come see the Doctor
+
+    '21 doctor' is a command that will run through several
+    on your system to highligh any issues.
+"""
+# standard python import
 import os
-import platform
 import re
-import requests
+import platform
 import shutil
 import socket
 import sys
-from enum import Enum, unique
-from json import JSONEncoder
-from two1.commands.config import \
-    TWO1_LOGGER_SERVER, TWO1_HOST, TWO1_PROVIDER_HOST, \
-    TWO1_PYPI_HOST, TWO1_POOL_URL, TWO1_MERCHANT_HOST, \
-    TWO1_VERSION, TWO1_USER_FOLDER, TWO1_CONFIG_FILE
-from two1.commands.status import has_bitcoinkit
-from two1.lib.util.exceptions import TwoOneError
-from two1.lib.server.analytics import capture_usage
-from two1.lib.util.decorators import json_output
-from two1.lib.util.uxstring import UxString
+import enum
+import urllib.parse as parse
 
-# Doctor Constants
-MIN_VERSION_21 = (0, 3, 0)
-MIN_VERSION_OS = (1, 0, 0)
-if platform.system() == "Darwin":
-  MIN_VERSION_OS = (14, 0, 0)
-elif platform.system() == "Linux":
-  MIN_VERSION_OS = (4, 0, 0)
-MIN_VERSION_PYTHON = (3, 3, 0)
-SOCKET_TIMEOUT = 10
-DEMO_ENDPOINTS = [
-    {"url": "/bitcoin_auth/token", "method": "get"},
-    {"url": "/phone/send-sms", "method": "post"},
-    {"url": "/search/bing", "method": "post"},
-]
+# 3rd party imports
+import click
+import requests
 
-@unique
-class DoctorStatus(Enum):
-    OK, Fail, Warning = range(3)
+# two1 imports
+import two1
+from two1.commands import config
+from two1.commands import update
+from two1.commands import status
+from two1.lib.util import uxstring
+from two1.lib.util import decorators
+from two1.lib.util import exceptions
 
-    def prettyprint(self):
-        color = "white"
-        if self.name == "OK":
-            color = "green"
-        elif self.name == "Fail":
-            color = "red"
-        elif self.name == "Warning":
-            color = "orange"
-        return click.style(self.name, fg=color)
 
-class DoctorCheck:
-    def __init__(self, config):
-        self.config = config;
-        self.checks = []
-        self.summary = {}
-        self.passed = 0
-        self.warnings = 0
+class Check(object):
+    """ Maintains the state information of an individual doctor check """
 
-    def addCheck(self, name, value, status, error=None):
-        self.checks.append({
-            "name": name,
-            "value": value,
-            "status": status.name,
-            "error": error
-        })
-        self.config.log("  {: <30} -> {:<35} [{}]".format(name, value, status.prettyprint()))
-        if status is DoctorStatus.OK:
-            self.passed += 1
-        elif status is DoctorStatus.Warning:
-            self.passed += 1
-            self.warnings += 1
-        elif status is DoctorStatus.Fail:
-            if error:
-                self.config.log(UxString.doctor_error + error)
+    class Result(enum.Enum):
+        """ Enum used to indicate result of a Doctor check """
+        PASS = "green"
+        FAIL = "red"
+        SKIP = "purple"
+        WARN = "yellow"
 
-    def generateSummary(self):
-        final_status = DoctorStatus.Fail
-        if self.passed == len(self.checks):
-            final_status = DoctorStatus.OK
-            if self.warnings > 0:
-                final_status = DoctorStatus.Warning
-        self.summary = {
-            "passed": self.passed,
-            "warnings": self.warnings,
-            "total": len(self.checks),
-            "status": final_status.name
-        }
-        DoctorCheck.printSummary(self.config, self.summary)
+    # change this to adjust the first column width in the doctor report
+    WIDTH = 35
 
-    # static method
-    def printSummary(config, *summary):
-        total = {
-            "passed": 0,
-            "total": 0,
-            "warnings": 0
-        }
+    def __init__(self, name, message, value, result):
+        self.name = name
+        self.message = message
+        self.value = value
+        self.result = result
 
-        for s in summary:
-            total["passed"] += s["passed"]
-            total["total"] += s["total"]
-            total["warnings"] += s["warnings"]
+    def __str__(self):
+        return "  {0: <{width}}->  {1: <{width}}  [{2}]".format(
+            self.message,
+            self.value,
+            click.style(self.result.name, fg=self.result.value),
+            width=self.WIDTH)
 
-        final_status = DoctorStatus.Fail
-        if total["passed"] == total["total"]:
-            final_status = DoctorStatus.OK
-            if total["warnings"] > 0:
-                final_status = DoctorStatus.Warning
-
-        config.log("\n{} / {} tests passed, {} warnings. [{}]\n".format(\
-            total["passed"],
-            total["total"],
-            total["warnings"],
-            final_status.prettyprint()))
-
-    def json(self):
+    def to_dict(self):
+        """ Returns a dict of all of the Checks data members """
         return {
-            "checks": self.checks,
-            "summary": self.summary
-        }
+            "name": self.name,
+            "message": self.message,
+            "value": self.value,
+            "result": self.result.name
+            }
+
+class Doctor(object):
+    """ Get an installation checkup with the doctor
+
+        Doctor makes severeal checks on your system to ensure your
+        sytem is functioning correctly.
+    """
+
+    HEADER = "Specialty doctor should overwrite the HEADER"
+
+    def __init__(self, two1_config):
+        self.config = two1_config
+        self.checks = []
+
+    def begin_checkup(self):
+        """ Starts the doctor checkup by printing the header message to stdout """
+        self.config.log("\n{}\n".format(self.HEADER))
+
+
+    @classmethod
+    def check(cls, func):
+        """ Decorates check functions to handle errors and save results
+
+            Using a classmethod based decorator to easily check the result of a
+            check and save the results to a Check class. By decorating the
+            class like this all Checks are automatically saved to the checks
+            list which makes for easy post processing after the checks are
+            complete.
+        """
+        def _(self):
+            result, message, value = func(self)
+
+            # truncate the string if value is too long
+            if isinstance(value, str) and len(value) > Check.WIDTH:
+                value = "{}...".format(value[:Check.WIDTH-3])
+
+            self.checks.append(Check(func.__name__, message, value, result))
+        return _
+
+    def result_summary(self):
+        """ Returns the Doctor checks in a dict format organized by Check.Result names
+
+        Returns:
+            dict: a summary of checks organized by Check.Result
+        """
+        return {result.name: [check for check in self.checks if check.result == result] for result in Check.Result}
+
+    def print_results(self, skip_checks=False):
+        """ Prints a summary of the results to standard out
+
+        Args:
+            skip_checks (bool): skips printing check summary if True
+        """
+        if not skip_checks:
+            for check in self.checks:
+                self.config.log(check)
+
+        summary = self.result_summary()
+        self.config.log("\n{}/{} Checks passed, {} failed, {} warnings, and {} skipped".format(
+            len(summary['PASS']),
+            len(self.checks),
+            len(summary['FAIL']),
+            len(summary['WARN']),
+            len(summary['SKIP'])))
+
+
+class GeneralDoctor(Doctor):
+    """ GenrealDoctor is a specialist on general checkups for your system """
+
+    # gets printed in begin_checkup
+    HEADER = uxstring.UxString.doctor_general
+
+    SUPPORTED_OS = {
+        "Linux": "4.0.0",
+        "Darwin": "14.0.0",}
+        #"Windows": [10, 0, 0]}
+
+    SUPPORTED_PYTHON_VERSION = "3.3.0"
+
+    def is_version_gte(self, actual, expected):
+        """ Checks two versions for actual >= epected condition
+
+            Versions need to be in Major.Minor.Patch format.
+
+        Args:
+            actual (str): the actual version being checked
+            expected (str): the expected version being checked
+
+        Returns:
+            bool: True if the actual version is greater than or equal to
+                the expected version.
+        """
+        # extract the major minor and patch from the version string
+        e_match = re.search(r'(\d+).(\d+).(\d)', expected)
+        a_match = re.search(r'(\d+).(\d+).(\d)', actual)
+        if e_match and a_match:
+            return all([int(a) >= int(e) for a, e in zip(a_match.groups(), e_match.groups())])
+
+        raise ValueError("Versions ({} & {}) do not match format MAJOR.MINOR.PATCH".format(
+            actual, expected))
+
+    @Doctor.check
+    def check_two1_version(self):
+        """ Checks if the installed two1 version is up-to-date
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    The actaul two1 version installed on the system
+        """
+        check_str = "21 Tool Version"
+        expected_version = update.lookup_pypi_version()
+        actual_version = config.TWO1_VERSION
+
+        if self.is_version_gte(actual_version, expected_version):
+            return Check.Result.PASS, check_str, actual_version
+
+        return Check.Result.FAIL, check_str, actual_version
+
+    @Doctor.check
+    def check_operating_system(self):
+        """ Checks if the OS is supported
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    The name of the operating system
+        """
+        check_str = "Operating Sytem"
+        actual_os = platform.system()
+        if actual_os in self.SUPPORTED_OS.keys():
+            return Check.Result.PASS, check_str, actual_os
+
+        return Check.Result.FAIL, check_str, actual_os
+
+    @Doctor.check
+    def check_operating_system_release(self):
+        """ Checks if the OS version is supported
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Operating system version
+        """
+        check_str = "Operating Sytem Release Version"
+        actual_os = platform.system()
+        actual_os_version = platform.release()
+
+        # make sure the os is supported first
+        if actual_os in self.SUPPORTED_OS.keys():
+
+            # use the os as a lookup for the version
+            expected_os_version = self.SUPPORTED_OS[actual_os]
+            if self.is_version_gte(actual_os_version, expected_os_version):
+                return Check.Result.PASS, check_str, actual_os_version
+
+        return Check.Result.FAIL, check_str, actual_os_version
+
+    @Doctor.check
+    def check_python_version(self):
+        """ Checks if the python version is valid
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    The python version
+        """
+        check_str = "Python Version"
+        actual_py_version = platform.python_version()
+
+        if self.is_version_gte(actual_py_version, self.SUPPORTED_PYTHON_VERSION):
+            return Check.Result.PASS, check_str, actual_py_version
+
+        return Check.Result.FAIL, check_str, actual_py_version
+
+    @Doctor.check
+    def check_has_bitcoin_computer(self):
+        """ Checks if the system has a 21 bitcoin shield
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    "Yes" if the device has a bitcoin shield, "No" otherwise
+        """
+        check_str = "Has Bitcoin Kit"
+        if status.has_bitcoinkit():
+            return Check.Result.PASS, check_str, "Yes"
+
+        return Check.Result.FAIL, check_str, "No"
+
+    @Doctor.check
+    def check_ip_address(self):
+        """ Checks if the system has an IP addressed assigned
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    IP address in string format
+        """
+        check_str = "IP Address"
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            _ = sock.connect(("8.8.8.8", 80))
+            ip_address = sock.getsockname()[0]
+        except socket.timeout:
+            return Check.Result.FAIL, check_str, "Timeout Error on connection"
+
+        return Check.Result.PASS, check_str, ip_address
+
+
+class DependencyDoctor(Doctor):
+    """ DependencyDoctor is a specialist on dependency checkups for your system """
+
+    # gets printed in begin_checkup
+    HEADER = uxstring.UxString.doctor_dependencies
+
+    @Doctor.check
+    def check_two1_lib(self):
+        """ Checks if two1 is properly installed on your system
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the installed two1 package
+        """
+        check_str = "Two1 Library"
+
+        two1_location = two1.__file__
+        if 'two1' in sys.modules:
+            return Check.Result.PASS, check_str, two1_location
+
+        return Check.Result.FAIL, check_str, "two1 not in sys.modules"
+
+    @Doctor.check
+    def check_two1_cli(self):
+        """ Checks if binaries 21 and twentyone are installed on your system
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the 21 binary
+        """
+        check_str = "Two1 CLI"
+        two1_cli = shutil.which("21")
+        twentyone_cli = shutil.which("twentyone")
+        if two1_cli and twentyone_cli:
+            return Check.Result.PASS, check_str, two1_cli
+
+        if not two1_cli and not twentyone_cli:
+            message = "21 and twnetyone binaries not found"
+        elif not two1_cli:
+            message = "21 binary not found"
+        else:
+            message = "twentyone binary not found"
+
+        return Check.Result.FAIL, check_str, message
+
+    @Doctor.check
+    def check_zerotier_cli(self):
+        """ Checks if zerotier-cli is installed on your system
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the zerotier-cli binary
+        """
+        check_str = "Zerotier CLI"
+
+        zt_cli = shutil.which("zerotier-cli")
+        if zt_cli:
+            return Check.Result.PASS, check_str, zt_cli
+
+        return Check.Result.FAIL, check_str, "zerotier-cli not installed"
+
+    @Doctor.check
+    def check_minerd_cli(self):
+        """ Checks if minerd binary is installed on your system
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the minerd binary
+        """
+        check_str = "Minerd"
+
+        minerd_cli = shutil.which("minerd")
+        if minerd_cli:
+            return Check.Result.PASS, check_str, minerd_cli
+
+        return Check.Result.FAIL, check_str, "minerd not installed"
+
+    @Doctor.check
+    def check_wallet_cli(self):
+        """ Checks if the two1 wallet is properly installed
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the two1 wallet
+        """
+        check_str = "Two1 Wallet"
+
+        wallet_cli = shutil.which("wallet")
+        if wallet_cli:
+            return Check.Result.PASS, check_str, wallet_cli
+
+        return Check.Result.FAIL, check_str, "Two1 wallet not installed"
+
+    @Doctor.check
+    def check_two1_dotenv(self):
+        """ Checks if the two1 dotenv folder and files are present
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Path to the two1 dotenv folder
+        """
+        check_str = "Two1 Dotenv"
+
+        dotenv_path = config.TWO1_USER_FOLDER
+        if not os.path.exists(dotenv_path):
+            return Check.Result.FAIL, check_str, "{} does not exist".format(dotenv_path)
+
+        config_file_path = config.TWO1_CONFIG_FILE
+        config_file = config_file_path.split(os.path.sep)[-1]
+        if os.path.exists(config_file_path):
+            return Check.Result.PASS, check_str, config_file_path
+
+        return Check.Result.FAIL, check_str, "{} config file does not exist".format(config_file)
+
+class ServerDoctor(Doctor):
+    """ SrverDoctor is a specialist on server checkups like making sure they are up """
+
+    # gets printed in begin_checkup
+    HEADER = uxstring.UxString.doctor_servers
+
+    # max timeout value when making requests to servers
+    SOCKET_TIMEOUT = 10
+
+    # lookup for ports based upon scheme if the hard-coded config value doesn't have a port
+    PORT_MAPPING = {'https': 443, 'http': 80}
+
+
+    def _make_connection(self, url):
+        """ Uses sockets to connet to the server url
+
+        Args:
+            url (str): url string with or without a port
+
+        Returns:
+            bool: True if socket connection can be made, False otherwise
+        """
+        url = parse.urlparse(url)
+
+        port = url.port
+        if not port:
+            port = self.PORT_MAPPING[url.scheme]
+
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.SOCKET_TIMEOUT)
+            _ = sock.connect((url.hostname, port))
+        except socket.timeout:
+            return False
+
+        return True
+
+    @Doctor.check
+    def check_21_api(self):
+        """ Checks if the 21 api is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Url to the 21 api
+        """
+        check_str = "21 API"
+        result = Check.Result.FAIL
+        if self._make_connection(config.TWO1_HOST):
+            result = Check.Result.PASS
+
+        return result, check_str, config.TWO1_HOST
+
+    @Doctor.check
+    def check_21_pool(self):
+        """ Checks if the 21 pool api is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Url to the 21 pool api
+        """
+        check_str = "21 Pool"
+        result = Check.Result.FAIL
+        if self._make_connection(config.TWO1_POOL_URL):
+            result = Check.Result.PASS
+
+        return result, check_str, config.TWO1_POOL_URL
+
+    @Doctor.check
+    def check_21_logging(self):
+        """ Checks if the 21 loggin server is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Url to the 21 logging server
+        """
+        check_str = "21 Logging"
+        result = Check.Result.FAIL
+        if self._make_connection(config.TWO1_LOGGER_SERVER):
+            result = Check.Result.PASS
+
+        return result, check_str, config.TWO1_LOGGER_SERVER
+
+    @Doctor.check
+    def check_21_provider(self):
+        """ Checks if 21 blockchain provider is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Url to the 21 blockchain provider
+        """
+        check_str = "21 Blockchain Provider"
+        result = Check.Result.FAIL
+        # checks connection and status code
+        if self._make_connection(config.TWO1_PROVIDER_HOST):
+            result = Check.Result.PASS
+
+        return result, check_str, config.TWO1_PROVIDER_HOST
+
+    @Doctor.check
+    def check_21_pypi(self):
+        """ Checks if 21 hosted pypi server is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    Url to the 21 pypi server
+        """
+        check_str = "21 Pypicloud"
+        result = Check.Result.FAIL
+        if self._make_connection(config.TWO1_PYPI_HOST):
+            result = Check.Result.PASS
+
+        return result, check_str, config.TWO1_PYPI_HOST
+
+    @Doctor.check
+    def check_21_slack(self):
+        """ Checks if the 21 slack server is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    HTTP status code from the request
+        """
+        check_str = "21 Slack"
+        url = "https://slack.21.co"
+        result = Check.Result.FAIL
+        response = requests.get(url)
+        if response.status_code < 400:
+            result = Check.Result.PASS
+
+        return result, check_str, response.status_code
+
+    @Doctor.check
+    def check_raspbian_apt(self):
+        """ Checks if the raspbian mirror is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    HTTP status code from the request
+        """
+        check_str = "Raspbian Mirror"
+        url = "http://mirrordirector.raspbian.org/raspbian"
+        result = Check.Result.FAIL
+        response = requests.get(url)
+        if response.status_code < 400:
+            result = Check.Result.PASS
+
+        return result, check_str, response.status_code
+
 
 @click.command()
-@json_output
-def doctor(config):
+@decorators.json_output
+def doctor(two1_config):
     """Checks on the health of the tool.
     """
-    return _doctor(config)
-
-@capture_usage
-def _doctor(config):
-    def assertEqual(checker, name, val, expected_val):
-        if val == expected_val:
-            checker.addCheck(name, val, DoctorStatus.OK)
-        else:
-            checker.addCheck(name, val, DoctorStatus.Fail, "{} != {}.".format(val, expected_val))
-
-    def assertTrue(checker, name, val, success_msg="Exists", error_msg = None):
-        if val == True or val == "Yes":
-            checker.addCheck(name, success_msg, DoctorStatus.OK)
-        else:
-            if error_msg == None:
-                error_msg = "{} is not True.".format(val)
-            checker.addCheck(name, "No", DoctorStatus.Fail, error_msg)
+    return _doctor(two1_config)
 
 
-    def assertAny(checker, name, val):
-        if val != None and val != "":
-            checker.addCheck(name, val, DoctorStatus.OK)
-        else:
-            checker.addCheck(name, val, DoctorStatus.Fail, "{} cannot be None.".format(name))
+#@capture_usage
+def _doctor(two1_config):
 
-    def assertIn(checker, name, val, expected_val_array):
-        if val in expected_val_array:
-            checker.addCheck(name, val, DoctorStatus.OK)
-        else:
-            checker.addCheck(name, val, DoctorStatus.Fail, "{} must be one of {}".format(val, expected_val_array)) 
+    # warm welcome message
+    two1_config.log(uxstring.UxString.doctor_start)
 
-    def assertGte(checker, name, val, min_val):
-        if val >= min_val:
-            checker.addCheck(name, val, DoctorStatus.OK)
-        else:
-            checker.addCheck(name, val, DoctorStatus.Fail, "{} must be >= {}".format(val, min_val))
+    # Get an appointment with a general doctor first
+    general_doc = GeneralDoctor(two1_config)
+    general_doc.begin_checkup()
 
-    def assertVersionGte(checker, name, version, min_version):
-        ok = True
-        version_str = "{}.{}.{}".format(version[0],version[1],version[2])
-        # compare major
-        if int(version[0]) > min_version[0]:
-            ok = True
-        elif int(version[0]) < min_version[0]:
-            ok = False
-        else:
-            # compare minor
-            if int(version[1]) > min_version[1]:
-                ok = True
-            elif int(version[1]) < min_version[1]:
-                ok = False
-            else:
-                # compare revision
-                rev = int(version[2].split('-')[0])
-                if rev >= min_version[2]:
-                    ok = True
-                elif rev < min_version[2]:
-                    ok = False
-        if ok:
-            checker.addCheck(name, version_str, DoctorStatus.OK)
-        else:
-            checker.addCheck(name, version_str, DoctorStatus.Fail, "Version must be >= {}.{}.{}. Your version is {}.{}.{}.".format(min_version[0], min_version[1], min_version[2], version[0],version[1],version[2]))
+    general_doc.check_two1_version()
+    general_doc.check_operating_system()
+    general_doc.check_operating_system_release()
+    general_doc.check_python_version()
+    general_doc.check_has_bitcoin_computer()
+    general_doc.check_ip_address()
+    general_doc.print_results()
 
-    def assertHTTPStatusCode(checker, name, url, method="get", expected_status_code=402):
-      try:
-          request_method = getattr(requests, method)
-          r  = request_method(url, timeout=SOCKET_TIMEOUT)
-          if r.status_code == expected_status_code:
-              checker.addCheck("{} {}".format(method.upper(), name), r.status_code, DoctorStatus.OK)
-          else:
-              checker.addCheck("{} {}".format(method.upper(), name), r.status_code, DoctorStatus.Fail, "Expected status code '{}'".format(expected_status_code))
-      except requests.exceptions.ConnectionError:
-          checker.addCheck("{} {}".format(method.upper(), name), "Failed", DoctorStatus.Fail, "Could not connect to '{}'".format(url))
-      except Exception as e:
-          checker.addCheck("{} {}".format(method.upper(), name), "Failed", DoctorStatus.Fail, str(e))
-    
-    def assertSocket(checker, name, url):
-        protocol = "http"
-        port = 80
-        hostname = ""
+    # Get an appointment with a DependencyDoctor
+    dependency_doc = DependencyDoctor(two1_config)
+    dependency_doc.begin_checkup()
 
-        url_components = url.split("://")
-        if len(url_components) >= 2:
-            protocol = url_components[0]
-            hostname = url_components[1]
-            host_components = hostname.split(":")
-            if len(host_components) == 2:
-                hostname = host_components[0]
-                port = int(host_components[1])
-        else:
-            checker.addCheck(name, url, DoctorStatus.Fail, "Invalid url " + url)
-            return
+    # perform all of the dependency checkups
+    dependency_doc.check_two1_lib()
+    dependency_doc.check_two1_cli()
+    dependency_doc.check_zerotier_cli()
+    dependency_doc.check_minerd_cli()
+    dependency_doc.check_wallet_cli()
+    dependency_doc.check_two1_dotenv()
+    dependency_doc.print_results()
 
-        if protocol == "https":
-            port = 443
+    # Get an appointment with a ServerDoctor
+    server_doc = ServerDoctor(two1_config)
+    server_doc.begin_checkup()
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(SOCKET_TIMEOUT)
-        try:
-            result = s.connect_ex((hostname, port))
-            s.close()
-            if result > 0:
-                checker.addCheck(name, url, DoctorStatus.Fail, errno.errorcode[result])
-            else:
-                checker.addCheck(name, "{}:{}".format(hostname, port), DoctorStatus.OK)
-        except Exception as e:
-            s.close()
-            checker.addCheck(name, url, DoctorStatus.Fail, str(e))
+    # perform all of the server checkups
+    server_doc.check_21_api()
+    server_doc.check_21_pool()
+    server_doc.check_21_logging()
+    server_doc.check_21_provider()
+    server_doc.check_21_pypi()
+    server_doc.check_21_slack()
+    server_doc.check_raspbian_apt()
+    server_doc.print_results()
 
-    def assertCommandExists(checker, name, cmd, error_msg=None):
-        cmd_path = None
-        try:
-            cmd_path = shutil.which(cmd)
-        except Exception as e:
-            pass
-        if error_msg == None:
-          error_msg = "'{}' does not exist.".format(cmd)
-        assertTrue(check_dependencies, name, cmd_path != None, error_msg=error_msg)
+    two1_config.log("\n" + uxstring.UxString.doctor_total)
 
-    def assertPathExists(checker, name, path):
-        return assertTrue(checker, name, os.path.exists(path), error_msg="'{}' does not exist.".format(path))
+    # groups all checks into one class for reuse of print_summary
+    all_checks = general_doc.checks + dependency_doc.checks + server_doc.checks
+    doc = Doctor(two1_config)
+    doc.checks = all_checks
+    doc.print_results(skip_checks=True)
 
-    # doctor code start
-    config.log(UxString.doctor_start)
+    passing = [check for check in all_checks if check.result != Check.Result.FAIL]
+    results_dict = {
+        "general": [check.to_dict() for check in general_doc.checks],
+        "dependency": [check.to_dict() for check in dependency_doc.checks],
+        "server": [check.to_dict() for check in server_doc.checks],
+        }
 
-    # Checking OS
-    config.log(UxString.doctor_general)
-    check_general = DoctorCheck(config)
-    assertVersionGte(check_general, "21 Tool version", TWO1_VERSION.split('.'), MIN_VERSION_21)
-    assertIn(check_general, "OS System", platform.system(), ["Windows", "Linux", "Darwin"])
-    assertVersionGte(check_general, "OS Release", platform.release().split('.'), MIN_VERSION_OS)
-    assertVersionGte(check_general, "Python version", platform.python_version_tuple(), MIN_VERSION_PYTHON)
-    assertTrue(check_general, "Has Bitcoin kit", has_bitcoinkit(), success_msg="Yes", error_msg="Bitcoin kit not detected.")
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        assertAny(check_general, "IP Address", s.getsockname()[0])
-    except Exception as e: 
-        assertTrue(check_general, "IP Address", False, error_msg="No Internet Connectivity Found.")
-    check_general.generateSummary()
-
-    # Checking dependencies
-    config.log(UxString.doctor_dependencies)
-    check_dependencies = DoctorCheck(config)
-    assertTrue(check_dependencies, "two1 python library", 'two1' in sys.modules, error_msg="two1 lib does not exist.")
-    cli_path = None
-    try:
-        cli_path = shutil.which('21')
-    except Exception as e:
-        pass
-    assertCommandExists(check_dependencies, "21 CLI", cmd="21", error_msg="21 CLI not bound to '21'.")
-    assertCommandExists(check_dependencies, "Zerotier CLI", cmd="zerotier-cli", error_msg="Zerotier CLI not bound.")
-    assertCommandExists(check_dependencies, "apt-get", cmd="apt-get")
-    assertCommandExists(check_dependencies, "minerd", cmd="minerd")
-    assertCommandExists(check_dependencies, "wallet", cmd="wallet")
-
-    assertPathExists(check_dependencies, ".two1 folder", TWO1_USER_FOLDER)
-    assertPathExists(check_dependencies, ".two1 config file", TWO1_CONFIG_FILE)
-    check_dependencies.generateSummary()
-
-    # Checking demo endpoints
-    config.log(UxString.doctor_demo_endpoints)
-    check_demos = DoctorCheck(config)
-    for demo_endpoint in DEMO_ENDPOINTS:
-        assertHTTPStatusCode(check_demos, name=demo_endpoint["url"], url=(TWO1_MERCHANT_HOST + demo_endpoint["url"]), method=demo_endpoint["method"], expected_status_code=402)
-    check_demos.generateSummary()
-
-    # Check servers
-    config.log(UxString.doctor_servers)
-    check_servers = DoctorCheck(config)
-    assertSocket(check_servers, "Pool2 Api", TWO1_HOST)
-    assertSocket(check_servers, "Pool2 Tcp", TWO1_POOL_URL)
-    assertSocket(check_servers, "Log server", TWO1_LOGGER_SERVER)
-    assertSocket(check_servers, "Merchant", TWO1_MERCHANT_HOST)
-    assertSocket(check_servers, "Blockchain", TWO1_PROVIDER_HOST)
-    assertSocket(check_servers, "PyPi Host", TWO1_PYPI_HOST)
-    assertHTTPStatusCode(check_servers, name="21co slack", url="https://slack.21.co", expected_status_code=200)
-    assertHTTPStatusCode(check_servers, name="Raspbian package repo", url="http://mirrordirector.raspbian.org/raspbian", expected_status_code=200)
-    assertHTTPStatusCode(check_servers, name="Chain.com API", url="https://api.chain.com", expected_status_code=401)
-    
-    check_servers.generateSummary()
-
-    config.log(UxString.doctor_total)
-    DoctorCheck.printSummary(config, \
-        check_general.summary, \
-        check_dependencies.summary, \
-        check_demos.summary, \
-        check_servers.summary)
-
-    result =  {
-        "general": check_general.json(),
-        "dependencies": check_dependencies.json(),
-        "demo": check_demos.json(),
-        "servers": check_servers.json()
-    }
-
-    if all([doctor_check['summary']['total'] == doctor_check['summary']['passed'] for doctor_check in result.values()]):
-        return result
+    if len(passing) == len(all_checks):
+        return results_dict
     else:
-        raise TwoOneError("21 doctor failed some checks.", result)
+        raise exceptions.TwoOneError("21 doctor failed some checks.", json=results_dict)
