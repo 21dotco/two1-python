@@ -127,7 +127,12 @@ class UxString:
         "outstanding balance in the channel for merchant insurance.\n" + \
         "Read more at (https://21.co/micropayments/)\n" + \
         "Proceed?"
+    buy_bad_payment_method = "'{}' is not a supported payment method."
+    buy_bad_uri_scheme = "Please provide a valid scheme for the request, such as `http://` and `https://`."
+    buy_bad_uri_host = "Please provide a valid hostname for the request, such as `market.21.co`."
     buy_channel_aborted = "Payment aborted."
+    buy_bad_data_format = "Unknown data format."
+    buy_balances = "You spent: {} Satoshis. Remaining {} balance: {} Satoshis."
 
     # doctor
     doctor_start = click.style("21.co Doctor", fg='green') + "\n\n" + \
