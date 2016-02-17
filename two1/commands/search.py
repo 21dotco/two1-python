@@ -131,7 +131,6 @@ def market_search_formatter(search_results, current_page):
         str: formatted results in tabular format
     """
     headers = ["id", "Details", "Creator", "price range", "category", "rating"]
-    import pdb; pdb.set_trace()
     rows = []
     for i, item in enumerate(search_results):
         id = item["id"]
