@@ -1,0 +1,9 @@
+language: python
+python: "3.5"
+# command to install dependencies
+install:
+    # need to make the version string off of the git tag
+    - python two1/lib/util/mkrelease.py
+    - pip install -r requirements.txt
+# command to run tests
+script: py.test
