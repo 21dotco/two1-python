@@ -115,16 +115,22 @@ class Doctor(object):
 
         Args:
             result (Check.Result): only returns a list of the specified result type
+
+        Raises:
+            ValueError: if result is not of type Check.Result
         """
+        if result and not isinstance(result, Check.Result):
+            raise ValueError("result {} is not of type Check.Result".format(result))
+
         # flat list of checks
         checks = [check for check_type in self.checks.keys() for check in self.checks[check_type]]
         return checks if not result else [check for check in checks if check.result == result]
 
     def to_dict(self):
         """ Puts all checks into dict format grouped by check types """
-        return {specialty: [check.to_dict() for check in self.checks[specialty]] for specialty in self.SPECIALTIES}
+        return {specialty: [check.to_dict() for check in self.checks[specialty]] for specialty in self.checks.keys()}
 
-    def _make_connection(self, url):
+    def make_http_connection(self, url):
         """ Uses sockets to connet to the server url
 
         Args:
@@ -145,6 +151,8 @@ class Doctor(object):
             _ = sock.connect((url.hostname, port))
         except socket.timeout:
             return False
+        except ConnectionRefusedError:
+            return False
 
         return True
 
@@ -160,6 +168,10 @@ class Doctor(object):
         Returns:
             bool: True if the actual version is greater than or equal to
                 the expected version.
+
+        Raises:
+            ValueError: if expected ot actual version is not in Major.Minor.Patch
+                format.
         """
         # extract the major minor and patch from the version string
         e_match = re.search(r'(\d+).(\d+).(\d)', expected)
@@ -438,7 +450,7 @@ class Doctor(object):
         """
         check_str = "21 API"
         result = Check.Result.FAIL
-        if self._make_connection(config.TWO1_HOST):
+        if self.make_http_connection(config.TWO1_HOST):
             result = Check.Result.PASS
 
         return result, check_str, config.TWO1_HOST
@@ -453,7 +465,7 @@ class Doctor(object):
         """
         check_str = "21 Pool"
         result = Check.Result.FAIL
-        if self._make_connection(config.TWO1_POOL_URL):
+        if self.make_http_connection(config.TWO1_POOL_URL):
             result = Check.Result.PASS
 
         return result, check_str, config.TWO1_POOL_URL
@@ -468,7 +480,7 @@ class Doctor(object):
         """
         check_str = "21 Logging"
         result = Check.Result.FAIL
-        if self._make_connection(config.TWO1_LOGGER_SERVER):
+        if self.make_http_connection(config.TWO1_LOGGER_SERVER):
             result = Check.Result.PASS
 
         return result, check_str, config.TWO1_LOGGER_SERVER
@@ -484,7 +496,7 @@ class Doctor(object):
         check_str = "21 Blockchain Provider"
         result = Check.Result.FAIL
         # checks connection and status code
-        if self._make_connection(config.TWO1_PROVIDER_HOST):
+        if self.make_http_connection(config.TWO1_PROVIDER_HOST):
             result = Check.Result.PASS
 
         return result, check_str, config.TWO1_PROVIDER_HOST
@@ -499,7 +511,7 @@ class Doctor(object):
         """
         check_str = "21 Pypicloud"
         result = Check.Result.FAIL
-        if self._make_connection(config.TWO1_PYPI_HOST):
+        if self.make_http_connection(config.TWO1_PYPI_HOST):
             result = Check.Result.PASS
 
         return result, check_str, config.TWO1_PYPI_HOST
