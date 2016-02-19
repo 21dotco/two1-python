@@ -5,7 +5,6 @@ import two1.lib.channels.blockchain as blockchain
 
 @pytest.fixture(params=[
     blockchain.InsightBlockchain("https://blockexplorer.com/api"),
-    blockchain.BlockCypherBlockchain("https://api.blockcypher.com/v1/btc/main"),
     blockchain.TwentyOneBlockchain("https://blockchain.21.co/blockchain/bitcoin"),
 ])
 def bc(request):
