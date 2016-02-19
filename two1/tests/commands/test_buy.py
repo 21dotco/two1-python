@@ -6,7 +6,7 @@ import pytest
 
 import two1.tests.mock as mock
 import two1.commands.buy as buy
-import two1.lib.util.uxstring as uxstring
+import two1.commands.util.uxstring as uxstring
 
 
 def test_get_buy(patch_click, mock_config, patch_bitrequests, patch_rest_client):

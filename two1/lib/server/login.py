@@ -3,7 +3,7 @@ import base64
 import click
 import re
 
-from two1.lib.util.exceptions import UnloggedException
+from two1.commands.util.exceptions import UnloggedException
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.rest_client import ServerRequestError

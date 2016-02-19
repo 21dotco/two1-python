@@ -4,7 +4,7 @@ import click
 # two1 imports
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.wallet.exceptions import WalletBalanceError
-from two1.lib.util.decorators import json_output
+from two1.commands.util.decorators import json_output
 
 
 @click.command("send")

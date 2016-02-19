@@ -5,9 +5,9 @@ import click
 import datetime
 import requests
 from simplejson import JSONDecodeError
-from two1.lib.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
+from two1.commands.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
     UnloggedException
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.uxstring import UxString
 from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
 
 

@@ -24,9 +24,9 @@ from two1.commands.config import TWO1_VERSION
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.server.login import check_setup_twentyone_account
-from two1.lib.util.decorators import docstring_parameter
-from two1.lib.util.exceptions import TwoOneError, UnloggedException
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.decorators import docstring_parameter
+from two1.commands.util.exceptions import TwoOneError, UnloggedException
+from two1.commands.util.uxstring import UxString
 # from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.buybitcoin import buybitcoin
