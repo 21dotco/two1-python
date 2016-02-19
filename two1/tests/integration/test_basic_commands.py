@@ -7,6 +7,7 @@ import math
 import time
 from two1.tests import test_utils
 from two1.tests.integration.decorators import verify_balances
+from two1.commands.util import bitcoin_computer
 
 # test constants (in satoshi)
 PREVIOUS_MINE_TIMEDOUT = False
@@ -52,7 +53,7 @@ def test_21_status(cli_runner, **kwargs):
 def test_21_mine(cli_runner, **kwargs):
 
     # Mining is only available on PI.
-    if not cli_runner.is_running_on_bc():
+    if not bitcoin_computer.get_device_uuid():
         # TODO: verify that the mining fails as expected on ubuntu/osx
         # FIXME: I am not sure there is a better way to check that we are on a BC
         # FIXME (cont.) see conftest.py

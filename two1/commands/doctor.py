@@ -26,6 +26,7 @@ from two1.lib.server import analytics
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
+from two1.commands.util import bitcoin_computer
 
 
 class Check(object):
@@ -308,8 +309,8 @@ class Doctor(object):
                                     Human readable message describing the check
                                     "Yes" if the device has a bitcoin shield, "No" otherwise
         """
-        check_str = "Has Bitcoin Kit"
-        if status.has_bitcoinkit():
+        check_str = "Has Bitcoin Computer"
+        if bitcoin_computer.has_mining_chip():
             return Check.Result.PASS, check_str, "Yes"
 
         return Check.Result.FAIL, check_str, "No"

@@ -9,8 +9,8 @@ import pexpect
 import json
 import requests
 import subprocess
-from two1.commands.config import Config, get_device_uuid
-
+from two1.commands.config import Config
+from two1.commands.util import bitcoin_computer
 
 
 SINK_PAYOUT_ADDRESS = "12bVw5YTYqBghFxxZDwNCcAA78FKUNbWCJ"
@@ -158,7 +158,7 @@ class CLI21():
             print(e)
 
     def is_running_on_bc(self):
-        return get_device_uuid() != None
+        return bitcoin_computer.get_device_uuid() != None
 
     def sweep_wallet(self):
         if self.walletCreated:
