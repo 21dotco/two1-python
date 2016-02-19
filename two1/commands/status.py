@@ -1,11 +1,9 @@
 """
 View the status of mining and machine-payable purchases
 """
-import click
 # standard python imports
 import urllib.parse
 import collections
-
 # 3rd party imports
 import click
 from tabulate import tabulate
@@ -18,80 +16,9 @@ from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
 from two1.commands.util.decorators import json_output, check_notifications
 from two1.commands.util.uxstring import UxString
+from two1.commands.util.bitcoin_computer import  has_mining_chip, get_hashrate
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
-
-
-def has_bitcoinkit():
-    """ Check for presence of mining chip via file presence
-
-    The full test is to actually try to boot the chip, but we
-    only try that if this file exists.
-
-    We keep this file in two1/commands/status to avoid a circular
-    import.
-    Todo:
-        Move out of status
-
-    Returns:
-        bool: True if device is a bitcoin computer, false otherwise
-    """
-    try:
-        with open("/proc/device-tree/hat/product", "r") as f:
-            bitcoinkit_present = f.read().startswith('21 Bitcoin')
-    except FileNotFoundError:
-        bitcoinkit_present = False
-    return bitcoinkit_present
-
-
-def get_hashrate():
-    """ Uses unix socks to get hashrate of mining chip on current system
-
-    Returns:
-        str: A formatted string showing the mining hashrate
-    """
-    hashrate = None
-
-    try:
-        import socket
-        import json
-
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect("/tmp/minerd.sock")
-
-        buf = b""
-
-        while True:
-            chunk = s.recv(4096)
-
-            # If server disconnected
-            if not chunk:
-                s.close()
-                break
-
-            buf += chunk
-            while b"\n" in buf:
-                pos = buf.find(b"\n")
-                data = buf[0:pos].decode('utf-8')
-                buf = buf[pos+1:]
-
-                event = json.loads(data)
-
-                if event['type'] == "StatisticsEvent":
-                    # Use 15min hashrate, if uptime is past 15min
-                    if event['payload']['statistics']['uptime'] > 15*60:
-                        hashrate = "{:.1f} GH/s".format(event['payload']['statistics']['hashrate']['15min']/1e9)
-                    else:
-                        hashrate = "~50 GH/s (warming up)"
-
-                    break
-
-            if hashrate:
-                break
-    except:
-        pass
-
-    return hashrate or UxString.Error.data_unavailable
 
 
 def status_mining(config, client):
@@ -104,23 +31,27 @@ def status_mining(config, client):
     Returns:
         dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
     """
-    has_chip = has_bitcoinkit()
+    has_chip = has_mining_chip()
+    has_chip = True
+    is_mining, mined, hashrate = None, None, None
     if has_chip:
-        bk = "21 mining chip running (/run/minerd.pid)"
+        try:
+            hashrate = get_hashrate("15min")
+            if hashrate > 0:
+                return "{:.1f} GH/s".format(hashrate/1e9)
+            else:
+                return "~50 GH/s (warming up)"
+        except FileNotFoundError:
+            is_mining = "Run {} to start mining".format(click.style("21 mine", bold=True))
+        except TimeoutError:
+            is_mining = "TimeoutError occured while getting hashrate"
+        else:
+            is_mining = "21 mining chip running (/run/minerd.pid)"
         mined = client.get_mined_satoshis()
-        hashrate = get_hashrate()
-        if hashrate == UxString.Error.data_unavailable:
-            bk = "Run {} to start mining".format(click.style("21 mine", bold=True))
-    else:
-        bk, mined, hashrate = None, None, None
-    data = dict(is_mining=bk,
-                hashrate=hashrate,
-                mined=mined)
-    if has_chip:
-        out = UxString.status_mining.format(**data)
+        out = UxString.status_mining.format(is_mining, hashrate, mined)
         config.log(out)
 
-    return data
+    return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
 
 
 @click.command("status")

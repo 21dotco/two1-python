@@ -23,6 +23,7 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.channels import PaymentChannelClient
 from two1.lib.wallet import test_wallet
 from two1.commands.util.uxstring import UxString
+from two1.commands.util import bitcoin_computer
 
 
 # if there is a .env in the root directory, use the endpoints that are specified in there
@@ -54,26 +55,6 @@ def load_dotenv(dotenv_path):
     return True
 
 
-def get_device_uuid():
-    """ Reads the uuid from the device by checking device tree
-
-    Todo:
-        throw the FileNotFound exception instead of returning None
-
-    Returns:
-        str: full uuid of device
-
-    Raises:
-        FileNotFoundError: if uuid file doesn't exist on the device
-    """
-    uuid = None
-    try:
-        with open("/proc/device-tree/hat/uuid", "r") as f:
-            uuid = f.readline().strip("\x00\n")
-    except FileNotFoundError:
-        pass
-    return uuid
-
 base_dir = str(Path(__file__).parents[2])
 dotenv_path = os.path.join(base_dir, '.env')
 
@@ -93,7 +74,7 @@ TWO1_LOGGER_SERVER = os.environ.get("TWO1_LOGGER_SERVER", "http://logger.21.co")
 TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21.co:21006")
 TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST", "http://market.21.co")
 TWO1_VERSION = two1.__version__
-TWO1_DEVICE_ID = os.environ.get("TWO1_DEVICE_ID") or get_device_uuid()
+TWO1_DEVICE_ID = os.environ.get("TWO1_DEVICE_ID") or bitcoin_computer.get_device_uuid()
 
 try:
     TWO1_PATH = os.path.dirname(sys.argv[0])
