@@ -184,7 +184,7 @@ class Config(object):
             print("self.file=" + self.file)
             self.file.rmdir()
         with open(self.file + ".tmp", mode="w", encoding='utf-8') as fh:
-            json.dump(self.defaults, fh, indent=2, sort_keys=True)
+            fh.write(json.dumps(self.defaults, indent=2, sort_keys=True))
         # move file if successfully written
         os.rename(self.file + ".tmp", self.file)
         return self
@@ -195,13 +195,12 @@ class Config(object):
         Returns:
             Config: config object
         """
-        if self.file.exists() and self.file.isfile():
-            try:
-                with open(self.file, mode="r", encoding='utf-8') as fh:
-                    self.defaults = json.load(fh)
-            except:
-                print(UxString.Error.file_load % self.file)
-                self.defaults = {}
+        try:
+            with open(self.file, mode="r", encoding='utf-8') as fh:
+                self.defaults = json.loads(fh.read())
+        except FileNotFoundError:
+            print(UxString.Error.file_load % self.file)
+            self.defaults = {}
 
         defaults = dict(username=None,
                         sellprice=10000,

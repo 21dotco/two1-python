@@ -1,0 +1,129 @@
+"""Unit tests for `21 config`."""
+import json
+import codecs
+import collections
+import unittest.mock as mock
+
+import two1.lib.wallet as wallet
+import two1.commands.config as config
+
+CONFIG_DATA = '{"contact": "two1@21.co", "maxspend": 25000, "sellprice": 11000, "stderr": ".two1/two1.stderr", "username": "satoshi", "mining_auth_pubkey": "i_haz_key", "stdout": ".two1/two1.stdout", "auto_update": false, "verbose": false, "bitin": ".bitcoin/wallet.dat", "sortby": "price", "bitout": ".bitcoin/wallet.dat", "collect_analytics": true}'
+PARTIAL_CONFIG_DATA = '{"contact": "21@21.co"}'
+
+
+@mock.patch('two1.commands.config.os.rename', mock.Mock())
+@mock.patch('two1.commands.config.open', mock.mock_open(read_data=CONFIG_DATA))
+def test_basic_config():
+    """Test Config object can load a file and access its settings."""
+    c = config.Config(config_file='config_file', create_wallet=False)
+
+    assert c.username == 'satoshi'
+    assert c.sellprice == 11000
+    assert c.contact == 'two1@21.co'
+    assert c.stdout == '.two1/two1.stdout'
+    assert c.stderr == '.two1/two1.stderr'
+    assert c.bitin == '.bitcoin/wallet.dat'
+    assert c.bitout == '.bitcoin/wallet.dat'
+    assert c.sortby == 'price'
+    assert c.maxspend == 25000
+    assert c.verbose is False
+    assert c.mining_auth_pubkey == 'i_haz_key'
+    assert c.auto_update is False
+    assert c.wallet_path == wallet.Two1Wallet.DEFAULT_WALLET_PATH
+    assert c.collect_analytics is True
+
+
+@mock.patch('two1.commands.config.os.rename', mock.Mock())
+@mock.patch('two1.commands.config.open', mock.mock_open(read_data=PARTIAL_CONFIG_DATA))
+def test_default_config():
+    """Test Config object loads defualt settings when file is incomplete."""
+    c = config.Config(config_file='config_file', create_wallet=False)
+
+    assert c.username is None
+    assert c.sellprice == 10000
+    assert c.contact == "21@21.co"
+    assert c.stdout == ".two1/two1.stdout"
+    assert c.stderr == ".two1/two1.stderr"
+    assert c.bitin == ".bitcoin/wallet.dat"
+    assert c.bitout == ".bitcoin/wallet.dat"
+    assert c.sortby == "price"
+    assert c.maxspend == 20000
+    assert c.verbose is False
+    assert c.mining_auth_pubkey is None
+    assert c.auto_update is False
+    assert c.wallet_path == wallet.Two1Wallet.DEFAULT_WALLET_PATH
+    assert c.collect_analytics is False
+
+
+@mock.patch('two1.commands.config.os.rename', mock.Mock())
+def test_save_config():
+    """Test Config object can save to update a file."""
+    mock_config = mock.mock_open(read_data=CONFIG_DATA)
+    with mock.patch('two1.commands.config.open', mock_config):
+        c = config.Config(config_file='config_file', create_wallet=False)
+
+    num_config_keys = len(c.defaults.keys())
+
+    # Update an existing key and add a new one
+    c.update_key('username', 'TEST_USERNAME')
+    c.update_key('some_list_key', [123, 456, 789])
+    with mock.patch('two1.commands.config.open', mock_config):
+        c.save()
+
+    # Import the newly saved configuration file
+    new_config = json.loads(mock_config.return_value.write.call_args[0][0])
+
+    assert c.username == 'TEST_USERNAME'
+    assert c.some_list_key == [123, 456, 789]
+    assert new_config['username'] == 'TEST_USERNAME'
+    assert new_config['some_list_key'] == [123, 456, 789]
+    assert len(new_config.keys()) == num_config_keys + 1
+
+
+@mock.patch('two1.commands.config.os.rename', mock.Mock())
+def test_no_config_file_exists():
+    """Test that a new `two1.json` file is created if it doesn't exist."""
+    mock_config = mock.mock_open(mock=mock.Mock(side_effect=[FileNotFoundError, mock.DEFAULT]))
+    with mock.patch('two1.commands.config.open', mock_config):
+        c = config.Config(config_file='config_file', create_wallet=False)
+
+    dc = json.loads(mock_config.return_value.write.call_args[0][0])
+
+    assert mock_config.call_args[1]['mode'] == 'w'
+    assert dc['username'] is None
+    assert dc['sellprice'] == 10000
+    assert dc['contact'] == "two1@21.co"
+    assert dc['stdout'] == ".two1/two1.stdout"
+    assert dc['stderr'] == ".two1/two1.stderr"
+    assert dc['bitin'] == ".bitcoin/wallet.dat"
+    assert dc['bitout'] == ".bitcoin/wallet.dat"
+    assert dc['sortby'] == "price"
+    assert dc['maxspend'] == 20000
+    assert dc['verbose'] is False
+    assert dc['mining_auth_pubkey'] is None
+    assert dc['auto_update'] is False
+    assert dc['wallet_path'] == wallet.Two1Wallet.DEFAULT_WALLET_PATH
+    assert dc['collect_analytics'] is False
+
+
+@mock.patch('two1.commands.config.os.rename', mock.Mock())
+@mock.patch('two1.commands.config.open', mock.mock_open(read_data='{"contact": "two1@21.co", "maxspend": 25000, "sellprice": 11000, "stderr": ".two1/two1.stderr", "username": "satoshi", "mining_auth_pubkey": "i_haz_key", "stdout": ".two1/two1.stdout", "auto_update": false, "verbose": false, "bitin": ".bitcoin/wallet.dat", "sortby": "price", "bitout": ".bitcoin/wallet.dat", "collect_analytics": true}'))
+def test_config_repr():
+    """Test Config object can be displayed nicely in `print` statements."""
+    c = config.Config(config_file='config_file', create_wallet=False)
+    printed = c.__repr__()
+
+    assert 'satoshi' in printed
+    assert '11000' in printed
+    assert 'two1@21.co' in printed
+    assert '.two1/two1.stdout' in printed
+    assert '.two1/two1.stderr' in printed
+    assert '.bitcoin/wallet.dat' in printed
+    assert '.bitcoin/wallet.dat' in printed
+    assert 'price' in printed
+    assert '25000' in printed
+    assert 'False' in printed
+    assert 'i_haz_key' in printed
+    assert 'False' in printed
+    assert wallet.Two1Wallet.DEFAULT_WALLET_PATH in printed
+    assert 'True' in printed
