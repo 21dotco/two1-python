@@ -8,12 +8,11 @@ import click
 # two1 imports
 import two1.lib.server.login as server_login
 from two1.lib.blockchain import exceptions
-
-from two1.lib.util.exceptions import TwoOneError, UnloggedException
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.exceptions import TwoOneError, UnloggedException
+from two1.commands.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
-from two1.lib.util.decorators import json_output
+from two1.commands.util.decorators import json_output
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config

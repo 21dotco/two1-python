@@ -6,11 +6,11 @@ import click
 
 # two1 imports
 from two1.commands import config
-from two1.lib.util import exceptions
+from two1.commands.util import exceptions
 from two1.lib.server import rest_client
 from two1.lib.server import analytics
-from two1.lib.util import decorators
-from two1.lib.util import uxstring
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.group(invoke_without_command=True)

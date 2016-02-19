@@ -16,7 +16,7 @@ from two1.commands.config import TWO1_VERSION
 from two1.commands.config import TWO1_PYPI_HOST
 from two1.commands.config import TWO1_PACKAGE_NAME
 from two1.lib.server.analytics import capture_usage
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.uxstring import UxString
 
 
 @click.command()

@@ -9,7 +9,7 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.uxstring import UxString
 from two1.commands.helpers.sell_helpers import install_requirements
 from two1.commands.helpers.sell_helpers import validate_directory
 from two1.commands.helpers.sell_helpers import create_site_includes

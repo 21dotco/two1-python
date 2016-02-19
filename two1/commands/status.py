@@ -16,8 +16,8 @@ from two1.lib.channels.cli import format_expiration_time
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST
 from two1.lib.server.analytics import capture_usage
-from two1.lib.util.decorators import json_output, check_notifications
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.decorators import json_output, check_notifications
+from two1.commands.util.uxstring import UxString
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
 

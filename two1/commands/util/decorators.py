@@ -1,10 +1,12 @@
-import click
 import json as jsonlib
 from functools import update_wrapper
-from two1.lib.util.exceptions import TwoOneError
-from two1.lib.server import rest_client
+
+import click
+from two1.commands.util.uxstring import UxString
+
 from two1.commands.config import TWO1_HOST
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.exceptions import TwoOneError
+from two1.lib.server import rest_client
 
 
 def docstring_parameter(*args, **kwargs):
@@ -14,7 +16,7 @@ def docstring_parameter(*args, **kwargs):
     return dec
 
 def json_output(f):
-    """Allows the return value to be optionally returned as json output 
+    """Allows the return value to be optionally returned as json output
        with the '--json' flag."""
     @click.option('--json',
               default=False,

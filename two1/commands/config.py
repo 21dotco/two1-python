@@ -22,7 +22,8 @@ from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 from two1.lib.channels import PaymentChannelClient
 from two1.lib.wallet import test_wallet
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.uxstring import UxString
+
 
 # if there is a .env in the root directory, use the endpoints that are specified in there
 
