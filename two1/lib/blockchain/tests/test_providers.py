@@ -5,13 +5,11 @@ from two1.lib.bitcoin.txn import Transaction
 from two1.lib.blockchain.insight_provider import InsightProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderError
-from two1.lib.blockchain.block_cypher_provider import BlockCypherProvider
 
 
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 twentyone_provider = TwentyOneProvider()
-block_cypher_provider = BlockCypherProvider()
 insight_provider = InsightProvider("http://insight.bitpay.com")
 testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
 
@@ -20,7 +18,6 @@ testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
                          [
                              (twentyone_provider, False),
                              (twentyone_provider, True),
-                             (block_cypher_provider, False),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
@@ -44,7 +41,6 @@ def test_get_transactions(provider, testnet):
                          [
                              (twentyone_provider, False),
                              (twentyone_provider, True),
-                             (block_cypher_provider, False),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
@@ -97,8 +93,6 @@ def test_provider_json_error(provider, testnet):
                          [
                              (twentyone_provider, False),
                              (twentyone_provider, True),
-                             (block_cypher_provider, False),
-                             (block_cypher_provider, True),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])

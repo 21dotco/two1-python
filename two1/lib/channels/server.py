@@ -303,9 +303,5 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         public_key = channel['redeem_script'].customer_public_key
         assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
 
-        # Broadcast to blockchain
-        bc = blockchain.BlockCypherBlockchain("https://api.blockcypher.com/v1/btc/main" if not self._wallet.testnet else "https://api.blockcypher.com/v1/btc/test3")
-        bc.broadcast_tx(channel['payment_tx'].to_hex())
-
         # Return payment txid
         return str(channel['payment_tx'].hash)
