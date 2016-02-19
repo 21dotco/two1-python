@@ -20,7 +20,7 @@ from two1.lib.server import rest_client, message_factory
 from two1.lib.server.analytics import capture_usage
 import two1.commands.config as cmd_config
 from two1.commands import status
-from two1.commands.status import has_bitcoinkit
+from two1.commands.util.bitcoin_computer import has_mining_chip
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.server.rest_client import ServerRequestError
 from two1.commands.util.decorators import check_notifications
@@ -64,7 +64,14 @@ $ 21 mine --dashboard
 @check_notifications
 @capture_usage
 def _mine(config, dashboard=False):
-    if has_bitcoinkit():
+    """ Starts the mining ASIC if not mining and cpu mines if already mining
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        dashboard (bool): shows minertop dashboard if True
+    """
+
+    if has_mining_chip():
         if not is_minerd_running():
             start_minerd(config, dashboard)
         elif dashboard:
