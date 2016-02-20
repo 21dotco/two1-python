@@ -25,3 +25,11 @@ class UpdateRequiredError(UnloggedException):
 
 class BitcoinComputerNeededError(UnloggedException):
     pass
+
+
+class ConfigError(Exception):
+    pass
+
+
+class FileDecodeError(ConfigError):
+    pass
