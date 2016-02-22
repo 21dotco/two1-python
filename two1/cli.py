@@ -87,6 +87,8 @@ goods both at the command line and programmatically, visit 21.co/learn
         raise TwoOneError(UxString.Error.connection_cli)
     except DataProviderError:
         raise TwoOneError(UxString.Error.server_err)
+    except exceptions.FileDecodeError as e:
+        raise click.clickException(uxstring.UxString.file_decode(str(e)))
 
     if create_wallet_and_account:
         try:
