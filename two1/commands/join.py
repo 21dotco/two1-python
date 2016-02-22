@@ -78,23 +78,20 @@ def _join(config, network):
     client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                              config.machine_auth,
                                              config.username)
-
     try:
         config.log(UxString.update_superuser)
-        user_platform = platform.system()
-        if user_platform != "Darwin":
-            start_zerotier_command = [
-                "sudo", "service", "zerotier-one", "start"
-            ]
-            subprocess.check_output(start_zerotier_command)
+
+        if zerotier.is_installed():
+            # ensures the zerotier daemon is running
+            zerotier.start_daemon()
+        else:
+            config.log(UxString.install_zerotier)
+
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
-            join_command = [
-                "sudo", "zerotier-cli", "join",
-                response.json().get("networkid")
-            ]
-            subprocess.check_output(join_command)
+            network_id = response.json().get("networkid")
+            zerotier.join_network(network_id)
             config.log(UxString.successful_join.format(click.style(network, fg="magenta")))
     except ServerRequestError as e:
         if e.status_code == 401:
