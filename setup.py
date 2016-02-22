@@ -36,7 +36,7 @@ install_requires = [
                     'pyyaml'
                     ]
 
-version = __import__('two1').__version__
+version = __import__('two1').TWO1_VERSION
 
 setup(
     name='two1',
