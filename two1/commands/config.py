@@ -73,7 +73,7 @@ TWO1_PACKAGE_NAME = "two1"
 TWO1_LOGGER_SERVER = os.environ.get("TWO1_LOGGER_SERVER", "http://logger.21.co")
 TWO1_POOL_URL = os.environ.get("TWO1_POOL_URL", "swirl+tcp://grid.21.co:21006")
 TWO1_MERCHANT_HOST = os.environ.get("TWO1_MERCHANT_HOST", "http://market.21.co")
-TWO1_VERSION = two1.__version__
+TWO1_VERSION = two1.TWO1_VERSION
 TWO1_DEVICE_ID = os.environ.get("TWO1_DEVICE_ID") or bitcoin_computer.get_device_uuid()
 
 try:

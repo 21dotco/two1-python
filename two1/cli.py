@@ -19,15 +19,12 @@ from path import path
 import click
 from path import path
 from two1.commands.config import Config
-from two1.commands.config import TWO1_CONFIG_FILE
-from two1.commands.config import TWO1_VERSION
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.server.login import check_setup_twentyone_account
 from two1.commands.util.decorators import docstring_parameter
 from two1.commands.util.exceptions import TwoOneError, UnloggedException
 from two1.commands.util.uxstring import UxString
-# from two1.commands.update import update_two1_package
 from two1.commands.buy import buy
 from two1.commands.buybitcoin import buybitcoin
 from two1.commands.doctor import doctor
@@ -44,6 +41,7 @@ from two1.commands.search import search
 from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.join import join
+import two1.commands.util.config as config
 
 
 CLI_NAME = str(path(sys.argv[0]).name)
@@ -53,18 +51,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option('--config-file',
               envvar='TWO1_CONFIG_FILE',
-              default=TWO1_CONFIG_FILE,
+              default=two1.TWO1_CONFIG_FILE,
               metavar='PATH',
               help='Path to config (default: %s)' % TWO1_CONFIG_FILE)
-@click.option('--config',
+@click.option('--config', 'config_dict',
               nargs=2,
               multiple=True,
               metavar='KEY VALUE',
               help='Overrides a config key/value pair.')
-@click.version_option(TWO1_VERSION, message='%(prog)s v%(version)s')
+@click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
 @docstring_parameter(CLI_NAME)
-def main(ctx, config_file, config):
+def main(ctx, config_file, config_dict):
     """Mine bitcoin and use it to buy and sell digital goods.
 
 \b
@@ -79,14 +77,10 @@ $ {0} buy search "Satoshi Nakamoto"
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    create_wallet_and_account = ctx.invoked_subcommand not in \
-                                ('help', 'update', 'sell', 'login')
+    create_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell', 'login')
+
     try:
-        cfg = Config(config_file, config, create_wallet=create_wallet_and_account)
-    except DataProviderUnavailableError:
-        raise TwoOneError(UxString.Error.connection_cli)
-    except DataProviderError:
-        raise TwoOneError(UxString.Error.server_err)
+        cfg = config.Config(config_file, config_dict)
     except exceptions.FileDecodeError as e:
         raise click.clickException(uxstring.UxString.file_decode(str(e)))
 

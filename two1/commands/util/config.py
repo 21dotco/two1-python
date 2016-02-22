@@ -2,6 +2,7 @@
 import os
 import json
 
+import two1
 import two1.lib.wallet as wallet
 import two1.lib.channels as channels
 import two1.commands.util.exceptions as exceptions
@@ -12,8 +13,6 @@ class Config:
 
     """Stores information required to run two1 commands."""
 
-    TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
-    TWO1_CONFIG_FILE = TWO1_USER_FOLDER + 'two1.json'
     DEFAULTS = dict(username=None,
                     sellprice=10000,
                     contact='two1@21.co',
@@ -29,8 +28,8 @@ class Config:
                     wallet_path=wallet.Two1Wallet.DEFAULT_WALLET_PATH,
                     collect_analytics=False)
 
-    def __init__(self, config_file=TWO1_CONFIG_FILE, config=None):
-        """Return a new _Config object with defaults plus custom properties."""
+    def __init__(self, config_file=two1.TWO1_CONFIG_FILE, config=None):
+        """Return a new Config object with defaults plus custom properties."""
         # Load configuration defaults
         self.state = {key: val for key, val in Config.DEFAULTS.items()}
         # Override defaults with any custom configuration
