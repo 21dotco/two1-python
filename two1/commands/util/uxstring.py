@@ -303,6 +303,9 @@ class UxString:
     join_cmd = click.style("21 join", bold=True)
 
     no_network = click.style("You are not part of any network.", fg="blue")
+    install_zerotier = click.style("To join network you must have zerotier-one installed.\n" \
+                                   "See installation instructions at:\n" \
+                                   "\n\thttps://www.zerotier.com/product-one.shtml\n")
 
     # publish
     coming_soon = click.style("Coming soon", bold=True)
