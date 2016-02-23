@@ -121,32 +121,6 @@ def list_networks():
     return cli_json('listnetworks')
 
 
-def device_ip(network_id):
-    """ Returns the IP address and network mask for the provided Zerotier network.
-
-    Args:
-        network_id (str): Zerotier network id for which the IP address is desired.
-
-    Returns:
-        list (IP, mask): Returns the IP and the mask. e.g. [u'172.23.15.14', u'16']
-
-    Raises:
-        RuntimeError: if the network_id given is not a valid network id or an IP address
-            has not been assigned yet.
-    """
-    networks = list_networks()
-    if not networks:
-        raise RuntimeError("Error: not connected to any networks")
-
-    for network in networks:
-        # found a match
-        if network_id and network_id in network['nwid']:
-            if len(network["assignedAddresses"]) > 0:
-                return network["assignedAddresses"][0].split("/")
-
-    raise RuntimeError("Error in looking up Zerotier IP for %s" % network_id)
-
-
 def list_peers():
     """ zerotier-cli listpeers command
 
@@ -221,6 +195,7 @@ def start_daemon():
 
     return subprocess.check_output(cmd)
 
+
 def get_address(network_name):
     """ Gets the IP address of the given network name
 
@@ -233,6 +208,32 @@ def get_address(network_name):
         return all_addresses[network_name]
 
     return None
+
+
+def get_address_by_id(network_id):
+    """ Returns the IP address and network mask for the provided Zerotier network.
+
+    Args:
+        network_id (str): Zerotier network id for which the IP address is desired.
+
+    Returns:
+        list (IP, mask): Returns the IP and the mask. e.g. [u'172.23.15.14', u'16']
+
+    Raises:
+        RuntimeError: if the network_id given is not a valid network id or an IP address
+            has not been assigned yet.
+    """
+    networks = list_networks()
+    if not networks:
+        raise RuntimeError("Error: not connected to any networks")
+
+    for network in networks:
+        # found a match
+        if network_id and network_id in network['nwid']:
+            if len(network["assignedAddresses"]) > 0:
+                return network["assignedAddresses"][0].split("/")
+
+    raise RuntimeError("Error in looking up Zerotier IP for %s" % network_id)
 
 
 def get_all_addresses():
