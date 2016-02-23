@@ -12,11 +12,10 @@ from tabulate import tabulate
 import two1.lib.channels as channels
 from two1.lib.channels.cli import format_expiration_time
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.commands.util.decorators import json_output, check_notifications
-from two1.commands.util.uxstring import UxString
-from two1.commands.util.bitcoin_computer import  has_mining_chip, get_hashrate
+from two1.lib.server import analytics
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
+from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
 
@@ -48,7 +47,7 @@ def status_mining(config, client):
         else:
             is_mining = "21 mining chip running (/run/minerd.pid)"
         mined = client.get_mined_satoshis()
-        out = UxString.status_mining.format(is_mining, hashrate, mined)
+        out = uxstring.UxString.status_mining.format(is_mining, hashrate, mined)
         config.log(out)
 
     return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
@@ -59,16 +58,16 @@ def status_mining(config, client):
               is_flag=True,
               default=False,
               help="List non-zero balances for each address")
-@json_output
-def status(config, detail):
+@decorators.json_output
+@analytics.capture_usage
+@decorators.check_notifications
+def status(ctx, detail):
     """View your bitcoin balance and address.
     """
-    return _status(config, detail)
+    return _status(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'], detail)
 
 
-@capture_usage
-@check_notifications
-def _status(config, detail):
+def _status(config, client, wallet, detail):
     """ Reports two1 stataus including balances, username, and mining hashrate
 
     Args:
@@ -79,15 +78,10 @@ def _status(config, detail):
         dict: a dictionary of 'account', 'mining', and 'wallet' items with formatted
             strings for each value
     """
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
-
-
     status = {
-        "account": status_account(config),
+        "account": status_account(config, wallet),
         "mining": status_mining(config, client),
-        "wallet": status_wallet(config, client, detail)
+        "wallet": status_wallet(config, client, wallet, detail)
     }
 
     config.log("")
@@ -96,7 +90,8 @@ def _status(config, detail):
 
     return status
 
-def status_account(config):
+
+def status_account(config, wallet):
     """ Logs a formatted string displaying account status to the command line
 
     Args:
@@ -107,16 +102,16 @@ def status_account(config):
     """
     status_account = {
         "username": config.username,
-        "address": config.wallet.current_address
+        "address": wallet.current_address
     }
-    config.log(UxString.status_account.format(status_account["username"]))
+    config.log(uxstring.UxString.status_account.format(status_account["username"]))
     return status_account
 
 SEARCH_UNIT_PRICE = 3500
 SMS_UNIT_PRICE = 3000
 
 
-def status_wallet(config, client, detail=False):
+def status_wallet(config, client, wallet, detail=False):
     """ Logs a formatted string displaying wallet status to the command line
 
     Args:
@@ -128,7 +123,8 @@ def status_wallet(config, client, detail=False):
         dict: a dictionary of 'wallet' and 'buyable' items with formatted
             strings for each value
     """
-    user_balances = _get_balances(config, client)
+    channel_client = channels.PaymentChannelClient(wallet)
+    user_balances = _get_balances(client, wallet, channel_client)
 
     status_wallet = {
         "twentyone_balance": user_balances.twentyone,
@@ -136,32 +132,32 @@ def status_wallet(config, client, detail=False):
         "flushing": user_balances.flushed,
         "channels_balance": user_balances.channels
     }
-    config.log(UxString.status_wallet.format(**status_wallet))
+    config.log(uxstring.UxString.status_wallet.format(**status_wallet))
 
     if detail:
         # show balances by address for default wallet
-        address_balances = config.wallet.balances_by_address(0)
+        address_balances = wallet.balances_by_address(0)
         status_addresses = []
         for addr, balances in address_balances.items():
             if balances['confirmed'] > 0 or balances['total'] > 0:
-                status_addresses.append(UxString.status_wallet_address.format(
+                status_addresses.append(uxstring.UxString.status_wallet_address.format(
                     addr, balances['confirmed'], balances['total']))
 
         # Display status for all payment channels
         status_channels = []
-        for url in config.channel_client.list():
-            status = config.channel_client.status(url)
+        for url in channel_client.list():
+            status = channel_client.status(url)
             url = urllib.parse.urlparse(url)
-            status_channels.append(UxString.status_wallet_channel.format(
+            status_channels.append(uxstring.UxString.status_wallet_channel.format(
                 url.scheme, url.netloc, status.state, status.balance,
                 format_expiration_time(status.expiration_time)))
         if not len(status_channels):
-            status_channels = [UxString.status_wallet_channels_none]
+            status_channels = [uxstring.UxString.status_wallet_channels_none]
 
-        config.log(UxString.status_wallet_detail_on.format(
+        config.log(uxstring.UxString.status_wallet_detail_on.format(
             addresses=''.join(status_addresses), channels=''.join(status_channels)))
     else:
-        config.log(UxString.status_wallet_detail_off)
+        config.log(uxstring.UxString.status_wallet_detail_off)
 
     total_balance = user_balances.twentyone + user_balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
@@ -172,15 +168,15 @@ def status_wallet(config, client, detail=False):
         "buyable_sms": buyable_sms,
         "sms_unit_price": SMS_UNIT_PRICE
     }
-    config.log(UxString.status_buyable.format(**status_buyable), nl=False)
+    config.log(uxstring.UxString.status_buyable.format(**status_buyable), nl=False)
 
     if total_balance == 0:
-        config.log(UxString.status_empty_wallet.format(click.style("21 mine",
+        config.log(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
                                                                    bold=True)))
     else:
         buy21 = click.style("21 buy", bold=True)
         buy21help = click.style("21 buy --help", bold=True)
-        config.log(UxString.status_exit_message.format(buy21, buy21help),
+        config.log(uxstring.UxString.status_exit_message.format(buy21, buy21help),
                    nl=False)
 
     return {
@@ -189,9 +185,9 @@ def status_wallet(config, client, detail=False):
     }
 
 
-def _get_balances(config, client):
-    balance_c = config.wallet.confirmed_balance()
-    balance_u = config.wallet.unconfirmed_balance()
+def _get_balances(client, wallet, channel_client):
+    balance_c = wallet.confirmed_balance()
+    balance_u = wallet.unconfirmed_balance()
     pending_transactions = balance_u - balance_c
 
     spendable_balance = min(balance_c, balance_u)
@@ -199,9 +195,10 @@ def _get_balances(config, client):
     data = client.get_earnings()
     twentyone_balance = data["total_earnings"]
     flushed_earnings = data["flushed_amount"]
-    config.channel_client.sync()
-    channel_urls = config.channel_client.list()
-    channels_balance = sum(s.balance for s in (config.channel_client.status(url) for url in channel_urls)
+
+    channel_client.sync()
+    channel_urls = channel_client.list()
+    channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_urls)
                            if s.state == channels.PaymentChannelState.READY)
 
     return Balances(twentyone_balance, spendable_balance, pending_transactions,
@@ -226,7 +223,7 @@ def status_earnings(config, client):
     if "flush_amount" in data and data["flush_amount"] > 0:
         flush_amount = data["flush_amount"]
         config.log("Flushed Earnings         : {}" .format(none2zero(flush_amount)))
-        config.log("\n" + UxString.flush_status % flush_amount, fg='green')
+        config.log("\n" + uxstring.UxString.flush_status % flush_amount, fg='green')
 
 
 def status_shares(config, client):
@@ -250,13 +247,13 @@ def status_shares(config, client):
                                             share_data["today"][n],
                                             share_data["hour"][n]]))
         except KeyError:
-            data = []  # config.log(UxString.Error.data_unavailable)
+            data = []  # config.log(uxstring.UxString.Error.data_unavailable)
 
         if len(data):
             config.log("\nShare statistics:", fg="magenta")
             config.log(tabulate(data, headers=headers, tablefmt='psql'))
             # else:
-            #    config.log(UxString.Error.data_unavailable)
+            #    config.log(uxstring.UxString.Error.data_unavailable)
 
 
 def none2zero(x):

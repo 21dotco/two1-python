@@ -6,10 +6,8 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.uxstring import UxString
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
+from two1.commands.util import uxstring
 
 
 @click.command()
@@ -38,16 +36,16 @@ $ 21 rate --list
     """
     #pylint: disable=redefined-builtin
     if list:
-        _list(ctx.obj["config"])
+        _list(ctx.obj["config"], ctx.obj["client"])
     else:
         if not (app_id and rating):
             # print help and exit
             click.secho(ctx.command.help)
             return
-        _rate(ctx.obj["config"], app_id, rating)
+        _rate(ctx.obj["config"], ctx.obj["client"], app_id, rating)
 
 
-def _list(config):
+def _list(config, client):
     """ Lists all of the apps that the user has rated
 
     If no apps have been rated, then an empty formatted list is printed
@@ -60,9 +58,6 @@ def _list(config):
     """
     click.secho(UxString.rating_list)
 
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
     try:
         ratings = client.get_ratings()
         headers = ["id", "App title", "Creator", "Rating", "Rating Date"]
@@ -85,7 +80,7 @@ def _list(config):
             raise e
 
 
-def _rate(config, app_id, rating):
+def _rate(config, client, app_id, rating):
     """ Rate an app listed in the marketplace
 
     Args:
@@ -100,9 +95,6 @@ def _rate(config, app_id, rating):
         click.secho(UxString.bad_rating, fg="red")
         return
 
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
     try:
         client.rate_app(app_id, rating)
     except ServerRequestError as e:

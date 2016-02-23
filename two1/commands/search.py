@@ -7,19 +7,18 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.decorators import json_output
-from two1.commands.util.uxstring import UxString
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.command("search")
 @click.pass_context
 @click.argument('search_string', required=False)
-@json_output
-def search(config, search_string=None):
+@decorators.json_output
+@analytics.capture_usage
+def search(ctx, search_string=None):
     """Search for app on the 21 Marketplace.
 
 \b
@@ -43,11 +42,10 @@ You can view detailed information about an app by specifying it's id
 at the prompt.
 
     """
-    _search(config, search_string)
+    _search(ctx.obj['config'], ctx.obj['client'], search_string)
 
 
-@capture_usage
-def _search(config, search_string):
+def _search(config, client, search_string):
     """ Searches the marketplace for apps by the given search_string
 
         Apps are then displayed in a pager in which the user can get more
@@ -57,11 +55,8 @@ def _search(config, search_string):
         config (Config): config object used for getting .two1 information
         search_string (str): string used to search for apps
     """
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
     if search_string is None:
-        click.secho(UxString.list_all, fg="green")
+        click.secho(uxstring.UxString.list_all, fg="green")
 
     current_page = 0
     total_pages = get_search_results(client, search_string, current_page)
@@ -70,7 +65,7 @@ def _search(config, search_string):
 
     while 0 <= current_page < total_pages:
         try:
-            prompt_resp = click.prompt(UxString.pagination,
+            prompt_resp = click.prompt(uxstring.UxString.pagination,
                                        type=str)
             next_page = get_next_page(prompt_resp, current_page)
             if next_page == -1:
@@ -86,7 +81,7 @@ def _search(config, search_string):
             return
 
 
-def get_search_results(rest_client, search_string, page):
+def get_search_results(client, search_string, page):
     """ Uses the rest client to get search results in a paginated format
 
     Args:
@@ -96,15 +91,15 @@ def get_search_results(rest_client, search_string, page):
     Returns:
         int: the total number of pages returned by the server
     """
-    resp = rest_client.search(search_string, page)
+    resp = client.search(search_string, page)
     if resp.ok:
         resp_json = resp.json()
         search_results = resp_json["results"]
         if search_results is None or len(search_results) == 0:
             if search_string:
-                click.secho(UxString.empty_listing.format(search_string))
+                click.secho(uxstring.UxString.empty_listing.format(search_string))
             else:
-                click.secho(UxString.no_app_in_marketplace)
+                click.secho(uxstring.UxString.no_app_in_marketplace)
 
             return 0
 
@@ -114,7 +109,7 @@ def get_search_results(rest_client, search_string, page):
         click.echo(content)
         return total_pages
     else:
-        raise ServerRequestError()
+        raise rest_client.ServerRequestError()
 
 
 MAX_PAGE_SIZE = 10
@@ -190,9 +185,9 @@ def display_search_info(config, client, listing_id):
     """
     try:
         resp = client.get_listing_info(listing_id)
-    except ServerRequestError as e:
+    except rest_client.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(UxString.app_does_not_exist.format(listing_id))
+            click.secho(uxstring.UxString.app_does_not_exist.format(listing_id))
             return
         else:
             raise e

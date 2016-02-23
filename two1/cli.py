@@ -18,13 +18,18 @@ from codecs import open
 from path import path
 import click
 from path import path
-from two1.commands.config import Config
 from two1.lib.blockchain.exceptions import DataProviderUnavailableError
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.server.login import check_setup_twentyone_account
-from two1.commands.util.decorators import docstring_parameter
-from two1.commands.util.exceptions import TwoOneError, UnloggedException
-from two1.commands.util.uxstring import UxString
+
+import two1
+from two1.lib.server import rest_client
+from two1.lib.server import machine_auth_wallet
+from two1.commands.util import config
+from two1.commands.util import uxstring
+from two1.commands.util import decorators
+from two1.commands.util import wallet as wallet_utils
+from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
 from two1.commands.buybitcoin import buybitcoin
 from two1.commands.doctor import doctor
@@ -41,7 +46,6 @@ from two1.commands.search import search
 from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.join import join
-import two1.commands.util.config as config
 
 
 CLI_NAME = str(path(sys.argv[0]).name)
@@ -77,20 +81,21 @@ $ {0} buy search "Satoshi Nakamoto"
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    create_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell', 'login')
+    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell', 'login')
 
     try:
-        cfg = config.Config(config_file, config_dict)
+        config = config.Config(config_file, config_dict)
+        ctx.obj = dict(config=config)
     except exceptions.FileDecodeError as e:
         raise click.clickException(uxstring.UxString.file_decode(str(e)))
 
-    if create_wallet_and_account:
-        try:
-            check_setup_twentyone_account(cfg)
-        except UnloggedException:
-            sys.exit(1)
-
-    ctx.obj = dict(config=cfg)
+    if need_wallet_and_account:
+        wallet = wallet_utils.get_or_create_wallet(config.wallet_path)
+        username = account_utils.get_or_create_username(config)
+        machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
+        client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, config.username)
+        ctx.obj['client'] = client
+        ctx.obj['wallet'] = wallet
 
 
 main.add_command(buy)

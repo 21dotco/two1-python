@@ -2,39 +2,23 @@
 import click
 
 # two1 imports
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.decorators import check_notifications
-from two1.commands.util.uxstring import UxString
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.command()
 @click.pass_context
+@decorators.check_notifications
+@analytics.capture_usage
 def flush(ctx):
     """ Flush your 21.co buffer to the blockchain."""
-    config = ctx.obj['config']
-    _flush(config)
-
-
-@check_notifications
-@capture_usage
-def _flush(config):
-    """
-    Todo:
-        Why keep this function? Just put the logic in flush()
-    """
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
-
-    flush_earnings(config, client)
-
+    _flush(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'])
     config.log("")
 
 
-def flush_earnings(config, client):
+def _flush(config, client, wallet):
     """ Flushes current off-chain balance to the blockchain
 
     Args:
@@ -48,14 +32,13 @@ def flush_earnings(config, client):
     try:
         response = client.flush_earnings()
         if response.ok:
-            success_msg = UxString.flush_success.format(
+            success_msg = uxstring.UxString.flush_success.format(
                 click.style("Flush to Blockchain", fg='magenta'),
-                config.wallet.current_address,
+                wallet.current_address,
                 click.style("21 mine", bold=True))
             config.log(success_msg, nl=False)
-    except ServerRequestError as e:
+    except rest_client.ServerRequestError as e:
         if e.status_code == 401:
-            click.echo(UxString.flush_insufficient_earnings)
+            click.echo(uxstring.UxString.flush_insufficient_earnings)
         else:
             raise e
-

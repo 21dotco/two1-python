@@ -5,8 +5,7 @@ from datetime import datetime
 import click
 
 # two1 imports
-from two1.commands import config
-from two1.commands.util import exceptions
+from two1.lib.util import exceptions
 from two1.lib.server import rest_client
 from two1.lib.server import analytics
 from two1.commands.util import decorators
@@ -23,7 +22,7 @@ from two1.commands.util import uxstring
               help="Shows your history of Bitcoin purchases")
 @click.argument('amount', default=0, type=click.FLOAT)
 @decorators.json_output
-def buybitcoin(click_config, info, status, amount, history):
+def buybitcoin(ctx, info, status, amount, history):
     """Buy Bitcoins from Coinbase
 
 To use this command, you need to connect your 21 account with your Coinbase account.
@@ -53,24 +52,20 @@ When you buy Bitcoins through this command, you can decide where the Bitcoins wi
 \b
     """
     exchange = "coinbase"
-    return _buybitcoin(click_config, info, status, exchange, amount, history)
+    return _buybitcoin(ctx.obj['config'], ctx.obj['client'], info, status, exchange, amount, history)
 
 
 @analytics.capture_usage
-def _buybitcoin(click_config, info, status, exchange, amount, history):
-    client = rest_client.TwentyOneRestClient(config.TWO1_HOST,
-                                             click_config.machine_auth,
-                                             click_config.username)
-
+def _buybitcoin(config, client, info, status, exchange, amount, history):
     if info:
-        return buybitcoin_config(click_config, client, exchange)
+        return buybitcoin_config(config, client, exchange)
     elif history:
-        return buybitcoin_history(click_config, client)
+        return buybitcoin_history(config, client)
     else:
         if amount <= 0 or status:
-            return buybitcoin_show_status(click_config, client, exchange)
+            return buybitcoin_show_status(config, client, exchange)
         else:
-            return buybitcoin_buy(click_config, client, exchange, amount)
+            return buybitcoin_buy(config, client, exchange, amount)
 
 
 def buybitcoin_show_status(config, client, exchange):

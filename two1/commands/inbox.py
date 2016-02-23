@@ -5,22 +5,21 @@ from datetime import datetime
 import click
 
 # two1 imports
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.commands.util.decorators import json_output
-from two1.commands.util.uxstring import UxString
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.command()
-@json_output
-def inbox(config):
+@decorators.json_output
+@analytics.capture_usage
+def inbox(ctx):
     """ Shows a list of notifications for your account """
-    return _inbox(config)
+    return _inbox(ctx.obj['config'], ctx.obj['client'])
 
 
-@capture_usage
-def _inbox(config):
+def _inbox(config, client):
     """ Shows a list of notifications on a click pager
 
     Args:
@@ -29,10 +28,6 @@ def _inbox(config):
     Returns:
         list: list of notifications in users inbox
     """
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
-
     prints = []
 
     notifications, has_unreads = get_notifications(config, client)

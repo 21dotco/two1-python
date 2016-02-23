@@ -1,35 +1,26 @@
-from collections import deque
 from datetime import date, datetime
+
 import click
-from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.commands.util.decorators import json_output
-from two1.commands.util.uxstring import UxString
+
+from two1.lib.server import analytics
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.command()
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
-@json_output
-def log(config, debug):
+@decorators.json_output
+@analytics.capture_usage
+def log(ctx, debug):
     """Shows a list of events for your Bitcoin Computer"""
-    return _log(config, debug)
-
-
-@capture_usage
-def _log(config, debug):
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
-
     prints = []
 
-    logs = get_bc_logs(client, debug)
+    logs = get_bc_logs(ctx.obj['client'], debug)
     prints.extend(logs)
 
     output = "\n".join(prints)
-    config.echo_via_pager(output)
+    ctx.obj['config'].echo_via_pager(output)
 
     return logs
 
@@ -40,7 +31,7 @@ def get_bc_logs(client, debug):
     response = client.get_earning_logs()
     logs = response["logs"]
 
-    prints.append(UxString.log_intro)
+    prints.append(uxstring.UxString.log_intro)
 
     if not debug:
         logs = filter_rollbacks(logs)
@@ -59,7 +50,7 @@ def get_bc_logs(client, debug):
             prints.append("\n")
 
     if len(prints) == 1:
-        prints.append(UxString.empty_logs)
+        prints.append(uxstring.UxString.empty_logs)
 
     return prints
 
@@ -68,26 +59,26 @@ def get_headline(entry):
     # headline
     local_date = datetime.fromtimestamp(entry["date"]).strftime("%Y-%m-%d %H:%M:%S")
     if entry["amount"] > 0:
-        headline = UxString.debit_message.format(local_date, entry["amount"])
+        headline = uxstring.UxString.debit_message.format(local_date, entry["amount"])
     elif entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout":
-        headline = UxString.blockchain_credit_message.format(local_date, entry["amount"],
+        headline = uxstring.UxString.blockchain_credit_message.format(local_date, entry["amount"],
                                                              -entry["amount"])
     else:
-        headline = UxString.credit_message.format(local_date, entry["amount"])
+        headline = uxstring.UxString.credit_message.format(local_date, entry["amount"])
 
     headline = click.style(headline, fg="cyan")
     return headline
 
 
 def get_description(entry):
-    reason = UxString.reasons.get(entry["reason"], entry["reason"])
+    reason = uxstring.UxString.reasons.get(entry["reason"], entry["reason"])
 
     if "-" in entry["reason"]:
         buy_str = entry["reason"].split("-", 1)
         if entry["amount"] < 0 :
-            reason = UxString.buy_message.format(buy_str[1], buy_str[0])
+            reason = uxstring.UxString.buy_message.format(buy_str[1], buy_str[0])
         else:
-            reason = UxString.sell_message.format(buy_str[1], buy_str[0])
+            reason = uxstring.UxString.sell_message.format(buy_str[1], buy_str[0])
 
     description = "Description: {}".format(reason)
     return description
@@ -123,4 +114,3 @@ def filter_rollbacks(logs):
             result.append(entry)
 
     return result
-

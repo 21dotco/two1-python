@@ -45,6 +45,7 @@ DEMOS = {
 @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.pass_context
+@analytics.capture_usage
 def buy(ctx, resource, **options):
     """Buy API calls with mined bitcoin.
 
@@ -55,11 +56,10 @@ Send an SMS to a phone number.
 $ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
 
 """
-    _buy(ctx.obj['config'], resource, **options)
+    _buy(ctx.obj['config'], ctx.obj['client'], resource, **options)
 
 
-@analytics.capture_usage
-def _buy(config, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
+def _buy(config, client, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
     """Purchase a 402-enabled resource via CLI.
 
     This function attempts to purchase the requested resource using the
@@ -139,7 +139,6 @@ def _buy(config, resource, info_only=False, payment_method='offchain', header=()
         return
 
     # Calculate user balances for the correct payment method
-    client = server.rest_client.TwentyOneRestClient(two1config.TWO1_HOST, config.machine_auth, config.username)
     user_balances = status._get_balances(config, client)
 
     # Write out diagnostic payment information
