@@ -381,6 +381,10 @@ class UxString:
                                                 "'contact' section.",
                                                 fg="red")
 
+    manifest_contact_fields = {"name", "email"}
+    manifest_contact_field_missing = "Field '{}' is missing from the manifest file under the " \
+                                     "'contact' section."
+
     price_fields = ["min", "max"]
     price_fields_missing = click.style("Field '{}' is missing from the manifest file under the " \
                                        "'x-21-total-price' section.",
