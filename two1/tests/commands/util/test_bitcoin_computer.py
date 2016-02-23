@@ -2,6 +2,7 @@
 import unittest.mock as mock
 import builtins
 import json
+import socket
 
 # 3rd party imports
 import pytest
@@ -74,7 +75,7 @@ STAT_EVENT_HASHRATE = {
                 '5min': HASHRATE
                 },
             # 61 minutes is enough uptime
-            'uptime': 61*60,
+            'uptime': (61*60)
             }
         }
     }
@@ -91,20 +92,27 @@ NETWORK_EVENT = {
     }
 
 
-@pytest.mark.parametrize("event_dicts,  outcome", [
-    ([NETWORK_EVENT, STAT_EVENT_HASHRATE], HASHRATE),
-    ([NETWORK_EVENT, STAT_EVENT_STARTING_UP], -1),
-    ([NETWORK_EVENT], TimeoutError),
-    ([], TimeoutError),
+@pytest.mark.parametrize("event_dicts, side_effect, outcome", [
+    ([NETWORK_EVENT, STAT_EVENT_HASHRATE], None, HASHRATE),
+    ([NETWORK_EVENT, STAT_EVENT_STARTING_UP], None, -1),
+    ([NETWORK_EVENT], None, TimeoutError),
+    ([], None, TimeoutError),
+    (None, None, TimeoutError),
+    ([], socket.timeout, TimeoutError),
     ])
-def test_get_hashrate(event_dicts, outcome):
+@mock.patch.object(bitcoin_computer.socket.socket, "connect")
+def test_get_hashrate(mock_connect, event_dicts, side_effect, outcome):
     """ Mocks socket.recv function to test various payloads while getting hashrate """
-    event_str = "\n".join([json.dumps(event) for event in event_dicts]) + "\n"
-    event_bytes = event_str.encode()
+    if event_dicts is None:
+        event_bytes = b""
+    else:
+        event_str = "\n".join([json.dumps(event) for event in event_dicts]) + "\n"
+        event_bytes = event_str.encode()
 
     with mock.patch.object(bitcoin_computer.socket.socket, "recv") as mock_recv:
         # forces the return value on recv to the list of events given
         mock_recv.return_value = event_bytes
+        mock_recv.side_effect = side_effect
 
         if isinstance(outcome, (int, float)):
             # ensures the proper output value
@@ -122,8 +130,9 @@ def test_get_hashrate(event_dicts, outcome):
     ("1min", ValueError),
     (None, ValueError)])
 # force all recv calls from socket to be a known payload
+@mock.patch.object(bitcoin_computer.socket.socket, "connect")
 @mock.patch.object(bitcoin_computer.socket.socket, "recv")
-def test_get_hashrate_inputs(mock_recv, hashrate_sample, outcome):
+def test_get_hashrate_inputs(mock_recv, mock_connect, hashrate_sample, outcome):
     """ Ensures input values are checked and handled correctly """
     # sets up the return value for socket.recv
     mock_recv.return_value = str(json.dumps(STAT_EVENT_HASHRATE)+"\n").encode()
