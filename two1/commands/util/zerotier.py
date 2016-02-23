@@ -27,12 +27,16 @@ def cli(*args):
         str: A string with the entire output of the shell command.
 
     Raises:
+        ValueError: if any of the args are not strings.
         CalledProcessError: If the cli call failed.
     """
+    if not all([isinstance(arg, str) for arg in args]):
+        raise ValueError("Error: args can only be strings")
+
     return subprocess.check_output(("sudo", "zerotier-cli") + args)
 
 
-def cli_json(*cmd):
+def cli_json(*args):
     """ Runs zerotier-cli as superuser and returns the results in json format
 
     Args:
@@ -43,9 +47,14 @@ def cli_json(*cmd):
 
     Raises:
         CalledProcessError: If the cli call failed.
-        ValueError: If the json string could not be successfully parsed into a dict.
+        ValueError: if any of the args are not strings.
+        json.decoder.JSONDecodeError: If the json string could not be successfully
+            parsed into a dict.
     """
-    result = cli(*(cmd + ("-j",)))
+    if not all([isinstance(arg, str) for arg in args]):
+        raise ValueError("Error: arg can only be strings")
+
+    result = cli(*(args+ ("-j",)))
     text = result.decode('utf-8')
     return json.loads(text)
 
@@ -58,12 +67,9 @@ def is_valid(id_str, id_len=16):
 
     Returns:
         bool: True if the id_str is valid, False otherwise
-
-    Raises:
-        ValueError: if the length of the id string is not equal to the expected id length
     """
     if len(id_str) != id_len:
-        raise ValueError("Error: length of the id_str is not equal to the expected length")
+        return False
 
     try:
         # expected to be valid hexadecmal string
@@ -115,11 +121,8 @@ def list_networks():
     return cli_json('listnetworks')
 
 
-def device_ip(network_id=None):
+def device_ip(network_id):
     """ Returns the IP address and network mask for the provided Zerotier network.
-
-        If no network is provided, this will return the IP if the device is connected to
-        only one Zerotier network.
 
     Args:
         network_id (str): Zerotier network id for which the IP address is desired.
@@ -128,23 +131,20 @@ def device_ip(network_id=None):
         list (IP, mask): Returns the IP and the mask. e.g. [u'172.23.15.14', u'16']
 
     Raises:
-        NameError: if the network_id given is not a valid network id or an IP address
+        RuntimeError: if the network_id given is not a valid network id or an IP address
             has not been assigned yet.
     """
     networks = list_networks()
-    ret = None
-    if network_id:
-        ret = next((n for n in networks if n['nwid'] == network_id), None)
-        if ret:
-            ret = ret["assignedAddresses"][0]
-    else:
-        if len(networks) == 1:
-            if len(networks[0]["assignedAddresses"]) > 0:
-                ret = networks[0]["assignedAddresses"][0]
-    if not ret:
-        raise NameError("Error in looking up Zerotier IP for %s" % network_id)
-    else:
-        return ret.split("/")
+    if not networks:
+        raise RuntimeError("Error: not connected to any networks")
+
+    for network in networks:
+        # found a match
+        if network_id and network_id in network['nwid']:
+            if len(network["assignedAddresses"]) > 0:
+                return network["assignedAddresses"][0].split("/")
+
+    raise RuntimeError("Error in looking up Zerotier IP for %s" % network_id)
 
 
 def list_peers():
@@ -171,7 +171,6 @@ def join_network(network_id):
 
     Raises:
         CalledProcessError: If the cli call failed.
-        ValueError: If the json string could not be successfully parsed into a dict.
         ValueError: If the given network_id is invalid.
     """
     if not is_valid(network_id, id_len=16):
@@ -191,7 +190,6 @@ def leave_network(network_id):
 
     Raises:
         CalledProcessError: If the cli call failed.
-        ValueError: If the json string could not be successfully parsed into a dict.
         ValueError: If the given network_id is invalid.
     """
     if not is_valid(network_id, id_len=16):
@@ -247,12 +245,16 @@ def get_all_addresses():
     result = {}
     try:
         networks = list_networks()
-    except (ValueError, CalledProcessError):
+    except (ValueError, subprocess.CalledProcessError):
         return result
 
-    for network in networks():
-        address_and_mask = network["assignedAddresses"][0]
-        address = address_and_mask.split("/")[0]
+    for network in networks:
+        if len(network["assignedAddresses"]) > 0:
+            address = network["assignedAddresses"][0].split("/")[0]
+        else:
+            address = ""
+
         result[network["name"]] = address
 
     return result
+
