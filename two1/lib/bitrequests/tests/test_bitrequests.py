@@ -1,7 +1,7 @@
 import json
 import pytest
 import requests
-from two1.commands.config import Config
+from two1.commands.utils import config
 from two1.lib.bitrequests import BitTransferRequests
 from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitRequestsError
@@ -59,7 +59,7 @@ def mockrequest(*args, **kwargs):
 ##############################################################################
 
 # Set up Two1 command line config
-config = Config()
+config = config.Config()
 # Inject the mock wallet into config as a test dependency
 wallet = MockWallet()
 

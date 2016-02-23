@@ -5,11 +5,11 @@ import click
 import datetime
 import requests
 from simplejson import JSONDecodeError
+import two1
 from two1.commands.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
     UnloggedException
 from two1.commands.util.uxstring import UxString
 from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
-
 
 class ServerRequestError(Exception):
     pass
@@ -27,7 +27,7 @@ class TwentyOneRestClient(object):
         self.version = version
         self.username = username
         self._session = None
-        self._device_id = TWO1_DEVICE_ID or "FREE_CLIENT"
+        self._device_id = two1.TWO1_DEVICE_ID or "FREE_CLIENT"
         cb = self.auth.public_key.compressed_bytes
         self._wallet_pk = base64.b64encode(cb).decode()
 
@@ -58,7 +58,7 @@ class TwentyOneRestClient(object):
                                                             sign_username,
                                                             sig)
         # Change the user agent to contain the 21 CLI and version
-        headers["User-Agent"] = "21/{}".format(TWO1_VERSION)
+        headers["User-Agent"] = "21/{}".format(two1.TWO1_VERSION)
         headers["From"] = "{}@{}".format(self._wallet_pk, self._device_id)
 
         try:
@@ -275,11 +275,11 @@ class TwentyOneRestClient(object):
 
 if __name__ == "__main__":
     # host = "http://127.0.0.1:8000"
-    from two1.commands.config import Config
-    from two1.commands.config import TWO1_HOST
+    import two1
+    from two1.commands.utils import config
 
-    conf = Config()
-    host = TWO1_HOST
+    conf = config.Config()
+    host = two1.TWO1_HOST
     for n in range(2):
         m = TwentyOneRestClient(host, conf.machine_auth, conf.username)
         try:

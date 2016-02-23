@@ -4,7 +4,7 @@ import click
 # two1 imports
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.wallet.exceptions import WalletBalanceError
-from two1.commands.util.decorators import json_output
+from two1.commands.util import decorators
 
 
 @click.command("send")
@@ -15,8 +15,8 @@ from two1.commands.util.decorators import json_output
               default=False,
               show_default=True,
               help="Use unconfirmed transactions/UTXOs")
-@json_output
-def send(config, address, satoshis, use_unconfirmed):
+@decorators.json_output
+def send(ctx, address, satoshis, use_unconfirmed):
     """Send the specified address some satoshis.
 
 \b
@@ -33,13 +33,15 @@ By default, this command uses only confirmed transactions and
 UTXOs to send coins. To use unconfirmed transactions, use the
 --use-unconfirmed flag.
 """
-    w = config.wallet
-    balance = min(w.confirmed_balance(),
-                  w.unconfirmed_balance())
+    _send(ctx.obj['wallet'], address, satoshis, use_unconfirmed)
+
+
+def _send(wallet, address, satoshis, use_unconfirmed=False):
+    """Send bitcoin to the specified address"""
+    balance = min(wallet.confirmed_balance(),
+                  wallet.unconfirmed_balance())
     try:
-        txids = w.send_to(address=address,
-                          amount=satoshis,
-                          use_unconfirmed=use_unconfirmed)
+        txids = wallet.send_to(address=address, amount=satoshis, use_unconfirmed=use_unconfirmed)
         # For now there is only a single txn created, so assume it's 0
         txid = txids[0]["txid"]
         tx = txids[0]["txn"]

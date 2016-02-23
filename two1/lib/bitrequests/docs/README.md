@@ -135,10 +135,10 @@ The API for using payment methods has aimed to be as consistent as possible. Thi
 
 
     # BitTransferRequests
-    from two1.commands.config import Config
+    from two1.commands.utils import config
     from two1.lib.wallet import Wallet
     from two1.lib.bitrequests import BitTransferRequests
-    requests = BitTransferRequests(Wallet(), Config().username)
+    requests = BitTransferRequests(Wallet(), config.Config().username)
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # OnChainRequests

@@ -4,15 +4,13 @@ import subprocess
 
 # 3rd party imports
 import click
+from tabulate import tabulate
 
 # two1 imports
-from tabulate import tabulate
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST
-from two1.lib.server.analytics import capture_usage
-from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.decorators import check_notifications
-from two1.commands.util.uxstring import UxString
+from two1.commands.util import decorators
+from two1.commands.util import uxstring
 from two1.commands.util import zerotier
 
 
@@ -21,6 +19,8 @@ from two1.commands.util import zerotier
 @click.option('--status', is_flag=True, default=False,
               help='Show the status of all the networks that you have joined.')
 @click.pass_context
+@analytics.capture_usage
+@decorators.check_notifications
 def join(ctx, network, status):
     """Join a p2p network to buy/sell for BTC.
 
@@ -35,16 +35,13 @@ $ 21 join --status
 
 Shows the status of all the networks that you have joined
 """
-    config = ctx.obj['config']
     if status:
-        show_network_status(config)
+        show_network_status()
     else:
-        _join(config, network)
+        _join(ctx.obj['config'], ctx.obj['client'], network)
 
 
-@check_notifications
-@capture_usage
-def show_network_status(config):
+def show_network_status():
     """ Prints the network status of the zerotier networks
 
     Args:
@@ -52,7 +49,7 @@ def show_network_status(config):
     """
     networks_info = zerotier.get_all_addresses()
     if len(networks_info) == 0:
-        click.secho(UxString.no_network)
+        click.secho(uxstring.UxString.no_network)
         return
 
     headers = ["Network Name", "Your IP"]
@@ -63,9 +60,7 @@ def show_network_status(config):
     click.echo(tabulate(rows, headers, tablefmt="grid"))
 
 
-@check_notifications
-@capture_usage
-def _join(config, network):
+def _join(config, client, network):
     """ Joins the given zerotier network
 
     Args:
@@ -75,9 +70,6 @@ def _join(config, network):
     Raises:
         ServerRequestError: if server returns an error code other than 401
     """
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
     try:
         config.log(UxString.update_superuser)
 
@@ -95,7 +87,7 @@ def _join(config, network):
             config.log(UxString.successful_join.format(click.style(network, fg="magenta")))
     except ServerRequestError as e:
         if e.status_code == 401:
-            config.log(UxString.invalid_network)
+            config.log(uxstring.UxString.invalid_network)
         else:
             raise e
     except subprocess.CalledProcessError as e:

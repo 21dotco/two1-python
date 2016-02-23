@@ -12,11 +12,10 @@ from distutils.version import LooseVersion
 import click
 
 # two1 imports
-from two1.commands.config import TWO1_VERSION
-from two1.commands.config import TWO1_PYPI_HOST
-from two1.commands.config import TWO1_PACKAGE_NAME
-from two1.lib.server.analytics import capture_usage
-from two1.commands.util.uxstring import UxString
+import two1
+from two1.commands.util import uxstring
+
+TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
 
 
 @click.command()
@@ -31,16 +30,8 @@ Usage
 Invoke this with no arguments to update the CLI.
 $ 21 update
 """
-    config = ctx.obj['config']
-    _update(config, version)
-
-
-@capture_usage
-def _update(config, version):
-    click.echo(UxString.update_check)
-    update_two1_package(config, version, force_update_check=True)
-
-TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + TWO1_PACKAGE_NAME
+    click.echo(uxstring.UxString.update_check)
+    update_two1_package(ctx.obj['config'], version, force_update_check=True)
 
 
 def update_two1_package(config, version, force_update_check=False):
@@ -85,12 +76,12 @@ def update_two1_package(config, version, force_update_check=False):
         # well.
         set_update_check_date(config, date.today())
 
-        installed_version = TWO1_VERSION
+        installed_version = two1.TWO1_VERSION
 
         if installed_version == '':
             # This has occured when local git commits have happened
             click.echo("")
-            raise click.ClickException(UxString.Error.version_not_detected)
+            raise click.ClickException(uxstring.UxString.Error.version_not_detected)
 
         try:
             latest_version = lookup_pypi_version(version)
@@ -108,13 +99,13 @@ def update_two1_package(config, version, force_update_check=False):
             # The update is performed either using pip or apt-get depending
             # on how two1 was installed in the first place.
 
-            click.echo(UxString.update_package % latest_version)
+            click.echo(uxstring.UxString.update_package % latest_version)
             # Detect if the package was installed using apt-get
             # This detection only works for deb based linux systems
             ret['update_successful'] = _do_update(latest_version)
         else:
             # Alert the user if there is no newer version available
-            click.echo(UxString.update_not_needed)
+            click.echo(uxstring.UxString.update_not_needed)
 
     return ret
 
@@ -166,12 +157,12 @@ def lookup_pypi_version(version='latest'):
     """
     import requests
     try:
-        url = urljoin(TWO1_PYPI_HOST,
-                      "api/package/{}/".format(TWO1_PACKAGE_NAME))
+        url = urljoin(two1.TWO1_PYPI_HOST,
+                      "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
         r = requests.get(url)
         data = r.json()
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-        raise click.ClickException(UxString.Error.update_server_connection)
+        raise click.ClickException(uxstring.UxString.Error.update_server_connection)
 
     pypi_version = None
 
@@ -191,12 +182,12 @@ def lookup_pypi_version(version='latest'):
                          re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
 
         if not data:
-            raise click.ClickException(UxString.Error.version_not_found.format(version))
+            raise click.ClickException(uxstring.UxString.Error.version_not_found.format(version))
         else:
             pypi_version = data["version"]
 
     except (AttributeError, KeyError, TypeError):
-        raise click.ClickException(UxString.Error.server_err)
+        raise click.ClickException(uxstring.UxString.Error.server_err)
 
     return pypi_version
 
@@ -238,8 +229,7 @@ def set_update_check_date(config, update_date):
     """
 
     # Save the date in a locked down string format
-    config.update_key('last_update_check', update_date.strftime("%Y-%m-%d"))
-    config.save()
+    config.set('last_update_check', update_date.strftime("%Y-%m-%d"))
 
 
 def perform_pip_based_update(version):
@@ -249,11 +239,11 @@ def perform_pip_based_update(version):
     install_command = ["pip3",
                        "install",
                        "-i",
-                       "{}/pypi".format(TWO1_PYPI_HOST),
+                       "{}/pypi".format(two1.TWO1_PYPI_HOST),
                        "-U",
                        "--no-deps",
                        "-I",
-                       "{}=={}".format(TWO1_PACKAGE_NAME, version)]
+                       "{}=={}".format(two1.TWO1_PACKAGE_NAME, version)]
 
     stop_walletd()
 
@@ -264,13 +254,13 @@ def perform_pip_based_update(version):
         if hasattr(sys, "real_prefix"):
             subprocess.check_call(install_command)
         else:
-            click.echo(UxString.update_superuser)
+            click.echo(uxstring.UxString.update_superuser)
             # If not in a virtual environment, run the install command
             # with sudo permissions.
             subprocess.check_call(["sudo"] + install_command)
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         # TODO: log this error on the server backend for diagnostics
-        click.echo(UxString.Error.update_failed)
+        click.echo(uxstring.UxString.Error.update_failed)
         return False
 
     return True
@@ -290,7 +280,7 @@ def perform_apt_based_update():
                        "-y",
                        "install",
                        "--only-upgrade",
-                       TWO1_PACKAGE_NAME,
+                       two1.TWO1_PACKAGE_NAME,
                        "minerd",
                        "zerotier-one"]
     ret = False
@@ -300,6 +290,6 @@ def perform_apt_based_update():
         ret = True
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         # TODO: log this error on the server backend for diagnostics
-        click.echo(UxString.Error.update_failed)
+        click.echo(uxstring.UxString.Error.update_failed)
 
     return ret

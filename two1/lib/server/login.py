@@ -3,8 +3,8 @@ import base64
 import click
 import re
 
-from two1.commands.util.exceptions import UnloggedException
-from two1.commands.config import TWO1_HOST
+import two1
+from two1.cinnabds.util.exceptions import UnloggedException
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.util.uxstring import UxString
@@ -146,13 +146,12 @@ def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
             click.echo(UxString.creating_account % username)
             password = get_password(username)
 
-        rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth, username)
+        rest_client = TwentyOneRestClient(two1.TWO1_HOST, machine_auth, username)
         try:
             r = rest_client.account_post(bitcoin_payout_address, email, password)
             click.echo(UxString.payout_address % bitcoin_payout_address)
-            config.update_key("username", username)
-            config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
-            config.save()
+            config.set("username", username)
+            config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
             # Ask for opt-in to analytics
             analytics_optin(config)
             break
@@ -191,7 +190,7 @@ def signin_account(config, machine_auth, machine_auth_pubkey_b64, bitcoin_payout
 
 def login_with_username_password(config, username, password, machine_auth, payout_address):
     click.secho(UxString.login_in_progress.format(username))
-    rest_client = TwentyOneRestClient(TWO1_HOST, machine_auth=machine_auth, username=username)
+    rest_client = TwentyOneRestClient(two1.TWO1_HOST, machine_auth=machine_auth, username=username)
     try:
         r = rest_client.login(payout_address=payout_address, password=password)
     except ServerRequestError as e:
@@ -221,8 +220,7 @@ def analytics_optin(config):
         config: Config object from the cli context.
     """
     if click.confirm(UxString.analytics_optin):
-        config.update_key("collect_analytics", True)
-        config.save()
+        config.set("collect_analytics", True)
         click.echo(UxString.analytics_thankyou)
     else:
         click.echo("")

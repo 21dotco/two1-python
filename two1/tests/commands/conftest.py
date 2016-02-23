@@ -28,6 +28,11 @@ def mock_config():
     return mock_objects.MockConfig()
 
 
+@pytest.fixture()
+def mock_rest_client(mock_config):
+    return mock_objects.MockTwentyOneRestClient(None, mock_config.machine_auth, mock_config.username)
+
+
 @pytest.yield_fixture()
 def patch_click():
     with mock.patch('click.echo') as patch_click:

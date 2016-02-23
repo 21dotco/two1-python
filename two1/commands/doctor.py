@@ -19,14 +19,12 @@ import requests
 
 # two1 imports
 import two1
-from two1.commands import config
 from two1.commands import update
 from two1.commands import status
 from two1.lib.server import analytics
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
-from two1.commands.util import exceptions
-from two1.commands.util import bitcoin_computer
+from two1.lib.util import exceptions
 
 
 class Check(object):
@@ -241,7 +239,7 @@ class Doctor(object):
         """
         check_str = "21 Tool Version"
         expected_version = update.lookup_pypi_version()
-        actual_version = config.TWO1_VERSION
+        actual_version = two1.TWO1_VERSION
 
         if self.is_version_gte(actual_version, expected_version):
             return Check.Result.PASS, check_str, actual_version
@@ -430,11 +428,11 @@ class Doctor(object):
         """
         check_str = "Two1 Dotenv"
 
-        dotenv_path = config.TWO1_USER_FOLDER
+        dotenv_path = two1.TWO1_USER_FOLDER
         if not os.path.exists(dotenv_path):
             return Check.Result.FAIL, check_str, "{} does not exist".format(dotenv_path)
 
-        config_file_path = config.TWO1_CONFIG_FILE
+        config_file_path = two1.TWO1_CONFIG_FILE
         config_file = config_file_path.split(os.path.sep)[-1]
         if os.path.exists(config_file_path):
             return Check.Result.PASS, check_str, config_file_path
@@ -451,10 +449,10 @@ class Doctor(object):
         """
         check_str = "21 API"
         result = Check.Result.FAIL
-        if self.make_http_connection(config.TWO1_HOST):
+        if self.make_http_connection(two1.TWO1_HOST):
             result = Check.Result.PASS
 
-        return result, check_str, config.TWO1_HOST
+        return result, check_str, two1.TWO1_HOST
 
     def check_server_21_pool(self):
         """ Checks if the 21 pool api is up
@@ -466,10 +464,10 @@ class Doctor(object):
         """
         check_str = "21 Pool"
         result = Check.Result.FAIL
-        if self.make_http_connection(config.TWO1_POOL_URL):
+        if self.make_http_connection(two1.TWO1_POOL_URL):
             result = Check.Result.PASS
 
-        return result, check_str, config.TWO1_POOL_URL
+        return result, check_str, two1.TWO1_POOL_URL
 
     def check_server_21_logging(self):
         """ Checks if the 21 loggin server is up
@@ -481,10 +479,10 @@ class Doctor(object):
         """
         check_str = "21 Logging"
         result = Check.Result.FAIL
-        if self.make_http_connection(config.TWO1_LOGGER_SERVER):
+        if self.make_http_connection(two1.TWO1_LOGGER_SERVER):
             result = Check.Result.PASS
 
-        return result, check_str, config.TWO1_LOGGER_SERVER
+        return result, check_str, two1.TWO1_LOGGER_SERVER
 
     def check_server_21_provider(self):
         """ Checks if 21 blockchain provider is up
@@ -497,10 +495,10 @@ class Doctor(object):
         check_str = "21 Blockchain Provider"
         result = Check.Result.FAIL
         # checks connection and status code
-        if self.make_http_connection(config.TWO1_PROVIDER_HOST):
+        if self.make_http_connection(two1.TWO1_PROVIDER_HOST):
             result = Check.Result.PASS
 
-        return result, check_str, config.TWO1_PROVIDER_HOST
+        return result, check_str, two1.TWO1_PROVIDER_HOST
 
     def check_server_21_pypi(self):
         """ Checks if 21 hosted pypi server is up
@@ -512,10 +510,10 @@ class Doctor(object):
         """
         check_str = "21 Pypicloud"
         result = Check.Result.FAIL
-        if self.make_http_connection(config.TWO1_PYPI_HOST):
+        if self.make_http_connection(two1.TWO1_PYPI_HOST):
             result = Check.Result.PASS
 
-        return result, check_str, config.TWO1_PYPI_HOST
+        return result, check_str, two1.TWO1_PYPI_HOST
 
     def check_server_21_slack(self):
         """ Checks if the 21 slack server is up

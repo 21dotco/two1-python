@@ -14,27 +14,27 @@ import base64
 import click
 
 # two1 imports
+import two1
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory
-from two1.lib.server.analytics import capture_usage
-import two1.commands.config as cmd_config
+from two1.lib.server import analytics
+from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
 from two1.lib.bitcoin.hash import Hash
 from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.decorators import check_notifications
-from two1.commands.util.exceptions import MiningDisabledError, BitcoinComputerNeededError
-from two1.commands.util.uxstring import UxString
+from two1.commands.util.exceptions import MiningDisabledError
+from two1.commands.util import uxstring
 import two1.lib.bitcoin.utils as utils
-import two1.commands.config as app_config
-from two1.commands.config import TWO1_DEVICE_ID
 
 
 @click.command()
 @click.option('--dashboard', default=False, is_flag=True,
               help="Dashboard with mining details")
 @click.pass_context
+@analytics.capture_usage
+@decorators.check_notifications
 def mine(ctx, dashboard):
     """Mine bitcoin at the command line.
 
@@ -56,14 +56,10 @@ $ 21 log
 See a mining dashboard for low-level mining details.
 $ 21 mine --dashboard
 """
-    config = ctx.obj['config']
-
-    _mine(config, dashboard=dashboard)
+    _mine(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'], dashboard=dashboard)
 
 
-@check_notifications
-@capture_usage
-def _mine(config, dashboard=False):
+def _mine(config, client, wallet, dashboard=False):
     """ Starts the mining ASIC if not mining and cpu mines if already mining
 
     Args:
@@ -81,8 +77,8 @@ def _mine(config, dashboard=False):
         else:
             start_cpu_mining(config)
     else:
-        config.log(UxString.buy_ad, fg="magenta")
-        start_cpu_mining(config)
+        config.log(uxstring.UxString.buy_ad, fg="magenta")
+        start_cpu_mining(config, client, wallet)
 
 
 def is_minerd_running():
@@ -111,10 +107,10 @@ def show_minertop(show_dashboard):
         show_dashboard (bool): shows the dashboard if True
     """
     if show_dashboard:
-        click.pause(UxString.mining_show_dashboard_prompt)
+        click.pause(uxstring.UxString.mining_show_dashboard_prompt)
         subprocess.call("minertop")
     else:
-        click.echo(UxString.mining_show_dashboard_context)
+        click.echo(uxstring.UxString.mining_show_dashboard_context)
 
 
 def start_minerd(config, show_dashboard=False):
@@ -126,7 +122,7 @@ def start_minerd(config, show_dashboard=False):
     """
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
-    config.log(UxString.mining_chip_start)
+    config.log(uxstring.UxString.mining_chip_start)
     # Read the PID and check if the process is running
     if os.path.isfile(minerd_pid_file):
         pid = None
@@ -136,7 +132,7 @@ def start_minerd(config, show_dashboard=False):
         if pid is not None:
             if check_pid(pid):
                 # Running, so fire up minertop...
-                click.echo(UxString.mining_chip_running)
+                click.echo(uxstring.UxString.mining_chip_running)
                 show_minertop(show_dashboard)
                 return
             else:
@@ -147,7 +143,7 @@ def start_minerd(config, show_dashboard=False):
     # TODO: make sure config exists in /etc
     # TODO: replace with sys-ctrl command
     minerd_cmd = ["sudo", "minerd", "-u", config.username,
-                  cmd_config.TWO1_POOL_URL]
+                  two1.TWO1_POOL_URL]
     try:
         o = subprocess.check_output(minerd_cmd, universal_newlines=True)
     except subprocess.CalledProcessError as e:
@@ -157,7 +153,7 @@ def start_minerd(config, show_dashboard=False):
     show_minertop(show_dashboard)
 
 
-def start_cpu_mining(config):
+def start_cpu_mining(config, client, wallet):
     """ Mines bitcoin on the command line by using the CPU of the system
 
     CPU mining, or foreground mining, is when the pool sets the difficulty
@@ -166,16 +162,10 @@ def start_cpu_mining(config):
     Args:
         config (Config): config object used for getting .two1 information
     """
-
-    client = rest_client.TwentyOneRestClient(cmd_config.TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
-
-    enonce1, enonce2_size, reward = set_payout_address(config, client)
+    enonce1, enonce2_size, reward = set_payout_address(config, client, wallet)
 
     start_time = time.time()
-    config.log(UxString.mining_start.format(config.username, reward))
-
+    config.log(uxstring.UxString.mining_start.format(config.username, reward))
 
     work = get_work(config, client)
 
@@ -187,17 +177,17 @@ def start_cpu_mining(config):
     duration = end_time - start_time
 
     config.log(
-        UxString.mining_success.format(config.username, paid_satoshis, duration),
+        uxstring.UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="magenta")
 
-    click.echo(UxString.mining_status)
+    click.echo(uxstring.UxString.mining_status)
     status.status_wallet(config, client)
 
-    click.echo(UxString.mining_finish.format(
+    click.echo(uxstring.UxString.mining_finish.format(
         click.style("21 status", bold=True), click.style("21 buy", bold=True)))
 
 
-def set_payout_address(config, client):
+def set_payout_address(client, wallet):
     """ Set a new address from the HD wallet for payouts
 
     Args:
@@ -209,7 +199,7 @@ def set_payout_address(config, client):
         int: the size in bytes of the extra nonce 2
         int: reward amount given upon sucessfull solution found
     """
-    payout_address = config.wallet.current_address
+    payout_address = wallet.current_address
     auth_resp = client.account_payout_address_post(payout_address)
 
     user_info = json.loads(auth_resp.text)
@@ -265,11 +255,11 @@ def get_work(config, client):
         work_msg = client.get_work()
     except ServerRequestError as e:
         if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
-            click.secho(UxString.mining_bitcoin_computer_needed, fg="red")
+            click.secho(uxstring.UxString.mining_bitcoin_computer_needed, fg="red")
             raise BitcoinComputerNeededError()
         elif e.status_code == 404 or e.status_code == 403:
-            click.echo(UxString.mining_limit_reached)
-            raise MiningDisabledError(UxString.mining_limit_reached)
+            click.echo(uxstring.UxString.mining_limit_reached)
+            raise MiningDisabledError(uxstring.UxString.mining_limit_reached)
         else:
             raise e
 

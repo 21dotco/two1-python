@@ -6,28 +6,29 @@ import traceback
 import os
 import requests
 from functools import update_wrapper
-from two1.commands import config as app_config
-from two1.commands.util.exceptions import UnloggedException
-from two1.commands.util.uxstring import UxString
+import two1
+from two1.lib.commands.exceptions import UnloggedException
+from two1.lib.commands.uxstring import UxString
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
 
 
 def capture_usage(func):
     """Wraps a 21 CLI command in a function that logs usage statistics."""
-    def _capture_usage(config, *args, **kw):
+    def _capture_usage(ctx, *args, **kw):
         func_name = func.__name__[1:]
+        config = ctx.obj['config']
         username = config.username
         user_platform = platform.system() + platform.release()
         # we can separate between updates
-        version = app_config.TWO1_VERSION
+        version = two1.TWO1_VERSION
         try:
             if config.collect_analytics:
                 func_name = func.__name__[1:]
                 username = config.username
                 user_platform = platform.system() + platform.release()
                 # we can separate between updates
-                version = app_config.TWO1_VERSION
+                version = two1.TWO1_VERSION
                 username = username or "unknown"
                 data = {
                     "channel": "cli",
@@ -39,7 +40,7 @@ def capture_usage(func):
                 }
                 log_message(data)
 
-            res = func(config, *args, **kw)
+            res = func(ctx, *args, **kw)
 
             return res
 
@@ -82,7 +83,7 @@ def str2bool(v):
 
 def log_message(message):
     """Send the payload to the logging server."""
-    url = app_config.TWO1_LOGGER_SERVER + "/logs"
+    url = two1.TWO1_LOGGER_SERVER + "/logs"
     message_str = json.dumps(message)
     requests.request("post", url, data=message_str)
     # TODO log a better error message in case of an uncaught exception

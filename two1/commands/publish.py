@@ -10,14 +10,13 @@ from yaml.error import YAMLError
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server.analytics import capture_usage
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.decorators import check_notifications
+from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException
-from two1.commands.util.uxstring import UxString
+from two1.commands.util import uxstring
 from two1.commands.util import zerotier
-from two1.commands.config import TWO1_HOST
 from two1.commands.search import get_next_page
 
 
@@ -65,6 +64,7 @@ $ 21 publish remove --help
 
 @publish.command()
 @click.pass_context
+@analytics.capture_usage
 def list(ctx):
     """
 Lists all your published apps.
@@ -78,13 +78,14 @@ You can view detailed admin information about an app by specifying it's id
 at the prompt.
     """
     #pylint: disable=redefined-builtin
-    config = ctx.obj["config"]
-    _list_apps(config)
+    _list_apps(ctx.obj['config'], ctx.obj['client'])
 
 
 @publish.command()
 @click.argument('app_id')
 @click.pass_context
+@analytics.capture_usage
+@decorators.check_notifications
 def remove(ctx, app_id):
     """
 Removes a published app from the Marketplace.
@@ -95,8 +96,7 @@ The app_id can be obtained by performing:
 
 $ 21 publish list
     """
-    config = ctx.obj["config"]
-    _delete_app(config, app_id)
+    _delete_app(ctx.obj['config'], ctx.obj['client'], app_id)
 
 
 @publish.command()
@@ -106,6 +106,8 @@ $ 21 publish list
 @click.option('-s', '--skip', is_flag=True, default=False,
               help='Skips the strict checking of the manifest against your current ip.')
 @click.pass_context
+@analytics.capture_usage
+@decorators.check_notifications
 def submit(ctx, manifest_path, marketplace, skip):
     """
 Submits an app to the Marketplace.
@@ -118,20 +120,16 @@ https://21.co/publish
 
 Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
     """
-    _publish(ctx.obj["config"], manifest_path, marketplace, skip)
+    _publish(ctx.obj['config'], ctx.obj['client'] manifest_path, marketplace, skip)
 
 
-@capture_usage
-def _list_apps(config):
+def _list_apps(config, client):
     """ Lists all apps that have been published to the 21 marketplace
 
     Args:
         config (Config): config object used for getting .two1 information
     """
-    click.secho(UxString.my_apps.format(config.username), fg="green")
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
+    click.secho(uxstring.UxString.my_apps.format(config.username), fg="green")
     current_page = 0
     total_pages = get_search_results(config, client, current_page)
     if total_pages < 1:
@@ -139,7 +137,7 @@ def _list_apps(config):
 
     while 0 <= current_page < total_pages:
         try:
-            prompt_resp = click.prompt(UxString.pagination,
+            prompt_resp = click.prompt(uxstring.UxString.pagination,
                                        type=str)
 
             next_page = get_next_page(prompt_resp, current_page)
@@ -157,34 +155,27 @@ def _list_apps(config):
             return
 
 
-@check_notifications
-@capture_usage
-def _delete_app(config, app_id):
+def _delete_app(config, client, app_id):
     """ Deletes an app that has been published to the 21 marketplace
 
     Args:
         config (Config): config object used for getting .two1 information
         app_id (str): a unique string that identifies the application
     """
-    if click.confirm(UxString.delete_confirmation.format(app_id)):
-        client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                                 config.machine_auth,
-                                                 config.username)
+    if click.confirm(uxstring.UxString.delete_confirmation.format(app_id)):
         try:
             resp = client.delete_app(config.username, app_id)
             resp_json = resp.json()
             deleted_title = resp_json["deleted_title"]
-            click.secho(UxString.delete_success.format(app_id, deleted_title))
+            click.secho(uxstring.UxString.delete_success.format(app_id, deleted_title))
         except ServerRequestError as e:
             if e.status_code == 404:
-                click.secho(UxString.delete_app_not_exist.format(app_id), fg="red")
+                click.secho(uxstring.UxString.delete_app_not_exist.format(app_id), fg="red")
             elif e.status_code == 403:
-                click.secho(UxString.delete_app_no_permissions.format(app_id), fg="red")
+                click.secho(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
 
 
-@check_notifications
-@capture_usage
-def _publish(config, manifest_path, marketplace, skip):
+def _publish(config, client, manifest_path, marketplace, skip):
     """ Publishes application by uploading the manifest to the given marketplace
 
     Args:
@@ -202,15 +193,15 @@ def _publish(config, manifest_path, marketplace, skip):
             address = get_zerotier_address(marketplace)
 
             if address != app_ip:
-                if not click.confirm(UxString.wrong_ip.format(app_ip, address, app_ip)):
-                    click.secho(UxString.switch_host.format(manifest_path, app_ip, address))
+                if not click.confirm(uxstring.UxString.wrong_ip.format(app_ip, address, app_ip)):
+                    click.secho(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
                     return
 
     except ValueError:
         return
     except ValidationError as e:
         click.secho(
-            UxString.bad_manifest.format(manifest_path, e.args[0], UxString.publish_docs_url),
+            uxstring.UxString.bad_manifest.format(manifest_path, e.args[0], uxstring.UxString.publish_docs_url),
             fg="red")
         return
 
@@ -219,14 +210,11 @@ def _publish(config, manifest_path, marketplace, skip):
                                       manifest_json["host"],
                                       manifest_json["basePath"])
 
-    click.secho(UxString.publish_start.format(app_name, app_endpoint, marketplace))
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             config.machine_auth,
-                                             config.username)
+    click.secho(uxstring.UxString.publish_start.format(app_name, app_endpoint, marketplace))
     payload = {"manifest": manifest_json, "marketplace": marketplace}
     response = client.publish(payload)
     if response.status_code == 201:
-        click.secho(UxString.publish_success.format(app_name, marketplace))
+        click.secho(uxstring.UxString.publish_success.format(app_name, marketplace))
 
 
 def get_search_results(config, client, page):
@@ -245,7 +233,7 @@ def get_search_results(config, client, page):
         resp_json = resp.json()
         search_results = resp_json["results"]
         if search_results is None or len(search_results) == 0:
-            click.secho(UxString.no_published_apps, fg="blue")
+            click.secho(uxstring.UxString.no_published_apps, fg="blue")
             return 0
 
         total_pages = resp_json["total_pages"]
@@ -359,7 +347,7 @@ def display_app_info(config, client, app_id):
 
     except ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(UxString.app_does_not_exist.format(app_id))
+            click.secho(uxstring.UxString.app_does_not_exist.format(app_id))
         else:
             raise e
 
@@ -376,31 +364,31 @@ def check_app_manifest(api_docs_path):
     """
     if not os.path.exists(api_docs_path):
         raise ValidationError(
-            UxString.manifest_missing.format(
-                api_docs_path, UxString.publish_docs_url))
+            uxstring.UxString.manifest_missing.format(
+                api_docs_path, uxstring.UxString.publish_docs_url))
 
     if os.path.isdir(api_docs_path):
         raise ValidationError(
-            UxString.manifest_is_directory.format(api_docs_path), fg="red")
+            uxstring.UxString.manifest_is_directory.format(api_docs_path), fg="red")
 
     file_size = os.path.getsize(api_docs_path) / 1e6
     if file_size > 2:
         raise ValidationError(
-            UxString.large_manifest.format(api_docs_path,
-                                           UxString.publish_docs_url))
+            uxstring.UxString.large_manifest.format(api_docs_path,
+                                           uxstring.UxString.publish_docs_url))
     try:
         with open(api_docs_path, "r") as f:
             manifest_dict = yaml.load(f.read())
             validate_manifest(manifest_dict)
             return manifest_dict
     except YAMLError:
-        click.secho(UxString.malformed_yaml.format(api_docs_path, UxString.publish_docs_url), fg="red")
+        click.secho(uxstring.UxString.malformed_yaml.format(api_docs_path, uxstring.UxString.publish_docs_url), fg="red")
         raise ValueError()
     except ValueError as e:
-        click.secho(UxString.bad_manifest.format(
+        click.secho(uxstring.UxString.bad_manifest.format(
             api_docs_path,
             e.args[0],
-            UxString.publish_docs_url), fg="red")
+            uxstring.UxString.publish_docs_url), fg="red")
         raise ValueError()
 
 
@@ -415,24 +403,24 @@ def validate_manifest(manifest_json):
     Raises:
         ValueError: if a required field is not valid or present in the manifest
     """
-    for field in UxString.valid_top_level_manifest_fields:
+    for field in uxstring.UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
-            raise ValidationError(UxString.top_level_manifest_field_missing.format(field))
+            raise ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field))
 
-    for field in UxString.manifest_info_fields:
+    for field in uxstring.UxString.manifest_info_fields:
         if field not in manifest_json["info"]:
-            raise ValidationError(UxString.manifest_info_field_missing.format(field))
+            raise ValidationError(uxstring.UxString.manifest_info_field_missing.format(field))
 
-    for field in UxString.price_fields:
+    for field in uxstring.UxString.price_fields:
         if field not in manifest_json["info"]["x-21-total-price"]:
-            raise ValidationError(UxString.price_fields_missing.format(field))
+            raise ValidationError(uxstring.UxString.price_fields_missing.format(field))
 
     if len(manifest_json["schemes"]) == 0:
-        raise ValidationError(UxString.scheme_missing)
+        raise ValidationError(uxstring.UxString.scheme_missing)
 
-    if manifest_json["info"]["x-21-category"].lower() not in UxString.valid_app_categories:
-        valid_categories = ", ".join(UxString.valid_app_categories)
-        raise ValidationError(UxString.invalid_category.format(
+    if manifest_json["info"]["x-21-category"].lower() not in uxstring.UxString.valid_app_categories:
+        valid_categories = ", ".join(uxstring.UxString.valid_app_categories)
+        raise ValidationError(uxstring.UxString.invalid_category.format(
             manifest_json["info"]["x-21-category"], valid_categories))
 
 
@@ -448,9 +436,9 @@ def get_zerotier_address(marketplace):
     Raises:
         UnloggedException: if the zt network doesn't exist
     """
-    click.secho(UxString.update_superuser)
+    click.secho(uxstring.UxString.update_superuser)
     try:
         return zerotier.get_address_for_network(marketplace)
     except KeyError:
-        click.secho(UxString.no_zt_network.format(marketplace, UxString.join_cmd))
+        click.secho(uxstring.UxString.no_zt_network.format(marketplace, uxstring.UxString.join_cmd))
         raise UnloggedException()

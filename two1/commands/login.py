@@ -6,16 +6,16 @@ import base64
 import click
 
 # two1 imports
+import two1
 import two1.lib.server.login as server_login
 from two1.lib.blockchain import exceptions
-from two1.commands.util.exceptions import TwoOneError, UnloggedException
-from two1.commands.util.uxstring import UxString
+from two1.lib.util.exceptions import TwoOneError, UnloggedException
+from two1.lib.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
-from two1.commands.util.decorators import json_output
-from two1.lib.server.analytics import capture_usage
+from two1.commands.util import decorators
+from two1.lib.server import analytics
 from two1.lib.server import rest_client
-from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 
@@ -25,18 +25,18 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
               help='Set/update your 21 password')
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
-@json_output
-def login(config, setpassword, username, password):
+@decorators.json_output
+def login(ctx, setpassword, username, password):
     """Log in to your different 21 accounts."""
     if setpassword:
-        return _set_password(config)
+        return _set_password(ctx.obj['config'], ctx.obj['client'])
     else:
-        _login(config, username, password)
+        _login(ctx.obj['config'], ctx.obj['wallet'], username, password)
 
 
 @check_notifications
 @capture_usage
-def _login(config, username, password):
+def _login(config, wallet, username, password):
     """ Log in a user into the two1 account
 
     Args:
@@ -44,11 +44,10 @@ def _login(config, username, password):
         username (str): optional command line arg to skip username prompt
         password (str): optional command line are to skip password prompt
     """
-    cfg = Config()
-    machine_auth = cfg.machine_auth
+    machine_auth = config.machine_auth
     machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
-    bitcoin_payout_address = cfg.wallet.current_address
-    server_login.signin_account(config=cfg,
+    bitcoin_payout_address = wallet.current_address
+    server_login.signin_account(config=config,
                                 machine_auth=machine_auth,
                                 machine_auth_pubkey_b64=machine_auth_pubkey_b64,
                                 bitcoin_payout_address=bitcoin_payout_address,
@@ -58,7 +57,7 @@ def _login(config, username, password):
 
 
 @capture_usage
-def _set_password(config):
+def _set_password(config, client):
     """ Upadets the 21 user account password from command line
 
     Args:
@@ -72,9 +71,6 @@ def _set_password(config):
 
         password = server_login.get_password(config.username)
         machine_auth = get_machine_auth(config)
-        client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                                 machine_auth,
-                                                 config.username)
         client.update_password(password)
 
     except click.exceptions.Abort:
@@ -93,10 +89,10 @@ def get_machine_auth(config):
     if hasattr(config, "machine_auth"):
         machine_auth = config.machine_auth
     else:
-        dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
+        dp = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
         wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
         if not Two1Wallet.check_wallet_file(wallet_path):
-            create_wallet_and_account()
+            create_wallet_and_account(config)
             return
 
         wallet = Wallet(wallet_path=wallet_path,
@@ -122,15 +118,14 @@ def save_config(config, machine_auth, username):
     config.save()
 
 
-def create_wallet_and_account():
+def create_wallet_and_account(config):
     """ Creates a wallet and two1 account
 
     Raises:
         TwoOneError: if the data provider is unavailable or an error occurs
     """
     try:
-        cfg = Config()
-        server_login.check_setup_twentyone_account(cfg)
+        server_login.check_setup_twentyone_account(config)
     except exceptions.DataProviderUnavailableError:
         raise TwoOneError(UxString.Error.connection_cli)
     except exceptions.DataProviderError:
