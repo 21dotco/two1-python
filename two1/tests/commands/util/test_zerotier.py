@@ -129,6 +129,7 @@ SINGLE_NETWORKS = [
 
 EMPTY_NETWORKS = []
 
+
 @pytest.mark.parametrize("network_id, list_networks_ret_val, outcome", [
     ("6c0c6960a20bf150", MULTIPLE_NETWORKS, ["10.244.223.250", "16"]),
     ("not a valid str", MULTIPLE_NETWORKS, RuntimeError),
@@ -142,16 +143,16 @@ EMPTY_NETWORKS = []
 
     (None, EMPTY_NETWORKS, RuntimeError),
     ])
-def test_device_ip(network_id, list_networks_ret_val, outcome):
-    """ Tests zerotier.device_ip """
+def test_get_address_by_id(network_id, list_networks_ret_val, outcome):
+    """ Tests zerotier.get_address_by_id """
     with mock.patch("two1.commands.util.zerotier.list_networks",
                     return_value=list_networks_ret_val):
 
         if isinstance(outcome, list):
-            assert zerotier.device_ip(network_id) == outcome
+            assert zerotier.get_address_by_id(network_id) == outcome
         else:
             with pytest.raises(outcome):
-                zerotier.device_ip(network_id)
+                zerotier.get_address_by_id(network_id)
 
 
 @pytest.mark.parametrize("list_networks_ret_val, outcome", [
