@@ -69,7 +69,7 @@ def test_cli_json(args, outcome):
 
     # expecting JSONError when string is given as an outcome
     elif isinstance(outcome, bytes):
-        with pytest.raises(json.decoder.JSONDecodeError):
+        with pytest.raises(ValueError):
             with mock.patch("two1.commands.util.zerotier.cli", return_value=outcome):
                 zerotier.cli_json(args)
 
@@ -184,4 +184,33 @@ def test_get_address(network_name, get_all_ret_val, outcome):
     with mock.patch("two1.commands.util.zerotier.get_all_addresses",
                     return_value=get_all_ret_val):
         assert zerotier.get_address(network_name) == outcome
+
+
+@mock.patch('two1.commands.util.zerotier.cli_json')
+def test_info(mock_cli_json):
+    """ Makes sure that the return value is a dict """
+    mock_cli_json.return_value = [("test", True)]
+    assert zerotier.info() == {"test": True}
+
+
+@mock.patch('two1.commands.util.zerotier.cli_json')
+def test_list_networks(mock_cli_json):
+    """ Makes sure that the return value is a dict """
+    mock_cli_json.return_value = "test"
+    assert zerotier.list_networks() == "test"
+
+
+@pytest.mark.parametrize("info_dict, outcome", [
+    ({"address": "0123456789"}, "0123456789"),
+    ({"address": "0123456789abcdef"}, ValueError)
+     ])
+def test_device_address(info_dict, outcome):
+    with mock.patch("two1.commands.util.zerotier.info") as info_mock:
+        info_mock.return_value = info_dict
+
+        if isinstance(outcome, str):
+            assert zerotier.device_address() == outcome
+        else:
+            with pytest.raises(outcome):
+                zerotier.device_address()
 
