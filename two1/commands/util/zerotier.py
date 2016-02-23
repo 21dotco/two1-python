@@ -102,9 +102,12 @@ def device_address():
     Raises:
         CalledProcessError: If the cli call failed.
         ValueError: If the json string could not be successfully parsed into a dict.
+        ValueError: If the address from info is not valid
     """
     address = info()['address']
-    assert is_valid(address, id_len=10)
+    if not is_valid(address, id_len=10):
+        raise ValueError("Error: address from info() is not valid")
+
     return address
 
 
