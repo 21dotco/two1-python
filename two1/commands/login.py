@@ -28,7 +28,26 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 @decorators.json_output
 @analytics.capture_usage
 def login(ctx, setpassword, username, password):
-    """Log in to your different 21 accounts."""
+    """Log in to your 21 account.
+
+\b
+Usage
+_____
+Use an interactive login prompt to log in to your 21 account.
+$ 21 login
+
+\b
+Log in without the login prompt.
+$ 21 login -u your_username -p your_password
+
+\b
+Change the password for the currently logged in user.
+$ 21 login -sp
+
+\b
+View the user that is currently logged in.
+$ 21 login -a
+    """
     if setpassword:
         return _set_password(ctx.obj['config'], ctx.obj['client'])
     else:
