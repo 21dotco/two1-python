@@ -6,12 +6,19 @@ import pytest
 
 this_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def pytest_generate_tests(metafunc):
-    _blocks = []
-    _txns = []
-    _txns_dict = {}
+@pytest.fixture(scope="session")
+def txns_json():
     with gzip.open(os.path.join(this_file_path, "txns.json.gz"), 'rt') as f:
         _txns = json.load(f)
+
+    return _txns
+
+
+@pytest.fixture(scope="session")
+def blocks_json(txns_json):
+    _blocks = []
+    _txns = txns_json
+    _txns_dict = {}
 
     # Create a dict keyed by the txn hash so that we can populate the
     # blocks with it. This assumes that all the txns for each of the
@@ -19,7 +26,7 @@ def pytest_generate_tests(metafunc):
     # created by gen_test_inputs.py, that will be the case.
     for t, txn in enumerate(_txns):
         _txns_dict[txn['hash']] = txn
-        
+
     with gzip.open(os.path.join(this_file_path, "blocks.json.gz"), 'rt') as f:
         _blocks = json.load(f)
 
@@ -28,10 +35,7 @@ def pytest_generate_tests(metafunc):
         block_txns = []
         for t in b['transaction_hashes']:
             block_txns.append(_txns_dict.get(t, None))
-        
+
         b['transactions'] = block_txns
-        
-    if 'block_json' in metafunc.fixturenames:
-        metafunc.parametrize("block_json", _blocks)
-    if 'txn_json' in metafunc.fixturenames:
-        metafunc.parametrize("txn_json", _txns)
+
+    return _blocks
