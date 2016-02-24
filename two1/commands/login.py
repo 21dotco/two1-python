@@ -1,15 +1,14 @@
 # standard python imports
-import base64
 import sys
-from two1.lib.server.login import check_setup_twentyone_account, get_username_interactive, \
-    get_password_interactive, signin_account
+import base64
 
 # 3rd party imports
 import click
 
 # two1 imports
-from two1.lib.server.login import check_setup_twentyone_account
-from two1.lib.blockchain.exceptions import DataProviderUnavailableError, DataProviderError
+import two1.lib.server.login as server_login
+from two1.lib.blockchain import exceptions
+
 from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
@@ -20,7 +19,6 @@ from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
-from two1.lib.server.login import get_password
 
 
 @click.command()
@@ -45,29 +43,40 @@ def login(config, accounts, switchuser, setpassword, username, password):
 @check_notifications
 @capture_usage
 def _login(config, username, password):
+    """ Log in a user into the two1 account
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        username (str): optional command line arg to skip username prompt
+        password (str): optional command line are to skip password prompt
+    """
     cfg = Config()
     machine_auth = cfg.machine_auth
-    machine_auth_pubkey_b64 = base64.b64encode(
-        machine_auth.public_key.compressed_bytes
-    ).decode()
+    machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
     bitcoin_payout_address = cfg.wallet.current_address
-    signin_account(config=cfg,
-                   machine_auth=machine_auth,
-                   machine_auth_pubkey_b64=machine_auth_pubkey_b64,
-                   bitcoin_payout_address=bitcoin_payout_address,
-                   username=username,
-                   password=password,
-                   show_analytics_prompt=False)
+    server_login.signin_account(config=cfg,
+                                machine_auth=machine_auth,
+                                machine_auth_pubkey_b64=machine_auth_pubkey_b64,
+                                bitcoin_payout_address=bitcoin_payout_address,
+                                username=username,
+                                password=password,
+                                show_analytics_prompt=False)
 
 
 @capture_usage
 def _set_password(config, user):
+    """ Upadets the 21 user account password from command line
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        user (str): name of the user to update password for
+    """
     try:
         if not hasattr(config, "username"):
             click.secho(UxString.no_account_found)
             return
 
-        password = get_password(config.username)
+        password = server_login.get_password(config.username)
         machine_auth = get_machine_auth(config)
         client = rest_client.TwentyOneRestClient(TWO1_HOST,
                                                  machine_auth,
@@ -79,6 +88,14 @@ def _set_password(config, user):
 
 
 def get_machine_auth(config):
+    """ Gets the machine auth wallet object from a wallet
+
+    Args:
+        config (Config): config object used for getting .two1 information
+
+    Return:
+        MachineAuthWallet: machine auth wallet object
+    """
     if hasattr(config, "machine_auth"):
         machine_auth = config.machine_auth
     else:
@@ -187,10 +204,10 @@ def create_wallet_and_account():
     """
     try:
         cfg = Config()
-        check_setup_twentyone_account(cfg)
-    except DataProviderUnavailableError:
+        server_login.check_setup_twentyone_account(cfg)
+    except exceptions.DataProviderUnavailableError:
         raise TwoOneError(UxString.Error.connection_cli)
-    except DataProviderError:
+    except exceptions.DataProviderError:
         raise TwoOneError(UxString.Error.server_err)
     except UnloggedException:
         sys.exit(1)
