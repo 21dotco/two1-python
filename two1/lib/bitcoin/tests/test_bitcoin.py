@@ -55,78 +55,80 @@ def txn_from_json(txn_json):
     return txn
 
 
-def test_txn_serialization(txn_json):
+def test_txn_serialization(txns_json):
     ''' txn_json: a JSON dict from api.chain.com that also contains
                  the raw hex of the transaction in the 'hex' key
     '''
-    txn = txn_from_json(txn_json)
-    txn_bytes = bytes(txn)
-    txn_hash = txn.hash
+    for txn_json in txns_json:
+        txn = txn_from_json(txn_json)
+        txn_bytes = bytes(txn)
+        txn_hash = txn.hash
 
-    try:
-        assert txn.num_inputs == len(txn_json['inputs'])
-        assert txn.num_outputs == len(txn_json['outputs'])
-        assert str(txn_hash) == txn_json['hash'], \
-            "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (
-                txn_json['hash'],
-                txn_json['hex'],
-                bytes_to_str(txn_bytes),
-                txn_json)
-    except AssertionError as e:
-        print(e)
-        raise
+        try:
+            assert txn.num_inputs == len(txn_json['inputs'])
+            assert txn.num_outputs == len(txn_json['outputs'])
+            assert str(txn_hash) == txn_json['hash'], \
+                "Hash does not match for txn: %s\nCorrect bytes:\n%s\nConstructed bytes:\n%s\nJSON:\n%s" % (
+                    txn_json['hash'],
+                    txn_json['hex'],
+                    bytes_to_str(txn_bytes),
+                    txn_json)
+        except AssertionError as e:
+            print(e)
+            raise
 
 
-def test_block(block_json):
-    # Why is it so f*ing hard to get a UNIX-time from a time string?
-    a = arrow.get(block_json['time'])
-    time = timegm(a.datetime.timetuple())
+def test_block(blocks_json):
+    for block_json in blocks_json:
+        # Why is it so f*ing hard to get a UNIX-time from a time string?
+        a = arrow.get(block_json['time'])
+        time = timegm(a.datetime.timetuple())
 
-    # TODO: Need to have a make_txn_from_json() method that's shared
-    # between here and test_txn()
-    txns = [txn_from_json(t) for t in block_json['transactions']]
+        # TODO: Need to have a make_txn_from_json() method that's shared
+        # between here and test_txn()
+        txns = [txn_from_json(t) for t in block_json['transactions']]
 
-    # Create a new Block object
-    block = Block(block_json['height'],
-                  block_json['version'],
-                  Hash(block_json['previous_block_hash']),
-                  time,
-                  int(block_json['bits'], 16),
-                  block_json['nonce'],
-                  txns)
+        # Create a new Block object
+        block = Block(block_json['height'],
+                      block_json['version'],
+                      Hash(block_json['previous_block_hash']),
+                      time,
+                      int(block_json['bits'], 16),
+                      block_json['nonce'],
+                      txns)
 
-    block_hash = block.hash
+        block_hash = block.hash
 
-    try:
-        assert len(block.txns) == len(block_json['transactions'])
-        assert block.height == block_json['height']
-        assert block.block_header.version == block_json['version']
-        assert block.block_header.prev_block_hash == Hash(block_json['previous_block_hash'])
-        assert block.block_header.merkle_root_hash == Hash(block_json['merkle_root'])
-        assert block.block_header.time == time
-        assert block.block_header.bits == int(block_json['bits'], 16)
-        assert block.block_header.nonce == block_json['nonce']
-        assert block_hash == Hash(block_json['hash'])
-        assert block.block_header.valid
+        try:
+            assert len(block.txns) == len(block_json['transactions'])
+            assert block.height == block_json['height']
+            assert block.block_header.version == block_json['version']
+            assert block.block_header.prev_block_hash == Hash(block_json['previous_block_hash'])
+            assert block.block_header.merkle_root_hash == Hash(block_json['merkle_root'])
+            assert block.block_header.time == time
+            assert block.block_header.bits == int(block_json['bits'], 16)
+            assert block.block_header.nonce == block_json['nonce']
+            assert block_hash == Hash(block_json['hash'])
+            assert block.block_header.valid
 
-    except AssertionError as e:
-        print(e)
-        print("block height:        %d" % (block.height))
-        print("   from json:        %d" % (block_json['height']))
-        print("     version:        %d" % (block.block_header.version))
-        print("   from json:        %d" % (block_json['version']))
-        print("   prev_block_hash:  %s" % (block.block_header.prev_block_hash))
-        print("   from json:        %s" % (block_json['previous_block_hash']))
-        print("   merkle_root_hash: %s" % (block.block_header.merkle_root_hash))
-        print("   from json:        %s" % (block_json['merkle_root']))
-        print("        time:        %d" % (block.block_header.time))
-        print("   from json:        %d" % (time))
-        print("        bits:        %d" % (block.block_header.bits))
-        print("   from json:        %d" % (int(block_json['bits'], 16)))
-        print("       nonce:        %d" % (block.block_header.nonce))
-        print("   from json:        %d" % (block_json['nonce']))
+        except AssertionError as e:
+            print(e)
+            print("block height:        %d" % (block.height))
+            print("   from json:        %d" % (block_json['height']))
+            print("     version:        %d" % (block.block_header.version))
+            print("   from json:        %d" % (block_json['version']))
+            print("   prev_block_hash:  %s" % (block.block_header.prev_block_hash))
+            print("   from json:        %s" % (block_json['previous_block_hash']))
+            print("   merkle_root_hash: %s" % (block.block_header.merkle_root_hash))
+            print("   from json:        %s" % (block_json['merkle_root']))
+            print("        time:        %d" % (block.block_header.time))
+            print("   from json:        %d" % (time))
+            print("        bits:        %d" % (block.block_header.bits))
+            print("   from json:        %d" % (int(block_json['bits'], 16)))
+            print("       nonce:        %d" % (block.block_header.nonce))
+            print("   from json:        %d" % (block_json['nonce']))
 
-        raise
+            raise
 
 def test_crypto():
     pts = ((0x50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352,
