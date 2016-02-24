@@ -13,7 +13,7 @@ from two1.lib.util.exceptions import TwoOneError, UnloggedException
 from two1.lib.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
-from two1.lib.util.decorators import json_output, check_notifications
+from two1.lib.util.decorators import json_output
 from two1.lib.server.analytics import capture_usage
 from two1.lib.server import rest_client
 from two1.commands.config import TWO1_HOST, TWO1_PROVIDER_HOST, Config
@@ -22,20 +22,15 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 
 
 @click.command()
-@click.option('-a', '--accounts', is_flag=True, default=False,
-              help='Shows a list of your 21 accounts')
-@click.option('-su', '--switchuser', default=None, help='Switch the active user')
 @click.option('-sp', '--setpassword', is_flag=True, default=False,
               help='Set/update your 21 password')
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
 @json_output
-def login(config, accounts, switchuser, setpassword, username, password):
+def login(config, setpassword, username, password):
     """Log in to your different 21 accounts."""
     if setpassword:
-        return _set_password(config, switchuser)
-    elif switchuser or accounts:
-        return _switch_user(config, switchuser)
+        return _set_password(config)
     else:
         _login(config, username, password)
 
@@ -64,7 +59,7 @@ def _login(config, username, password):
 
 
 @capture_usage
-def _set_password(config, user):
+def _set_password(config):
     """ Upadets the 21 user account password from command line
 
     Args:
@@ -110,74 +105,6 @@ def get_machine_auth(config):
         machine_auth = MachineAuthWallet(wallet)
 
     return machine_auth
-
-
-@capture_usage
-def _login(config, user):
-    """ Logs into a two1 user account
-
-        Using the rest api and wallet machine auth, _login
-        will log into your account and set your authentication credientails
-        for all further api calls.
-
-    Args:
-        config (Config): config object used for getting .two1 information
-        user (str): username
-    """
-    if config.username:
-        click.secho("Currently logged in as: {}".format(config.username), fg="blue")
-
-    # get machine auth
-    if hasattr(config, "machine_auth"):
-        machine_auth = config.machine_auth
-    else:
-        dp = TwentyOneProvider(TWO1_PROVIDER_HOST)
-        wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
-        if not Two1Wallet.check_wallet_file(wallet_path):
-            create_wallet_and_account()
-            return
-
-        wallet = Wallet(wallet_path=wallet_path,
-                        data_provider=dp)
-        machine_auth = MachineAuthWallet(wallet)
-
-    client = rest_client.TwentyOneRestClient(TWO1_HOST,
-                                             machine_auth)
-
-    # get a list of all usernames for device_id/wallet_pk pair
-    res = client.account_info()
-    usernames = res.json()["usernames"]
-    if len(usernames) == 0:
-        create_wallet_and_account()
-        return
-
-    else:
-        if user is None:
-            # interactively select the username
-            counter = 1
-            click.secho(UxString.registered_usernames_title)
-
-            for user in usernames:
-                click.secho("{}- {}".format(counter, user))
-                counter += 1
-
-            username_index = -1
-            while username_index <= 0 or username_index > len(usernames):
-                username_index = click.prompt(UxString.login_prompt, type=int)
-                if username_index <= 0 or username_index > len(usernames):
-                    click.secho(UxString.login_prompt_invalid_user.format(1, len(usernames)))
-
-            username = usernames[username_index - 1]
-        else:
-            # log in with provided username
-            if user in usernames:
-                username = user
-            else:
-                click.secho(UxString.login_prompt_user_does_not_exist.format(user))
-                return
-
-        # save the selection in the config file
-        save_config(config, machine_auth, username)
 
 
 def save_config(config, machine_auth, username):
