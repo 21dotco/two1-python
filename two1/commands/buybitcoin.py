@@ -5,7 +5,7 @@ from datetime import datetime
 import click
 
 # two1 imports
-from two1.lib.util import exceptions
+from two1.commands.util import exceptions
 from two1.lib.server import rest_client
 from two1.lib.server import analytics
 from two1.commands.util import decorators
