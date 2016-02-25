@@ -9,7 +9,7 @@ import pexpect
 import json
 import requests
 import subprocess
-from two1.commands.config import Config
+from two1.commands.util.config import Config
 from two1.commands.util import bitcoin_computer
 
 

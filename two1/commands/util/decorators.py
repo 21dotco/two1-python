@@ -8,12 +8,12 @@ from two1.commands.util.exceptions import TwoOneError
 from two1.lib.server import rest_client
 
 
-
 def docstring_parameter(*args, **kwargs):
     def dec(obj):
         obj.__doc__ = obj.__doc__.format(*args, **kwargs)
         return obj
     return dec
+
 
 def json_output(f):
     """Allows the return value to be optionally returned as json output

@@ -24,6 +24,7 @@ from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
 from two1.commands.util import config
 from two1.commands.util import uxstring
+from two1.commands.util import decorators
 from two1.commands.util import wallet as wallet_utils
 from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
@@ -53,7 +54,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               envvar='TWO1_CONFIG_FILE',
               default=two1.TWO1_CONFIG_FILE,
               metavar='PATH',
-              help='Path to config (default: %s)' % TWO1_CONFIG_FILE)
+              help='Path to config (default: %s)' % two1.TWO1_CONFIG_FILE)
 @click.option('--config', 'config_dict',
               nargs=2,
               multiple=True,
@@ -61,7 +62,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Overrides a config key/value pair.')
 @click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
-@docstring_parameter(CLI_NAME)
+@decorators.docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config_dict):
     """Mine bitcoin and use it to buy and sell digital goods.
 

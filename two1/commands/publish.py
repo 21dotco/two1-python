@@ -120,7 +120,7 @@ https://21.co/publish
 
 Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
     """
-    _publish(ctx.obj['config'], ctx.obj['client'] manifest_path, marketplace, skip)
+    _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip)
 
 
 def _list_apps(config, client):

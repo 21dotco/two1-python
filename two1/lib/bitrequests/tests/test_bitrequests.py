@@ -1,7 +1,7 @@
 import json
 import pytest
 import requests
-from two1.commands.utils import config
+from two1.commands.util import config
 from two1.lib.bitrequests import BitTransferRequests
 from two1.lib.bitrequests import OnChainRequests
 from two1.lib.bitrequests import BitRequestsError

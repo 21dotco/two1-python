@@ -26,6 +26,7 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
 @decorators.json_output
+@analytics.capture_usage
 def login(ctx, setpassword, username, password):
     """Log in to your different 21 accounts."""
     if setpassword:

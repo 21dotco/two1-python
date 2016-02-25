@@ -3,8 +3,8 @@ import sys
 
 from two1.commands.util import uxstring
 from two1.lib.server import login
-from two1.lib.blockchain import bc_exceptions
-from two1.commands.util import cmd_exceptions
+from two1.lib.blockchain import exceptions as bc_exceptions
+from two1.commands.util import exceptions as cmd_exceptions
 
 
 def get_or_create_username(config):
