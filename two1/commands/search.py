@@ -51,6 +51,11 @@ def _search(config, client, search_string):
         Apps are then displayed in a pager in which the user can get more
         info on a selected app.
 
+        config (Config): Config object used for user specific information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
+        wallet (two1.lib.wallet.Wallet): a user's wallet instance
+
     Args:
         config (Config): config object used for getting .two1 information
         search_string (str): string used to search for apps

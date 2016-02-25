@@ -65,6 +65,8 @@ def _join(config, client, network):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
         network (str): the name of the network being joined. Defaults to 21market
 
     Raises:

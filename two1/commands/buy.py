@@ -70,6 +70,8 @@ def _buy(config, client, resource, info_only=False, payment_method='offchain', h
         config (two1.commands.config.Config): an object necessary for various
             user-specific actions, as well as for using the `capture_usage`
             function decorator.
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
         resource (str): a URI of the form scheme://host:port/path with `http`
             and `https` strictly enforced as required schemes.
         info_only (bool): if True, do not purchase the resource, and cause the
