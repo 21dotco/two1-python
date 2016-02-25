@@ -5,7 +5,6 @@ import collections
 
 import two1.lib.bitcoin as bitcoin
 import two1.lib.channels as channels
-import two1.lib.server.machine_auth_wallet as machine_auth_wallet
 
 
 class MockTwo1Wallet:
@@ -146,9 +145,6 @@ class MockConfig:
 
     def __init__(self):
         """Return a new MockConfig object."""
-        self.wallet = MockTwo1Wallet()
-        self.machine_auth = machine_auth_wallet.MachineAuthWallet(self.wallet)
-        self.channel_client = MockChannelClient()
         self.username = 'MockTestUser'
         self.purchases = []
 
