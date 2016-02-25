@@ -18,16 +18,12 @@ from codecs import open
 from path import path
 import click
 from path import path
-from two1.lib.blockchain.exceptions import DataProviderUnavailableError
-from two1.lib.blockchain.exceptions import DataProviderError
-from two1.lib.server.login import check_setup_twentyone_account
 
 import two1
 from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
 from two1.commands.util import config
 from two1.commands.util import uxstring
-from two1.commands.util import decorators
 from two1.commands.util import wallet as wallet_utils
 from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
