@@ -138,15 +138,17 @@ def _buy(config, client, resource, info_only=False, payment_method='offchain', h
     if not hasattr(response, 'amount_paid'):
         return
 
-    # Calculate user balances for the correct payment method
-    user_balances = status._get_balances(config, client)
-
-    # Write out diagnostic payment information
+    # Fetch and write out diagnostic payment information for balances
     if payment_method == 'offchain':
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, '21.co', user_balances.twentyone), err=True)
+        twentyone_balance = client.get_earnings()["total_earnings"]
+        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, '21.co', twentyone_balance), err=True)
     elif payment_method == 'onchain':
+        spendable_balance = min(requests.wallet.confirmed_balance(), requests.wallet.unconfirmed_balance())
         click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'blockchain', user_balances.onchain), err=True)
     elif payment_method == 'channel':
+        channel_client.sync()
+        channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_client.list())
+                               if s.state == channels.PaymentChannelState.READY)
         click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', user_balances.channels), err=True)
 
     # Record the transaction if it was a payable request

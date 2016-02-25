@@ -9,8 +9,8 @@ import click
 import two1
 import two1.lib.server.login as server_login
 from two1.lib.blockchain import exceptions
-from two1.lib.util.exceptions import TwoOneError, UnloggedException
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.exceptions import TwoOneError, UnloggedException
+from two1.commands.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
 from two1.commands.util import decorators

@@ -7,8 +7,8 @@ import os
 import requests
 from functools import update_wrapper
 import two1
-from two1.lib.commands.exceptions import UnloggedException
-from two1.lib.commands.uxstring import UxString
+from two1.commands.util.exceptions import UnloggedException
+from two1.commands.util.uxstring import UxString
 from two1.lib.server.rest_client import ServerRequestError
 from two1.lib.server.rest_client import ServerConnectionError
 

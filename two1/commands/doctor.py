@@ -24,7 +24,7 @@ from two1.commands import status
 from two1.lib.server import analytics
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
-from two1.lib.util import exceptions
+from two1.commands.util import exceptions
 
 
 class Check(object):
