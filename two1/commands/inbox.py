@@ -24,6 +24,8 @@ def _inbox(config, client):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
 
     Returns:
         list: list of notifications in users inbox

@@ -64,6 +64,9 @@ def _mine(config, client, wallet, dashboard=False):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
+        wallet (two1.lib.wallet.Wallet): a user's wallet instance
         dashboard (bool): shows minertop dashboard if True
     """
 

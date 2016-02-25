@@ -52,6 +52,8 @@ def _list(config, client):
 
     Args:
         config (Config): Config object used for user specific information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
 
     Raises:
         ServerRequestError: If server error occurs other than a 404
@@ -85,6 +87,8 @@ def _rate(config, client, app_id, rating):
 
     Args:
         config (Config): Config object used for user specific information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
         app_id (str): Unique app id used to identify which app to rate
         rating (int): rating number (1-5)
 

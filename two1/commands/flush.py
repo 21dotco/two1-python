@@ -23,7 +23,9 @@ def _flush(config, client, wallet):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (TwentyOneRestClient): rest client used for communication with the backend api
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
+        wallet (two1.lib.wallet.Wallet): a user's wallet instance
 
     Raises:
         ServerRequestError: if server returns an error code other than 401

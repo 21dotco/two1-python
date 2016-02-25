@@ -128,6 +128,8 @@ def _list_apps(config, client):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
     """
     click.secho(uxstring.UxString.my_apps.format(config.username), fg="green")
     current_page = 0
@@ -160,6 +162,8 @@ def _delete_app(config, client, app_id):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
         app_id (str): a unique string that identifies the application
     """
     if click.confirm(uxstring.UxString.delete_confirmation.format(app_id)):
@@ -180,6 +184,8 @@ def _publish(config, client, manifest_path, marketplace, skip):
 
     Args:
         config (Config): config object used for getting .two1 information
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
         manifest_path (str): the path to the manifest file
         marketplace (str): the zerotier marketplace name
         skip (bool): skips strict checking of manifest file

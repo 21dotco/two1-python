@@ -62,7 +62,8 @@ def _set_password(config, client):
 
     Args:
         config (Config): config object used for getting .two1 information
-        user (str): name of the user to update password for
+        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
     """
     try:
         if not hasattr(config, "username"):
