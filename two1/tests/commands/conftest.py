@@ -26,7 +26,9 @@ def doctor(config):
 
 @pytest.fixture()
 def mock_config():
-    return mock_objects.MockConfig()
+    config = mock_objects.MockConfig()
+    config.log = mock.Mock()
+    return config
 
 
 @pytest.fixture()

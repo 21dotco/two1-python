@@ -34,6 +34,11 @@ class MockTwo1Wallet:
         """Return the wallet's unconfirmed balance in satoshis."""
         return self._balance
 
+    @property
+    def current_address(self):
+        """Return the wallet's current address."""
+        return self.PRIVATE_KEY.public_key.address()
+
     def pay(self, amount):
         """Make a payment."""
         self._balance = self._balance - amount
@@ -92,6 +97,15 @@ class MockBitRequests:
         return self.response
 
 
+class MockHttpResponse:
+
+    def __init__(self, data=None, status=200):
+        self.data = data
+        self.status = status
+        if self.status == 200:
+            self.ok = True
+
+
 class MockTwentyOneRestClient:
 
     """Mock TwentyOneRestClient behavior."""
@@ -109,6 +123,10 @@ class MockTwentyOneRestClient:
     def get_earnings(self):
         """Get net earnings."""
         return dict(total_earnings=self.machine_auth.wallet.unconfirmed_balance(), flushed_amount=self._flushed)
+
+    def flush_earnings(self):
+        """Flush earnings to the blockchain."""
+        return MockHttpResponse()
 
 
 class MockChannelClient:
