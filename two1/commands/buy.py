@@ -89,7 +89,7 @@ def _buy(config, client, resource, info_only=False, payment_method='offchain', h
     """
     # Find the correct payment method
     if payment_method == 'offchain':
-        requests = bitrequests.BitTransferRequests(config.machine_auth, config.username)
+        requests = bitrequests.BitTransferRequests(client.machine_auth, config.username)
     elif payment_method == 'onchain':
         requests = bitrequests.OnChainRequests(config.wallet)
     elif payment_method == 'channel':

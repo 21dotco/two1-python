@@ -1,6 +1,4 @@
 """Unit tests for `21 buy`."""
-import collections
-
 import click
 import pytest
 
