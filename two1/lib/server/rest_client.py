@@ -9,7 +9,7 @@ import two1
 from two1.commands.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
     UnloggedException
 from two1.commands.util.uxstring import UxString
-from two1.commands.config import TWO1_VERSION, TWO1_DEVICE_ID
+
 
 class ServerRequestError(Exception):
     pass
@@ -276,7 +276,7 @@ class TwentyOneRestClient(object):
 if __name__ == "__main__":
     # host = "http://127.0.0.1:8000"
     import two1
-    from two1.commands.utils import config
+    from two1.commands.util import config
 
     conf = config.Config()
     host = two1.TWO1_HOST

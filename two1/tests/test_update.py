@@ -7,10 +7,11 @@ import click
 from collections import namedtuple
 import pytest
 import responses
+import two1
 from two1.lib.server.rest_client import ServerRequestError
 from two1.commands.update import checked_for_an_update_today
 from two1.commands.update import update_two1_package
-from two1.commands import update, config
+from two1.commands import update
 
 # mock update.stop_walletd to always return True
 update.stop_walletd = MagicMock(return_value=True)
@@ -20,7 +21,7 @@ class MockConfig(object):
     def __init__(self):
         self.last_update_check = None
 
-    def update_key(self, k, v):
+    def set(self, k, v):
         if k == 'last_update_check':
             self.last_update_check = v
         else:
@@ -64,7 +65,7 @@ def test_update_two1_package():
     assert not rv['update_available']
     assert rv['update_successful'] is None
 
-    url = urljoin(config.TWO1_PYPI_HOST, "api/package/{}/".format(config.TWO1_PACKAGE_NAME))
+    url = urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
     c.last_update_check = yesterday.date().strftime("%Y-%m-%d")
     responses.add(responses.GET, url,
                   body='{"error": "not found"}', status=404,
@@ -79,7 +80,7 @@ def test_update_two1_package():
 
     # Reset last_update_check
     c.last_update_check = yesterday.date().strftime("%Y-%m-%d")
-    update.TWO1_VERSION = "5.3.0"  # This should be safe to not trigger an update
+    two1.TWO1_VERSION = "5.3.0"  # This should be safe to not trigger an update
     responses.reset()
     responses.add(responses.GET, url, body=json, status=200)
 
@@ -89,7 +90,7 @@ def test_update_two1_package():
     assert rv['update_successful'] is None
 
     # Now let's try an update
-    update.TWO1_VERSION = "0.0.1"  # Should be safe to always trigger an update
+    two1.TWO1_VERSION = "0.0.1"  # Should be safe to always trigger an update
     c.last_update_check = yesterday.date().strftime("%Y-%m-%d")
     subprocess.check_call = MagicMock(return_value=True)
 

@@ -14,6 +14,7 @@ import click
 # two1 imports
 import two1
 from two1.commands.util import uxstring
+from two1.lib.server import analytics
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
 
@@ -21,6 +22,7 @@ TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PA
 @click.command()
 @click.argument('version', nargs=1, required=False, default='latest')
 @click.pass_context
+@analytics.capture_usage
 def update(ctx, version):
     """Update the 21 Command Line Interface.
 
@@ -30,8 +32,12 @@ Usage
 Invoke this with no arguments to update the CLI.
 $ 21 update
 """
+    _update(ctx.obj['config'], version)
+
+
+def _update(config, version):
     click.echo(uxstring.UxString.update_check)
-    update_two1_package(ctx.obj['config'], version, force_update_check=True)
+    update_two1_package(config, version, force_update_check=True)
 
 
 def update_two1_package(config, version, force_update_check=False):

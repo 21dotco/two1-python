@@ -4,10 +4,10 @@ import click
 import re
 
 import two1
-from two1.cinnabds.util.exceptions import UnloggedException
+from two1.commands.util.exceptions import UnloggedException
 from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.rest_client import ServerRequestError
-from two1.lib.util.uxstring import UxString
+from two1.commands.util.uxstring import UxString
 
 
 class EmailAddress(click.ParamType):
@@ -125,7 +125,7 @@ def create_username(config, username=None):
 
     # if the user is on a bitcoin computer create the account for them
     # otherwise login
-    if TWO1_DEVICE_ID:
+    if two1.TWO1_DEVICE_ID:
         return _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
                                bitcoin_payout_address)
     else:
