@@ -194,7 +194,9 @@ def start_daemon():
             raise EnvironmentError("Do not know how to start zerotier deamon on your system")
     elif platform.system() in "Darwin":
         # ZT post install for Macs already load the daemon
-        return
+        return ""
+    else:
+        raise EnvironmentError("Do not know how to start zerotier deamon on your system")
 
     return subprocess.check_output(cmd)
 

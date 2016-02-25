@@ -1,10 +1,5 @@
 """ Unit tests for the zerotier utility
 
-    The simple functions which call zerotier.cli or zoertier.cli_json
-    under the hood are not tested because the base functions are tested.
-    We do not want to get into the bussiness of testing zerotiers cli
-    for proper output.
-
     Every test in this module uses parametrization to test various inputs
     and outcomes.
 """
@@ -200,11 +195,19 @@ def test_list_networks(mock_cli_json):
     assert zerotier.list_networks() == "test"
 
 
+@mock.patch('two1.commands.util.zerotier.cli_json')
+def test_list_peers(mock_cli_json):
+    """ Makes sure that the return value is a dict """
+    mock_cli_json.return_value = "test"
+    assert zerotier.list_peers() == "test"
+
+
 @pytest.mark.parametrize("info_dict, outcome", [
     ({"address": "0123456789"}, "0123456789"),
     ({"address": "0123456789abcdef"}, ValueError)
-     ])
+    ])
 def test_device_address(info_dict, outcome):
+    """ Ensures that a ValueError is reaised on invalid id """
     with mock.patch("two1.commands.util.zerotier.info") as info_mock:
         info_mock.return_value = info_dict
 
@@ -213,4 +216,60 @@ def test_device_address(info_dict, outcome):
         else:
             with pytest.raises(outcome):
                 zerotier.device_address()
+
+
+@pytest.mark.parametrize("network_id, outcome", [
+    ("0123456789", ValueError),
+    ("0123456789abcdef", "return_value")
+    ])
+@mock.patch('two1.commands.util.zerotier.cli')
+def test_join_network(mock_cli, network_id, outcome):
+    """ Ensures that a ValueError is reaised on invalid id """
+    if isinstance(outcome, str):
+        mock_cli.return_value = outcome
+        assert zerotier.join_network(network_id) == outcome
+    else:
+        with pytest.raises(outcome):
+            zerotier.join_network(network_id)
+
+@pytest.mark.parametrize("network_id, outcome", [
+    ("0123456789", ValueError),
+    ("0123456789abcdef", "return_value")
+    ])
+@mock.patch('two1.commands.util.zerotier.cli')
+def test_leave_network(mock_cli, network_id, outcome):
+    """ Ensures that a ValueError is reaised on invalid id """
+    if isinstance(outcome, str):
+        mock_cli.return_value = outcome
+        assert zerotier.leave_network(network_id) == outcome
+    else:
+        with pytest.raises(outcome):
+            zerotier.leave_network(network_id)
+
+
+@pytest.mark.parametrize("which_side_effect, system_return_value, cmd, outcome", [
+    ((None, None), "Windows", (), EnvironmentError),
+    (("yep", None), "Linux", ('sudo', 'systemctl', 'start', 'zerotier-one.service'), "passed"),
+    ((None, "yep"), "Linux", ('sudo', 'service', 'zerotier-one', 'start'), "passed"),
+    ((None, None), "Linux", (), EnvironmentError),
+    ((None, None), "Darwin", (), ""),
+    ])
+@mock.patch('two1.commands.util.zerotier.subprocess.check_output')
+@mock.patch('two1.commands.util.zerotier.platform.system')
+@mock.patch('two1.commands.util.zerotier.shutil.which')
+def test_start_daemon(which_mock, system_mock, check_output_mock,
+                      which_side_effect, system_return_value, cmd, outcome):
+    """ Tests various platforms and sytem configs if the daemon can be started """
+    which_mock.side_effect = which_side_effect
+    system_mock.return_value = system_return_value
+
+    if isinstance(outcome, str):
+        check_output_mock.return_value = outcome
+        assert zerotier.start_daemon() == outcome
+        if outcome:
+            check_output_mock.assert_called_once_with(cmd)
+    else:
+        check_output_mock.side_effect = outcome
+        with pytest.raises(outcome):
+            zerotier.start_daemon()
 
