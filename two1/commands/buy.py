@@ -5,21 +5,14 @@ import urllib.parse
 
 import click
 
-# two1 imports
-from two1.commands.status import _get_balances
-from two1.commands.config import TWO1_MERCHANT_HOST
-from two1.commands.config import TWO1_HOST
-from two1.lib.server import rest_client
-from two1.commands.formatters import search_formatter
-from two1.commands.formatters import text_formatter
-from two1.lib.server.analytics import capture_usage
-from two1.lib.bitrequests import OnChainRequests
-from two1.lib.bitrequests import BitTransferRequests
-from two1.lib.bitrequests import ChannelRequests
-from two1.lib.bitrequests import ResourcePriceGreaterThanMaxPriceError
-from two1.lib.util.uxstring import UxString
-from two1.lib.wallet.fees import get_fees
-from two1.lib.channels.statemachine import PaymentChannelStateMachine
+import two1
+import two1.lib.server as server
+import two1.lib.wallet.fees as fees
+import two1.commands.status as status
+import two1.commands.util.uxstring as uxstring
+import two1.lib.bitrequests as bitrequests
+import two1.commands.util.decorators as decorators
+import two1.lib.channels.statemachine as statemachine
 
 
 URL_REGEXP = re.compile(
@@ -45,7 +38,7 @@ DEMOS = {
 @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 def buy(ctx, resource, **options):
     """Buy API calls with mined bitcoin.
 

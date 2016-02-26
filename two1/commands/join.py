@@ -7,7 +7,6 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
@@ -20,7 +19,7 @@ from two1.commands.util import exceptions
 @click.option('--status', is_flag=True, default=False,
               help='Show the status of all the networks that you have joined.')
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 @decorators.check_notifications
 def join(ctx, network, status):
     """Join a p2p network to buy/sell for BTC.
