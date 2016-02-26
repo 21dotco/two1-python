@@ -14,7 +14,7 @@ import click
 # two1 imports
 import two1
 from two1.commands.util import uxstring
-from two1.lib.server import analytics
+from two1.commands.util import decorators
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
 
@@ -22,7 +22,7 @@ TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PA
 @click.command()
 @click.argument('version', nargs=1, required=False, default='latest')
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 def update(ctx, version):
     """Update the 21 Command Line Interface.
 

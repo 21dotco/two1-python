@@ -2,7 +2,6 @@ from datetime import date, datetime
 
 import click
 
-from two1.lib.server import analytics
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -11,7 +10,7 @@ from two1.commands.util import uxstring
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
 @decorators.json_output
-@analytics.capture_usage
+@decorators.capture_usage
 def log(ctx, debug):
     """Shows a list of events for your Bitcoin Computer"""
     prints = []

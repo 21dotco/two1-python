@@ -14,7 +14,6 @@ from two1.commands.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
 from two1.commands.util import decorators
-from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
@@ -26,7 +25,7 @@ from two1.lib.server.machine_auth_wallet import MachineAuthWallet
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
 @decorators.json_output
-@analytics.capture_usage
+@decorators.capture_usage
 def login(ctx, setpassword, username, password):
     """Log in to your 21 account.
 

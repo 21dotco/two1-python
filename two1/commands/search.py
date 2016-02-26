@@ -7,7 +7,6 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
@@ -17,7 +16,7 @@ from two1.commands.util import uxstring
 @click.pass_context
 @click.argument('search_string', required=False)
 @decorators.json_output
-@analytics.capture_usage
+@decorators.capture_usage
 def search(ctx, search_string=None):
     """Search for app on the 21 Marketplace.
 

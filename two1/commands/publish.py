@@ -10,7 +10,6 @@ from yaml.error import YAMLError
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException, ServerRequestError
@@ -63,7 +62,7 @@ $ 21 publish remove --help
 
 @publish.command()
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 def list(ctx):
     """
 Lists all your published apps.
@@ -83,7 +82,7 @@ at the prompt.
 @publish.command()
 @click.argument('app_id')
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 @decorators.check_notifications
 def remove(ctx, app_id):
     """
@@ -105,7 +104,7 @@ $ 21 publish list
 @click.option('-s', '--skip', is_flag=True, default=False,
               help='Skips the strict checking of the manifest against your current ip.')
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 @decorators.check_notifications
 def submit(ctx, manifest_path, marketplace, skip):
     """

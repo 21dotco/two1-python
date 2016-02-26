@@ -12,7 +12,6 @@ from tabulate import tabulate
 import two1.lib.channels as channels
 from two1.lib.channels.cli import format_expiration_time
 from two1.lib.server import rest_client
-from two1.lib.server import analytics
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
@@ -59,7 +58,7 @@ def status_mining(config, client):
               default=False,
               help="List non-zero balances for each address")
 @decorators.json_output
-@analytics.capture_usage
+@decorators.capture_usage
 @decorators.check_notifications
 def status(ctx, detail):
     """View your bitcoin balance and address.

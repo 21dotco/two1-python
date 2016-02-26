@@ -18,7 +18,6 @@ import two1
 from two1.lib.bitcoin.block import CompactBlock
 from two1.lib.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory
-from two1.lib.server import analytics
 from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
@@ -32,7 +31,7 @@ import two1.lib.bitcoin.utils as utils
 @click.option('--dashboard', default=False, is_flag=True,
               help="Dashboard with mining details")
 @click.pass_context
-@analytics.capture_usage
+@decorators.capture_usage
 @decorators.check_notifications
 def mine(ctx, dashboard):
     """Mine bitcoin at the command line.

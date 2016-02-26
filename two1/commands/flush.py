@@ -2,7 +2,6 @@
 import click
 
 # two1 imports
-from two1.lib.server import analytics
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
@@ -11,7 +10,7 @@ from two1.commands.util import uxstring
 @click.command()
 @click.pass_context
 @decorators.check_notifications
-@analytics.capture_usage
+@decorators.capture_usage
 def flush(ctx):
     """ Flush your 21.co buffer to the blockchain."""
     config = ctx.obj['config']

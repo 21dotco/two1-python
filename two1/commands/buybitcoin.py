@@ -7,7 +7,6 @@ import click
 # two1 imports
 from two1.commands.util import exceptions
 from two1.lib.server import rest_client
-from two1.lib.server import analytics
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -55,7 +54,7 @@ When you buy Bitcoins through this command, you can decide where the Bitcoins wi
     return _buybitcoin(ctx.obj['config'], ctx.obj['client'], info, status, exchange, amount, history)
 
 
-@analytics.capture_usage
+@decorators.capture_usage
 def _buybitcoin(config, client, info, status, exchange, amount, history):
     if info:
         return buybitcoin_config(config, client, exchange)
