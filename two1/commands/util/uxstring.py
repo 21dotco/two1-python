@@ -84,9 +84,9 @@ class UxString:
     status_account = click.style("Logged in as: ", fg='magenta') + "{}\n"
 
     status_mining = mining=click.style("Mining", fg='magenta') + "\n"\
-       "    Status           : {is_mining}\n"\
-       "    Hashrate         : {hashrate}\n"\
-       "    Mined (all time) : {mined} Satoshis\n\n"\
+       "    Status           : {}\n"\
+       "    Hashrate         : {}\n"\
+       "    Mined (all time) : {} Satoshis\n\n"\
        "Type " + click.style("21 mine --dashboard", bold=True) + " to see a detailed view. Hit q to exit.\n"
 
     status_wallet = click.style("Total Balance", fg='magenta') + """
