@@ -1,7 +1,12 @@
 """Manages configuration variables for the two1 CLI."""
+# standard python imports
 import os
 import json
 
+# 3rd party imports
+import click
+
+# two1 imports
 import two1
 import two1.lib.wallet as wallet
 import two1.lib.channels as channels
@@ -31,6 +36,10 @@ class Config:
         """Return a new Config object with defaults plus custom properties."""
         # Load configuration defaults
         self.state = {key: val for key, val in Config.DEFAULTS.items()}
+
+        # disables json_output val by default
+        self.set_json_output(False)
+
         # Override defaults with any custom configuration
         self.load_dict_config(config) if config else self.load_file_config(config_file)
 
@@ -62,7 +71,7 @@ class Config:
         for key, value in config.items():
             self.state[key] = value
 
-    def set(self, key, value):
+    def set(self, key, value, should_save=False):
         """Updates the config value and save updated config to disk.
 
         Args:
@@ -70,6 +79,10 @@ class Config:
             value (any): value being updated
         """
         self.state[key] = value
+        if should_save:
+            self.save()
+
+    def save(self):
         with open(self.config_abs_path, mode='w') as f:
             f.write(json.dumps(self.state, indent=2, sort_keys=True))
 
