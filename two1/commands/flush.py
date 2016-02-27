@@ -14,7 +14,8 @@ from two1.commands.util import uxstring
 @analytics.capture_usage
 def flush(ctx):
     """ Flush your 21.co buffer to the blockchain."""
-    _flush(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'])
+    config = ctx.obj['config']
+    _flush(config, ctx.obj['client'], ctx.obj['wallet'])
     config.log("")
 
 
