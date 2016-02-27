@@ -70,8 +70,8 @@ def test_save_config():
 
     # Update an existing key and add a new one
     with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-        c.set('username', 'TEST_USERNAME')
-        c.set('some_list_key', [123, 456, 789])
+        c.set('username', 'TEST_USERNAME', should_save=True)
+        c.set('some_list_key', [123, 456, 789], should_save=True)
 
     # Import the newly saved configuration file
     new_config = json.loads(mock_config.return_value.write.call_args[0][0])
