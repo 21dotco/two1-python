@@ -33,8 +33,12 @@ def _inbox(config, client):
     prints = []
 
     notifications, has_unreads = get_notifications(config, client)
+    if not notifications:
+        config.log("Inbox empty")
+        return notifications
+
     if len(notifications) > 0:
-        prints.append(UxString.notification_intro)
+        prints.append(uxstring.UxString.notification_intro)
         prints.extend(notifications)
 
     output = "\n".join(prints)
