@@ -1,18 +1,22 @@
 """Utility functions for user wallets."""
 import click
+import json
+import os
 
 import two1
 import two1.lib.wallet as wallet
+import two1.lib.wallet.daemonizer as daemonizer
+import two1.lib.wallet.exceptions as exceptions
 from two1.commands.util import uxstring
 from two1.lib.blockchain import twentyone_provider
 
 
-def get_or_create_wallet(wallet_path):
+def get_or_create_wallet(config, wallet_path):
     """Create a new wallet or return the currently existing one."""
     data_provider = twentyone_provider.TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
 
     if wallet.Two1Wallet.check_wallet_file(wallet_path):
-        return Wallet(wallet_path=wallet_path, data_provider=data_provider)
+        return wallet.Wallet(wallet_path=wallet_path, data_provider=data_provider)
 
     # configure wallet with default options
     click.pause(uxstring.UxString.create_wallet)
@@ -41,5 +45,8 @@ def get_or_create_wallet(wallet_path):
             d.start()
             if d.started():
                 click.echo(uxstring.UxString.wallet_daemon_started)
-    except (OSError, DaemonizerError):
+    except (OSError, exceptions.DaemonizerError):
         pass
+
+    if wallet.Two1Wallet.check_wallet_file(wallet_path):
+        return wallet.Wallet(wallet_path=wallet_path, data_provider=data_provider)
