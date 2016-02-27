@@ -163,8 +163,7 @@ WantedBy=default.target
             bool: True if both systemd and systemctl are installed and
                 in the path.
         """
-        return shutil.which("systemd") is not None and \
-            shutil.which("systemctl") is not None
+        return shutil.which("systemctl") is not None
 
     @classmethod
     def _service_status(cls):
