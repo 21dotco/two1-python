@@ -4,9 +4,8 @@ import click
 import re
 
 import two1
-from two1.commands.util.exceptions import UnloggedException
+from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.lib.server.rest_client import TwentyOneRestClient
-from two1.lib.server.rest_client import ServerRequestError
 from two1.commands.util.uxstring import UxString
 
 
@@ -120,7 +119,7 @@ def create_username(config, username=None):
     ).decode()
     # use the same key for the payout address as well.
     # this will come from the wallet
-    bitcoin_payout_address = config.wallet.current_address
+    bitcoin_payout_address = machine_auth.wallet.current_address
     click.echo("")
 
     # if the user is on a bitcoin computer create the account for them
@@ -152,6 +151,7 @@ def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.set("username", username)
             config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
+            config.save()
             # Ask for opt-in to analytics
             analytics_optin(config)
             break
@@ -180,8 +180,8 @@ def signin_account(config, machine_auth, machine_auth_pubkey_b64, bitcoin_payout
                                             bitcoin_payout_address)
 
     click.echo(UxString.payout_address % bitcoin_payout_address)
-    config.update_key("username", username)
-    config.update_key("mining_auth_pubkey", machine_auth_pubkey_b64)
+    config.set("username", username)
+    config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
     config.save()
     if show_analytics_prompt:
         analytics_optin(config)
