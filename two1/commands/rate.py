@@ -8,6 +8,7 @@ from tabulate import tabulate
 # two1 imports
 from two1.lib.server import rest_client
 from two1.commands.util import uxstring
+from two1.commands.util import exceptions
 
 
 @click.command()
@@ -58,7 +59,7 @@ def _list(config, client):
     Raises:
         ServerRequestError: If server error occurs other than a 404
     """
-    click.secho(UxString.rating_list)
+    click.secho(uxstring.UxString.rating_list)
 
     try:
         ratings = client.get_ratings()
@@ -74,9 +75,9 @@ def _list(config, client):
 
         click.echo(tabulate(rows, headers, tablefmt="grid"))
 
-    except ServerRequestError as e:
+    except exceptions.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(UxString.no_ratings)
+            click.secho(uxstring.UxString.no_ratings)
             return
         else:
             raise e
@@ -96,15 +97,15 @@ def _rate(config, client, app_id, rating):
         ServerRequestError: If any other server error occurs other than a 404
     """
     if rating < 1 or rating > 5:
-        click.secho(UxString.bad_rating, fg="red")
+        click.secho(uxstring.UxString.bad_rating, fg="red")
         return
 
     try:
         client.rate_app(app_id, rating)
-    except ServerRequestError as e:
+    except exceptions.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(UxString.rating_app_not_found.format(app_id))
+            click.secho(uxstring.UxString.rating_app_not_found.format(app_id))
             return
         raise e
 
-    click.secho(UxString.rating_success.format(rating, app_id))
+    click.secho(uxstring.UxString.rating_success.format(rating, app_id))
