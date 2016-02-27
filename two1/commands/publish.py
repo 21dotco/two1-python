@@ -12,9 +12,8 @@ from tabulate import tabulate
 # two1 imports
 from two1.lib.server import analytics
 from two1.lib.server import rest_client
-from two1.lib.server.rest_client import ServerRequestError
 from two1.commands.util import decorators
-from two1.commands.util.exceptions import UnloggedException
+from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
 from two1.commands.search import get_next_page
