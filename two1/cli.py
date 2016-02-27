@@ -7,6 +7,7 @@ is preferred within Python or any context where the code needs to be
 imported. We have configured setup.py and this code such that the
 documentation dynamically updates based on this name.
 """
+import os
 import sys
 import platform
 import locale
@@ -22,9 +23,10 @@ from path import path
 import two1
 from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
-from two1.commands.util import config
+from two1.commands.util import config as two1_config
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
+from two1.commands.util import exceptions
 from two1.commands.util import wallet as wallet_utils
 from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
@@ -78,19 +80,19 @@ $ {0} buy search "Satoshi Nakamoto"
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell', 'login')
+    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell')
 
     try:
-        config = config.Config(config_file, config_dict)
-        ctx.obj = dict(config=config)
+        config = two1_config.Config(config_file, config_dict)
+        ctx.obj = dict(config=config, client=None, wallet=None)
     except exceptions.FileDecodeError as e:
-        raise click.clickException(uxstring.UxString.file_decode(str(e)))
+        raise click.ClickException(uxstring.UxString.Error.file_decode.format((str(e))))
 
     if need_wallet_and_account:
-        wallet = wallet_utils.get_or_create_wallet(config.wallet_path)
-        username = account_utils.get_or_create_username(config)
-        machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
-        client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, config.username)
+        wallet = wallet_utils.get_or_create_wallet(config, config.wallet_path)
+        config.machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
+        config.username = account_utils.get_or_create_username(config)
+        client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, config.machine_auth, config.username)
         ctx.obj['client'] = client
         ctx.obj['wallet'] = wallet
 
