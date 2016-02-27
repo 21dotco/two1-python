@@ -7,16 +7,8 @@ import requests
 from simplejson import JSONDecodeError
 import two1
 from two1.commands.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
-    UnloggedException
+    UnloggedException, ServerRequestError, ServerConnectionError
 from two1.commands.util.uxstring import UxString
-
-
-class ServerRequestError(Exception):
-    pass
-
-
-class ServerConnectionError(Exception):
-    pass
 
 
 class TwentyOneRestClient(object):

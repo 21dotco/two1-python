@@ -33,3 +33,12 @@ class ConfigError(Exception):
 
 class FileDecodeError(ConfigError):
     pass
+
+
+class ServerRequestError(Exception):
+    pass
+
+
+class ServerConnectionError(Exception):
+    pass
+
