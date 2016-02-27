@@ -12,6 +12,7 @@ from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
+from two1.commands.util import exceptions
 
 
 @click.command()
@@ -73,21 +74,21 @@ def _join(config, client, network):
         ServerRequestError: if server returns an error code other than 401
     """
     try:
-        config.log(UxString.update_superuser)
+        config.log(uxstring.UxString.update_superuser)
 
         if zerotier.is_installed():
             # ensures the zerotier daemon is running
             zerotier.start_daemon()
         else:
-            config.log(UxString.install_zerotier)
+            config.log(uxstring.UxString.install_zerotier)
 
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
             network_id = response.json().get("networkid")
             zerotier.join_network(network_id)
-            config.log(UxString.successful_join.format(click.style(network, fg="magenta")))
-    except ServerRequestError as e:
+            config.log(uxstring.UxString.successful_join.format(click.style(network, fg="magenta")))
+    except exceptions.ServerRequestError as e:
         if e.status_code == 401:
             config.log(uxstring.UxString.invalid_network)
         else:
