@@ -23,8 +23,7 @@ from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
 from two1.lib.bitcoin.hash import Hash
-from two1.lib.server.rest_client import ServerRequestError
-from two1.commands.util.exceptions import MiningDisabledError
+from two1.commands.util.exceptions import MiningDisabledError, ServerRequestError
 from two1.commands.util import uxstring
 import two1.lib.bitcoin.utils as utils
 
@@ -78,7 +77,7 @@ def _mine(config, client, wallet, dashboard=False):
         # if minerd is running and we have not specified a dashboard flag
         # do a cpu mine
         else:
-            start_cpu_mining(config)
+            start_cpu_mining(config,  client, wallet)
     else:
         config.log(uxstring.UxString.buy_ad, fg="magenta")
         start_cpu_mining(config, client, wallet)
@@ -165,7 +164,7 @@ def start_cpu_mining(config, client, wallet):
     Args:
         config (Config): config object used for getting .two1 information
     """
-    enonce1, enonce2_size, reward = set_payout_address(config, client, wallet)
+    enonce1, enonce2_size, reward = set_payout_address(client, wallet)
 
     start_time = time.time()
     config.log(uxstring.UxString.mining_start.format(config.username, reward))
@@ -184,7 +183,7 @@ def start_cpu_mining(config, client, wallet):
         fg="magenta")
 
     click.echo(uxstring.UxString.mining_status)
-    status.status_wallet(config, client)
+    status.status_wallet(config, client, wallet)
 
     click.echo(uxstring.UxString.mining_finish.format(
         click.style("21 status", bold=True), click.style("21 buy", bold=True)))
