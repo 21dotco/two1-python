@@ -25,6 +25,7 @@ from two1.lib.server import analytics
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
+from two1.commands.util import bitcoin_computer
 
 
 class Check(object):
@@ -552,13 +553,13 @@ class Doctor(object):
 
 @click.command()
 @decorators.json_output
-def doctor(two1_config):
+@analytics.capture_usage
+def doctor(ctx):
     """Checks on the health of the tool.
     """
-    return _doctor(two1_config)
+    return _doctor(ctx.obj['config'])
 
 
-@analytics.capture_usage
 def _doctor(two1_config):
 
     # warm welcome message
