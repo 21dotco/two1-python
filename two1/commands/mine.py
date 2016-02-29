@@ -22,7 +22,7 @@ from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
 from two1.lib.bitcoin.hash import Hash
-from two1.commands.util.exceptions import MiningDisabledError, ServerRequestError
+from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 import two1.lib.bitcoin.utils as utils
 
@@ -168,7 +168,10 @@ def start_cpu_mining(config, client, wallet):
     start_time = time.time()
     config.log(uxstring.UxString.mining_start.format(config.username, reward))
 
-    work = get_work(config, client)
+    try:
+        work = get_work(config, client)
+    except (exceptions.BitcoinComputerNeededError, exceptions.MiningDisabledError):
+        return
 
     found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
@@ -254,13 +257,13 @@ def get_work(config, client):
     """
     try:
         work_msg = client.get_work()
-    except ServerRequestError as e:
+    except exceptions.ServerRequestError as e:
         if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
             click.secho(uxstring.UxString.mining_bitcoin_computer_needed, fg="red")
-            raise BitcoinComputerNeededError()
+            raise exceptions.BitcoinComputerNeededError()
         elif e.status_code == 404 or e.status_code == 403:
             click.echo(uxstring.UxString.mining_limit_reached)
-            raise MiningDisabledError(uxstring.UxString.mining_limit_reached)
+            raise exceptions.MiningDisabledError(uxstring.UxString.mining_limit_reached)
         else:
             raise e
 
