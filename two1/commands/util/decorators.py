@@ -80,7 +80,7 @@ def capture_usage(func):
     Args:
         func (function): function being decorated
     """
-    def _capture_usage(ctx, *args, **kw):
+    def _capture_usage(ctx, *args, **kwargs):
         """ Captures usages and sends stastics to the 21 api if use opted in
 
         Args:
@@ -90,70 +90,56 @@ def capture_usage(func):
         """
         config = ctx.obj['config']
 
+        # return early if they opted out of sending usage stats
+        if hasattr(config, "collect_analytics") and not config.collect_analytics:
+            return func(ctx, *args, **kwargs)
+
+        # add a default username if user is not logged in
+        username = "unknown"
         if hasattr(config, "username"):
             username = config.username
-        else:
-            username = "unknown"
 
+        data = {
+            "channel": "cli",
+            "level": "info",
+            "username": username,
+            "command": func.__name__[1:],
+            "platform": "{}-{}".format(platform.system(), platform.release()),
+            "version" : two1.TWO1_VERSION
+        }
         try:
-            if config.collect_analytics:
-                func_name = func.__name__[1:]
-                username = config.username
-                user_platform = platform.system() + platform.release()
-                username = username or "unknown"
-                data = {
-                    "channel": "cli",
-                    "level": "info",
-                    "username": username,
-                    "command": func.__name__[1:],
-                    "platform": "{}-{}".format(platform.system(), platform.release()),
-                    "version" : two1.TWO1_VERSION
-                }
-                _log_message(data)
+            # send usage payload to the logging server
+            requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
 
-            res = func(ctx, *args, **kw)
+            # call decorated function and propigate args
+            res = func(ctx, *args, **kwargs)
 
             return res
 
+        # Catch any special errors that deserve a unique error message
         except exceptions.ServerRequestError as ex:
             click.echo(uxstring.UxString.Error.request)
 
         except exceptions.ServerConnectionError:
             click.echo(uxstring.UxString.Error.connection.format("21 Servers"))
 
-        # don't log UnloggedExceptions
+        # Don't log UnloggedExceptions to the server
         except exceptions.UnloggedException:
             return
-        except click.ClickException:
-            raise
 
         except Exception as e:
-            is_debug = _str2bool(os.environ.get("TWO1_DEBUG", False))
-            tb = traceback.format_exc()
-            if config.collect_analytics:
-                data = {
-                    "channel": "cli",
-                    "level": "error",
-                    "username": username,
-                    "command": func_name,
-                    "platform": user_platform,
-                    "version": two1.TWO1_VERSION,
-                    "exception": tb}
-                _log_message(data)
+            # Add the errors to the data payload
+            data['level'] = 'error'
+            data['exception'] = traceback.format_exc()
+
+            # send usage payload to the logging server
+            requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
+
             click.echo(uxstring.UxString.Error.server_err)
-            if is_debug:
+
+            # raise the error if debug is enabled
+            if os.environ.get("TWO1_DEBUG", False).lower() == "true":
                 raise e
 
     return functools.update_wrapper(_capture_usage, func)
 
-
-def _str2bool(v):
-    """Convenience method for converting from string to boolean."""
-    return str(v).lower() == "true"
-
-
-def _log_message(message):
-    """Send the payload to the logging server."""
-    url = two1.TWO1_LOGGER_SERVER + "/logs"
-    message_str = jsonlib.dumps(message)
-    requests.request("post", url, data=message_str)
