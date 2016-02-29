@@ -136,9 +136,12 @@ def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
                     bitcoin_payout_address):
 
     click.echo(UxString.missing_account)
-    email = click.prompt(UxString.enter_email, type=EmailAddress())
+    email = None
     while True:
-        if username == "" or username is None:
+        if not email:
+            email = click.prompt(UxString.enter_email, type=EmailAddress())
+
+        if not username:
             click.echo("")
             username = click.prompt(UxString.enter_username, type=Username())
             click.echo("")
@@ -147,7 +150,7 @@ def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
 
         rest_client = TwentyOneRestClient(two1.TWO1_HOST, machine_auth, username)
         try:
-            r = rest_client.account_post(bitcoin_payout_address, email, password)
+            rest_client.account_post(bitcoin_payout_address, email, password)
             click.echo(UxString.payout_address % bitcoin_payout_address)
             config.set("username", username)
             config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
@@ -156,8 +159,20 @@ def _create_account(config, username, machine_auth, machine_auth_pubkey_b64,
             analytics_optin(config)
             break
         except ServerRequestError as e:
-            if e.status_code == 400:
-                click.echo(UxString.username_exists % username)
+            if e.status_code == 400 and "error" in e.data:
+                error_code = e.data["error"]
+                if error_code == "TO401":
+                    click.echo(UxString.email_exists.format(email))
+                    email = None
+                    continue
+                elif error_code == "TO402":
+                    click.echo(UxString.username_exists % username)
+                    username = None
+                    continue
+                else:
+                    click.echo(str(next(iter(e.data.values()))) + "({})".format(e.status_code))
+                    raise UnloggedException()
+
             elif e.status_code == 404:
                 click.echo(UxString.Error.invalid_username)
             elif e.status_code == 403:
