@@ -21,6 +21,7 @@ import click
 from path import path
 
 import two1
+from two1.commands.util import bitcoin_computer
 from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
 from two1.commands.util import config as two1_config
@@ -81,6 +82,11 @@ For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
     need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell')
+
+    # sets UUID if avaliable
+    uuid = bitcoin_computer.get_device_uuid()
+    if uuid:
+        two1.TWO1_DEVICE_ID = uuid
 
     try:
         config = two1_config.Config(config_file, config_dict)
