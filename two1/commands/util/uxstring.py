@@ -458,6 +458,8 @@ refer to 21.co/app for futher instructions.", fg="red")
         connection = "Error: Cannot connect to {}. Please check your Internet connection."
         connection_cli = "An internet connection is required to run this command."
         timeout = "Error: Connection to %s timed out."
+        request = "Error: Server request error occurred"
+
         # 500 unknown error
         server_err = "Error: You have experienced a Technical Error. "\
             "We are working to correct this issue."
@@ -474,6 +476,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         # file errors
         file_load = "file %s does not exist"
         file_decode = "There was an error loading {}. It may be a corrupt or poorly formatted file."
+
         # Updater
         update_failed = "Error occured during update process. Please try to run a manual update."
         version_not_found = "Did not find version {}."
