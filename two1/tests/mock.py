@@ -99,11 +99,14 @@ class MockBitRequests:
 
 class MockHttpResponse:
 
-    def __init__(self, data=None, status=200):
+    def __init__(self, data=None, status_code=200):
         self.data = data
-        self.status = status
-        if self.status == 200:
+        self.status_code = status_code
+        if self.status_code == 200:
             self.ok = True
+
+    def json(self):
+        return json.loads(self.data)
 
 
 class MockTwentyOneRestClient:
