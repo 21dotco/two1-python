@@ -104,7 +104,7 @@ class TwentyOneRestClient(object):
 
     # POST /pool/account
     def account_post(self, payout_address, email, password):
-        path = "/pool/account/%s/" % self.username
+        path = "/pool/account/{}/".format(self.username)
         encoded_password = base64.encodebytes(bytes(password, 'utf-8')).decode()
         if self._device_id == "FREE_CLIENT":
             scope = "FREE_CLIENT"
@@ -144,7 +144,7 @@ class TwentyOneRestClient(object):
 
     # POST /pool/account/{username}/payoutaddress
     def account_payout_address_post(self, payout_address):
-        path = "/pool/account/%s/payout_address/" % self.username
+        path = "/pool/account/{}/payout_address/".format(self.username)
         body = {
             "payout_address": payout_address,
         }
@@ -154,13 +154,13 @@ class TwentyOneRestClient(object):
 
     # GET /pool/statistics/{username}/shares/
     def get_shares(self):
-        path = "/pool/statistics/%s/shares/" % self.username
+        path = "/pool/statistics/{}/shares/".format(self.username)
         return (self._request(sign_username=self.username,
                               path=path).json())[self.username]
 
     # GET /pool/statistics/{username}/earninglogs/
     def get_earning_logs(self):
-        path = "/pool/statistics/%s/earninglogs/" % self.username
+        path = "/pool/statistics/{}/earninglogs/".format(self.username)
         return self._request(sign_username=self.username,
                              path=path).json()
 
@@ -173,17 +173,17 @@ class TwentyOneRestClient(object):
 
     # POST /pool/{username}/earnings/?action=True
     def flush_earnings(self):
-        path = "/pool/account/%s/earnings/?action=flush" % self.username
+        path = "/pool/account/{}/earnings/?action=flush".format(self.username)
         return self._request(sign_username=self.username, method="POST", path=path)
 
     def join(self, network, device_id):
         data = json.dumps({"network": network, "zerotier_device_id": device_id})
-        path = "/pool/account/%s/zerotier/" % self.username
+        path = "/pool/account/{}/zerotier/".format(self.username)
         return self._request(sign_username=self.username, method="POST", path=path,
                              data=data)
 
     def get_notifications(self, username, detailed=False):
-        path = "/pool/account/%s/notifications/" % self.username
+        path = "/pool/account/{}/notifications/".format(self.username)
         if detailed:
             path += "?detailed=True"
         return self._request(sign_username=self.username, method="GET", path=path)
@@ -216,7 +216,7 @@ class TwentyOneRestClient(object):
         }
 
     def mark_notifications_read(self, username):
-        path = "/pool/account/%s/notifications/?action=mark_read" % self.username
+        path = "/pool/account/{}/notifications/?action=mark_read".format(self.username)
         return self._request(sign_username=self.username, method="POST", path=path)
 
     def publish(self, publish_info):
@@ -260,7 +260,7 @@ class TwentyOneRestClient(object):
 
     # GET /pool/statistics/{username}/earnings/
     def get_earnings(self):
-        path = "/pool/statistics/%s/earnings/" % self.username
+        path = "/pool/statistics/{}/earnings/".format(self.username)
         return (self._request(sign_username=self.username,
                               path=path).json())[self.username]
 
