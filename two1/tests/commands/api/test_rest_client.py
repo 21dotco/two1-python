@@ -1,9 +1,13 @@
+# standard python imports
 import json
-import pytest
-import requests
 import unittest.mock as mock
 import base64
 
+# 3rd party imports
+import pytest
+import requests
+
+# two1 imports
 import two1
 from two1.commands.util import exceptions
 from two1.lib.server import rest_client
@@ -94,3 +98,36 @@ def test_check_headers(mock_wallet, device_id, data):
             assert key in kwargs['headers']
             assert value == kwargs['headers'][key]
 
+
+@pytest.mark.integration
+def test_account_info(rest_client):
+    pytest.skip()
+    response = rest_client.account_info()
+    assert response.status_code == 200
+
+
+@pytest.mark.integration
+def test_get_work(logged_in_rest_client):
+    pytest.skip()
+    response = logged_in_rest_client.get_work()
+    assert response.status_code == 200
+
+
+@pytest.mark.integration
+def test_get_shares(logged_in_rest_client):
+    pytest.skip()
+    shares = logged_in_rest_client.get_shares()
+    assert isinstance(shares, dict)
+
+
+@pytest.mark.integration
+def test_get_earning_logs(logged_in_rest_client):
+    pytest.skip()
+    logs = logged_in_rest_client.get_earning_logs()
+    assert isinstance(logs, dict)
+
+
+@pytest.mark.integration
+def test_get_mined_satoshis(logged_in_rest_client):
+    pytest.skip()
+    assert isinstance(logged_in_rest_client.get_mined_satoshis(), int)
