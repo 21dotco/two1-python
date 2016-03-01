@@ -14,6 +14,7 @@ from two1.commands.util.uxstring import UxString
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
 from two1.commands.util import decorators
+from two1.commands.util import wallet
 from two1.lib.server import rest_client
 from two1.lib.wallet.two1_wallet import Wallet
 from two1.lib.server.machine_auth_wallet import MachineAuthWallet
@@ -63,9 +64,13 @@ def _login(config, wallet, username, password):
         username (str): optional command line arg to skip username prompt
         password (str): optional command line are to skip password prompt
     """
-    machine_auth = config.machine_auth
+    if not hasattr(config, 'machine_auth'):
+        machine_auth = get_machine_auth(config)
+    else:
+        machine_auth = config.machine_auth
+
     machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
-    bitcoin_payout_address = wallet.current_address
+    bitcoin_payout_address = machine_auth.wallet.current_address
     server_login.signin_account(config=config,
                                 machine_auth=machine_auth,
                                 machine_auth_pubkey_b64=machine_auth_pubkey_b64,
@@ -109,15 +114,9 @@ def get_machine_auth(config):
     if hasattr(config, "machine_auth"):
         machine_auth = config.machine_auth
     else:
-        dp = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
         wallet_path = Two1Wallet.DEFAULT_WALLET_PATH
-        if not Two1Wallet.check_wallet_file(wallet_path):
-            create_wallet_and_account(config)
-            return
-
-        wallet = Wallet(wallet_path=wallet_path,
-                        data_provider=dp)
-        machine_auth = MachineAuthWallet(wallet)
+        two1_wallet = wallet.get_or_create_wallet(config, wallet_path)
+        machine_auth = MachineAuthWallet(two1_wallet)
 
     return machine_auth
 
