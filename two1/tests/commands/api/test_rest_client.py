@@ -2,12 +2,15 @@ import json
 import pytest
 import requests
 import unittest.mock as mock
+import base64
 
+import two1
 from two1.commands.util import exceptions
 from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
 from two1.commands.util import exceptions
 from two1.tests.mock import MockHttpResponse
+
 
 @pytest.mark.parametrize("request_side_effect, status_code, data, raised_exception", [
     # checks early request errors
@@ -47,4 +50,47 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
                    rc._request()
             else:
                 assert rc._request() == response
+
+
+@pytest.mark.parametrize("device_id, data", [
+    # Custom device id and adds data to check Content-Type
+    ("DEVICE_ID", {'data': True}),
+
+    # Custom device id and no data
+    ("DEVICE_ID", None),
+
+    # No device id and no data
+    (None, None),
+    ])
+def test_check_headers(mock_wallet, device_id, data):
+    # Creates a machine_auth from a mock wallet
+    machine_auth = machine_auth_wallet.MachineAuthWallet(mock_wallet)
+    rc = rest_client.TwentyOneRestClient("", machine_auth)
+
+    # Forces the rest client _device_id to be parameterized
+    if device_id:
+        rc._device_id = device_id
+
+    # Gets the encoded amchine auth pub key
+    wallet_pk = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
+
+    # Expected header format to be called as an input param into request
+    expected_headers = {
+        'User-Agent': "21/{}".format(two1.TWO1_VERSION),
+        'From': "{}@{}".format(wallet_pk, device_id if device_id else "FREE_CLIENT")
+        }
+
+    # Function only adds content type when there is content
+    if data:
+        expected_headers['Content-Type'] = 'application/json'
+
+    with mock.patch("two1.lib.server.rest_client.requests.Session.request") as mock_request:
+        mock_request.return_value = MockHttpResponse(status_code=200, data=None)
+        rc._request(data=data)
+        call_args = mock_request.call_args
+        kwargs = call_args[1]
+        assert 'headers' in kwargs
+        for key, value in expected_headers.items():
+            assert key in kwargs['headers']
+            assert value == kwargs['headers'][key]
 
