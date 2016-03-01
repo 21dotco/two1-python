@@ -1,14 +1,18 @@
+# standard python imports
 import urllib
 import base64
 import json
-import click
 import datetime
+
+# 3rd party imports
+import click
 import requests
 from simplejson import JSONDecodeError
+
+# two1 imports
 import two1
-from two1.commands.util.exceptions import UpdateRequiredError, BitcoinComputerNeededError, \
-    UnloggedException, ServerRequestError, ServerConnectionError
-from two1.commands.util.uxstring import UxString
+from two1.commands.util import exceptions
+from two1.commands.util import uxstring
 
 
 class TwentyOneRestClient(object):
@@ -57,27 +61,27 @@ class TwentyOneRestClient(object):
             result = self._session.request(method, url, headers=headers, **kwargs)
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
-            raise ServerConnectionError
+            raise exceptions.ServerConnectionError
 
         # update required
         if result.status_code == 301:
-            click.secho(UxString.update_required, fg="red")
-            raise UpdateRequiredError()
+            click.secho(uxstring.UxString.update_required, fg="red")
+            raise exceptions.UpdateRequiredError()
 
         if result.status_code == 403:
             try:
                 r = result.json()
                 if "detail" in r and "TO100" in r["detail"]:
-                    click.secho(UxString.bitcoin_computer_needed, fg="red")
-                    raise BitcoinComputerNeededError()
+                    click.secho(uxstring.UxString.bitcoin_computer_needed, fg="red")
+                    raise exceptions.BitcoinComputerNeededError()
             # in case the response does not have json raise generic server exception
             except JSONDecodeError:
-                x = ServerRequestError()
+                x = exceptions.ServerRequestError()
                 x.status_code = result.status_code
                 raise x
 
         if result.status_code > 299:
-            x = ServerRequestError()
+            x = exceptions.ServerRequestError()
             x.status_code = result.status_code
             # attempt to interpret the returned content as JSON
             try:
@@ -123,11 +127,11 @@ class TwentyOneRestClient(object):
         data = json.dumps(body)
         try:
             ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
-        except ServerRequestError as e:
+        except exceptions.ServerRequestError as e:
             if e.status_code == 409:
                 username = e.data["username"]
-                click.secho(UxString.existing_account.format(username), fg="red")
-                raise UnloggedException()
+                click.secho(uxstring.UxString.existing_account.format(username), fg="red")
+                raise exceptions.UnloggedException()
             else:
                 raise e
         return ret
