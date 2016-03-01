@@ -88,26 +88,26 @@ def capture_usage(func):
             args (tuple): tuple of args of the fuction
             kwargs (dict): keyword args of the function
         """
-        config = ctx.obj['config']
-
-        # return early if they opted out of sending usage stats
-        if hasattr(config, "collect_analytics") and not config.collect_analytics:
-            return func(ctx, *args, **kwargs)
-
-        # add a default username if user is not logged in
-        username = "unknown"
-        if hasattr(config, "username"):
-            username = config.username
-
-        data = {
-            "channel": "cli",
-            "level": "info",
-            "username": username,
-            "command": func.__name__[1:],
-            "platform": "{}-{}".format(platform.system(), platform.release()),
-            "version" : two1.TWO1_VERSION
-        }
         try:
+            config = ctx.obj['config']
+
+            # return early if they opted out of sending usage stats
+            if hasattr(config, "collect_analytics") and not config.collect_analytics:
+                return func(ctx, *args, **kwargs)
+
+            # add a default username if user is not logged in
+            username = "unknown"
+            if hasattr(config, "username"):
+                username = config.username
+
+            data = {
+                "channel": "cli",
+                "level": "info",
+                "username": username,
+                "command": func.__name__[1:],
+                "platform": "{}-{}".format(platform.system(), platform.release()),
+                "version" : two1.TWO1_VERSION
+            }
             # send usage payload to the logging server
             requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
 
@@ -128,14 +128,17 @@ def capture_usage(func):
             return
 
         except Exception as e:
+            click.echo(uxstring.UxString.Error.server_err)
+
+            if hasattr(config, "collect_analytics") and not config.collect_analytics:
+                return
+
             # Add the errors to the data payload
             data['level'] = 'error'
             data['exception'] = traceback.format_exc()
 
             # send usage payload to the logging server
             requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
-
-            click.echo(uxstring.UxString.Error.server_err)
 
             # raise the error if debug is enabled
             if os.environ.get("TWO1_DEBUG", False).lower() == "true":
