@@ -30,7 +30,6 @@ def status_mining(config, client):
         dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
     """
     has_chip = has_mining_chip()
-    has_chip = True
     is_mining, mined, hashrate = None, None, None
     if has_chip:
         try:
