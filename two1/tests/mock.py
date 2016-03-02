@@ -36,6 +36,10 @@ class MockTwo1Wallet:
         """Return the wallet's unconfirmed balance in satoshis."""
         return self._balance
 
+    def balances_by_address(self, account=0):
+        """Return the wallet's balances by address."""
+        return { self.current_address: { 'confirmed': MockTwo1Wallet.BALANCE, 'total': MockTwo1Wallet.BALANCE } }
+
     @property
     def current_address(self):
         """Return the wallet's current address."""
@@ -156,14 +160,16 @@ class MockChannelClient:
 
     """Mock ChannelClient behavior."""
 
-    Channel = collections.namedtuple('Channel', ['balance', 'state'])
+    Channel = collections.namedtuple('Channel', ['balance', 'state', 'expiration_time'])
     URL = 'test://fake'
     BALANCE = 99000
+    EXPIRATION = 1456962357
 
-    def __init__(self):
+    def __init__(self, wallet):
         """Return a new MockChannelClient object."""
+        self.wallet = wallet
         self.channels = {}
-        self.channels[MockChannelClient.URL] = MockChannelClient.Channel(MockChannelClient.BALANCE, channels.PaymentChannelState.READY)
+        self.channels[MockChannelClient.URL] = MockChannelClient.Channel(MockChannelClient.BALANCE, channels.PaymentChannelState.READY, MockChannelClient.EXPIRATION)
 
     def sync(self):
         """Mocks the channel `sync` method."""
