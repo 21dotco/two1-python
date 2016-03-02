@@ -25,15 +25,16 @@ def doctor(config):
 
 
 @pytest.fixture()
-def mock_config():
-    config = mock_objects.MockConfig()
-    config.log = mock.Mock()
-    return config
+def mock_wallet():
+    return mock_objects.MockTwo1Wallet()
 
 
 @pytest.fixture()
-def mock_wallet():
-    return mock_objects.MockTwo1Wallet()
+def mock_config(mock_wallet):
+    config = mock_objects.MockConfig()
+    config.log = mock.Mock()
+    config.machine_auth = machine_auth_wallet.MachineAuthWallet(mock_wallet)
+    return config
 
 
 @pytest.fixture()
