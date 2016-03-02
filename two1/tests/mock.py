@@ -117,7 +117,7 @@ class MockTwentyOneRestClient:
 
     EARNINGS = 300000
     FLUSHED = 240000
-    DEFAULTS = dict(
+    DEFAULT_VALUES = dict(
         get_earnings=dict(total_earnings=EARNINGS, flushed_amount=FLUSHED, total_payouts=1),
         flush_earnings=unittest.mock.DEFAULT,
         login=unittest.mock.DEFAULT,
@@ -131,10 +131,25 @@ class MockTwentyOneRestClient:
         self.server_url = server_url
         self.auth = machine_auth
         self.username = username
-        for key, value in MockTwentyOneRestClient.DEFAULTS.items():
-            this = self
-            setattr(self, 'mock_' + key, unittest.mock.Mock(return_value=value))
-            setattr(self, key, lambda self=this, _key=key, *a, **kw: getattr(this, 'mock_' + _key)(*a, **kw))
+
+        # Create all mocks needed for introspection into method calls
+        for method, default_value in MockTwentyOneRestClient.DEFAULT_VALUES.items():
+            setattr(self, 'mock_' + method, unittest.mock.Mock(return_value=default_value))
+
+    def get_earnings(self):
+        return self.mock_get_earnings()
+
+    def flush_earnings(self):
+        return self.mock_flush_earnings()
+
+    def login(self, payout_address, password):
+        return self.mock_login(payout_address=payout_address, password=password)
+
+    def get_mined_satoshis(self):
+        return self.mock_get_mined_satoshis()
+
+    def get_notifications(self, username, detailed=False):
+        return self.mock_get_notifications(username, detailed)
 
 
 class MockChannelClient:
@@ -178,11 +193,11 @@ class MockConfig:
 
     def set(self, key, value):
         """Set a new config setting."""
-        return self.mock_set
+        return self.mock_set(key, value)
 
     def save(self):
         """Save current settings."""
-        return self.mock_save
+        return self.mock_save()
 
     def log_purchase(self, **kwargs):
         """Mock purchase log."""
