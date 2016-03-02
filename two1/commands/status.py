@@ -87,8 +87,6 @@ def _status(config, client, wallet, detail):
     }
 
     config.log("")
-    # status_endpoints(config)
-    # status_bought_endpoints(config)
 
     return status
 
@@ -205,59 +203,3 @@ def _get_balances(client, wallet, channel_client):
 
     return Balances(twentyone_balance, spendable_balance, pending_transactions,
                     flushed_earnings, channels_balance)
-
-
-def status_earnings(config, client):
-    """ Logs a formatted string displaying earnings status to the command line
-
-    Args:
-        config (Config): config object used for getting .two1 information
-        client (TwentyOneRestClient): rest client used for communication with the backend api
-    """
-    data = client.get_earnings()
-    total_earnings = data["total_earnings"]
-    total_payouts = data["total_payouts"]
-    config.log('\nMining Proceeds', fg='magenta')
-    config.log('''
-    Total Earnings           : {}
-    Total Payouts            : {}''' .format(none2zero(total_earnings), none2zero(total_payouts)))
-
-    if "flush_amount" in data and data["flush_amount"] > 0:
-        flush_amount = data["flush_amount"]
-        config.log("Flushed Earnings         : {}" .format(none2zero(flush_amount)))
-        config.log("\n" + uxstring.UxString.flush_status % flush_amount, fg='green')
-
-
-def status_shares(config, client):
-    """ Logs a formatted string displaying shares status to the command line
-
-    Args:
-        config (Config): config object used for getting .two1 information
-        client (TwentyOneRestClient): rest client used for communication with the backend api
-    """
-    try:
-        share_data = client.get_shares()
-    except:
-        share_data = None
-    headers = ("", "Total", "Today", "Past Hour")
-    data = []
-
-    if share_data:
-        try:
-            for n in ["good", "bad"]:
-                data.append(map(none2zero, [n, share_data["total"][n],
-                                            share_data["today"][n],
-                                            share_data["hour"][n]]))
-        except KeyError:
-            data = []  # config.log(uxstring.UxString.Error.data_unavailable)
-
-        if len(data):
-            config.log("\nShare statistics:", fg="magenta")
-            config.log(tabulate(data, headers=headers, tablefmt='psql'))
-            # else:
-            #    config.log(uxstring.UxString.Error.data_unavailable)
-
-
-def none2zero(x):
-    """ function to map None values of shares to 0 """
-    return 0 if x is None else x
