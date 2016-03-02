@@ -62,5 +62,6 @@ def patch_bitrequests(monkeypatch, mock_config, mock_wallet):
 def patch_rest_client(monkeypatch, mock_config, mock_wallet):
     machine_auth = machine_auth_wallet.MachineAuthWallet(mock_wallet)
     patch_rest_client = mock_objects.MockTwentyOneRestClient(None, machine_auth, mock_config.username)
-    monkeypatch.setattr(server.rest_client.TwentyOneRestClient, 'get_earnings', patch_rest_client.get_earnings)
+    for mock in mock_objects.MockTwentyOneRestClient.DEFAULT_VALUES.keys():
+        monkeypatch.setattr(server.rest_client.TwentyOneRestClient, mock, getattr(patch_rest_client, mock))
     return patch_rest_client
