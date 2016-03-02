@@ -101,6 +101,12 @@ class UxString:
     (See 21.co/micropayments for more details)
     """
 
+    status_mining_file_not_found = "Run {} to start mining".format(click.style("21 mine", bold=True))
+    status_mining_timeout = "TimeoutError occured while getting hashrate"
+    status_mining_success = "21 mining chip running (/run/minerd.pid)"
+    status_mining_hashrate = "{:.1f} GH/s"
+    status_mining_hashrate_unknown = "~50 GH/s (warming up)"
+
     status_balance_by_username_header = "Off-chain Balances by Username \n"
     status_balance_by_username_table_headers = ["Username", "Balance"]
     status_balance_by_username_total_footer = "\n    Total Balance: {}\n"
