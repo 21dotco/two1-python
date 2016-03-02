@@ -1,0 +1,64 @@
+import pytest
+import unittest.mock as mock
+
+import two1
+from two1.tests import mock as mock_objects
+from two1.commands import login, status
+from two1.commands.util import exceptions
+from two1.commands.util import uxstring
+
+
+@pytest.mark.parametrize('return_value, hashrate, is_mining', [
+    (FileNotFoundError(), None, uxstring.UxString.status_mining_file_not_found),
+    (TimeoutError(), None, uxstring.UxString.status_mining_timeout),
+    (0, uxstring.UxString.status_mining_hashrate_unknown, uxstring.UxString.status_mining_success),
+    (50e9, uxstring.UxString.status_mining_hashrate.format(50), uxstring.UxString.status_mining_success),
+])
+@mock.patch('two1.commands.status.has_mining_chip', return_value=True)
+def test_status_with_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click, return_value, hashrate, is_mining):
+    """Test 21 status integration."""
+
+    if isinstance(return_value, (int, float)):
+        with mock.patch('two1.commands.status.get_hashrate', return_value=return_value):
+            status_rv = status._status(mock_config, mock_rest_client, mock_wallet, False)
+    else:
+        with mock.patch('two1.commands.status.get_hashrate', side_effect=return_value):
+            status_rv = status._status(mock_config, mock_rest_client, mock_wallet, False)
+
+    assert mock_rest_client.mock_get_mined_satoshis.call_count == 1
+    assert mock_rest_client.mock_get_earnings.call_count == 1
+    assert status_rv['mining']['mined'] == mock_rest_client.mock_get_mined_satoshis.return_value
+    assert status_rv['mining']['hashrate'] == hashrate
+    assert status_rv['mining']['is_mining'] == is_mining
+    assert status_rv['account']['username'] == mock_config.username
+    assert status_rv['account']['address'] == mock_wallet.current_address
+    assert status_rv['wallet']['wallet']['onchain'] == mock_wallet.BALANCE
+    assert status_rv['wallet']['wallet']['twentyone_balance'] == mock_rest_client.EARNINGS
+    assert status_rv['wallet']['wallet']['flushing'] == mock_rest_client.FLUSHED
+    assert status_rv['wallet']['wallet']['channels_balance'] == 0
+
+    mock_config.log.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
+    mock_config.log.assert_any_call(uxstring.UxString.status_mining.format(status_rv['mining']['is_mining'], status_rv['mining']['hashrate'], status_rv['mining']['mined']))
+    mock_config.log.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
+
+
+@mock.patch('two1.commands.status.has_mining_chip', return_value=False)
+def test_status_no_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click):
+    """Test 21 status integration."""
+    status_rv = status._status(mock_config, mock_rest_client, mock_wallet, False)
+
+    assert mock_rest_client.mock_get_mined_satoshis.call_count == 0
+    assert mock_rest_client.mock_get_earnings.call_count == 1
+    assert status_rv['mining']['mined'] is None
+    assert status_rv['mining']['hashrate'] is None
+    assert status_rv['mining']['is_mining'] is None
+    assert status_rv['account']['username'] == mock_config.username
+    assert status_rv['account']['address'] == mock_wallet.current_address
+    assert status_rv['wallet']['wallet']['onchain'] == mock_wallet.BALANCE
+    assert status_rv['wallet']['wallet']['twentyone_balance'] == mock_rest_client.EARNINGS
+    assert status_rv['wallet']['wallet']['flushing'] == mock_rest_client.FLUSHED
+    assert status_rv['wallet']['wallet']['channels_balance'] == 0
+
+    mock_config.log.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
+    mock_config.log.assert_not_called(uxstring.UxString.status_mining.format(status_rv['mining']['is_mining'], status_rv['mining']['hashrate'], status_rv['mining']['mined']))
+    mock_config.log.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
