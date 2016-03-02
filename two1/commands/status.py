@@ -35,15 +35,15 @@ def status_mining(config, client):
         try:
             hashrate = get_hashrate("15min")
             if hashrate > 0:
-                return "{:.1f} GH/s".format(hashrate/1e9)
+                return uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
             else:
-                return "~50 GH/s (warming up)"
+                return uxstring.UxString.status_mining_hashrate_unknown
         except FileNotFoundError:
-            is_mining = "Run {} to start mining".format(click.style("21 mine", bold=True))
+            is_mining = uxstring.UxString.status_mining_file_not_found
         except TimeoutError:
-            is_mining = "TimeoutError occured while getting hashrate"
+            is_mining = uxstring.UxString.status_mining_timeout
         else:
-            is_mining = "21 mining chip running (/run/minerd.pid)"
+            is_mining = uxstring.UxString.status_mining_timeout.status_mining_success
         mined = client.get_mined_satoshis()
         out = uxstring.UxString.status_mining.format(is_mining, hashrate, mined)
         config.log(out)
