@@ -21,7 +21,7 @@ def test_get_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
     assert patch_bitrequests.response.text == mock.MockBitResponse.SUCCESS_RESPONSE
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.GET_COST
     assert patch_click.call_count == 2
-    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.GET_COST), err=True)
+    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
     patch_click.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, file=None)
 
 
@@ -52,7 +52,7 @@ def test_post_url_buy(patch_click, mock_config, patch_bitrequests, mock_rest_cli
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
     assert patch_click.call_count == 2
     patch_click.assert_any_call('{"type": "test"}', file=None)
-    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.POST_COST), err=True)
+    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
 def test_post_json_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
@@ -70,7 +70,7 @@ def test_post_json_buy(patch_click, mock_config, patch_bitrequests, mock_rest_cl
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
     assert patch_click.call_count == 2
     patch_click.assert_any_call('{"type": "test"}', file=None)
-    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.POST_COST), err=True)
+    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 def test_buy_headers(patch_click, mock_config, patch_bitrequests, mock_rest_client):
     """Test a buy with custom headers."""
@@ -87,7 +87,7 @@ def test_buy_headers(patch_click, mock_config, patch_bitrequests, mock_rest_clie
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.GET_COST
     assert patch_click.call_count == 2
     patch_click.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, file=None)
-    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.GET_COST), err=True)
+    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
 def test_non_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
