@@ -35,18 +35,18 @@ def status_mining(config, client):
         try:
             hashrate = get_hashrate("15min")
             if hashrate > 0:
-                return uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
+                hashrate = uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
             else:
-                return uxstring.UxString.status_mining_hashrate_unknown
+                hashrate = uxstring.UxString.status_mining_hashrate_unknown
         except FileNotFoundError:
             is_mining = uxstring.UxString.status_mining_file_not_found
         except TimeoutError:
             is_mining = uxstring.UxString.status_mining_timeout
         else:
-            is_mining = uxstring.UxString.status_mining_timeout.status_mining_success
+            is_mining = uxstring.UxString.status_mining_success
+
         mined = client.get_mined_satoshis()
-        out = uxstring.UxString.status_mining.format(is_mining, hashrate, mined)
-        config.log(out)
+        config.log(uxstring.UxString.status_mining.format(is_mining, hashrate, mined))
 
     return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
 
