@@ -7,10 +7,10 @@ import two1.commands.buy as buy
 import two1.commands.util.uxstring as uxstring
 
 
-def test_get_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_get_buy(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a standard GET buy."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource)
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource)
 
     assert patch_bitrequests.method == 'get'
     assert patch_bitrequests.url == resource
@@ -25,10 +25,10 @@ def test_get_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
     patch_click.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, file=None)
 
 
-def test_info_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_info_buy(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a information-only buy."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource, info_only=True)
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource, info_only=True)
 
     assert not hasattr(patch_bitrequests, 'method')
     assert not hasattr(patch_bitrequests, 'url')
@@ -37,10 +37,10 @@ def test_info_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client)
     patch_click.assert_called_once_with('\n'.join(['{}: {}'.format(k, v) for k, v in mock.MockBitRequests.HEADERS.items()]))
 
 
-def test_post_url_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_post_url_buy(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a POST buy with form url-encoded data."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource, data='type=test')
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource, data='type=test')
 
     assert patch_bitrequests.method == 'post'
     assert patch_bitrequests.url == resource
@@ -55,10 +55,10 @@ def test_post_url_buy(patch_click, mock_config, patch_bitrequests, mock_rest_cli
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
-def test_post_json_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_post_json_buy(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a POST buy with json-encoded data."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource, data='{"type": "test"}')
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource, data='{"type": "test"}')
 
     assert patch_bitrequests.method == 'post'
     assert patch_bitrequests.url == resource
@@ -72,10 +72,10 @@ def test_post_json_buy(patch_click, mock_config, patch_bitrequests, mock_rest_cl
     patch_click.assert_any_call('{"type": "test"}', file=None)
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
-def test_buy_headers(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_buy_headers(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a buy with custom headers."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource, header=('Authorization: Bearer MYTESTKEY',))
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource, header=('Authorization: Bearer MYTESTKEY',))
 
     assert patch_bitrequests.method == 'get'
     assert patch_bitrequests.url == resource
@@ -90,10 +90,10 @@ def test_buy_headers(patch_click, mock_config, patch_bitrequests, mock_rest_clie
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
-def test_non_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_non_buy(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test a buy that does not hit a 402-payable endpoint."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, resource, method='put')
+    buy._buy(mock_config, mock_rest_client, mock_wallet, resource, method='put')
 
     assert patch_bitrequests.method == 'put'
     assert patch_bitrequests.url == resource
@@ -105,23 +105,23 @@ def test_non_buy(patch_click, mock_config, patch_bitrequests, mock_rest_client):
     patch_click.assert_called_once_with(mock.MockBitResponse.FAILURE_RESPONSE, file=None)
 
 
-def test_error_buys(patch_click, mock_config, patch_bitrequests, mock_rest_client):
+def test_error_buys(patch_click, mock_config, mock_wallet, patch_bitrequests, mock_rest_client):
     """Test buy failure under various error cases."""
     resource = 'http://127.0.0.1:5000'
 
     # Test disallowed payment method
     with pytest.raises(click.ClickException) as e:
-        buy._buy(mock_config, mock_rest_client, resource, payment_method='fake')
+        buy._buy(mock_config, mock_rest_client, mock_wallet, resource, payment_method='fake')
     assert str(e.value) == uxstring.UxString.buy_bad_payment_method.format('fake')
 
     # Test improper resource URL
     with pytest.raises(click.ClickException) as e:
-        buy._buy(mock_config, mock_rest_client, '127.0.0.1:5000')
+        buy._buy(mock_config, mock_rest_client, mock_wallet, '127.0.0.1:5000')
     assert str(e.value) == uxstring.UxString.buy_bad_uri_scheme
 
     # Test improper resource URL
     with pytest.raises(click.ClickException) as e:
-        buy._buy(mock_config, mock_rest_client, 'http://')
+        buy._buy(mock_config, mock_rest_client, mock_wallet, 'http://')
     assert str(e.value) == uxstring.UxString.buy_bad_uri_host
 
     assert patch_click.called is False
