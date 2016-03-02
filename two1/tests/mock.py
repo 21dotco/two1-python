@@ -2,6 +2,7 @@
 import json
 import codecs
 import collections
+import unittest.mock
 
 import two1.lib.bitcoin as bitcoin
 import two1.lib.channels as channels
@@ -14,9 +15,10 @@ class MockTwo1Wallet:
     PRIVATE_KEY = bitcoin.PrivateKey.from_int(0x70b5d984b8a8e072e201ddd59ff3deb2d7303467136001c062ffa23552ea058e)
     BALANCE = 123000
 
-    def __init__(self):
+    def __init__(self, testnet=False):
         """Returns a new MockTwo1Wallet object."""
         self._balance = MockTwo1Wallet.BALANCE
+        self.testnet = testnet
 
     def sign_message(self, message, account_name_or_index=None, key_index=0):
         """Sign an arbitrary message."""
@@ -113,23 +115,26 @@ class MockTwentyOneRestClient:
 
     """Mock TwentyOneRestClient behavior."""
 
+    EARNINGS = 300000
     FLUSHED = 240000
+    DEFAULTS = dict(
+        get_earnings=dict(total_earnings=EARNINGS, flushed_amount=FLUSHED, total_payouts=1),
+        flush_earnings=unittest.mock.DEFAULT,
+        login=unittest.mock.DEFAULT,
+        get_mined_satoshis=[dict(date=1456768320, amount=10000, reason='CLI'),
+                            dict(date=1456768327, amount=10000, reason='CLI')],
+        get_notifications=dict(urgent_count=0, unread_count=0),
+    )
 
     def __init__(self, server_url, machine_auth, username=None):
         """Return a new MockTwentyOneRestClient object."""
         self.server_url = server_url
-        self.machine_auth = machine_auth
+        self.auth = machine_auth
         self.username = username
-        self._earnings = self.machine_auth.wallet.BALANCE
-        self._flushed = MockTwentyOneRestClient.FLUSHED
-
-    def get_earnings(self):
-        """Get net earnings."""
-        return dict(total_earnings=self.machine_auth.wallet.unconfirmed_balance(), flushed_amount=self._flushed)
-
-    def flush_earnings(self):
-        """Flush earnings to the blockchain."""
-        return MockHttpResponse()
+        for key, value in MockTwentyOneRestClient.DEFAULTS.items():
+            mock_function = unittest.mock.Mock(return_value=value)
+            setattr(self, 'mock_' + key, mock_function)
+            setattr(self, key, lambda *a, _fn=mock_function, **kw: _fn(*a, **kw))
 
 
 class MockChannelClient:
@@ -168,6 +173,16 @@ class MockConfig:
         """Return a new MockConfig object."""
         self.username = 'MockTestUser'
         self.purchases = []
+        self.mock_set = unittest.mock.Mock()
+        self.mock_save = unittest.mock.Mock()
+
+    def set(self, key, value):
+        """Set a new config setting."""
+        return self.mock_set
+
+    def save(self):
+        """Save current settings."""
+        return self.mock_save
 
     def log_purchase(self, **kwargs):
         """Mock purchase log."""
