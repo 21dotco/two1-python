@@ -132,9 +132,9 @@ class MockTwentyOneRestClient:
         self.auth = machine_auth
         self.username = username
         for key, value in MockTwentyOneRestClient.DEFAULTS.items():
-            mock_function = unittest.mock.Mock(return_value=value)
-            setattr(self, 'mock_' + key, mock_function)
-            setattr(self, key, lambda *a, _fn=mock_function, **kw: _fn(*a, **kw))
+            this = self
+            setattr(self, 'mock_' + key, unittest.mock.Mock(return_value=value))
+            setattr(self, key, lambda self=this, _key=key, *a, **kw: getattr(this, 'mock_' + _key)(*a, **kw))
 
 
 class MockChannelClient:
