@@ -514,3 +514,7 @@ refer to 21.co/app for futher instructions.", fg="red")
             "To use on-chain balance add {} to your buy command*".format(
                     click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True)
                 )
+
+        # account errors
+        login_error_username = "Can not log into account, username not set"
+        login_error_mining_auth_pubkey = "Can not log into account, username not set"
