@@ -95,12 +95,10 @@ goods both at the command line and programmatically, visit 21.co/learn
         raise click.ClickException(uxstring.UxString.Error.file_decode.format((str(e))))
 
     if need_wallet_and_account:
-        wallet = wallet_utils.get_or_create_wallet(config, config.wallet_path)
-        config.machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
-        config.username = account_utils.get_or_create_username(config)
-        client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, config.machine_auth, config.username)
-        ctx.obj['client'] = client
-        ctx.obj['wallet'] = wallet
+        ctx.obj['wallet'] = wallet_utils.get_or_create_wallet(config, config.wallet_path)
+        ctx.obj['machine_auth'] = machine_auth_wallet.MachineAuthWallet(ctx.obj['wallet'])
+        config.username = account_utils.get_or_create_username(config, ctx.obj['machine_auth'])
+        ctx.obj['client'] = rest_client.TwentyOneRestClient(two1.TWO1_HOST, ctx.obj['machine_auth'], config.username)
 
 
 main.add_command(buy)
