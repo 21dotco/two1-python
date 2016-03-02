@@ -55,6 +55,15 @@ class UxString:
     # username
     login_username = "\nUsername (Case sensitive)"
     login_password = "Password (Typing will be hidden)"
+    login_in_progress = "logging in {}."
+    login_required = "Account login is required.\n\n\tRun {} first.".format(click.style("21 login", bold=True))
+    incorrect_password = click.style("The username and password that you entered do not match.",
+                                     fg="red")
+
+    # sign up
+    signin_title = click.style(
+        "\nIf you don't have a 21 account, visit https://21.co/signup to create one. ", fg="blue")
+
     # account recovery
     registered_usernames_title = "\nRegistered usernames: \n"
     login_prompt = "\nPlease select the number associated with the username you want to " \
