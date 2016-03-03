@@ -9,6 +9,7 @@ import pytest
 # two1 imports
 # importing the class directly to get around renaming doctor
 from two1.commands.doctor import Check
+from two1.commands.doctor import Doctor
 
 
 @pytest.mark.parametrize("actual_version, expected_version, return_value", [
@@ -34,10 +35,8 @@ def test_is_version_gte(doctor, actual_version, expected_version, return_value):
     ("http://0.0.0.0:8000", True, 8000),
     ("http://0.0.0.0:8001", False, 8000),
     ("http://0.0.0.0", False, 8000),
-    ("http://0.0.0.0", False, 80),
     ("https://0.0.0.0:8000", True, 8000),
     ("https://0.0.0.0", False, 8000),
-    ("https://0.0.0.0", False, 443),
     ])
 def test_make_http_connection(doctor, url, return_value, server_port):
     """ Fires up an http server to check functionality of make_connection """
@@ -146,4 +145,36 @@ def test_to_dict(doctor, test_checks):
             assert check_obj.message == check_dict["message"]
             assert check_obj.value == check_dict["value"]
             assert check_obj.result.name == check_dict["result"]
+
+
+@pytest.mark.integration
+def test_doctor_integration(doctor):
+    """ Runs the full doctor suite of tests and ensures there are no failures"""
+    specialties = Doctor.SPECIALTIES
+
+    # Gets a dict of the types of checks and the functions of that check type as a list
+    expected_doctor_checks = {check_type: [] for check_type in specialties.keys()}
+    for attr_name in dir(doctor):
+        for check_type in specialties.keys():
+            if attr_name.startswith("check_{}".format(check_type)) and callable(getattr(doctor, attr_name)):
+                expected_doctor_checks[check_type].append(attr_name)
+
+    # runs each of the different checks
+    for check_type in expected_doctor_checks.keys():
+        doctor.checkup(check_type)
+
+    # gets the results from all checks in dict form
+    appointment_results = doctor.to_dict()
+
+    # iterates over all expected checks ensuring they were actually called
+    for check_type in expected_doctor_checks.keys():
+        expected_check_functions = expected_doctor_checks[check_type]
+        actual_check_functions = appointment_results[check_type]
+        for check_result in actual_check_functions:
+            assert check_result['name'] in expected_check_functions
+
+        assert len(actual_check_functions) == len(expected_check_functions)
+
+    # makes sure there are no failures
+    assert len(doctor.get_checks(Check.Result.FAIL)) == 0
 
