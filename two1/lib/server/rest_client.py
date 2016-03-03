@@ -66,14 +66,14 @@ class TwentyOneRestClient(object):
         # update required
         if result.status_code == 301:
             click.secho(uxstring.UxString.update_required, fg="red")
-            raise exceptions.UpdateRequiredError()
+            raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
 
         if result.status_code == 403:
             try:
                 r = result.json()
                 if "detail" in r and "TO100" in r["detail"]:
                     click.secho(uxstring.UxString.bitcoin_computer_needed, fg="red")
-                    raise exceptions.BitcoinComputerNeededError()
+                    raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed)
             # in case the response does not have json raise generic server exception
             except JSONDecodeError:
                 x = exceptions.ServerRequestError()

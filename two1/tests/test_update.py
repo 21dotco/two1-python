@@ -8,7 +8,6 @@ from collections import namedtuple
 import pytest
 import responses
 import two1
-from two1.lib.server.rest_client import ServerRequestError
 from two1.commands.update import checked_for_an_update_today
 from two1.commands.update import update_two1_package
 from two1.commands import update

@@ -10,8 +10,11 @@ class TwoOneError(click.ClickException):
     def __str__(self):
         return self._msg
 
+    def show(self, file=None):
+        click.echo(str(self.format_message()), file=file)
 
-class UnloggedException(Exception):
+
+class UnloggedException(TwoOneError):
     pass
 
 

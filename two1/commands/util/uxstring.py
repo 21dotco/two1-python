@@ -501,7 +501,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
-        account_failed = "Could not create a 21 account. Please check the username."
+        account_failed = "Could not create a 21 account. Please contact support at support@21.co"
 
         # version errors
         version_not_detected = "Could not properly detect your version of 21. \nTry"\
