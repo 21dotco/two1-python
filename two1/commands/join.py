@@ -88,7 +88,7 @@ def _join(config, client, network):
             zerotier.join_network(network_id)
             config.log(uxstring.UxString.successful_join.format(click.style(network, fg="magenta")))
     except exceptions.ServerRequestError as e:
-        if e.status_code == 401:
+        if e.status_code == 400:
             config.log(uxstring.UxString.invalid_network)
         else:
             raise e
