@@ -49,10 +49,10 @@ Send an SMS to a phone number.
 $ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
 
 """
-    _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'], resource, **options)
+    _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], resource, **options)
 
 
-def _buy(config, client, wallet, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
+def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
     """Purchase a 402-enabled resource via CLI.
 
     This function attempts to purchase the requested resource using the
@@ -65,7 +65,8 @@ def _buy(config, client, wallet, resource, info_only=False, payment_method='offc
             function decorator.
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        wallet (two1.lib.wallet.Wallet): a user's wallet instance.
+        machine_auth (two1.server.machine_auth.MachineAuthWallet): a wallet used
+            for machine authentication.
         resource (str): a URI of the form scheme://host:port/path with `http`
             and `https` strictly enforced as required schemes.
         info_only (bool): if True, do not purchase the resource, and cause the
@@ -85,11 +86,11 @@ def _buy(config, client, wallet, resource, info_only=False, payment_method='offc
     """
     # Find the correct payment method
     if payment_method == 'offchain':
-        requests = bitrequests.BitTransferRequests(config.machine_auth, config.username)
+        requests = bitrequests.BitTransferRequests(machine_auth, config.username)
     elif payment_method == 'onchain':
-        requests = bitrequests.OnChainRequests(wallet)
+        requests = bitrequests.OnChainRequests(machine_auth.wallet)
     elif payment_method == 'channel':
-        requests = bitrequests.ChannelRequests(wallet)
+        requests = bitrequests.ChannelRequests(machine_auth.wallet)
     else:
         raise click.ClickException(uxstring.UxString.buy_bad_payment_method.format(payment_method))
 
