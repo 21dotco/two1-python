@@ -8,6 +8,7 @@ import click
 import two1
 import two1.lib.server as server
 import two1.lib.wallet.fees as fees
+import two1.lib.channels as channels
 import two1.commands.status as status
 import two1.commands.util.uxstring as uxstring
 import two1.lib.bitrequests as bitrequests
@@ -128,13 +129,14 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         twentyone_balance = client.get_earnings()["total_earnings"]
         click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, '21.co', twentyone_balance), err=True)
     elif payment_method == 'onchain':
-        spendable_balance = min(requests.wallet.confirmed_balance(), requests.wallet.unconfirmed_balance())
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'blockchain', user_balances.onchain), err=True)
+        onchain_balance = min(requests.wallet.confirmed_balance(), requests.wallet.unconfirmed_balance())
+        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'blockchain', onchain_balance), err=True)
     elif payment_method == 'channel':
+        channel_client = requests._channelclient
         channel_client.sync()
         channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_client.list())
                                if s.state == channels.PaymentChannelState.READY)
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', user_balances.channels), err=True)
+        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', channels_balance), err=True)
 
     # Record the transaction if it was a payable request
     config.log_purchase(r=resource, p=response.amount_paid, d=str(datetime.datetime.today()))

@@ -7,10 +7,15 @@ import two1.commands.buy as buy
 import two1.commands.util.uxstring as uxstring
 
 
-def test_get_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client):
-    """Test a standard GET buy."""
+@pytest.mark.parametrize('method, balance_str, balance_int', [
+    ('offchain', '21.co', mock.MockTwentyOneRestClient.EARNINGS),
+    ('onchain', 'blockchain', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.GET_COST),
+    ('channel', 'payment channels', 0),
+])
+def test_get_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client, method, balance_str, balance_int):
+    """Test a standard GET buy with all payment methods."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource)
+    buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource, payment_method=method)
 
     assert patch_bitrequests.method == 'get'
     assert patch_bitrequests.url == resource
@@ -21,7 +26,7 @@ def test_get_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests,
     assert patch_bitrequests.response.text == mock.MockBitResponse.SUCCESS_RESPONSE
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.GET_COST
     assert patch_click.call_count == 2
-    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
+    patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, balance_str, balance_int), err=True)
     patch_click.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, file=None)
 
 
