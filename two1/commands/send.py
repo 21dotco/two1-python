@@ -55,7 +55,7 @@ def _send(wallet, address, satoshis, use_unconfirmed=False):
         # This will trigger if there's a below dust-limit output.
         raise click.ClickException(str(e))
     except WalletBalanceError:
-        if w.unconfirmed_balance() > satoshis:
+        if wallet.unconfirmed_balance() > satoshis:
             raise click.ClickException("Insufficient confirmed balance. However, you can use"
                                        "unconfirmed transactions using --use-unconfirmed.")
         else:
