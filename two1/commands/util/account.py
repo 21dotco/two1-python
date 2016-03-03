@@ -8,6 +8,7 @@ import click
 # two1 imports
 import two1
 from two1.commands.util import uxstring
+from two1.commands.util import exceptions
 from two1.commands import login
 
 
@@ -36,12 +37,10 @@ def get_or_create_username(config, machine_auth):
             login.login_account(config, machine_auth)
 
     if not config.username:
-        click.echo(uxstring.UxString.Error.login_error_username)
-        sys.exit(1)
+        raise exceptions.TwoOneError(uxstring.UxString.Error.login_error_username)
 
     if not config.mining_auth_pubkey:
-        click.echo(uxstring.UxString.Error.login_error_mining_auth_pubkey)
-        sys.exit(2)
+        exceptions.TwoOneError(uxstring.UxString.Error.login_error_mining_auth_pubkey)
 
     return config.username
 

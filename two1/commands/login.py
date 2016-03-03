@@ -152,8 +152,8 @@ def create_account_on_bc(config, machine_auth):
                         continue
                 # unexpected 400 error
                 else:
-                    click.echo(str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code))
-                    raise exceptions.UnloggedException()
+                    raise exceptions.TwoOneError(
+                        str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code))
 
             # handle an invalid username format
             elif ex.status_code == 404:
@@ -162,8 +162,7 @@ def create_account_on_bc(config, machine_auth):
             elif ex.status_code == 403:
                 r = ex.data
                 if "detail" in r and "TO200" in r["detail"]:
-                    click.secho(uxstring.UxString.max_accounts_reached)
-                raise exceptions.UnloggedException("Bitcoin Computer Needed")
+                    raise exceptions.UnloggedException(click.style(uxstring.UxString.max_accounts_reached))
             else:
                 click.echo(uxstring.UxString.Error.account_failed)
             username = None
