@@ -27,7 +27,7 @@ def get_device_uuid():
     uuid = None
     try:
         with open("/proc/device-tree/hat/uuid", "r") as f:
-            uuid = f.read().strip("\x00")
+            uuid = f.read().strip("\x00").strip("\n")
     except FileNotFoundError:
         pass
     return uuid if uuid else None
