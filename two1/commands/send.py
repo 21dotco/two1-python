@@ -5,6 +5,7 @@ import click
 from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.commands.util import decorators
+from two1.commands.util import uxstring
 
 
 @click.command("send")
@@ -38,38 +39,24 @@ UTXOs to send coins. To use unconfirmed transactions, use the
 
 def _send(wallet, address, satoshis, use_unconfirmed=False):
     """Send bitcoin to the specified address"""
-    balance = min(wallet.confirmed_balance(),
-                  wallet.unconfirmed_balance())
+    txids = []
     try:
         txids = wallet.send_to(address=address, amount=satoshis, use_unconfirmed=use_unconfirmed)
         # For now there is only a single txn created, so assume it's 0
-        txid = txids[0]["txid"]
-        tx = txids[0]["txn"]
-        click.echo("Successfully sent %s satoshis to %s.\n"
-                   "txid: %s\n"
-                   "tx: %s\n"
-                   "To see in the blockchain: "
-                   "https://blockexplorer.com/tx/%s\n"
-                   % (satoshis, address, txid, tx, txid))
+        txid, txn = txids[0]["txid"], txids[0]["txn"]
+        click.echo(uxstring.UxString.send_success.format(satoshis, address, txid, txn))
     except ValueError as e:
         # This will trigger if there's a below dust-limit output.
         raise click.ClickException(str(e))
     except WalletBalanceError:
         if wallet.unconfirmed_balance() > satoshis:
-            raise click.ClickException("Insufficient confirmed balance. However, you can use"
-                                       "unconfirmed transactions using --use-unconfirmed.")
+            raise click.ClickException(uxstring.UxString.send_insufficient_confirmed)
         else:
-            raise click.ClickException("Insufficient Blockchain balance of %s satoshis.\n"
-                                       "Cannot send %s satoshis to %s.\n"
-                                       "Do %s, then %s to increase your Blockchain balance." %
-                                       (balance, satoshis, address,
-                                        click.style("21 mine", bold=True),
-                                        click.style("21 flush", bold=True)))
-        txids = []
+            balance = min(wallet.confirmed_balance(), wallet.unconfirmed_balance())
+            raise click.ClickException(send_insufficient_blockchain.format(balance, satoshis, address))
     except DataProviderError as e:
         if "rejected" in str(e):
-            raise click.ClickException("Transaction rejected.\n"
-                                       "You may have to wait for other transactions to confirm.\n")
+            raise click.ClickException(uxstring.UxString.send_rejected)
         else:
             raise click.ClickException(str(e))
     return txids

@@ -469,6 +469,18 @@ refer to 21.co/app for futher instructions.", fg="red")
                                                                                     bold=True)
     no_ratings = click.style("You haven't rated any apps yet.", fg="blue")
 
+    # send
+
+    send_success = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\ntxn: {3}\n"
+                    "To see on the blockchain: https://blockexplorer.com/tx/{2}")
+    send_insufficient_confirmed = (
+        "Insufficient confirmed balance. However, you can use unconfirmed transactions with --use-unconfirmed.")
+    send_insufficient_blockchain = (
+        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
+        "Run %s, then %s to increase your Blockchain balance." %
+        (click.style("21 mine", bold=True), click.style("21 flush", bold=True)))
+    send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
+
     class Error:
         # network errors
         connection = "Error: Cannot connect to {}. Please check your Internet connection."
