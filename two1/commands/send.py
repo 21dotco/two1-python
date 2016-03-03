@@ -34,7 +34,7 @@ By default, this command uses only confirmed transactions and
 UTXOs to send coins. To use unconfirmed transactions, use the
 --use-unconfirmed flag.
 """
-    _send(ctx.obj['wallet'], address, satoshis, use_unconfirmed)
+    return _send(ctx.obj['wallet'], address, satoshis, use_unconfirmed)
 
 
 def _send(wallet, address, satoshis, use_unconfirmed=False):
