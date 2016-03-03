@@ -30,10 +30,14 @@ def mock_wallet():
 
 
 @pytest.fixture()
+def mock_machine_auth(mock_wallet):
+    return machine_auth_wallet.MachineAuthWallet(mock_wallet)
+
+
+@pytest.fixture()
 def mock_config(mock_wallet):
     config = mock_objects.MockConfig()
     config.log = mock.Mock()
-    config.machine_auth = machine_auth_wallet.MachineAuthWallet(mock_wallet)
     return config
 
 
