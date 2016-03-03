@@ -20,8 +20,13 @@ from two1.lib.server.rest_client import TwentyOneRestClient
 from two1.lib.server.machine_auth_wallet  import MachineAuthWallet
 
 
+### py.test hooks
 def pytest_cmdline_preparse(args):
     """ Auto adds a few usefull command line args
+
+        Strict flag below is used to force markers to be documented in setup.cfg
+        so spelling issues dont occur and theres a higher barrier to entry to make
+        new markers.
 
         From the help text:
         -r chars              show extra test summary info as specified by chars
@@ -30,10 +35,30 @@ def pytest_cmdline_preparse(args):
 
         --color=color         color terminal output (yes/no/auto).
         --durations=N         show N slowest setup/test durations (N=0 for all).
+        --strict              run pytest in strict mode, warnings become errors.
     """
-    args += ['-r fExw', '--color=yes', '--durations=5']
+    args += ['-r fExw', '--color=yes', '--durations=5', '--strict']
 
 
+def pytest_configure(config):
+    """ Register all markers here """
+    config.addinivalue_line("markers", "integration: mark a test as an integration test.")
+    config.addinivalue_line("markers", "unit: mark a test as a unit test.")
+
+
+def pytest_report_header(config):
+    """ Adds the two1 version to the report header """
+    return "two1: {}".format(two1.TWO1_VERSION)
+
+
+def pytest_runtest_setup(item):
+    """ Skips tests based upon makers """
+    integration_marker = item.get_marker("integration")
+    if integration_marker and integration_marker.name not in item.config.getoption("-m"):
+        pytest.skip("test {} is an integration test")
+
+
+### fixtures
 @pytest.fixture()
 def config(tmpdir):
     """ Fixture that injects a Config
