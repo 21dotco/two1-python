@@ -59,6 +59,10 @@ def patch_bitrequests(monkeypatch, mock_config, mock_wallet):
     patch_bitrequests = mock_objects.MockBitRequests(machine_auth_wallet.MachineAuthWallet(mock_wallet), mock_config.username)
     monkeypatch.setattr(bitrequests.BitTransferRequests, 'request', patch_bitrequests.request)
     monkeypatch.setattr(bitrequests.BitTransferRequests, 'get_402_info', patch_bitrequests.get_402_info)
+    monkeypatch.setattr(bitrequests.OnChainRequests, 'request', patch_bitrequests.request)
+    monkeypatch.setattr(bitrequests.OnChainRequests, 'get_402_info', patch_bitrequests.get_402_info)
+    monkeypatch.setattr(bitrequests.ChannelRequests, 'request', patch_bitrequests.request)
+    monkeypatch.setattr(bitrequests.ChannelRequests, 'get_402_info', patch_bitrequests.get_402_info)
     return patch_bitrequests
 
 
