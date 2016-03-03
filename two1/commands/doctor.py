@@ -152,6 +152,8 @@ class Doctor(object):
             return False
         except ConnectionRefusedError:
             return False
+        except Exception:
+            return False
 
         return True
 
@@ -311,7 +313,10 @@ class Doctor(object):
         if bitcoin_computer.has_mining_chip():
             return Check.Result.PASS, check_str, "Yes"
 
-        return Check.Result.FAIL, check_str, "No"
+        if two1.TWO1_DEVICE_ID:
+            return Check.Result.FAIL, check_str, "No"
+        else:
+            return Check.Result.WARN, check_str, "No"
 
     def check_general_ip_address(self):
         """ Checks if the system has an IP addressed assigned
@@ -384,7 +389,10 @@ class Doctor(object):
         if zt_cli:
             return Check.Result.PASS, check_str, zt_cli
 
-        return Check.Result.FAIL, check_str, "zerotier-cli not installed"
+        if two1.TWO1_DEVICE_ID:
+            return Check.Result.FAIL, check_str, "zerotier-cli not installed"
+        else:
+            return Check.Result.WARN, check_str, "zerotier-cli not installed"
 
     def check_dependency_minerd_cli(self):
         """ Checks if minerd binary is installed on your system
@@ -400,7 +408,11 @@ class Doctor(object):
         if minerd_cli:
             return Check.Result.PASS, check_str, minerd_cli
 
-        return Check.Result.FAIL, check_str, "minerd not installed"
+        if two1.TWO1_DEVICE_ID:
+            return Check.Result.FAIL, check_str, "minerd not installed"
+        else:
+            return Check.Result.WARN, check_str, "minerd not installed"
+
 
     def check_dependency_wallet_cli(self):
         """ Checks if the two1 wallet is properly installed
@@ -577,7 +589,7 @@ def _doctor(two1_config):
     # groups all checks into one class for reuse of print_summary
     doc.print_results()
 
-    if len(doc.get_checks(Check.Result.PASS)) == len(doc.get_checks()):
+    if len(doc.get_checks(Check.Result.FAIL)) == 0:
         return doc.to_dict()
     else:
         raise exceptions.TwoOneError("21 doctor failed some checks.", json=doc.to_dict())
