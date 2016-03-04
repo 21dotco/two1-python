@@ -8,6 +8,7 @@ from tabulate import tabulate
 
 # two1 imports
 from two1.lib.server import rest_client
+from two1.commands.util import exceptions
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -111,7 +112,7 @@ def get_search_results(client, search_string, page):
         click.echo(content)
         return total_pages
     else:
-        raise rest_client.ServerRequestError()
+        raise exceptions.ServerRequestError()
 
 
 MAX_PAGE_SIZE = 10
@@ -187,7 +188,7 @@ def display_search_info(config, client, listing_id):
     """
     try:
         resp = client.get_listing_info(listing_id)
-    except rest_client.ServerRequestError as e:
+    except exceptions.ServerRequestError as e:
         if e.status_code == 404:
             click.secho(uxstring.UxString.app_does_not_exist.format(listing_id))
             return
