@@ -15,84 +15,29 @@ import two1.commands.util.decorators as decorators
 import two1.lib.channels.statemachine as statemachine
 
 
- @click.command(context_settings=dict(
-         ignore_unknown_options=True,
-         ))
- @click.argument('service', nargs=-1)
- @click.pass_context
- def buy(ctx, service):
-     r = requests.get('http://apps.21.co/{}/manifest'.format(service[0]))
-     if r.status_code != 200:
-         return click.echo('{} not found or is not availible'.format(service[0]))
-     paths = r.json()['paths']
-     required_params = _parse_required_params(paths)
-     print(required_params)
-     submitted_params = [i[2:] for i in service[1:] if i[:2]=='--']
-     print(submitted_params)
-     potential_endpoints = _get_potential_endpoints(required_params, submitted_params)
-     print(potential_endpoints)
+@click.command()
+@click.argument('resource', nargs=1)
+@click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
+@click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
+@click.option('-H', '--header', multiple=True, default=None, help="HTTP header to include with the request")
+@click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
+@click.option('-o', '--output', 'output_file', default=None, type=click.File('w'), help="Output file")
+@click.option('-d', '--data', default=None, help="Data to send in HTTP body")
+@click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
+@click.option('--maxprice', default=10000, help="Maximum amount to pay")
+@click.pass_context
+@decorators.capture_usage
+def buy(ctx, resource, **options):
+    """Buy API calls with mined bitcoin.
 
- def _parse_required_params(paths):
-     required_params = {}
-     for endpoint in list(paths.keys()):
-         endpoint_dict = {}
-         for req_type in paths[endpoint]:
-             endpoint_dict[req_type] = []
-             if 'parameters' in list(paths[endpoint][req_type].keys()):
-                 for parameter in paths[endpoint][req_type]['parameters']:
-                     if 'required' in list(parameter.keys()) and parameter['required'] == True:
-                         endpoint_dict[req_type].append(parameter['name'])
-         required_params[endpoint] = endpoint_dict
-     return required_params
+\b
+Usage
+-----
+Send an SMS to a phone number.
+$ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
 
- def _get_potential_endpoints(required_params, submitted_params):
-     potential_endpoints = {}
-
-     #check each endpoint
-     for endpoint in list(required_params.keys()):
-         potential_endpoint = {}
-
-         #check each request type within each endpoint
-         for req_type in required_params[endpoint]:
-             must_be_submitted = set(required_params[endpoint][req_type])
-
-             #check that every required parameter for each request type is found in submitted parameters
-             for param in submitted_params:
-                 if param in must_be_submitted:
-                     must_be_submitted.remove(param)
-
-             #add req type to potential endpoint if all required parameters met
-             if len(must_be_submitted) == 0:
-                 potential_endpoint[req_type] = required_params[endpoint][req_type]
-
-         #add endpoint to list of potential endpoints if requirements met for at least one req type
-         if len(list(potential_endpoint.keys())) != 0:
-             potential_endpoints[endpoint] = potential_endpoint
-     return potential_endpoints
-
-# @click.command()
-# @click.argument('resource', nargs=1)
-# @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
-# @click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
-# @click.option('-H', '--header', multiple=True, default=None, help="HTTP header to include with the request")
-# @click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
-# @click.option('-o', '--output', 'output_file', default=None, type=click.File('w'), help="Output file")
-# @click.option('-d', '--data', default=None, help="Data to send in HTTP body")
-# @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
-# @click.option('--maxprice', default=10000, help="Maximum amount to pay")
-# @click.pass_context
-# @decorators.capture_usage
-# def buy(ctx, resource, **options):
-#     """Buy API calls with mined bitcoin.
-
-# \b
-# Usage
-# -----
-# Send an SMS to a phone number.
-# $ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
-
-# """
-#     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], resource, **options)
+"""
+    _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], resource, **options)
 
 
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
