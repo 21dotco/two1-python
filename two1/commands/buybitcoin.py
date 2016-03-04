@@ -21,6 +21,7 @@ from two1.commands.util import uxstring
               help="Shows your history of Bitcoin purchases")
 @click.argument('amount', default=0, type=click.FLOAT)
 @decorators.json_output
+@decorators.capture_usage
 def buybitcoin(ctx, info, status, amount, history):
     """Buy Bitcoins from Coinbase
 
@@ -54,7 +55,6 @@ When you buy Bitcoins through this command, you can decide where the Bitcoins wi
     return _buybitcoin(ctx.obj['config'], ctx.obj['client'], info, status, exchange, amount, history)
 
 
-@decorators.capture_usage
 def _buybitcoin(config, client, info, status, exchange, amount, history):
     if info:
         return buybitcoin_config(config, client, exchange)
