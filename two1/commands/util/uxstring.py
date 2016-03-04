@@ -7,7 +7,7 @@ import click
 class UxString:
 
     # general
-    update_required = "You are using an old version of 21. Please update using the '21 " \
+    update_required = "You are using an old version of 21 CLI. Please update using the '21 " \
                       "update' command."
     bitcoin_computer_needed = "You need a 21 Bitcoin Computer (21.co/buy) to access " \
                               "this service. If you believe you have received this " \
@@ -41,7 +41,7 @@ class UxString:
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting mining payout address: %s."
-    analytics_optin = "\nWould you like 21.co to collect usage analytics?\n"\
+    analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
         "This may help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
 
@@ -70,7 +70,7 @@ class UxString:
                    "log in with"
     login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
                                 "corresponding username"
-    login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet/device.\n"
+    login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet.\n"
 
     existing_account = click.style(
             "There is already a username associated with your current wallet. Use ",
@@ -118,9 +118,8 @@ class UxString:
 
     status_balance_by_username_header = "Off-chain Balances by Username \n"
     status_balance_by_username_table_headers = ["Username", "Balance"]
-    status_balance_by_username_total_footer = "\n    Total Balance: {}\n"
     status_wallet_detail_off = """\
-    To see all wallet addresses/payment channels, use '21 status --detail'\n"""
+    To see all wallet addresses and open payment channels, use '21 status --detail'\n"""
 
     status_wallet_detail_on = """\
     Addresses:\n{addresses}
@@ -138,9 +137,7 @@ class UxString:
     # buy
     buy_channel_warning = "Note: The default payment channel size is " + \
         "{} Satoshis. \nIn order to open this channel you’ll need to " + \
-        "spend a small amount extra to cover transaction fees and costs.\n" + \
-        "In addition, your *first* purchase will spend {} of your " + \
-        "outstanding balance in the channel for merchant insurance.\n" + \
+        "spend a small amount extra to cover transaction fees.\n" + \
         "Read more at (https://21.co/micropayments/)\n" + \
         "Proceed?"
     buy_bad_payment_method = "'{}' is not a supported payment method."
@@ -233,9 +230,7 @@ class UxString:
 
     # mining
     mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
-        "Hit any key to launch the dashboard. " + \
-        click.style("Hit q to exit the dashboard. ", bold=True)
-
+        "Hit any key to launch the dashboard. "
     mining_show_dashboard_context = "\nDo " + click.style("21 mine --dashboard", bold=True) + \
         " to see a mining dashboard.\n" + \
         "Do " + click.style("21 log", bold=True) + " to see more aggregated stats.\n" + \
@@ -247,7 +242,7 @@ class UxString:
     mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_dashboard_no_chip = "Without a 21 mining chip, we can't show you a mining dashboard.\n"\
-        "If you want to see this dashboard, run this on a 21 Bitcoin Computer."
+        "If you want to see this dashboard, run this command on a 21 Bitcoin Computer."
     mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
@@ -292,10 +287,10 @@ class UxString:
 
     empty_logs = "[No events yet]"
 
-    notification_intro = click.style("Account Notifications.\n\n", bold=True,
+    notification_intro = click.style("[Account Notifications]\n\n", bold=True,
                                      fg="magenta")
 
-    log_intro = click.style("21 Bitcoin Computer Activity Log.\n\n", bold=True, fg="magenta")
+    log_intro = click.style("[21 Bitcoin Computer Activity Log]\n\n", bold=True, fg="magenta")
 
     debit_message = "{} : {:+d} Satoshis to your 21.co balance"
     blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
@@ -307,15 +302,15 @@ class UxString:
     buy_message = "You bought {} from {}"
     sell_message = "You sold {} to {}"
 
-    unread_notifications = click.style("\nYou have {} unread important notifications.Type ",
+    unread_notifications = click.style("\nYou have {} unread notifications. Type ",
                                        fg="blue") + click.style("21 inbox",
                                                                 bold=True, fg="blue") + click.style(
             " to view your notifications.", fg="blue")
 
     # join
-    successful_join = "joined network {}. it might take a couple of seconds for joining " \
+    successful_join = "Joined network {}. It may take a few seconds for joining " \
                       "to take effect."
-    invalid_network = "Invalid network specified, please verify the network name"
+    invalid_network = "Invalid network specified, please verify the network name."
     join_cmd = click.style("21 join", bold=True)
 
     no_network = click.style("You are not part of any network.", fg="blue")
@@ -324,23 +319,18 @@ class UxString:
                                    "\n\thttps://www.zerotier.com/product-one.shtml\n")
 
     # publish
-    coming_soon = click.style("Coming soon", bold=True)
-    slack_21_co = click.style("slack.21.co", bold=True)
-    support_21_co = click.style("support@21.co", bold=True)
     publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
 
     manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
-                       "how to create one, please refer to {}"
+                       "how to create one, please refer to {}."
 
     bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\nFor " \
-                   "instructions on publishing your app, please refer to {}"
+                   "instructions on publishing your app, please refer to {}."
 
-    malformed_yaml = "Your manifest file at {} is not in valid YAML. For instructions on " \
+    malformed_yaml = "Your manifest file at {} is not valid YAML. For instructions on " \
                      "publishing your app, please refer to {}."
     large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
                      "2MB.\nFor instructions on publishing your app, please refer to {}."
-
-    reading_manifest = "Reading app manifest from {}"
 
     manifest_is_directory = "{} is a directory. Please enter the direct path to the manifest file."
     no_zt_network = click.style("You are not part of the {}. Use {}",
@@ -350,7 +340,7 @@ class UxString:
         "It seems that the IP address "
         "that you put in your manifest file (") + click.style(
         "{}", bold=True) + click.style(
-        ") is different than your current 21 marketplace IP (") + click.style(
+        ") is different than your current 21market IP (") + click.style(
         "{}", bold=True) + click.style(
         ")\nAre you sure you want to continue publishing with ") + click.style(
         "{}", bold=True) + click.style(" ?")
@@ -358,24 +348,31 @@ class UxString:
     switch_host = click.style(
         "Please edit ") + click.style("{}", bold=True) + click.style(
         " and replace ") + click.style("{}", bold=True) + click.style(
-        " with ") + click.style("{}", bold=True)
+        " with ") + click.style("{}.", bold=True)
 
     publish_start = click.style("Publishing {} at ") + click.style(
-        "{}", bold=True) + click.style(" to {}")
+        "{}", bold=True) + click.style(" to {}.")
 
     publish_success = click.style(
         "{} successfully published to {}. It may take a couple of minutes for your app "
-        "to show up in the marketplace.", fg="magenta")
+        "to show up in the marketplace.\nYou can view your app at https://21.co/mkt.", fg="magenta")
 
     valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
 
     valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path", "info"]
     top_level_manifest_field_missing = "Field '{}' is missing from the manifest file."
-    manifest_info_fields = ["contact", "x-21-github-profile-url", "x-21-github-project-url",
-                            "x-21-total-price", "description", "x-21-usage",
-                            "x-21-quick-buy", "version", "x-21-category", "x-21-keywords"]
+    manifest_info_fields = ["contact",
+                            "title",
+                            "description",
+                            "x-21-total-price",
+                            "x-21-quick-buy",
+                            "x-21-category"]
     manifest_info_field_missing = "Field '{}' is missing from the manifest file under the 'info' " \
                                   "section."
+
+    manifest_contact_fields = {"name", "email"}
+    manifest_contact_field_missing = "Field '{}' is missing from the manifest file under the " \
+                                     "'contact' section."
 
     price_fields = ["min", "max"]
     price_fields_missing = "Field '{}' is missing from the manifest file under the " \
@@ -393,10 +390,11 @@ class UxString:
             "21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") + click.style(
             " to publish your apps to the marketplace.", fg="blue")
 
-    app_does_not_exist = "The specified id for the app ({}) does not match any app."
+    app_does_not_exist = "The specified id for the app ({}) does not match any apps in the " \
+                         "marketplace."
 
     # publish delete
-    delete_confirmation = "Are you sure that you want to delete the app with id '{}' ?"
+    delete_confirmation = "Are you sure that you want to delete the app with id '{}'?"
     delete_success = "App {} ({}) was successfully removed from the marketplace."
     delete_app_not_exist = "The app with id '{}' does not exist in the marketplace."
     delete_app_no_permissions = "You don't have permission to delete the app with id '{}'. You " \
@@ -441,32 +439,33 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="red")
 
     # search
-    list_all = "Listing all the marketplace apps: "
-    pagination = click.style("\nType id of the app for more info, ",
+    list_all = "Listing all apps in the 21 marketplace: "
+    pagination = click.style("\nEnter the id of the app for more info, ",
                              fg="blue") + click.style(
         "n", bold=True, fg="blue") + click.style(
         " for next page, ", fg="blue") + click.style(
         "p", bold=True,fg="blue") + click.style(
         " for the previous page, ", fg="blue") + click.style(
         "q", bold=True, fg="blue") + click.style(
-        " to stop search", fg="blue")
+        " to stop search.", fg="blue")
 
-    empty_listing = click.style("\nWe couldn't find any listings that match '{}'.\n",
+    empty_listing = click.style("\nCouldn't find any listings that match: '{}'.\n",
                                 fg='blue')
     no_app_in_marketplace = click.style("\nThere are currently no apps in the marketplace.",
                                         fg="blue")
     # rate
-    bad_rating = "an app rating must be between 1 to 5"
+    bad_rating = "App ratings must be between 1 to 5."
     rating_success = click.style("Giving a ") + click.style("{}/5", bold=True) + click.style(
-            " rating to the app with id ") + click.style("{}", bold=True)
+            " rating to the app with id ") + click.style("{}.", bold=True)
 
     rating_app_not_found = click.style("App with id {} does not exist in 21 marketplace. Use ",
                                        fg="red") + click.style("21 search", bold=True,
                                                                fg="red") + click.style(
-        " to verify the id of the app", fg="red")
+        " to verify the id of the app.", fg="red")
+
     rating_list = click.style("Listing all the apps that you have rated. \nNote that you can "
-                              "always change your ratings by using ") + click.style("21 rate.\n",
-                                                                                    bold=True)
+                              "update your ratings at anytime with ") + click.style("21 rate\n",
+                                                                                    bold=True) + click.style(".")
     no_ratings = click.style("You haven't rated any apps yet.", fg="blue")
 
     # send
@@ -489,13 +488,11 @@ refer to 21.co/app for futher instructions.", fg="red")
         request = "Error: Server request error occurred"
 
         # 500 unknown error
-        server_err = "Error: You have experienced a Technical Error. "\
+        server_err = "Error: You have experienced a technical error. "\
             "We are working to correct this issue."
-        non_existing_user = "Error: Username %s does not exist"
+        non_existing_user = "Error: Username %s does not exist."
 
         # wallet errors
-        electrum_missing = "Error: Could not find ElectrumWallet application."
-        electrum_daemon = "Error: Could not start electrum daemon."
         create_wallet_failed = "Error: Could not create wallet."
 
         # data unavailable
@@ -506,10 +503,9 @@ refer to 21.co/app for futher instructions.", fg="red")
         file_decode = "There was an error loading {}. It may be a corrupt or poorly formatted file."
 
         # Updater
-        update_failed = "Error occured during update process. Please try to run a manual update."
+        update_failed = "Error occurred during update process. Please run a manual update."
         version_not_found = "Did not find version {}."
-        retry_update_after_reboot = "Could not stop Wallet Daemon. Please reboot your system and retry 21 update."
-
+        retry_update_after_reboot = "Could not stop wallet daemon. Please reboot your system and retry 21 update."
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         update_server_connection = "Could not connect to the update server. Please try again later."
@@ -517,8 +513,7 @@ refer to 21.co/app for futher instructions.", fg="red")
 
         # version errors
         version_not_detected = "Could not properly detect your version of 21. \nTry"\
-            " reinstalling from the 21 Toolbelt instructions at 21.co/learn. \nIf problems"\
-            " persist, please contact support@21.co."
+            " reinstalling or contact support@21.co."
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
         insufficient_funds_mine_more = "Insufficient satoshis for off-chain (zero-fee) transaction. "\
             "Type {} to get more.*\n\n"\

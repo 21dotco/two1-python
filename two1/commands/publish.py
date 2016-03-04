@@ -30,30 +30,35 @@ def publish():
 \b
 Usage
 _____
-Publish your app to the 21 Marketplace
-$ 21 publish submit path_to_manifest/manifest.json
+Publish your app to the 21 Marketplace.
+$ 21 publish submit path_to_manifest/manifest.yaml
+To update your published listing, run the above command after modifying your manifest.yaml.
+
+\b
+Publish your app to the 21 Marketplace without strict checking of the manifest against your current IP.
+$ 21 publish submit -s path_to_manifest/manifest.yaml
 
 
 \b
-See the help for submit
+See the help for submit.
 $ 21 publish submit --help
 
 
 \b
-View all of your published apps
+View all of your published apps.
 $ 21 publish list
 
 \b
-See the help for list
+See the help for list.
 $ 21 publish list --help
 
 \b
-Remove one of your published apps from the marketplace
-$ 21 publish remove app_id
+Remove one of your published apps from the marketplace.
+$ 21 publish remove {app_id}
 
 
 \b
-See the help for remove
+See the help for remove.
 $ 21 publish remove --help
 
     """
@@ -65,13 +70,15 @@ $ 21 publish remove --help
 @decorators.capture_usage
 def list(ctx):
     """
-Lists all your published apps.
 
+\b
+Usage
+_____
+Lists all your published apps.
 $ 21 publish list
 
 Results from the list command are paginated.
 Use 'n' to move to the next page and 'p' to move to the previous page.
-
 You can view detailed admin information about an app by specifying it's id
 at the prompt.
     """
@@ -86,12 +93,14 @@ at the prompt.
 @decorators.check_notifications
 def remove(ctx, app_id):
     """
+\b
+Usage
+_____
 Removes a published app from the Marketplace.
+$ 21 publish remove {app_id}
 
-$ 21 publish remove app_id
-
-The app_id can be obtained by performing:
-
+\b
+The {app_id} can be obtained by performing:
 $ 21 publish list
     """
     _delete_app(ctx.obj['config'], ctx.obj['client'], app_id)
@@ -100,7 +109,7 @@ $ 21 publish list
 @publish.command()
 @click.argument('manifest_path', type=click.Path(exists=False))
 @click.option('-m', '--marketplace', default='21market',
-              help="Selects the marketplace for publishing")
+              help="Selects the marketplace for publishing.")
 @click.option('-s', '--skip', is_flag=True, default=False,
               help='Skips the strict checking of the manifest against your current ip.')
 @click.pass_context
@@ -108,13 +117,14 @@ $ 21 publish list
 @decorators.check_notifications
 def submit(ctx, manifest_path, marketplace, skip):
     """
-Submits an app to the Marketplace.
-
 \b
-$ 21 publish submit path_to_manifest/manifest.json
+Usage
+_____
+Publishes an app to the Marketplace.
+$ 21 publish submit path_to_manifest/manifest.yaml
 
 The contents of the manifest file should follow the guidelines specified at
-https://21.co/publish
+https://21.co/learn/21-publish
 
 Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
     """
@@ -324,8 +334,7 @@ def display_app_info(config, client, app_id):
             "{}".format(app_info["app_url"]))
         category = click.style("Category        : ", fg="blue") + click.style(
             "{}".format(app_info["category"]))
-        keywords = click.style("Keywords        : ", fg="blue") + click.style(
-            "{}".format(', '.join(app_info["keywords"])))
+
         desc = click.style("Description     : ", fg="blue") + click.style(
             "{}".format(app_info["description"]))
         price = click.style("Price Range     : ", fg="blue") + click.style(
@@ -339,14 +348,19 @@ def display_app_info(config, client, app_id):
         quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
             app_info["quick_buy"])
 
-        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-            app_info["usage_docs"])
+        usage_docs = None
+        if "usage_docs" not in app_info:
+            usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
+                app_info["usage_docs"])
 
-        final_str = "\n".join(
-            [title, "\n",
-             rating_row, up_status, availability, last_crawl, last_update, version, "\n",
-             desc, app_url, doc_url, manifest_url, "\n",
-             category, keywords, price, "\n", quick_start, "\n", usage_docs, "\n\n"])
+        page_components = [title, "\n",
+                           rating_row, up_status, availability, last_crawl, last_update, version,
+                           "\n",
+                           desc, app_url, doc_url, manifest_url, "\n",
+                           category, price, "\n", quick_start, "\n"]
+        if usage_docs:
+            page_components.append(usage_docs + "\n")
+        final_str = "\n".join(page_components)
         config.echo_via_pager(final_str)
 
     except ServerRequestError as e:
@@ -414,6 +428,10 @@ def validate_manifest(manifest_json):
     for field in uxstring.UxString.manifest_info_fields:
         if field not in manifest_json["info"]:
             raise ValidationError(uxstring.UxString.manifest_info_field_missing.format(field))
+
+    for field in uxstring.UxString.manifest_contact_fields:
+        if field not in manifest_json["info"]["contact"]:
+            raise ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field))
 
     for field in uxstring.UxString.price_fields:
         if field not in manifest_json["info"]["x-21-total-price"]:
