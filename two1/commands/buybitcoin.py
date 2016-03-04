@@ -233,4 +233,4 @@ def get_deposit_info():
 
     except click.exceptions.Abort:
         click.secho("\nPurchase canceled", fg="magenta")
-        raise exceptions.UnloggedException()
+        raise exceptions.UnloggedException("")

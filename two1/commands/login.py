@@ -84,7 +84,7 @@ def login_account(config, machine_auth, username=None, password=None):
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
             click.secho(uxstring.UxString.incorrect_password)
-            raise exceptions.UnloggedException(uxstring.UxString.incorrect_password)
+            raise exceptions.UnloggedException("")
         else:
             click.secho("Error: " + str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code), fg="red")
             raise exceptions.UnloggedException(ex)

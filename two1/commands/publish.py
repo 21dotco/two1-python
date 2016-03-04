@@ -463,4 +463,4 @@ def get_zerotier_address(marketplace):
         return zerotier.get_address_for_network(marketplace)
     except KeyError:
         click.secho(uxstring.UxString.no_zt_network.format(marketplace, uxstring.UxString.join_cmd))
-        raise UnloggedException()
+        raise UnloggedException("")
