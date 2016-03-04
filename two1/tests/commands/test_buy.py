@@ -1,6 +1,7 @@
 """Unit tests for `21 buy`."""
 import click
 import pytest
+import unittest.mock
 
 import two1.tests.mock as mock
 import two1.commands.buy as buy
@@ -12,6 +13,7 @@ import two1.commands.util.uxstring as uxstring
     ('onchain', 'blockchain', mock.MockTwo1Wallet.BALANCE - mock.MockBitResponse.GET_COST),
     ('channel', 'payment channels', 0),
 ])
+@unittest.mock.patch('click.confirm', unittest.mock.Mock(return_value=True))
 def test_get_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client, method, balance_str, balance_int):
     """Test a standard GET buy with all payment methods."""
     resource = 'http://127.0.0.1:5000'
