@@ -76,7 +76,7 @@ def _search(config, client, search_string):
                 display_search_info(config, client, model_id)
             elif next_page >= total_pages or next_page < 0:
                 continue
-            else:
+            elif next_page != current_page:
                 get_search_results(client, search_string, next_page)
                 current_page = next_page
 
@@ -168,7 +168,7 @@ def get_next_page(prompt_response, current_page):
     if prompt_response.lower() in ["n", "next", "f", "forward"]:
         return current_page + 1
     elif prompt_response.lower() in ["p", "previous", 'b', "back"]:
-        return current_page - 1
+        return max(current_page - 1, 0)
     elif prompt_response.lower() in ["q", "cancel", "c"]:
         raise click.exceptions.Abort()
     else:
