@@ -131,7 +131,7 @@ class TwentyOneRestClient(object):
             if e.status_code == 409:
                 username = e.data["username"]
                 click.secho(uxstring.UxString.existing_account.format(username), fg="red")
-                raise exceptions.UnloggedException()
+                raise exceptions.UnloggedException("")
             else:
                 raise e
         return ret
