@@ -459,8 +459,9 @@ def get_zerotier_address(marketplace):
         UnloggedException: if the zt network doesn't exist
     """
     click.secho(uxstring.UxString.update_superuser)
-    try:
-        return zerotier.get_address_for_network(marketplace)
-    except KeyError:
+    address = zerotier.get_address(marketplace)
+    if not address:
         click.secho(uxstring.UxString.no_zt_network.format(marketplace, uxstring.UxString.join_cmd))
         raise UnloggedException("")
+
+    return address
