@@ -5,6 +5,7 @@ import click
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
+from two1.commands.util import exceptions
 
 
 @click.command()
@@ -39,8 +40,8 @@ def _flush(config, client, wallet):
                 wallet.current_address,
                 click.style("21 mine", bold=True))
             config.log(success_msg, nl=False)
-    except rest_client.ServerRequestError as e:
-        if e.status_code == 401:
+    except exceptions.ServerRequestError as ex:
+        if ex.status_code == 401:
             click.echo(uxstring.UxString.flush_insufficient_earnings)
         else:
-            raise e
+            raise ex
