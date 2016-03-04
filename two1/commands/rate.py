@@ -14,25 +14,24 @@ from two1.commands.util import exceptions
 @click.command()
 @click.pass_context
 @click.option('--list', is_flag=True, default=False,
-              help='Show the list of all the apps you have rated')
+              help='List all the apps that you have rated.')
 @click.argument('app_id', required=False, type=click.STRING)
 @click.argument('rating', required=False, type=click.INT)
 def rate(ctx, list, app_id, rating):
-    """Rate a marketplace app.
+    """Rate an app listed in the 21 Marketplace.
 
 \b
 Usage
 _____
-Rate an app
-$ 21 rate XYZ 3
-    - XYZ is the id of the app you want to rate and can be found when searching for the app in the
-      marketplace.
-    - 3 is your rating. Ratings should be numbers between 1 to 5.
-You can always change the rating for your app by doing another 21 rate.
+Rate an app.
+$ 21 rate Xe8 3
+    - Xe8 is the id of the app that you want to rate.  This id can be found with `21 search`.
+    - 3 is the rating to apply. A rating should be an integer between 1-5.
+You can update the rating for an app at anytime with `21 rate`.
 
 
 \b
-See all the apps that you have rates:
+List all the apps that you have rated.
 $ 21 rate --list
     """
     #pylint: disable=redefined-builtin

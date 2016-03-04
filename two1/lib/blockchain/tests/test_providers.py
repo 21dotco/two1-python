@@ -17,7 +17,6 @@ testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (twentyone_provider, True),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
@@ -40,7 +39,6 @@ def test_get_transactions(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (twentyone_provider, True),
                              (insight_provider, False),
                              (testnet_insight_provider, True)
                          ])
@@ -106,4 +104,3 @@ def test_transaction_send(provider, testnet):
     cp.testnet = testnet
     with pytest.raises(DataProviderError):
         data = cp.broadcast_transaction(tx)
-

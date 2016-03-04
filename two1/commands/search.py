@@ -23,22 +23,20 @@ def search(ctx, search_string=None):
 \b
 Usage
 -----
-View all the apps in the marketplace
+View all the apps in the marketplace.
 $ 21 search
 
 \b
-Search for specific keywords or terms
+Search for specific keywords or terms.
 $ 21 search "games social"
 
 \b
-Search for all the apps from a particular user
+Search for all the apps from a particular user.
 $ 21 search "snakamoto"
 
 Results from the search command are paginated.
 Use 'n' to move to the next page and 'p' to move to the previous page.
-
-You can view detailed information about an app by specifying it's id
-at the prompt.
+You can also enter an app id to view detailed information about the app.
 
     """
     _search(ctx.obj['config'], ctx.obj['client'], search_string)
@@ -223,8 +221,6 @@ def display_search_info(config, client, listing_id):
         "{}".format(result_json["app_url"]))
     category = click.style("Category     : ", fg="blue") + click.style(
         "{}".format(result_json["category"]))
-    keywords = click.style("Keywords     : ", fg="blue") + click.style(
-        "{}".format(', '.join(result_json["keywords"])))
     version = click.style("Version      : ", fg="blue") + click.style(
         "{}".format(result_json["version"]))
     last_updated_str = datetime.datetime.fromtimestamp(
@@ -242,14 +238,20 @@ def display_search_info(config, client, listing_id):
     availability = click.style("Availability : ", fg="blue") + click.style(
         "{:.2f}%".format(result_json["average_uptime"] * 100))
 
-    usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
-        result_json["usage_docs"])
+    usage_docs = None
+    if "usage_docs" in result_json:
+        usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
+            result_json["usage_docs"])
 
-    final_str = "\n".join(
-        [title, desc, created_by, price, rating, "\n",
-         is_active, availability, "\n",
-         doc_url, app_url, "\n",
-         category, keywords, version, last_update, "\n",
-         quick_start, "\n",
-         usage_docs, "\n\n"])
+    pager_components = [title, desc, created_by, price, rating, "\n",
+                        is_active, availability, "\n",
+                        doc_url, app_url, "\n",
+                        category, version, last_update, "\n",
+                        quick_start, "\n"]
+
+    if usage_docs:
+        pager_components.append(usage_docs + "\n")
+
+    final_str = "\n".join(pager_components)
+
     config.echo_via_pager(final_str)
