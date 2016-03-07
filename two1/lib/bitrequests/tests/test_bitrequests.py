@@ -1,6 +1,7 @@
 import json
 import pytest
 import requests
+import unittest.mock as mock
 from two1.commands.util import config
 from two1.lib.bitrequests import BitTransferRequests
 from two1.lib.bitrequests import OnChainRequests
@@ -114,6 +115,17 @@ def test_bittransfer_request():
         headers = {'price': price}
         setattr(mock_request, 'headers', headers)
         bit_req.make_402_payment(mock_request, test_max_price)
+
+
+def test_bittransfer_default_config():
+    """Test that it looks up a username using the default Config."""
+    current_username = config.username
+    bit_req = BitTransferRequests(wallet)
+    assert bit_req.username == current_username
+
+    # Test that we can still use a custom username
+    bit_req = BitTransferRequests(wallet, 'new_username')
+    assert bit_req.username == 'new_username'
 
 
 def test_bitrequest_kwargs():

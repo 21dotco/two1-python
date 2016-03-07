@@ -147,11 +147,15 @@ class BitTransferRequests(BitRequests):
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
     HTTP_BITCOIN_USERNAME = 'username'
 
-    def __init__(self, wallet, username):
+    def __init__(self, wallet, username=None):
         """Initialize the bittransfer with wallet and username."""
         super().__init__()
         self.wallet = wallet
-        self.username = username
+        if username is None:
+            import two1.commands.util.config as config
+            self.username = config.Config().username
+        else:
+            self.username = username
 
     def make_402_payment(self, response, max_price):
         """Make a bit-transfer payment to the payment-handling service."""
