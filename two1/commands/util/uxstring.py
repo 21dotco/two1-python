@@ -13,8 +13,8 @@ class UxString:
                               "this service. If you believe you have received this " \
                               "message in error, please contact support@21.co."
     max_accounts_reached = click.style(
-        "You have reached the maximum number of 21.co accounts that you can create on "
-        "this Bitcoin Computer. Use ",
+        "You have reached the maximum number of 21.co accounts that you can create. "
+        "Use ",
         fg="red") + click.style(
         "21 login", fg="red", bold=True) + click.style(
         " to switch between your available accounts.",
@@ -211,7 +211,7 @@ class UxString:
 
     coinbase_purchase_in_progress = "\nPurchasing Bitcoins From Coinbase...\n"
 
-    coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance on the Bitcoin Computer",
+    coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance",
                                       "TO_BALANCE": "your 21.co balance"}
     coinbase_wallet_completed = "The Bitcoins were deposited to your wallet on {}"
     coinbase_21_completed = "The Bitcoins were added to your balance immediately. " \
@@ -274,10 +274,10 @@ class UxString:
 
     # inbox
     reasons = {
-        "CLI": "You got an advance against your future work on the Bitcoin Computer",
-        "Shares": "You submitted work through the 21 Bitcoin Computer",
+        "CLI": "You just received a little bit of bitcoin.",
+        "Shares": "You submitted work through the 21 Bitcoin Computer.",
         "flush_payout": "You performed 21 flush to move your earnings to the "
-                        "Blockchain",
+                        "Blockchain.",
         "earning_payout": "This is a periodic payout of your mining earnings to "
                           "the Blockchain.",
         "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer.",
@@ -290,7 +290,7 @@ class UxString:
     notification_intro = click.style("[Account Notifications]\n\n", bold=True,
                                      fg="magenta")
 
-    log_intro = click.style("[21 Bitcoin Computer Activity Log]\n\n", bold=True, fg="magenta")
+    log_intro = click.style("[21 Activity Log]\n\n", bold=True, fg="magenta")
 
     debit_message = "{} : {:+d} Satoshis to your 21.co balance"
     blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
