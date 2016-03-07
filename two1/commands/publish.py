@@ -349,7 +349,7 @@ def display_app_info(config, client, app_id):
             app_info["quick_buy"])
 
         usage_docs = None
-        if "usage_docs" not in app_info:
+        if "usage_docs" in app_info:
             usage_docs = click.style("Detailed usage\n\n", fg="blue") + click.style(
                 app_info["usage_docs"])
 
