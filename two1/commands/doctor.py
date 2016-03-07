@@ -84,6 +84,10 @@ class Doctor(object):
         "Linux": "4.0.0",
         "Darwin": "14.0.0",}
         #"Windows": [10, 0, 0]}
+    UNMAINTAINED_OS = {
+        "Linux": "3.13.0",
+        "Darwin": "14.0.0",}
+        #"Windows": [10, 0, 0]}
 
     # python version
     SUPPORTED_PYTHON_VERSION = "3.3.0"
@@ -280,8 +284,12 @@ class Doctor(object):
 
             # use the os as a lookup for the version
             expected_os_version = self.SUPPORTED_OS[actual_os]
+            unmaintained_os_version = self.UNMAINTAINED_OS[actual_os]
             if self.is_version_gte(actual_os_version, expected_os_version):
                 return Check.Result.PASS, check_str, actual_os_version
+
+            elif self.is_version_gte(actual_os_version, unmaintained_os_version):
+                return Check.Result.WARN, check_str, actual_os_version
 
         return Check.Result.FAIL, check_str, actual_os_version
 
