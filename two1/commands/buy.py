@@ -17,7 +17,7 @@ import two1.lib.channels.statemachine as statemachine
 
 
 @click.command()
-@click.argument('resource', nargs=1)
+@click.argument('resource', nargs=2)
 @click.option('-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information.")
 @click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
 @click.option('-H', '--header', multiple=True, default=None, help="HTTP header to include with the request")
@@ -38,7 +38,14 @@ Send an SMS to a phone number.
 $ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
 
 """
-    _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], resource, **options)
+    # Get requested URL resource for `21 buy <URL>` syntax
+    buy_url = resource[0]
+
+    # Backwards compatibility for `21 buy url <URL>` syntax
+    if resource[0] == 'url':
+        buy_url = resource[1]
+
+    _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
 
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(), method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
