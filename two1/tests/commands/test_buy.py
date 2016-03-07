@@ -1,4 +1,5 @@
 """Unit tests for `21 buy`."""
+import json
 import click
 import pytest
 import unittest.mock
@@ -53,12 +54,11 @@ def test_post_url_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequ
     assert patch_bitrequests.url == resource
     assert patch_bitrequests.max_price == 10000
     assert patch_bitrequests.headers['Content-Type'] == 'application/x-www-form-urlencoded'
-    assert patch_bitrequests.data['type'] == 'test'
+    assert patch_bitrequests.data == 'type=test'
     assert patch_bitrequests.response.status_code == 201
-    assert patch_bitrequests.data['type'] in patch_bitrequests.response.text
+    assert 'test' in patch_bitrequests.response.text
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
     assert patch_click.call_count == 2
-    patch_click.assert_any_call('{"type": "test"}', file=None)
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
@@ -66,17 +66,17 @@ def test_post_json_buy(patch_click, mock_config, mock_machine_auth, patch_bitreq
     """Test a POST buy with json-encoded data."""
     resource = 'http://127.0.0.1:5000'
     buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource, data='{"type": "test"}')
+    data_dict = json.loads(patch_bitrequests.data)
 
     assert patch_bitrequests.method == 'post'
     assert patch_bitrequests.url == resource
     assert patch_bitrequests.max_price == 10000
     assert patch_bitrequests.headers['Content-Type'] == 'application/json'
-    assert patch_bitrequests.data['type'] == 'test'
+    assert data_dict['type'] == 'test'
     assert patch_bitrequests.response.status_code == 201
-    assert patch_bitrequests.data['type'] in patch_bitrequests.response.text
+    assert data_dict['type'] in patch_bitrequests.response.text
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
     assert patch_click.call_count == 2
-    patch_click.assert_any_call('{"type": "test"}', file=None)
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 def test_buy_headers(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client):
@@ -137,17 +137,18 @@ def test_error_buys(patch_click, mock_config, mock_machine_auth, patch_bitreques
 def test_parse_post_data():
     """Test utility functionality for parsing data."""
     form_url = 'type=test&message=hey hey hey!'
-    json = '{"type": "test", "message": "hey hey hey!"}'
+    json_data = '{"type": "test", "message": "hey hey hey!"}'
     invalid = 'type: test; message: hey hey hey!'
 
-    data_dict, content_type = buy._parse_post_data(form_url)
-    assert isinstance(data_dict, dict)
-    assert data_dict['type'] == 'test'
-    assert data_dict['message'] == 'hey hey hey!'
+    data_str, content_type = buy._parse_post_data(form_url)
+    assert isinstance(data_str, str)
+    assert 'type=test' in data_str
+    assert 'message=hey hey hey!' in data_str
     assert content_type == 'application/x-www-form-urlencoded'
 
-    data_dict, content_type = buy._parse_post_data(json)
-    assert isinstance(data_dict, dict)
+    data_str, content_type = buy._parse_post_data(json_data)
+    data_dict = json.loads(data_str)
+    assert isinstance(data_str, str)
     assert data_dict['type'] == 'test'
     assert data_dict['message'] == 'hey hey hey!'
     assert content_type == 'application/json'
