@@ -164,9 +164,14 @@ class TwentyOneRestClient(object):
         return sum(amts)
 
     # POST /pool/{username}/earnings/?action=True
-    def flush_earnings(self):
+    def flush_earnings(self, amount=None):
         path = "/pool/account/{}/earnings/?action=flush".format(self.username)
-        return self._request(sign_username=self.username, method="POST", path=path)
+        data = {}
+        if amount:
+            data["amount"] = amount
+
+        data = json.dumps(data)
+        return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     def join(self, network, device_id):
         data = json.dumps({"network": network, "zerotier_device_id": device_id})

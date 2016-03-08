@@ -13,14 +13,16 @@ from two1.commands.util import exceptions
 @decorators.catch_all
 @decorators.check_notifications
 @decorators.capture_usage
-def flush(ctx):
+@click.option('-a', '--amount', default=None, type=click.INT,
+              help="The amount to be flush out of your account.")
+def flush(ctx, amount):
     """ Flush your 21.co buffer to the blockchain."""
     config = ctx.obj['config']
-    _flush(config, ctx.obj['client'], ctx.obj['wallet'])
+    _flush(config, ctx.obj['client'], ctx.obj['wallet'], amount)
     config.log("")
 
 
-def _flush(config, client, wallet):
+def _flush(config, client, wallet, amount=None):
     """ Flushes current off-chain balance to the blockchain
 
     Args:
@@ -28,13 +30,14 @@ def _flush(config, client, wallet):
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         wallet (two1.lib.wallet.Wallet): a user's wallet instance
+        amount (int): The amount to be flushed. Should be more than 10k
 
     Raises:
         ServerRequestError: if server returns an error code other than 401
     """
 
     try:
-        response = client.flush_earnings()
+        response = client.flush_earnings(amount=amount)
         if response.ok:
             success_msg = uxstring.UxString.flush_success.format(
                 click.style("Flush to Blockchain", fg='magenta'),

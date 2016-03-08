@@ -143,7 +143,7 @@ class MockTwentyOneRestClient:
     def get_earnings(self):
         return self.mock_get_earnings()
 
-    def flush_earnings(self):
+    def flush_earnings(self, amount):
         return self.mock_flush_earnings()
 
     def login(self, payout_address, password):
