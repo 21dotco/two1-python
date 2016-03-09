@@ -38,10 +38,24 @@ class FileDecodeError(ConfigError):
     pass
 
 
-class ServerRequestError(Exception):
-    pass
+class ServerRequestError(click.ClickException):
+    """ Error during a request to a server """
+
+    def __init__(self, msg="", response=None, status_code=None, data=None):
+        super(ServerRequestError, self).__init__(msg)
+        if response:
+            self.status_code = response.status_code
+            try:
+                self.data = response.json()
+            except ValueError:
+                self.data = {"error": "Request Error"}
+        else:
+            self.status_code = status_code
+            self.data = data
 
 
-class ServerConnectionError(Exception):
-    pass
+class ServerConnectionError(click.ClickException):
+    """Error during a connection to a server"""
 
+    def __init__(self, msg=""):
+        super(ServerConnectionError, self).__init__(msg)
