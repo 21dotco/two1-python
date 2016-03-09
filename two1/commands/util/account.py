@@ -37,10 +37,10 @@ def get_or_create_username(config, machine_auth):
             login.login_account(config, machine_auth)
 
     if not config.username:
-        raise exceptions.TwoOneError(uxstring.UxString.Error.login_error_username)
+        raise exceptions.Two1Error(uxstring.UxString.Error.login_error_username)
 
     if not config.mining_auth_pubkey:
-        exceptions.TwoOneError(uxstring.UxString.Error.login_error_mining_auth_pubkey)
+        exceptions.Two1Error(uxstring.UxString.Error.login_error_mining_auth_pubkey)
 
     return config.username
 

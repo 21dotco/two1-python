@@ -1,13 +1,13 @@
 import click
 
 
-class TwoOneError(click.ClickException):
+class Two1Error(click.ClickException):
     """ A generic Two1Error """
 
     def __init__(self, msg="", json={}):
         self._msg = msg
         self._json = json
-        super(TwoOneError, self).__init__(self._msg)
+        super(Two1Error, self).__init__(self._msg)
 
     def __str__(self):
         return self._msg
@@ -15,14 +15,14 @@ class TwoOneError(click.ClickException):
     def show(self, file=None):
         """ Prints the error message to standard out or to a file
 
-            TwoOneError overwrites the show function because ClickException.show
+            Two1Error overwrites the show function because ClickException.show
             prefixes "Error:" to the error message which causes some undesireable
             UX effects.
         """
         click.echo(str(self.format_message()), file=file)
 
 
-class UnloggedException(TwoOneError):
+class UnloggedException(Two1Error):
     """ An error used to exit out of a commnad and not log the exception """
 
 

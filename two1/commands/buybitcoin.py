@@ -70,7 +70,7 @@ def _buybitcoin(config, client, info, status, exchange, amount, history):
 def buybitcoin_show_status(config, client, exchange):
     resp = client.get_coinbase_status()
     if not resp.ok:
-        raise exceptions.TwoOneError("Failed to get exchange status")
+        raise exceptions.Two1Error("Failed to get exchange status")
 
     coinbase = resp.json()["coinbase"]
 
@@ -150,12 +150,12 @@ def get_price_quote(client, amount, deposit_type):
     resp = client.buy_bitcoin_from_exchange(amount, "Satoshis", commit=False)
 
     if not resp.ok:
-        raise exceptions.TwoOneError("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
+        raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
     buy_result = resp.json()
     if "err" in buy_result:
         click.secho(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
-        raise exceptions.TwoOneError("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
+        raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
     fees = buy_result["fees"]
     total_fees = ["{} {}".format(float(f["amount"]["amount"]), f["amount"]["currency"]) for f in

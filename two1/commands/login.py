@@ -152,7 +152,7 @@ def create_account_on_bc(config, machine_auth):
                         continue
                 # unexpected 400 error
                 else:
-                    raise exceptions.TwoOneError(
+                    raise exceptions.Two1Error(
                         str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code))
 
             # handle an invalid username format

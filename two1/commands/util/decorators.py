@@ -36,7 +36,7 @@ def json_output(f):
         config.set_json_output(json)
         try:
             result = f(ctx, *args, **kwargs)
-        except exceptions.TwoOneError as e:
+        except exceptions.Two1Error as e:
             if (json):
                 err_json = e._json
                 err_json["error"] = e._msg
