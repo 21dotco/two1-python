@@ -2,7 +2,9 @@ import click
 
 
 class TwoOneError(click.ClickException):
-    def __init__(self, msg, json={}):
+    """ A generic Two1Error """
+
+    def __init__(self, msg="", json={}):
         self._msg = msg
         self._json = json
         super(TwoOneError, self).__init__(self._msg)
@@ -11,31 +13,29 @@ class TwoOneError(click.ClickException):
         return self._msg
 
     def show(self, file=None):
+        """ Prints the error message to standard out or to a file
+
+            TwoOneError overwrites the show function because ClickException.show
+            prefixes "Error:" to the error message which causes some undesireable
+            UX effects.
+        """
         click.echo(str(self.format_message()), file=file)
 
 
 class UnloggedException(TwoOneError):
-    pass
+    """ An error used to exit out of a commnad and not log the exception """
 
 
 class MiningDisabledError(UnloggedException):
-    pass
+    """ A error indicating that the mining limit has been reached """
 
 
 class UpdateRequiredError(UnloggedException):
-    pass
+    """ Error during a request os made and the client is out of date """
 
 
-class BitcoinComputerNeededError(UnloggedException):
-    pass
-
-
-class ConfigError(Exception):
-    pass
-
-
-class FileDecodeError(ConfigError):
-    pass
+class FileDecodeError(Exception):
+    """ Error when a config file cannot be decoded """
 
 
 class ServerRequestError(click.ClickException):
@@ -59,3 +59,7 @@ class ServerConnectionError(click.ClickException):
 
     def __init__(self, msg=""):
         super(ServerConnectionError, self).__init__(msg)
+
+
+class BitcoinComputerNeededError(ServerRequestError):
+    """ Error during a request made on a protected api """
