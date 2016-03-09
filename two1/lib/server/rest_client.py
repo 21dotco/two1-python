@@ -58,39 +58,29 @@ class TwentyOneRestClient(object):
         headers["From"] = "{}@{}".format(self._wallet_pk, self._device_id)
 
         try:
-            result = self._session.request(method, url, headers=headers, **kwargs)
+            response = self._session.request(method, url, headers=headers, **kwargs)
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
-            raise exceptions.ServerConnectionError
+            raise exceptions.ServerConnectionError()
 
         # update required
-        if result.status_code == 301:
+        if response.status_code == 301:
             click.secho(uxstring.UxString.update_required, fg="red")
-            raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
+            raise exceptions.UpdateRequiredError()
 
-        if result.status_code == 403:
-            try:
-                r = result.json()
-                if "detail" in r and "TO100" in r["detail"]:
-                    click.secho(uxstring.UxString.bitcoin_computer_needed, fg="red")
-                    raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed)
-            # in case the response does not have json raise generic server exception
-            except JSONDecodeError:
-                x = exceptions.ServerRequestError()
-                x.status_code = result.status_code
-                raise x
+        if response.status_code == 403:
+            ex = exceptions.ServerRequestError(response=response)
+            if "detail" in ex.data and "TO100" in ex.data["detail"]:
+                click.secho(uxstring.UxString.bitcoin_computer_needed, fg="red")
+                raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed,
+                                                            response=response)
+            else:
+                raise ex
 
-        if result.status_code > 299:
-            x = exceptions.ServerRequestError()
-            x.status_code = result.status_code
-            # attempt to interpret the returned content as JSON
-            try:
-                x.data = result.json()
-            except:
-                x.data = {"error": "Request Error"}
-            raise x
+        if response.status_code > 299:
+            raise exceptions.ServerRequestError(response=response)
 
-        return result
+        return response
 
     # GET /pool/accounts
     def account_info(self):
