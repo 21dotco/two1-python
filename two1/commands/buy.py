@@ -98,10 +98,10 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
 
     # Parse the url and validate its format
     _resource = urllib.parse.urlparse(resource)
+
+    # Assume `http` as default protocol
     if 'http' not in _resource.scheme:
-        raise click.ClickException(uxstring.UxString.buy_bad_uri_scheme)
-    if len(_resource.netloc) == 0:
-        raise click.ClickException(uxstring.UxString.buy_bad_uri_host)
+        resource = 'http://' + resource
 
     # Retrieve 402-related header information, print it, then exit
     if info_only:

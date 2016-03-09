@@ -121,16 +121,6 @@ def test_error_buys(patch_click, mock_config, mock_machine_auth, patch_bitreques
         buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource, payment_method='fake')
     assert str(e.value) == uxstring.UxString.buy_bad_payment_method.format('fake')
 
-    # Test improper resource URL
-    with pytest.raises(click.ClickException) as e:
-        buy._buy(mock_config, mock_rest_client, mock_machine_auth, '127.0.0.1:5000')
-    assert str(e.value) == uxstring.UxString.buy_bad_uri_scheme
-
-    # Test improper resource URL
-    with pytest.raises(click.ClickException) as e:
-        buy._buy(mock_config, mock_rest_client, mock_machine_auth, 'http://')
-    assert str(e.value) == uxstring.UxString.buy_bad_uri_host
-
     assert patch_click.called is False
 
 
