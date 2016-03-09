@@ -308,41 +308,38 @@ def get_search_results(config, client, page):
         int: the total number of pages returned by the server
     """
     resp = client.get_published_apps(config.username, page)
-    if resp.ok:
-        resp_json = resp.json()
-        search_results = resp_json["results"]
-        if search_results is None or len(search_results) == 0:
-            click.secho(uxstring.UxString.no_published_apps, fg="blue")
-            return 0
+    resp_json = resp.json()
+    search_results = resp_json["results"]
+    if search_results is None or len(search_results) == 0:
+        click.secho(uxstring.UxString.no_published_apps, fg="blue")
+        return 0
 
-        total_pages = resp_json["total_pages"]
-        click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime",
-                   "Last Update"]
-        rows = []
-        for r in search_results:
-            rating = "Not yet Rated"
-            if r["rating_count"] > 0:
-                rating = "{:.1f} ({} rating".format(r["average_rating"],
-                                                    int(r["rating_count"]))
-                if r["rating_count"] > 1:
-                    rating += "s"
-                rating += ")"
-            rows.append([r["id"],
-                         r["title"],
-                         r["app_url"],
-                         rating,
-                         str(r["is_up"]),
-                         str(r["is_healthy"]),
-                         "{:.2f}%".format(r["average_uptime"] * 100),
-                         datetime.datetime.fromtimestamp(r["last_update"]).strftime(
-                             "%Y-%m-%d %H:%M")])
+    total_pages = resp_json["total_pages"]
+    click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
+    headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime",
+               "Last Update"]
+    rows = []
+    for r in search_results:
+        rating = "Not yet Rated"
+        if r["rating_count"] > 0:
+            rating = "{:.1f} ({} rating".format(r["average_rating"],
+                                                int(r["rating_count"]))
+            if r["rating_count"] > 1:
+                rating += "s"
+            rating += ")"
+        rows.append([r["id"],
+                     r["title"],
+                     r["app_url"],
+                     rating,
+                     str(r["is_up"]),
+                     str(r["is_healthy"]),
+                     "{:.2f}%".format(r["average_uptime"] * 100),
+                     datetime.datetime.fromtimestamp(r["last_update"]).strftime(
+                         "%Y-%m-%d %H:%M")])
 
-        click.echo(tabulate(rows, headers, tablefmt="grid"))
+    click.echo(tabulate(rows, headers, tablefmt="grid"))
 
-        return total_pages
-    else:
-        raise ServerRequestError()
+    return total_pages
 
 
 def display_app_info(config, client, app_id):
