@@ -32,8 +32,12 @@ def json_output(f):
               help='Uses JSON output.')
     @click.pass_context
     def wrapper(ctx, json, *args, **kwargs):
-        config = ctx.obj['config']
-        config.set_json_output(json)
+
+        # protect against early cli failures
+        if ctx.obj and 'config' in ctx.obj:
+            config = ctx.obj['config']
+            config.set_json_output(json)
+
         try:
             result = f(ctx, *args, **kwargs)
         except exceptions.Two1Error as e:
@@ -56,18 +60,21 @@ def check_notifications(func):
     """
 
     def _check_notifications(ctx, *args, **kwargs):
-        config = ctx.obj['config']
-        client = ctx.obj['client']
+        config = None
+        client = None
+        # protect against early cli failures
+        if ctx.obj and 'config' in ctx.obj and 'client' in ctx.obj:
+            config = ctx.obj['config']
+            client = ctx.obj['client']
+
         res = func(ctx, *args, **kwargs)
 
-        try:
-            notifications = client.get_notifications(config.username)
-            notification_json = notifications.json()
+        if client and config:
+            notifications_resp = client.get_notifications(config.username)
+            notification_json = notifications_resp.json()
             urgent_notifications = notification_json["urgent_count"]
             if urgent_notifications > 0:
-                click.secho(UxString.unread_notifications.format(urgent_notifications))
-        except:
-            pass
+                click.secho(uxstring.UxString.unread_notifications.format(urgent_notifications))
 
         return res
 
@@ -89,6 +96,10 @@ def capture_usage(func):
             kwargs (dict): keyword args of the function
         """
         try:
+            # protect against early cli failures
+            if not ctx.obj or 'config' not in ctx.obj:
+                return func(ctx, *args, **kwargs)
+
             config = ctx.obj['config']
 
             # return early if they opted out of sending usage stats
@@ -128,6 +139,10 @@ def capture_usage(func):
             return
 
         except Exception as e:
+            # protect against early cli failures
+            if not ctx.obj or 'config' not in ctx.obj:
+                raise e
+
             click.echo(uxstring.UxString.Error.server_err)
 
             if hasattr(config, "collect_analytics") and not config.collect_analytics:
