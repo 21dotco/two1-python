@@ -600,4 +600,4 @@ def _doctor(two1_config):
     if len(doc.get_checks(Check.Result.FAIL)) == 0:
         return doc.to_dict()
     else:
-        raise exceptions.TwoOneError("21 doctor failed some checks.", json=doc.to_dict())
+        raise exceptions.Two1Error("21 doctor failed some checks.", json=doc.to_dict())
