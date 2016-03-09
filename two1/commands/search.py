@@ -95,24 +95,21 @@ def get_search_results(client, search_string, page):
         int: the total number of pages returned by the server
     """
     resp = client.search(search_string, page)
-    if resp.ok:
-        resp_json = resp.json()
-        search_results = resp_json["results"]
-        if search_results is None or len(search_results) == 0:
-            if search_string:
-                click.secho(uxstring.UxString.empty_listing.format(search_string))
-            else:
-                click.secho(uxstring.UxString.no_app_in_marketplace)
+    resp_json = resp.json()
+    search_results = resp_json["results"]
+    if search_results is None or len(search_results) == 0:
+        if search_string:
+            click.secho(uxstring.UxString.empty_listing.format(search_string))
+        else:
+            click.secho(uxstring.UxString.no_app_in_marketplace)
 
-            return 0
+        return 0
 
-        total_pages = resp_json["total_pages"]
-        click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-        content = market_search_formatter(search_results, page)
-        click.echo(content)
-        return total_pages
-    else:
-        raise exceptions.ServerRequestError()
+    total_pages = resp_json["total_pages"]
+    click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
+    content = market_search_formatter(search_results, page)
+    click.echo(content)
+    return total_pages
 
 
 MAX_PAGE_SIZE = 10
