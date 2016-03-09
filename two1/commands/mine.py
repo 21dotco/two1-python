@@ -256,11 +256,11 @@ def get_work(config, client):
         WorkNotification: a Swirl work notification message
     """
     try:
-        work_msg = client.get_work()
+        response = client.get_work()
     except exceptions.ServerRequestError as e:
         if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
             click.secho(uxstring.UxString.mining_bitcoin_computer_needed, fg="red")
-            raise exceptions.BitcoinComputerNeededError()
+            raise exceptions.BitcoinComputerNeededError(response=response)
         elif e.status_code == 404 or e.status_code == 403:
             click.echo(uxstring.UxString.mining_limit_reached)
             raise exceptions.MiningDisabledError(uxstring.UxString.mining_limit_reached)
@@ -268,7 +268,7 @@ def get_work(config, client):
             raise e
 
     msg_factory = message_factory.SwirlMessageFactory()
-    msg = base64.decodebytes(work_msg.content)
+    msg = base64.decodebytes(response.content)
     work = msg_factory.read_object(msg)
     return work
 
