@@ -571,6 +571,7 @@ class Doctor(object):
 
 
 @click.command()
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def doctor(ctx):

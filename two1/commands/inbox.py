@@ -11,6 +11,7 @@ from two1.commands.util import uxstring
 
 
 @click.command()
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def inbox(ctx):

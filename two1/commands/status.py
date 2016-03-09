@@ -56,6 +56,7 @@ def status_mining(config, client):
               is_flag=True,
               default=False,
               help="List non-zero balances for each address")
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 @decorators.check_notifications

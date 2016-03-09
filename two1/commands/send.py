@@ -16,6 +16,7 @@ from two1.commands.util import uxstring
               default=False,
               show_default=True,
               help="Use unconfirmed transactions/UTXOs")
+@decorators.catch_all
 @decorators.json_output
 def send(ctx, address, satoshis, use_unconfirmed):
     """Send the specified address some satoshis.

@@ -11,7 +11,7 @@ from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
 
-@click.group(invoke_without_command=True)
+@click.command()
 @click.option('--info', is_flag=True, default=False,
               help="Shows instructions on how to connect you Bitcoin Computer to an exchange "
                    "account")
@@ -20,6 +20,8 @@ from two1.commands.util import uxstring
 @click.option('--history', is_flag=True, default=False,
               help="Shows your history of Bitcoin purchases")
 @click.argument('amount', default=0, type=click.FLOAT)
+@click.pass_context
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def buybitcoin(ctx, info, status, amount, history):

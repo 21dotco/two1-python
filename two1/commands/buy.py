@@ -28,6 +28,7 @@ import two1.lib.channels.statemachine as statemachine
 @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 def buy(ctx, resource, **options):
     """Buy API calls with mined bitcoin.
