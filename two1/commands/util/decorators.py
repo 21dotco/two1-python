@@ -146,3 +146,37 @@ def capture_usage(func):
 
     return functools.update_wrapper(_capture_usage, func)
 
+
+def catch_all(func):
+    """ Adds a safety net to functions that catches all exceptions
+
+    Args:
+        func (function): function being decorated
+    """
+    def _catch_all(ctx, *args, **kwargs):
+        """ Catches all exceptions and prints the stacktrace if an environment variable is set
+
+        Args:
+            ctx (click.Context): cli context object
+            args (tuple): tuple of args of the fuction
+            kwargs (dict): keyword args of the function
+        """
+        try:
+            return func(ctx, *args, **kwargs)
+
+        # raise all click exceptions because they are used to bail and print a message
+        except click.ClickException:
+            raise
+
+        except Exception:
+            # generic error string
+            click.echo(uxstring.UxString.Error.server_err)
+
+            # only dump the stack traces if the debug flag is set
+            if "TWO1_DEBUG" in  os.environ:
+                click.secho("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
+                click.secho("Args: {}".format(args), fg="red")
+                click.secho("Kwargs: {}".format(kwargs), fg="red")
+                click.secho("{}".format(traceback.format_exc()), fg="red")
+
+    return functools.update_wrapper(_catch_all, func)
