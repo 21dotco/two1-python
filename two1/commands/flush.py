@@ -10,6 +10,7 @@ from two1.commands.util import exceptions
 
 @click.command()
 @click.pass_context
+@decorators.catch_all
 @decorators.check_notifications
 @decorators.capture_usage
 def flush(ctx):

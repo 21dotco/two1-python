@@ -31,6 +31,7 @@ import two1.lib.bitcoin.utils as utils
 @click.option('--dashboard', default=False, is_flag=True,
               help="Dashboard with mining details")
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
 def mine(ctx, dashboard):

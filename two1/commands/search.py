@@ -16,6 +16,7 @@ from two1.commands.util import uxstring
 @click.command("search")
 @click.pass_context
 @click.argument('search_string', required=False)
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def search(ctx, search_string=None):

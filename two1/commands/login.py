@@ -23,6 +23,7 @@ from two1.lib.server import machine_auth_wallet
               help='Set/update your 21 password')
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def login(ctx, setpassword, username, password):

@@ -9,6 +9,7 @@ from two1.commands.util import uxstring
 @click.command()
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
+@decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 def log(ctx, debug):

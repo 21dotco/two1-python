@@ -65,6 +65,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Overrides a config key/value pair.')
 @click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
+@decorators.catch_all
 @decorators.docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config_dict):
     """Mine bitcoin and use it to buy and sell digital goods.

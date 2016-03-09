@@ -19,6 +19,7 @@ from two1.commands.util import exceptions
 @click.option('--status', is_flag=True, default=False,
               help='Show the status of all the networks that you have joined.')
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
 def join(ctx, network, status):

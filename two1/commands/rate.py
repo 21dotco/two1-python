@@ -9,6 +9,7 @@ from tabulate import tabulate
 from two1.lib.server import rest_client
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
+from two1.commands.util import decorators
 
 
 @click.command()
@@ -17,6 +18,7 @@ from two1.commands.util import exceptions
               help='List all the apps that you have rated.')
 @click.argument('app_id', required=False, type=click.STRING)
 @click.argument('rating', required=False, type=click.INT)
+@decorators.catch_all
 def rate(ctx, list, app_id, rating):
     """Rate an app listed in the 21 Marketplace.
 

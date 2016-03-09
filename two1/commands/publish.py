@@ -69,6 +69,7 @@ $ 21 publish remove --help
 
 @publish.command()
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 def list(ctx):
     """
@@ -89,6 +90,7 @@ at the prompt.
 @publish.command()
 @click.argument('app_id')
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
 def remove(ctx, app_id):
