@@ -50,8 +50,16 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
             response = MockHttpResponse(status_code=status_code, data=data)
             mock_request.return_value = response
             if raised_exception:
-                with pytest.raises(raised_exception):
+                with pytest.raises(raised_exception) as ex_info:
                    rc._request()
+
+                if data:
+                    try:
+                        json.loads(data)
+                    except ValueError:
+                        assert 'error' in ex_info.value.data
+                    else:
+                        assert json.loads(data) == ex_info.value.data
             else:
                 assert rc._request() == response
 
