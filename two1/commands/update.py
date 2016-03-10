@@ -15,6 +15,7 @@ import click
 import two1
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
+from two1.commands.util import exceptions
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
 
@@ -87,12 +88,11 @@ def update_two1_package(config, version, force_update_check=False):
 
         if installed_version == '':
             # This has occured when local git commits have happened
-            click.echo("")
-            raise click.ClickException(uxstring.UxString.Error.version_not_detected)
+            raise exceptions.Two1Error(uxstring.UxString.Error.version_not_detected)
 
         try:
             latest_version = lookup_pypi_version(version)
-        except click.ClickException:
+        except exceptions.Two1Error:
             raise
         except Exception:
             ret['update_successful'] = _do_update('latest')
@@ -169,7 +169,7 @@ def lookup_pypi_version(version='latest'):
         r = requests.get(url)
         data = r.json()
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
-        raise click.ClickException(uxstring.UxString.Error.update_server_connection)
+        raise exceptions.Two1Error(uxstring.UxString.Error.update_server_connection)
 
     pypi_version = None
 
@@ -189,12 +189,12 @@ def lookup_pypi_version(version='latest'):
                          re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
 
         if not data:
-            raise click.ClickException(uxstring.UxString.Error.version_not_found.format(version))
+            raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
         else:
             pypi_version = data["version"]
 
     except (AttributeError, KeyError, TypeError):
-        raise click.ClickException(uxstring.UxString.Error.server_err)
+        raise exceptions.Two1Error(uxstring.UxString.Error.server_err)
 
     return pypi_version
 
