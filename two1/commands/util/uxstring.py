@@ -495,8 +495,9 @@ refer to 21.co/app for futher instructions.", fg="red")
         request = "Error: Server request error occurred"
 
         # 500 unknown error
-        server_err = "Error: You have experienced a technical error. "\
-            "We are working to correct this issue."
+        server_err = click.style("You have experienced a technical error. "
+                                 "We are working to correct this issue.",
+                                 fg="red")
         non_existing_user = "Error: Username %s does not exist."
 
         # wallet errors
@@ -510,17 +511,19 @@ refer to 21.co/app for futher instructions.", fg="red")
         file_decode = "There was an error loading {}. It may be a corrupt or poorly formatted file."
 
         # Updater
-        update_failed = "Error occurred during update process. Please run a manual update."
-        version_not_found = "Did not find version {}."
+        update_failed = click.style("Error occurred during update process. Please run a manual update.", fg="red")
+        version_not_found = click.style("Could not find version '{}'.", fg="red")
         retry_update_after_reboot = "Could not stop wallet daemon. Please reboot your system and retry 21 update."
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
-        update_server_connection = "Could not connect to the update server. Please try again later."
+        update_server_connection = click.style("Could not connect to the update server. Please try again later.",
+                                               fg="red")
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
 
         # version errors
-        version_not_detected = "Could not properly detect your version of 21. \nTry"\
-            " reinstalling or contact support@21.co."
+        version_not_detected = click.style("Could not properly detect your version of 21. "\
+                                           "Try reinstalling or contact support@21.co.",
+                                           fg="red")
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
         insufficient_funds_mine_more = "Insufficient satoshis for off-chain (zero-fee) transaction. "\
             "Type {} to get more.*\n\n"\
