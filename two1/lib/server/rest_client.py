@@ -76,7 +76,7 @@ class TwentyOneRestClient(object):
                 raise ex
 
         if response.status_code > 299:
-            raise exceptions.ServerRequestError(response=response)
+            raise exceptions.ServerRequestError(msg=uxstring.UxString.Error.server_err, response=response)
 
         return response
 
