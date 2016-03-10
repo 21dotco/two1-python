@@ -7,11 +7,13 @@ import click
 class UxString:
 
     # general
-    update_required = "You are using an old version of 21 CLI. Please update using the '21 " \
-                      "update' command."
-    bitcoin_computer_needed = "You need a 21 Bitcoin Computer (21.co/buy) to access " \
-                              "this service. If you believe you have received this " \
-                              "message in error, please contact support@21.co."
+    update_required = click.style("You are using an old version of 21 CLI. Please update using the '21 " \
+                                  "update' command.",
+                                  fg="red")
+    bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access " \
+                                          "this service. If you believe you have received this " \
+                                          "message in error, please contact support@21.co.",
+                                          fg="red")
     max_accounts_reached = click.style(
         "You have reached the maximum number of 21.co accounts that you can create. "
         "Use ",
@@ -487,7 +489,7 @@ refer to 21.co/app for futher instructions.", fg="red")
 
     class Error:
         # network errors
-        connection = "Error: Cannot connect to {}. Please check your Internet connection."
+        connection = click.style("Error: Cannot connect to {}. Please check your Internet connection.", fg="red")
         connection_cli = "An internet connection is required to run this command."
         timeout = "Error: Connection to %s timed out."
         request = "Error: Server request error occurred"
