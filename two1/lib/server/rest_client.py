@@ -61,17 +61,15 @@ class TwentyOneRestClient(object):
             response = self._session.request(method, url, headers=headers, **kwargs)
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
-            raise exceptions.ServerConnectionError()
+            raise exceptions.ServerConnectionError(uxstring.UxString.Error.connection.format("21 Servers"))
 
         # update required
         if response.status_code == 301:
-            click.secho(uxstring.UxString.update_required, fg="red")
-            raise exceptions.UpdateRequiredError()
+            raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
 
         if response.status_code == 403:
             ex = exceptions.ServerRequestError(response=response)
             if "detail" in ex.data and "TO100" in ex.data["detail"]:
-                click.secho(uxstring.UxString.bitcoin_computer_needed, fg="red")
                 raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed,
                                                             response=response)
             else:
