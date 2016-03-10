@@ -143,6 +143,7 @@ name        : The name of the app publisher.
 email       : The email of the app publisher.
 host        : The IP address or hostname of the machine hosting the app.
               If you provide AUTO as a value for this field, your 21market IP will be automatically detected and added to the manifest.
+port        : The port on which the app is running on.
     """
     if parameters is not None:
         parameters = _parse_parameters(parameters)
@@ -511,6 +512,12 @@ def override_manifest(manifest_json, overrides, marketplace):
             host = overrides[key]
             if host == "AUTO":
                 host = get_zerotier_address(marketplace)
+            manifest_json["host"] = host
+        if key.lower() == "port":
+            host = manifest_json["host"]
+            # if the host is in the form of https://x.com/ remove the trailing slash
+            host = host.strip("/")
+            host += ":{}".format(overrides[key])
             manifest_json["host"] = host
     return manifest_json
 
