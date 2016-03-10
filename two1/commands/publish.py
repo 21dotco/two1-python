@@ -275,8 +275,6 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
                     click.secho(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
                     return
 
-    except ValueError:
-        return
     except exceptions.ValidationError as e:
         click.secho(
             uxstring.UxString.bad_manifest.format(manifest_path, e.args[0], uxstring.UxString.publish_docs_url),
@@ -441,8 +439,7 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         marketplace (str): the marketplace name
 
     Raises:
-        ValidationError: If manifest is missing, is a directory, or too large
-        ValueError: If the manifest is not valid or bad
+        ValidationError: If manifest is not valid, bad, missing, is a directory, or too large
     """
     if not os.path.exists(api_docs_path):
         raise exceptions.ValidationError(
@@ -473,16 +470,8 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
             yaml.dump(manifest_dict, f)
 
         return manifest_dict
-    except YAMLError:
-        click.secho(uxstring.UxString.malformed_yaml.format(api_docs_path, uxstring.UxString.publish_docs_url),
-                    fg="red")
-        raise ValueError()
-    except ValueError as e:
-        click.secho(uxstring.UxString.bad_manifest.format(
-            api_docs_path,
-            e.args[0],
-            uxstring.UxString.publish_docs_url), fg="red")
-        raise ValueError()
+    except (YAMLError, ValueError):
+        raise exceptions.ValidationError(uxstring.UxString.malformed_yaml.format(api_docs_path))
 
 
 def clean_manifest(manifest_json):

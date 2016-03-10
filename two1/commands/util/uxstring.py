@@ -322,14 +322,14 @@ class UxString:
 
     # publish
     publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
+    publish_instructions = "For instructions on publishing your app, please refer to {}".format(publish_docs_url)
 
     manifest_missing = click.style("Could not find the manifest file at {}.", fg="red")
 
-    bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\n\nFor " \
-                   "instructions on publishing your app, please refer to {}."
+    bad_manifest = "{}{}".format("The following error occurred while reading your manifest file at {}:\n{}\n\n",
+                                 publish_instructions)
 
-    malformed_yaml = "Your manifest file at {} is not valid YAML. \n\nFor instructions on " \
-                     "publishing your app, please refer to {}."
+    malformed_yaml = click.style("Your manifest file at {} is not valid YAML.", fg="red")
     large_manifest = click.style("Size of the manifest file at {} exceeds the maximum limit of 2MB.", fg="red")
 
     manifest_is_directory = click.style("{} is a directory. Please enter the direct path to the manifest file.",
