@@ -6,6 +6,7 @@ from two1.lib.blockchain.exceptions import DataProviderError
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
+from two1.commands.util import exceptions
 
 
 @click.command("send")
@@ -48,16 +49,16 @@ def _send(wallet, address, satoshis, use_unconfirmed=False):
         click.echo(uxstring.UxString.send_success.format(satoshis, address, txid, txn))
     except ValueError as e:
         # This will trigger if there's a below dust-limit output.
-        raise click.ClickException(str(e))
+        raise exceptions.Two1Error(str(e))
     except WalletBalanceError:
         if wallet.unconfirmed_balance() > satoshis:
-            raise click.ClickException(uxstring.UxString.send_insufficient_confirmed)
+            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_confirmed)
         else:
             balance = min(wallet.confirmed_balance(), wallet.unconfirmed_balance())
-            raise click.ClickException(send_insufficient_blockchain.format(balance, satoshis, address))
+            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain.format(balance, satoshis, address))
     except DataProviderError as e:
         if "rejected" in str(e):
-            raise click.ClickException(uxstring.UxString.send_rejected)
+            raise exceptions.Two1Error(uxstring.UxString.send_rejected)
         else:
-            raise click.ClickException(str(e))
+            raise exceptions.Two1Error(str(e))
     return txids
