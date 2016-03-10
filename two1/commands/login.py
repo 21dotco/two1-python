@@ -136,6 +136,10 @@ def create_account_on_bc(config, machine_auth):
             rest_client = _rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, username)
             rest_client.account_post(payout_address, email, password)
 
+        # Do not continue creating an account because the UUID is invalid
+        except exceptions.BitcoinComputerNeededError:
+            raise
+
         except exceptions.ServerRequestError as ex:
             # handle various 400 errors from the server
             if ex.status_code == 400:

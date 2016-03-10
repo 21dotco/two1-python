@@ -38,12 +38,12 @@ class FileDecodeError(Exception):
     """ Error when a config file cannot be decoded """
 
 
-class ServerRequestError(click.ClickException):
+class ServerRequestError(Two1Error):
     """ Error during a request to a server """
 
     def __init__(self, msg="", response=None, status_code=None, data=None):
         super(ServerRequestError, self).__init__(msg)
-        if response:
+        if response is not None:
             self.status_code = response.status_code
             try:
                 self.data = response.json()
@@ -54,7 +54,7 @@ class ServerRequestError(click.ClickException):
             self.data = data
 
 
-class ServerConnectionError(click.ClickException):
+class ServerConnectionError(Two1Error):
     """Error during a connection to a server"""
 
     def __init__(self, msg=""):
