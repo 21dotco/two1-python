@@ -169,11 +169,10 @@ def start_cpu_mining(config, client, wallet):
     start_time = time.time()
     config.log(uxstring.UxString.mining_start.format(config.username, reward))
 
-    try:
-        work = get_work(config, client)
-    except (exceptions.BitcoinComputerNeededError, exceptions.MiningDisabledError):
-        return
+    # gets work from the server
+    work = get_work(config, client)
 
+    # kicks off cpu miner to find a solution
     found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
     paid_satoshis = save_work(client, found_share, config.username)
@@ -260,10 +259,9 @@ def get_work(config, client):
         response = client.get_work()
     except exceptions.ServerRequestError as e:
         if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
-            click.secho(uxstring.UxString.mining_bitcoin_computer_needed, fg="red")
-            raise exceptions.BitcoinComputerNeededError(response=response)
+            raise exceptions.BitcoinComputerNeededError(msg=uxstring.UxString.mining_bitcoin_computer_needed,
+                                                        response=response)
         elif e.status_code == 404 or e.status_code == 403:
-            click.echo(uxstring.UxString.mining_limit_reached)
             raise exceptions.MiningDisabledError(uxstring.UxString.mining_limit_reached)
         else:
             raise e
