@@ -156,6 +156,7 @@ def get_price_quote(client, amount, deposit_type):
 
     buy_result = resp.json()
     if "err" in buy_result:
+        #TODO: remove the secho and use the exception to print message
         click.secho(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
         raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
@@ -234,5 +235,4 @@ def get_deposit_info():
         return deposit_type
 
     except click.exceptions.Abort:
-        click.secho("\nPurchase canceled", fg="magenta")
-        raise exceptions.UnloggedException("")
+        raise exceptions.UnloggedException(click.style("\nPurchase canceled", fg="magenta"))
