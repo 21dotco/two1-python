@@ -112,23 +112,84 @@ $ 21 publish list
               help="Selects the marketplace for publishing.")
 @click.option('-s', '--skip', is_flag=True, default=False,
               help='Skips the strict checking of the manifest against your current ip.')
+@click.option('-p', '--parameters', default=None,
+              help='Overrides manifest parameters.')
 @click.pass_context
 @decorators.capture_usage
 @decorators.check_notifications
-def submit(ctx, manifest_path, marketplace, skip):
+def submit(ctx, manifest_path, marketplace, skip, parameters):
     """
 \b
 Usage
 _____
-Publishes an app to the Marketplace.
+Publishes an app to 21 Marketplace.
 $ 21 publish submit path_to_manifest/manifest.yaml
 
 The contents of the manifest file should follow the guidelines specified at
 https://21.co/learn/21-publish
 
-Before publishing, make sure that you've joined the 21 marketplace by running the `21 join` command.
+Before publishing, make sure that you've joined the 21 Marketplace by running the `21 join` command.
+
+\b
+Publishes an app to 21 Marketplace but overrides the specified fields in the existing manifest.
+$ 21 publish submit path_to_manifest/manifest.yaml -p "title='my App Title' price=2500 host=AUTO"
+
+\b
+Available fields for override:
+title       : The title of the app.
+description : The description of the app.
+price       : The price for each call to your app.
+name        : The name of the app publisher.
+email       : The email of the app publisher.
+host        : The IP address or hostname of the machine hosting the app.
+              If you provide AUTO as a value for this field, your 21market IP will be automatically detected and added to the manifest.
     """
-    _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip)
+    if parameters is not None:
+        parameters = _parse_parameters(parameters)
+
+    _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip, parameters)
+
+
+def _parse_parameters(parameters):
+    """ Parses parameters string and returns a dict of overrides.
+
+    This function assumes that parameters string is in the form of "key=value key='value'".
+    Use of single quotes is optional but is helpful for strings that contain spaces.
+
+    Args:
+        parameters (str): A string in the form of "key=value key='value'".
+
+    Returns:
+        dict: A dict containing key/value pairs parsed from the parameters string.
+
+    Raises:
+        ValueError: if the parameters string is malformed
+    """
+
+    try:
+        # first we add tokens that separate key/value pairs.
+        # in case of key='ss  sss  ss', we skip tokenizing when we se the first single quote
+        # and resume when we see the second
+        replace_space = True
+        tokenized = ""
+        for c in parameters:
+            if c == '\'':
+                replace_space = not replace_space
+            elif c == ' ' and replace_space:
+                tokenized += "$$"
+            else:
+                tokenized += c
+
+        # now get the tokens
+        tokens = tokenized.split('$$')
+        result = {}
+        for token in tokens:
+            # separate key/values
+            key_value = token.split("=")
+            result[key_value[0]] = key_value[1]
+        return result
+    except (IndexError, KeyError):
+        raise ValueError
 
 
 def _list_apps(config, client):
@@ -187,7 +248,7 @@ def _delete_app(config, client, app_id):
                 click.secho(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
 
 
-def _publish(config, client, manifest_path, marketplace, skip):
+def _publish(config, client, manifest_path, marketplace, skip, overrides):
     """ Publishes application by uploading the manifest to the given marketplace
 
     Args:
@@ -197,9 +258,12 @@ def _publish(config, client, manifest_path, marketplace, skip):
         manifest_path (str): the path to the manifest file
         marketplace (str): the zerotier marketplace name
         skip (bool): skips strict checking of manifest file
+        overrides (dict): Dictionary containing the key/value pairs will be overridden
+        in the manifest.
+
     """
     try:
-        manifest_json = check_app_manifest(manifest_path)
+        manifest_json = check_app_manifest(manifest_path, overrides, marketplace)
         app_url = urlparse(manifest_json["host"])
         app_ip = app_url.path.split(":")[0]
 
@@ -370,11 +434,14 @@ def display_app_info(config, client, app_id):
             raise e
 
 
-def check_app_manifest(api_docs_path):
+def check_app_manifest(api_docs_path, overrides, marketplace):
     """ Runs validate_manifest and handles any errors that could occur
 
     Args:
         api_docs_path (str): path to the manifest file
+        overrides (dict): Dictionary containing the key/value pairs will be overridden
+        in the manifest.
+        marketplace (str): the zerotier marketplace name
 
     Raises:
         ValidationError: If manifest is missing, is a directory, or too large
@@ -397,6 +464,8 @@ def check_app_manifest(api_docs_path):
     try:
         with open(api_docs_path, "r") as f:
             manifest_dict = yaml.load(f.read())
+            if overrides is not None:
+                manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
             validate_manifest(manifest_dict)
             return manifest_dict
     except YAMLError:
@@ -408,6 +477,42 @@ def check_app_manifest(api_docs_path):
             e.args[0],
             uxstring.UxString.publish_docs_url), fg="red")
         raise ValueError()
+
+
+def override_manifest(manifest_json, overrides, marketplace):
+    """ Overrides fields in the manifest file.
+
+    Args:
+        manifest_json (dict): a json dict of the entire manifest
+        overrides (dict): a json dict of override parameters. If this dict contains invalid
+        keys (non overridables), they will be ignored.
+        marketplace (str): the zerotier marketplace name
+
+    Raises:
+        UnloggedException: if the zt network doesn't exist
+        ValueError: if a non integer is passed as the price parameter
+
+    Returns:
+        dict: a json dict of the manifest with fields overridden.
+    """
+    for key in overrides.keys():
+        if key.lower() == "title" in overrides:
+            manifest_json["info"]["title"] = overrides[key]
+        if key.lower() == "description":
+            manifest_json["info"]["description"] = overrides[key]
+        if key.lower() == "price":
+            manifest_json["info"]["x-21-total-price"]["min"] = int(overrides[key])
+            manifest_json["info"]["x-21-total-price"]["max"] = int(overrides[key])
+        if key.lower() == "name":
+            manifest_json["info"]["contact"]["name"] = overrides[key]
+        if key.lower() == "email":
+            manifest_json["info"]["contact"]["email"] = overrides[key]
+        if key.lower() == "host":
+            host = overrides[key]
+            if host == "AUTO":
+                host = get_zerotier_address(marketplace)
+            manifest_json["host"] = host
+    return manifest_json
 
 
 def validate_manifest(manifest_json):
