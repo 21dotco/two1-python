@@ -95,58 +95,46 @@ def capture_usage(func):
             args (tuple): tuple of args of the fuction
             kwargs (dict): keyword args of the function
         """
+        # protect against early cli failures
+        if not ctx.obj or 'config' not in ctx.obj:
+            return func(ctx, *args, **kwargs)
+
+        config = ctx.obj['config']
+
+        # return early if they opted out of sending usage stats
+        if hasattr(config, "collect_analytics") and not config.collect_analytics:
+            return func(ctx, *args, **kwargs)
+
+        # add a default username if user is not logged in
+        username = "unknown"
+        if hasattr(config, "username"):
+            username = config.username
+
+        # log payload as a dict
+        data = {
+            "channel": "cli",
+            "level": "info",
+            "username": username,
+            "command": func.__name__[1:],
+            "platform": "{}-{}".format(platform.system(), platform.release()),
+            "version" : two1.TWO1_VERSION
+        }
+
+        # send usage payload to the logging server
+        requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
+
         try:
-            # protect against early cli failures
-            if not ctx.obj or 'config' not in ctx.obj:
-                return func(ctx, *args, **kwargs)
-
-            config = ctx.obj['config']
-
-            # return early if they opted out of sending usage stats
-            if hasattr(config, "collect_analytics") and not config.collect_analytics:
-                return func(ctx, *args, **kwargs)
-
-            # add a default username if user is not logged in
-            username = "unknown"
-            if hasattr(config, "username"):
-                username = config.username
-
-            data = {
-                "channel": "cli",
-                "level": "info",
-                "username": username,
-                "command": func.__name__[1:],
-                "platform": "{}-{}".format(platform.system(), platform.release()),
-                "version" : two1.TWO1_VERSION
-            }
-            # send usage payload to the logging server
-            requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
-
             # call decorated function and propigate args
-            res = func(ctx, *args, **kwargs)
-
-            return res
-
-        # Catch any special errors that deserve a unique error message
-        except exceptions.ServerRequestError as ex:
-            click.echo(uxstring.UxString.Error.request)
-
-        except exceptions.ServerConnectionError:
-            click.echo(uxstring.UxString.Error.connection.format("21 Servers"))
+            return func(ctx, *args, **kwargs)
 
         # Don't log UnloggedExceptions to the server
         except exceptions.UnloggedException:
             return
 
-        except Exception as e:
+        except Exception as ex:
             # protect against early cli failures
             if not ctx.obj or 'config' not in ctx.obj:
-                raise e
-
-            click.echo(uxstring.UxString.Error.server_err)
-
-            if hasattr(config, "collect_analytics") and not config.collect_analytics:
-                return
+                raise ex
 
             # Add the errors to the data payload
             data['level'] = 'error'
@@ -155,9 +143,7 @@ def capture_usage(func):
             # send usage payload to the logging server
             requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
 
-            # raise the error if debug is enabled
-            if os.environ.get("TWO1_DEBUG", False).lower() == "true":
-                raise e
+            raise ex
 
     return functools.update_wrapper(_capture_usage, func)
 
