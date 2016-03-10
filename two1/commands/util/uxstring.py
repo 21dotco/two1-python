@@ -323,20 +323,18 @@ class UxString:
     # publish
     publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
 
-    manifest_missing = "Could not find the manifest file at {}.\nFor instructions on " \
-                       "how to create one, please refer to {}."
+    manifest_missing = click.style("Could not find the manifest file at {}.", fg="red")
 
-    bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\nFor " \
+    bad_manifest = "The following error occurred while reading your manifest file at {}:\n{}\n\nFor " \
                    "instructions on publishing your app, please refer to {}."
 
-    malformed_yaml = "Your manifest file at {} is not valid YAML. For instructions on " \
+    malformed_yaml = "Your manifest file at {} is not valid YAML. \n\nFor instructions on " \
                      "publishing your app, please refer to {}."
-    large_manifest = "Size of the manifest file at {} exceeds the maximum limit of " \
-                     "2MB.\nFor instructions on publishing your app, please refer to {}."
+    large_manifest = click.style("Size of the manifest file at {} exceeds the maximum limit of 2MB.", fg="red")
 
-    manifest_is_directory = "{} is a directory. Please enter the direct path to the manifest file."
-    no_zt_network = click.style("You are not part of the {}. Use {}",
-                                fg="red") + click.style(" to join the market.", fg="red")
+    manifest_is_directory = click.style("{} is a directory. Please enter the direct path to the manifest file.",
+                                        fg="red")
+    no_zt_network = click.style("You are not part of the {}. Use {} to join the market.", fg="red")
     invalid_parameter = "Manifest parameter overrides should be in the form 'key1=\"value1\" " \
                         "key2=\"value2\"."
 
@@ -367,27 +365,30 @@ class UxString:
     valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
 
     valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path", "info"]
-    top_level_manifest_field_missing = "Field '{}' is missing from the manifest file."
+    top_level_manifest_field_missing = click.style("Field '{}' is missing from the manifest file.", fg="red")
     manifest_info_fields = ["contact",
                             "title",
                             "description",
                             "x-21-total-price",
                             "x-21-quick-buy",
                             "x-21-category"]
-    manifest_info_field_missing = "Field '{}' is missing from the manifest file under the 'info' " \
-                                  "section."
+    manifest_info_field_missing = click.style("Field '{}' is missing from the manifest file under the 'info' section.",
+                                              fg="red")
 
     manifest_contact_fields = {"name", "email"}
-    manifest_contact_field_missing = "Field '{}' is missing from the manifest file under the " \
-                                     "'contact' section."
+    manifest_contact_field_missing = click.style("Field '{}' is missing from the manifest file under the " \
+                                                "'contact' section.",
+                                                fg="red")
 
     price_fields = ["min", "max"]
-    price_fields_missing = "Field '{}' is missing from the manifest file under the " \
-                           "'x-21-total-price' section."
-    scheme_missing = "You have to specify either HTTP or HTTPS for your endpoint under the " \
-                     "`schemes` section."
-    invalid_category = "'{}' is not a valid category for the 21 marketplace. Valid categories are " \
-                       "{}."
+    price_fields_missing = click.style("Field '{}' is missing from the manifest file under the " \
+                                       "'x-21-total-price' section.",
+                                       fg="red")
+    scheme_missing = click.style("You have to specify either HTTP or HTTPS for your endpoint under the " \
+                                 "`schemes` section.",
+                                 fg="red")
+    invalid_category = click.style("'{}' is not a valid category for the 21 marketplace. Valid categories are {}.",
+                                   fg="red")
 
     # publish-list
     my_apps = "Listing all the published apps by {}: "
@@ -492,7 +493,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         connection = click.style("Error: Cannot connect to {}. Please check your Internet connection.", fg="red")
         connection_cli = "An internet connection is required to run this command."
         timeout = "Error: Connection to %s timed out."
-        request = "Error: Server request error occurred"
+        request = click.style("Error: Server request error occurred", fg="red")
 
         # 500 unknown error
         server_err = click.style("You have experienced a technical error. "
