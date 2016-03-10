@@ -63,3 +63,7 @@ class ServerConnectionError(Two1Error):
 
 class BitcoinComputerNeededError(ServerRequestError):
     """ Error during a request made on a protected api """
+
+
+class ValidationError(Two1Error):
+    """ Manifest validation error occurs when parsing manifest file """

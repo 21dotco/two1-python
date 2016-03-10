@@ -17,12 +17,8 @@ from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
+from two1.commands.util import exceptions
 from two1.commands.search import get_next_page
-
-
-class ValidationError(Exception):
-    """ Manifest validation error occurs when parsing manifest file """
-    pass
 
 
 @click.group()
@@ -281,7 +277,7 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
 
     except ValueError:
         return
-    except ValidationError as e:
+    except exceptions.ValidationError as e:
         click.secho(
             uxstring.UxString.bad_manifest.format(manifest_path, e.args[0], uxstring.UxString.publish_docs_url),
             fg="red")
@@ -449,17 +445,16 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         ValueError: If the manifest is not valid or bad
     """
     if not os.path.exists(api_docs_path):
-        raise ValidationError(
+        raise exceptions.ValidationError(
             uxstring.UxString.manifest_missing.format(
                 api_docs_path, uxstring.UxString.publish_docs_url))
 
     if os.path.isdir(api_docs_path):
-        raise ValidationError(
-            uxstring.UxString.manifest_is_directory.format(api_docs_path), fg="red")
+        raise exceptions.ValidationError(uxstring.UxString.manifest_is_directory.format(api_docs_path))
 
     file_size = os.path.getsize(api_docs_path) / 1e6
     if file_size > 2:
-        raise ValidationError(
+        raise exceptions.ValidationError(
             uxstring.UxString.large_manifest.format(api_docs_path,
                                            uxstring.UxString.publish_docs_url))
     try:
@@ -597,26 +592,26 @@ def validate_manifest(manifest_json):
     """
     for field in uxstring.UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
-            raise ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field))
 
     for field in uxstring.UxString.manifest_info_fields:
         if field not in manifest_json["info"]:
-            raise ValidationError(uxstring.UxString.manifest_info_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.manifest_info_field_missing.format(field))
 
     for field in uxstring.UxString.manifest_contact_fields:
         if field not in manifest_json["info"]["contact"]:
-            raise ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field))
 
     for field in uxstring.UxString.price_fields:
         if field not in manifest_json["info"]["x-21-total-price"]:
-            raise ValidationError(uxstring.UxString.price_fields_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.price_fields_missing.format(field))
 
     if len(manifest_json["schemes"]) == 0:
-        raise ValidationError(uxstring.UxString.scheme_missing)
+        raise exceptions.ValidationError(uxstring.UxString.scheme_missing)
 
     if manifest_json["info"]["x-21-category"].lower() not in uxstring.UxString.valid_app_categories:
         valid_categories = ", ".join(uxstring.UxString.valid_app_categories)
-        raise ValidationError(uxstring.UxString.invalid_category.format(
+        raise exceptions.ValidationError(uxstring.UxString.invalid_category.format(
             manifest_json["info"]["x-21-category"], valid_categories))
 
 
