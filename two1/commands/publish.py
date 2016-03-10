@@ -446,17 +446,15 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
     """
     if not os.path.exists(api_docs_path):
         raise exceptions.ValidationError(
-            uxstring.UxString.manifest_missing.format(
-                api_docs_path, uxstring.UxString.publish_docs_url))
+            uxstring.UxString.manifest_missing.format(api_docs_path))
 
     if os.path.isdir(api_docs_path):
         raise exceptions.ValidationError(uxstring.UxString.manifest_is_directory.format(api_docs_path))
 
     file_size = os.path.getsize(api_docs_path) / 1e6
     if file_size > 2:
-        raise exceptions.ValidationError(
-            uxstring.UxString.large_manifest.format(api_docs_path,
-                                           uxstring.UxString.publish_docs_url))
+        raise exceptions.ValidationError(uxstring.UxString.large_manifest.format(api_docs_path))
+
     try:
         with open(api_docs_path, "r") as f:
             manifest_dict = yaml.load(f.read())
@@ -476,7 +474,8 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
 
         return manifest_dict
     except YAMLError:
-        click.secho(uxstring.UxString.malformed_yaml.format(api_docs_path, uxstring.UxString.publish_docs_url), fg="red")
+        click.secho(uxstring.UxString.malformed_yaml.format(api_docs_path, uxstring.UxString.publish_docs_url),
+                    fg="red")
         raise ValueError()
     except ValueError as e:
         click.secho(uxstring.UxString.bad_manifest.format(
