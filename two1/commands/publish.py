@@ -115,6 +115,7 @@ $ 21 publish list
 @click.option('-p', '--parameters', default=None,
               help='Overrides manifest parameters.')
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
 def submit(ctx, manifest_path, marketplace, skip, parameters):
@@ -464,6 +465,10 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
     try:
         with open(api_docs_path, "r") as f:
             manifest_dict = yaml.load(f.read())
+
+        # empty yaml files do not raise an error, so do it here
+        if not manifest_dict:
+            raise YAMLError
 
         manifest_dict = clean_manifest(manifest_dict)
         if overrides is not None:
