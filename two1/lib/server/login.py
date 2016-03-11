@@ -31,7 +31,7 @@ class Username(click.ParamType):
         click.ParamType.__init__(self)
 
     def convert(self, value, param, ctx):
-        if re.match(r"^[a-zA-Z][a-zA-Z_0-9]+$", value):
+        if re.match(r"^[a-zA-Z0-9][a-zA-Z_0-9]+$", value):
             if len(value) > 4 and len(value) < 32:
                 return value
         self.fail(UxString.Error.invalid_username)
