@@ -439,7 +439,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="red")
 
     # search
-    list_all = "Listing all apps in the 21 marketplace: "
+    list_all = "Listing all apps in the 21 Marketplace: "
     pagination = click.style("\nEnter the id of the app for more info, ",
                              fg="blue") + click.style(
         "n", bold=True, fg="blue") + click.style(
