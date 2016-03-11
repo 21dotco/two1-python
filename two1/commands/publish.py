@@ -1,5 +1,6 @@
 # standard python imports
 import json
+import re
 
 import os
 import datetime
@@ -128,13 +129,13 @@ Publishes an app to 21 Marketplace.
 $ 21 publish submit path_to_manifest/manifest.yaml
 
 The contents of the manifest file should follow the guidelines specified at
-https://21.co/learn/21-publish
+https://21.co/learn/21-publish .
 
 Before publishing, make sure that you've joined the 21 Marketplace by running the `21 join` command.
 
 \b
 Publishes an app to 21 Marketplace but overrides the specified fields in the existing manifest.
-$ 21 publish submit path_to_manifest/manifest.yaml -p "title='my App Title' price=2500 host=AUTO"
+$ 21 publish submit path_to_manifest/manifest.yaml -p 'title="My App Title" price="2500" host="AUTO"'
 
 \b
 Available fields for override:
@@ -145,10 +146,14 @@ name        : The name of the app publisher.
 email       : The email of the app publisher.
 host        : The IP address or hostname of the machine hosting the app.
               If you provide AUTO as a value for this field, your 21market IP will be automatically detected and added to the manifest.
-port        : The port on which the app is running on.
+port        : The port on which the app is running.
     """
     if parameters is not None:
-        parameters = _parse_parameters(parameters)
+        try:
+            parameters = _parse_parameters(parameters)
+        except:
+            click.secho(uxstring.UxString.invalid_parameter, fg="red")
+            return
 
     _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip, parameters)
 
@@ -156,43 +161,43 @@ port        : The port on which the app is running on.
 def _parse_parameters(parameters):
     """ Parses parameters string and returns a dict of overrides.
 
-    This function assumes that parameters string is in the form of "key=value key='value'".
+    This function assumes that parameters string is in the form of '"key="value" key="value"'.
     Use of single quotes is optional but is helpful for strings that contain spaces.
 
     Args:
-        parameters (str): A string in the form of "key=value key='value'".
+        parameters (str): A string in the form of '"key="value" key="value"'.
 
     Returns:
         dict: A dict containing key/value pairs parsed from the parameters string.
 
     Raises:
-        ValueError: if the parameters string is malformed
+        ValueError: if the parameters string is malformed.
     """
 
-    try:
-        # first we add tokens that separate key/value pairs.
-        # in case of key='ss  sss  ss', we skip tokenizing when we se the first single quote
-        # and resume when we see the second
-        replace_space = True
-        tokenized = ""
-        for c in parameters:
-            if c == '\'':
-                replace_space = not replace_space
-            elif c == ' ' and replace_space:
-                tokenized += "$$"
-            else:
-                tokenized += c
-
-        # now get the tokens
-        tokens = tokenized.split('$$')
-        result = {}
-        for token in tokens:
-            # separate key/values
-            key_value = token.split("=")
-            result[key_value[0]] = key_value[1]
-        return result
-    except (IndexError, KeyError):
+    if not re.match(r'^(\w+)="([^=]+)"(\s{1}(\w+)="([^=]+)")*$', parameters):
         raise ValueError
+
+    # first we add tokens that separate key/value pairs.
+    # in case of key='ss  sss  ss', we skip tokenizing when we se the first single quote
+    # and resume when we see the second
+    replace_space = True
+    tokenized = ""
+    for c in parameters:
+        if c == '\"':
+            replace_space = not replace_space
+        elif c == ' ' and replace_space:
+            tokenized += "$$"
+        else:
+            tokenized += c
+
+    # now get the tokens
+    tokens = tokenized.split('$$')
+    result = {}
+    for token in tokens:
+        # separate key/values
+        key_value = token.split("=")
+        result[key_value[0]] = key_value[1]
+    return result
 
 
 def _list_apps(config, client):
@@ -467,10 +472,17 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
     try:
         with open(api_docs_path, "r") as f:
             manifest_dict = yaml.load(f.read())
-            if overrides is not None:
-                manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
-            validate_manifest(manifest_dict)
-            return manifest_dict
+
+        manifest_dict = clean_manifest(manifest_dict)
+        if overrides is not None:
+            manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
+        validate_manifest(manifest_dict)
+
+        # write back the manifest in case some clean up or overriding has happend
+        with open(api_docs_path, "w") as f:
+            yaml.dump(manifest_dict, f)
+
+        return manifest_dict
     except YAMLError:
         click.secho(uxstring.UxString.malformed_yaml.format(api_docs_path, uxstring.UxString.publish_docs_url), fg="red")
         raise ValueError()
@@ -480,6 +492,21 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
             e.args[0],
             uxstring.UxString.publish_docs_url), fg="red")
         raise ValueError()
+
+
+def clean_manifest(manifest_json):
+    """ cleans up possible errors in the user manifest.
+
+    Args:
+        manifest_json (dict): dict representation of user manifest.
+
+    Returns:
+        dict: The user manifest with its possible errors fixed.
+    """
+    host = manifest_json["host"]
+    host = host.strip("/").lstrip("http://").lstrip("https://")
+    manifest_json["host"] = host
+    return manifest_json
 
 
 def override_manifest(manifest_json, overrides, marketplace):
@@ -521,7 +548,8 @@ def override_manifest(manifest_json, overrides, marketplace):
         host = manifest_json["host"]
         # if the host is in the form of https://x.com/ remove the trailing slash
         host = host.strip("/")
-        host += ":{}".format(overrides["port"])
+        port = int(overrides["port"])
+        host += ":{}".format(port)
         manifest_json["host"] = host
 
     new_host = manifest_json["host"]
