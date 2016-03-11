@@ -148,7 +148,6 @@ def market_search_formatter(search_results, current_page):
             rating += ")"
         rating = click.style(rating, fg="blue")
         rows.append([id, title, creator, price_range, category, rating])
-        rows.append(["", "", "", "", "", ""])
         for indx, l in enumerate(wrap(item["description"])):
             rows.append(["", l, "", "", "", ""])
         rows.append(["", "", "", "", "", ""])
