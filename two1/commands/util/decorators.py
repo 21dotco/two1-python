@@ -136,14 +136,20 @@ def capture_usage(func):
             if not ctx.obj or 'config' not in ctx.obj:
                 raise ex
 
-            # Add the errors to the data payload
+            # elevate the level to 'error'
             data['level'] = 'error'
             data['exception'] = traceback.format_exc()
+
+            # add json data and message from a Two1Error to the data payload
+            if isinstance(ex, exceptions.Two1Error) and hasattr(ex, "_json"):
+                data['json'] = ex._json
+                data['message'] = ex._msg
 
             # send usage payload to the logging server
             requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
 
             raise ex
+
 
     return functools.update_wrapper(_capture_usage, func)
 
