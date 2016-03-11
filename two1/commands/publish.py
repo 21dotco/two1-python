@@ -520,7 +520,7 @@ def override_manifest(manifest_json, overrides, marketplace):
 
     Raises:
         UnloggedException: if the zt network doesn't exist
-        ValueError: if a non integer is passed as the price parameter
+        ValidationError: if a non integer is passed as the price or port parameter.
 
     Returns:
         dict: a json dict of the manifest with fields overridden.
@@ -533,8 +533,14 @@ def override_manifest(manifest_json, overrides, marketplace):
     if "description" in overrides:
         manifest_json["info"]["description"] = overrides["description"]
     if "price" in overrides:
-        manifest_json["info"]["x-21-total-price"]["min"] = int(overrides["price"])
-        manifest_json["info"]["x-21-total-price"]["max"] = int(overrides["price"])
+        try:
+            price = int(overrides["price"])
+            manifest_json["info"]["x-21-total-price"]["min"] = price
+            manifest_json["info"]["x-21-total-price"]["max"] = price
+            if price < 0:
+                raise ValidationError(uxstring.UxString.invalid_price_format)
+        except ValueError:
+            raise ValidationError(uxstring.UxString.invalid_price_format)
     if "name" in overrides:
         manifest_json["info"]["contact"]["name"] = overrides["name"]
     if "email" in overrides:
@@ -548,7 +554,12 @@ def override_manifest(manifest_json, overrides, marketplace):
         host = manifest_json["host"]
         # if the host is in the form of https://x.com/ remove the trailing slash
         host = host.strip("/")
-        port = int(overrides["port"])
+        try:
+            port = int(overrides["port"])
+            if port <= 0 or port > 65536:
+                raise ValidationError(uxstring.UxString.invalid_port_format)
+        except ValueError:
+            raise ValidationError(uxstring.UxString.invalid_port_format)
         host += ":{}".format(port)
         manifest_json["host"] = host
 
