@@ -1,7 +1,6 @@
 # standard python imports
 import json
 import re
-
 import os
 import datetime
 from urllib.parse import urlparse
@@ -75,8 +74,6 @@ def list(ctx):
     """
 
 \b
-Usage
-_____
 Lists all your published apps.
 $ 21 publish list
 
@@ -97,8 +94,6 @@ at the prompt.
 def remove(ctx, app_id):
     """
 \b
-Usage
-_____
 Removes a published app from the Marketplace.
 $ 21 publish remove {app_id}
 
@@ -123,8 +118,6 @@ $ 21 publish list
 def submit(ctx, manifest_path, marketplace, skip, parameters):
     """
 \b
-Usage
-_____
 Publishes an app to 21 Marketplace.
 $ 21 publish submit path_to_manifest/manifest.yaml
 
@@ -161,7 +154,7 @@ port        : The port on which the app is running.
 def _parse_parameters(parameters):
     """ Parses parameters string and returns a dict of overrides.
 
-    This function assumes that parameters string is in the form of '"key="value" key="value"'.
+    This function assumes that parameters string is in the form of '"key1="value1" key2="value2"'.
     Use of single quotes is optional but is helpful for strings that contain spaces.
 
     Args:
@@ -204,7 +197,7 @@ def _list_apps(config, client):
     """ Lists all apps that have been published to the 21 marketplace
 
     Args:
-        config (Config): config object used for getting .two1 information
+        config (Config): config object used for getting .two1 information.
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
     """
@@ -241,7 +234,7 @@ def _delete_app(config, client, app_id):
         config (Config): config object used for getting .two1 information
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        app_id (str): a unique string that identifies the application
+        app_id (str): a unique string that identifies the application.
     """
     if click.confirm(uxstring.UxString.delete_confirmation.format(app_id)):
         try:
@@ -263,9 +256,9 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
         config (Config): config object used for getting .two1 information
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        manifest_path (str): the path to the manifest file
-        marketplace (str): the zerotier marketplace name
-        skip (bool): skips strict checking of manifest file
+        manifest_path (str): the path to the manifest file.
+        marketplace (str): the zerotier marketplace name.
+        skip (bool): skips strict checking of manifest file.
         overrides (dict): Dictionary containing the key/value pairs will be overridden
         in the manifest.
 
@@ -308,8 +301,8 @@ def get_search_results(config, client, page):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (TwentyOneRestClient): rest client used for communication with the backend api
-        page (int): the page number used in querying the paginated marketplace api
+        client (TwentyOneRestClient): rest client used for communication with the backend api.
+        page (int): the page number used in querying the paginated marketplace api.
 
     Returns:
         int: the total number of pages returned by the server
@@ -449,7 +442,7 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         api_docs_path (str): path to the manifest file
         overrides (dict): Dictionary containing the key/value pairs will be overridden
         in the manifest.
-        marketplace (str): the zerotier marketplace name
+        marketplace (str): the marketplace name
 
     Raises:
         ValidationError: If manifest is missing, is a directory, or too large
@@ -516,11 +509,11 @@ def override_manifest(manifest_json, overrides, marketplace):
         manifest_json (dict): a json dict of the entire manifest
         overrides (dict): a json dict of override parameters. If this dict contains invalid
         keys (non overridables), they will be ignored.
-        marketplace (str): the zerotier marketplace name
+        marketplace (str): the marketplace name
 
     Raises:
-        UnloggedException: if the zt network doesn't exist
-        ValidationError: if a non integer is passed as the price or port parameter.
+        UnloggedException: if the marketplace doesn't exist
+        ValidationError: if a non-integer is passed as the price or port parameter.
 
     Returns:
         dict: a json dict of the manifest with fields overridden.
@@ -570,14 +563,14 @@ def override_manifest(manifest_json, overrides, marketplace):
 
 
 def replace_host_in_docs(manifest_json, new_host, old_host):
-    """replaces all the occurrences of the old_host in manifest_json with new_host.
+    """Replaces all the occurrences of the old_host in manifest_json with new_host.
     Args:
         manifest_json (dict): dict representation of the manifest.
         new_host (str): The new host that should appear in the manifest.
         old_host (str): The old host that currently appears in the manifest.
 
     Returns:
-        dict: a new representation of the manifest with all occurances of old_host replaced by
+        dict: a new representation of the manifest with all occurrences of old_host replaced by
         new_host.
     """
 
