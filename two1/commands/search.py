@@ -128,13 +128,15 @@ def market_search_formatter(search_results, current_page):
     Returs:
         str: formatted results in tabular format
     """
-    headers = ["id", "Details", "Creator", "price range", "category", "rating"]
+    headers = ["id", "Details", "Creator", "Price", "Category", "Rating"]
     rows = []
     for i, item in enumerate(search_results):
         id = item["id"]
-        price_range = click.style("{} - {} Satoshis".format(item["min_price"],
-                                                            item["max_price"]), fg="blue")
-
+        if item["min_price"] != item["max_price"]:
+            price_range = click.style("Variable", fg="blue")
+        else:
+            price_range = click.style("{} Satoshis".format(item["min_price"]),
+                                      fg="blue")
         category = click.style("{}".format(item["category"]), fg="blue")
         creator = click.style("{}".format(item["username"]), fg="blue")
         title = click.style(item["title"], fg="blue")
