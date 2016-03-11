@@ -261,6 +261,8 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
         overrides (dict): Dictionary containing the key/value pairs will be overridden
         in the manifest.
 
+    Raises:
+        ValidationError: if an error occurs while parsing the manifest file
     """
     try:
         manifest_json = check_app_manifest(manifest_path, overrides, marketplace)
@@ -275,11 +277,10 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
                     click.secho(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
                     return
 
-    except exceptions.ValidationError as e:
-        click.secho(
-            uxstring.UxString.bad_manifest.format(manifest_path, e.args[0], uxstring.UxString.publish_docs_url),
-            fg="red")
-        return
+    except exceptions.ValidationError as ex:
+        # catches and re-raises the same exception to enhance the error message
+        raise exceptions.ValidationError(uxstring.UxString.bad_manifest.format(manifest_path, ex.args[0]),
+                                         json=ex._json)
 
     app_name = manifest_json["info"]["title"]
     app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
@@ -442,8 +443,7 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         ValidationError: If manifest is not valid, bad, missing, is a directory, or too large
     """
     if not os.path.exists(api_docs_path):
-        raise exceptions.ValidationError(
-            uxstring.UxString.manifest_missing.format(api_docs_path))
+        raise exceptions.ValidationError(uxstring.UxString.manifest_missing.format(api_docs_path))
 
     if os.path.isdir(api_docs_path):
         raise exceptions.ValidationError(uxstring.UxString.manifest_is_directory.format(api_docs_path))
@@ -580,27 +580,33 @@ def validate_manifest(manifest_json):
     """
     for field in uxstring.UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
-            raise exceptions.ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field),
+                                             json=manifest_json)
 
     for field in uxstring.UxString.manifest_info_fields:
         if field not in manifest_json["info"]:
-            raise exceptions.ValidationError(uxstring.UxString.manifest_info_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.manifest_info_field_missing.format(field),
+                                             json=manifest_json)
 
     for field in uxstring.UxString.manifest_contact_fields:
         if field not in manifest_json["info"]["contact"]:
-            raise exceptions.ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field),
+                                             json=manifest_json)
 
     for field in uxstring.UxString.price_fields:
         if field not in manifest_json["info"]["x-21-total-price"]:
-            raise exceptions.ValidationError(uxstring.UxString.price_fields_missing.format(field))
+            raise exceptions.ValidationError(uxstring.UxString.price_fields_missing.format(field),
+                                             json=manifest_json)
 
     if len(manifest_json["schemes"]) == 0:
-        raise exceptions.ValidationError(uxstring.UxString.scheme_missing)
+        raise exceptions.ValidationError(uxstring.UxString.scheme_missing, json=manifest_json)
+
 
     if manifest_json["info"]["x-21-category"].lower() not in uxstring.UxString.valid_app_categories:
         valid_categories = ", ".join(uxstring.UxString.valid_app_categories)
         raise exceptions.ValidationError(uxstring.UxString.invalid_category.format(
-            manifest_json["info"]["x-21-category"], valid_categories))
+            manifest_json["info"]["x-21-category"], valid_categories),
+                                         json=manifest_json)
 
 
 def get_zerotier_address(marketplace):
