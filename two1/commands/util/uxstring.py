@@ -335,6 +335,8 @@ class UxString:
     manifest_is_directory = "{} is a directory. Please enter the direct path to the manifest file."
     no_zt_network = click.style("You are not part of the {}. Use {}",
                                 fg="red") + click.style(" to join the market.", fg="red")
+    invalid_parameter = "Manifest parameter overrides should be in the form 'key1=\"value1\" " \
+                        "key2=\"value2\"."
 
     wrong_ip = click.style(
         "It seems that the IP address "
