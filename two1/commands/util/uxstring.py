@@ -338,6 +338,9 @@ class UxString:
     invalid_parameter = "Manifest parameter overrides should be in the form 'key1=\"value1\" " \
                         "key2=\"value2\"."
 
+    invalid_price_format = "Price should be a non-negative integer."
+    invalid_port_format = "Port should be an integer between 0 and 65536."
+
     wrong_ip = click.style(
         "It seems that the IP address "
         "that you put in your manifest file (") + click.style(
