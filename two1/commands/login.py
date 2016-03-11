@@ -193,7 +193,7 @@ def analytics_optin(config):
         config: Config object from the cli context.
     """
     if click.confirm(uxstring.UxString.analytics_optin):
-        config.set("collect_analytics", True)
+        config.set("collect_analytics", True, should_save=True)
         click.echo(uxstring.UxString.analytics_thankyou)
     else:
         click.echo("")
