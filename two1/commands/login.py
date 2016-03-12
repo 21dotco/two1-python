@@ -86,6 +86,10 @@ def login_account(config, machine_auth, username=None, password=None):
         if ex.status_code == 401:
             click.secho(uxstring.UxString.incorrect_password)
             raise exceptions.UnloggedException("")
+        elif ex.status_code == 403 and "error" in ex.data and ex.data["error"] == "TO408":
+            email = ex.data["email"]
+            click.secho(uxstring.UxString.unconfirmed_email.format(email), fg="blue")
+            return
         else:
             click.secho("Error: " + str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code), fg="red")
             raise exceptions.UnloggedException(ex)
