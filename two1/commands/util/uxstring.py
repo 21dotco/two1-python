@@ -46,6 +46,7 @@ class UxString:
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
         "This may help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
+    unconfirmed_email = "Before logging in, you must activate your 21 account using the email sent to you at ali@21.co. If you can't find the email, please visit 21.co/activation."
 
     flush_success = "{}\n"\
         "Your mined Satoshis will be sent to you on the "\
