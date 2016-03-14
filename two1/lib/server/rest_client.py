@@ -117,9 +117,7 @@ class TwentyOneRestClient(object):
             ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
         except exceptions.ServerRequestError as e:
             if e.status_code == 409:
-                username = e.data["username"]
-                click.secho(uxstring.UxString.existing_account.format(username), fg="red")
-                raise exceptions.UnloggedException("")
+                raise exceptions.UnloggedException(uxstring.UxString.existing_account.format(e.data["username"]))
             else:
                 raise e
         return ret
