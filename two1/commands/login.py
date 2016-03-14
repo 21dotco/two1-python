@@ -84,15 +84,13 @@ def login_account(config, machine_auth, username=None, password=None):
     # handles 401 gracefully
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
-            click.secho(uxstring.UxString.incorrect_password)
-            raise exceptions.UnloggedException("")
+            raise exceptions.UnloggedException(uxstring.UxString.incorrect_password)
         elif ex.status_code == 403 and "error" in ex.data and ex.data["error"] == "TO408":
             email = ex.data["email"]
-            click.secho(uxstring.UxString.unconfirmed_email.format(email), fg="blue")
-            return
+            raise exceptions.UnloggedException(click.style(uxstring.UxString.unconfirmed_email.format(email),
+                                                           fg="blue"))
         else:
-            click.secho("Error: " + str(next(iter(ex.data.values()), "")) + "({})".format(ex.status_code), fg="red")
-            raise exceptions.UnloggedException(ex)
+            raise ex
 
     click.echo(uxstring.UxString.payout_address % payout_address)
 
@@ -171,8 +169,7 @@ def create_account_on_bc(config, machine_auth):
             elif ex.status_code == 403:
                 r = ex.data
                 if "detail" in r and "TO200" in r["detail"]:
-                    click.secho(click.style(uxstring.UxString.max_accounts_reached))
-                    raise exceptions.UnloggedException()
+                    raise exceptions.UnloggedException(uxstring.UxString.max_accounts_reached)
             else:
                 click.echo(uxstring.UxString.Error.account_failed)
             username = None
