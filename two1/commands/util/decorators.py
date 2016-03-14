@@ -129,7 +129,7 @@ def capture_usage(func):
 
         # Don't log UnloggedExceptions to the server
         except exceptions.UnloggedException:
-            return
+            raise
 
         except Exception as ex:
             # protect against early cli failures
