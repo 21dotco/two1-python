@@ -314,7 +314,7 @@ class UxString:
     successful_join = "Joined network {}. It may take a few seconds for joining " \
                       "to take effect."
     invalid_network = "Invalid network specified, please verify the network name."
-    join_cmd = click.style("21 join", bold=True)
+    join_cmd = click.style("21 join", bold=True, reset=False)
 
     no_network = click.style("You are not part of any network.", fg="blue")
     install_zerotier = click.style("To join network you must have zerotier-one installed.\n" \
@@ -335,7 +335,8 @@ class UxString:
 
     manifest_is_directory = click.style("{} is a directory. Please enter the direct path to the manifest file.",
                                         fg="red")
-    no_zt_network = click.style("You are not part of the {}. Use {} to join the market.", fg="red")
+    no_zt_network = click.style("You are not part of the {}. Use {} to join the market.".format("{}", join_cmd),
+                                fg="red")
     invalid_parameter = "Manifest parameter overrides should be in the form 'key1=\"value1\" " \
                         "key2=\"value2\"."
 
