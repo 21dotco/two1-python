@@ -626,7 +626,6 @@ def get_zerotier_address(marketplace):
     click.secho(uxstring.UxString.update_superuser)
     address = zerotier.get_address(marketplace)
     if not address:
-        click.secho(uxstring.UxString.no_zt_network.format(marketplace, uxstring.UxString.join_cmd))
-        raise UnloggedException("")
+        raise UnloggedException(uxstring.UxString.no_zt_network.format(marketplace))
 
     return address
