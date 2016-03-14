@@ -20,7 +20,7 @@ from two1.commands.util import uxstring
 @decorators.json_output
 @decorators.capture_usage
 def search(ctx, search_string=None):
-    """Search for app on the 21 Marketplace.
+    """Search for apps listed on the 21 Marketplace.
 
 \b
 Usage

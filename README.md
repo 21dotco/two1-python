@@ -69,7 +69,7 @@ $ py.test
 
 ## The `two1/commands/util` directory
  - [account.py](two1/commands/util/account.py): Utility functions for user accounts.
- - [bitcoin_computer.py](two1/commands/util/bitcoin_computer.py): Contains methods to interact with the bitcoin computer hardware 
+ - [bitcoin_computer.py](two1/commands/util/bitcoin_computer.py): Contains methods to interact with the bitcoin computer hardware
  - [config.py](two1/commands/util/config.py): Manages configuration variables for the two1 CLI.
  - [uxstring.py](two1/commands/util/uxstring.py): Strings for the two1 CLI user interface
  - [wallet.py](two1/commands/util/wallet.py): Utility functions for user wallets.
@@ -114,6 +114,7 @@ $ py.test
 ## The `two1/lib/blockchain` directory
  - [__init__.py](two1/lib/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive
  - [base_provider.py](two1/lib/blockchain/base_provider.py): This submodule provides an abstract base class for a Provider, which
+ - [block_cypher_provider.py](two1/lib/blockchain/block_cypher_provider.py): This submodule provides a concrete `BlockCypherProvider` class that provides
  - [exceptions.py](two1/lib/blockchain/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
  - [insight_provider.py](two1/lib/blockchain/insight_provider.py): This submodule provides a concrete `InsightProvider` class that provides
  - [mock_provider.py](two1/lib/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
@@ -137,6 +138,8 @@ $ py.test
  - [cpu_miner.py](two1/lib/mining/cpu_miner.py): CPU-based miner
 
 ## The `two1/lib/server` directory
+ - [analytics.py](two1/lib/server/analytics.py): Handles usage and error statistics and communication
+ - [login.py](two1/lib/server/login.py): Handles client-side user account setup and authentication.
  - [machine_auth.py](two1/lib/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
  - [machine_auth_wallet.py](two1/lib/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
  - [message_factory.py](two1/lib/server/message_factory.py): Generates new swirl messages.
@@ -146,11 +149,15 @@ $ py.test
 
 ## The `two1/tests/commands` directory
  - [test_buy.py](two1/tests/commands/test_buy.py): Unit tests for `21 buy`.
- - [test_doctor.py](two1/tests/commands/test_doctor.py): Doctor command unit tests 
- - [test_flush.py](two1/tests/commands/test_flush.py): Flush command unit tests. 
+ - [test_doctor.py](two1/tests/commands/test_doctor.py): Doctor command unit tests
+ - [test_flush.py](two1/tests/commands/test_flush.py): Flush command unit tests.
  - [test_send.py](two1/tests/commands/test_send.py): Unit tests for `21 send`.
 
 ## The `two1/tests/commands/util` directory
  - [test_config.py](two1/tests/commands/util/test_config.py): Unit tests for `21 config`.
  - [test_zerotier.py](two1/tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
+
+## The `two1/lib/util` directory
+ - [uxstring.py](two1/lib/util/uxstring.py): Strings for the two1 CLI user interface
+ - [zerotier.py](two1/lib/util/zerotier.py): Simple wrapper for zerotier-cli
 

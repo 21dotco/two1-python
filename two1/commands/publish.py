@@ -463,11 +463,14 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         manifest_dict = clean_manifest(manifest_dict)
         if overrides is not None:
             manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
+
+        # ensure the manifest is valid
         validate_manifest(manifest_dict)
 
-        # write back the manifest in case some clean up or overriding has happend
-        with open(api_docs_path, "w") as f:
-            yaml.dump(manifest_dict, f)
+            # write back the manifest in case some clean up or overriding has happend
+        if overrides is not None:
+            with open(api_docs_path, "w") as f:
+                yaml.dump(manifest_dict, f)
 
         return manifest_dict
     except (YAMLError, ValueError):
@@ -495,7 +498,6 @@ def override_manifest(manifest_json, overrides, marketplace):
     Args:
         manifest_json (dict): a json dict of the entire manifest
         overrides (dict): a json dict of override parameters. If this dict contains invalid
-        keys (non overridables), they will be ignored.
         marketplace (str): the marketplace name
 
     Raises:
@@ -518,9 +520,9 @@ def override_manifest(manifest_json, overrides, marketplace):
             manifest_json["info"]["x-21-total-price"]["min"] = price
             manifest_json["info"]["x-21-total-price"]["max"] = price
             if price < 0:
-                raise ValidationError(uxstring.UxString.invalid_price_format)
+                raise exceptions.ValidationError(uxstring.UxString.invalid_price_format)
         except ValueError:
-            raise ValidationError(uxstring.UxString.invalid_price_format)
+            raise exceptions.ValidationError(uxstring.UxString.invalid_price_format)
     if "name" in overrides:
         manifest_json["info"]["contact"]["name"] = overrides["name"]
     if "email" in overrides:
@@ -537,9 +539,9 @@ def override_manifest(manifest_json, overrides, marketplace):
         try:
             port = int(overrides["port"])
             if port <= 0 or port > 65536:
-                raise ValidationError(uxstring.UxString.invalid_port_format)
+                raise exceptions.ValidationError(uxstring.UxString.invalid_port_format)
         except ValueError:
-            raise ValidationError(uxstring.UxString.invalid_port_format)
+            raise exceptions.ValidationError(uxstring.UxString.invalid_port_format)
         host += ":{}".format(port)
         manifest_json["host"] = host
 
