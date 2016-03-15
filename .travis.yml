@@ -12,6 +12,7 @@ matrix:
         - os: linux
           sudo: required
           python: 3.5
+          sudo: false
         # Use generic language for osx
         - os: osx
           language: generic
