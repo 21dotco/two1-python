@@ -1,5 +1,6 @@
 # standard python imports
 from datetime import datetime
+import logging
 
 # 3rd party imports
 import click
@@ -9,6 +10,10 @@ from two1.commands.util import exceptions
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.command()

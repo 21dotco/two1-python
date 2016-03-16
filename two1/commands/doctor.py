@@ -12,6 +12,7 @@ import socket
 import sys
 import enum
 import urllib.parse as parse
+import logging
 
 # 3rd party imports
 import click
@@ -25,6 +26,10 @@ from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
 from two1.commands.util import bitcoin_computer
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 class Check(object):

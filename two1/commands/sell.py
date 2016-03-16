@@ -3,6 +3,7 @@ Launch a machine-payable endpoint on the current machine
 """
 # standard python imports
 import os
+import logging
 
 # 3rd party imports
 import click
@@ -20,6 +21,10 @@ from two1.commands.helpers.sell_helpers import destroy_app
 from two1.commands.helpers.sell_helpers import dir_to_absolute
 from two1.commands.helpers.sell_helpers import absolute_path_to_foldername
 from two1.commands.helpers.sell_helpers import check_or_create_manifest
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.group()

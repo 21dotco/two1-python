@@ -4,6 +4,7 @@ import re
 import os
 import datetime
 from urllib.parse import urlparse
+import logging
 
 # 3rd partyimports
 import click
@@ -19,6 +20,10 @@ from two1.commands.util import uxstring
 from two1.commands.util import zerotier
 from two1.commands.util import exceptions
 from two1.commands.search import get_next_page
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.group()

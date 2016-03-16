@@ -1,8 +1,16 @@
+# standard python imports
+import logging
+
 # 3rd party imports
 import click
 
 # two1 imports
 from two1.commands.util import decorators
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
+
 
 @click.command()
 @click.pass_context

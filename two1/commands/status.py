@@ -4,6 +4,8 @@ View the status of mining and machine-payable purchases
 # standard python imports
 import urllib.parse
 import collections
+import logging
+
 # 3rd party imports
 import click
 from tabulate import tabulate
@@ -17,6 +19,10 @@ from two1.commands.util import uxstring
 from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 def status_mining(config, client):
