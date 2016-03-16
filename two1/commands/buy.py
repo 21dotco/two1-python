@@ -1,11 +1,15 @@
 """Buy from a machine-payable endpoint."""
+# standart python imports
 import re
 import json
 import datetime
 import urllib.parse
+import logging
 
+# 3rd party imports
 import click
 
+# two1 imports
 import two1
 import two1.lib.server as server
 import two1.lib.wallet.fees as fees
@@ -15,6 +19,10 @@ import two1.commands.util.uxstring as uxstring
 import two1.lib.bitrequests as bitrequests
 import two1.commands.util.decorators as decorators
 import two1.lib.channels.statemachine as statemachine
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.command()

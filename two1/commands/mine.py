@@ -9,6 +9,7 @@ import os
 import random
 from collections import namedtuple
 import base64
+import logging
 
 # 3rd party imports
 import click
@@ -25,6 +26,10 @@ from two1.lib.bitcoin.hash import Hash
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 import two1.lib.bitcoin.utils as utils
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.command()

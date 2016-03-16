@@ -2,6 +2,7 @@
 import sys
 import base64
 import re
+import logging
 
 # 3rd party imports
 import click
@@ -16,6 +17,10 @@ from two1.commands.util import wallet as wallet_util
 from two1.lib.server import rest_client as _rest_client
 from two1.lib.wallet import two1_wallet
 from two1.lib.server import machine_auth_wallet
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.command()

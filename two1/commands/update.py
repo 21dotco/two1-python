@@ -2,6 +2,7 @@
 import sys
 import re
 import os
+import logging
 import subprocess
 from urllib.parse import urljoin
 from datetime import date
@@ -18,6 +19,10 @@ from two1.commands.util import decorators
 from two1.commands.util import exceptions
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 @click.command()
