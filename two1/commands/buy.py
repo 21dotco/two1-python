@@ -157,9 +157,6 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
                                if s.state == channels.PaymentChannelState.READY)
         click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', channels_balance), err=True)
 
-    # Record the transaction if it was a payable request
-    config.log_purchase(r=resource, p=response.amount_paid, d=str(datetime.datetime.today()))
-
 
 def _parse_post_data(data):
     """Parse a string into a data object that `requests` can use.
