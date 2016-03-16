@@ -1,4 +1,12 @@
+# standart python imports
+import logging
+
+# 3rd party imports
 import click
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 class Two1Error(click.ClickException):

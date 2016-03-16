@@ -1,7 +1,9 @@
 """Utility functions for user wallets."""
+# standard python imports
 import click
 import json
 import os
+import logging
 
 import two1
 import two1.lib.wallet as wallet
@@ -9,6 +11,10 @@ import two1.lib.wallet.daemonizer as daemonizer
 import two1.lib.wallet.exceptions as exceptions
 from two1.commands.util import uxstring
 from two1.lib.blockchain import twentyone_provider
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 def get_or_create_wallet(config, wallet_path):

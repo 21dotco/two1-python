@@ -1,10 +1,4 @@
 """Utility functions for user accounts."""
-# standard python imports
-import sys
-
-# 3rd party imports
-import click
-
 # two1 imports
 import two1
 from two1.commands.util import uxstring

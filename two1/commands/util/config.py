@@ -3,9 +3,6 @@
 import os
 import json
 
-# 3rd party imports
-import click
-
 # two1 imports
 import two1
 import two1.lib.wallet as wallet
