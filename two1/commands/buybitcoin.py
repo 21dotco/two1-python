@@ -94,13 +94,13 @@ def buybitcoin_show_status(config, client, exchange):
                                                            coinbase["account_name"], payment_method_string))
         if coinbase["payment_method"] is None:
             ADD_PAYMENT_METHOD_URL = "https://coinbase.com/quickstarts/payment"
-            config.log(uxstring.UxString.buybitcoin_no_payment_method.format(
+            logger.info(uxstring.UxString.buybitcoin_no_payment_method.format(
                 exchange.capitalize(),
                 click.style(ADD_PAYMENT_METHOD_URL, fg="blue", bold=True)
             ))
         else:
             click.secho(uxstring.UxString.buybitcoin_instruction_header)
-            config.log(uxstring.UxString.buybitcoin_instructions.format(exchange.capitalize()))
+            logger.info(uxstring.UxString.buybitcoin_instructions.format(exchange.capitalize()))
         return coinbase
 
 
@@ -135,11 +135,11 @@ def buybitcoin_history(config, client):
         lines.append(uxstring.UxString.coinbase_no_bitcoins_purchased)
 
     prints = "\n\n".join(lines)
-    click.echo_via_pager(prints)
+    logger.info(prints, pager=True)
 
 
 def buybitcoin_config(config, client, exchange):
-    config.log(uxstring.UxString.buybitcoin_pairing.format(click.style(exchange.capitalize()), config.username))
+    logger.info(uxstring.UxString.buybitcoin_pairing.format(click.style(exchange.capitalize()), config.username))
 
 
 def buybitcoin_buy(config, client, exchange, amount):

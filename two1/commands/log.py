@@ -28,7 +28,7 @@ def log(ctx, debug):
     prints.extend(logs)
 
     output = "\n".join(prints)
-    ctx.obj['config'].echo_via_pager(output)
+    logger.info(output, pager=True)
 
     return logs
 

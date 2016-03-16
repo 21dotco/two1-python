@@ -39,7 +39,7 @@ def _inbox(config, client):
 
     notifications, has_unreads = get_notifications(config, client)
     if not notifications:
-        config.log("Inbox empty")
+        logger.info("Inbox empty")
         return notifications
 
     if len(notifications) > 0:
@@ -47,7 +47,7 @@ def _inbox(config, client):
         prints.extend(notifications)
 
     output = "\n".join(prints)
-    config.echo_via_pager(output)
+    logger.info(output, pager=True)
 
     if has_unreads:
         client.mark_notifications_read(config.username)

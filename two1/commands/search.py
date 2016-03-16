@@ -259,4 +259,4 @@ def display_search_info(config, client, listing_id):
 
     final_str = "\n".join(pager_components)
 
-    config.echo_via_pager(final_str)
+    logger.info(final_str, pager=True)
