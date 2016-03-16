@@ -65,7 +65,7 @@ def _search(config, client, search_string):
         search_string (str): string used to search for apps
     """
     if search_string is None:
-        click.secho(uxstring.UxString.list_all, fg="green")
+        logger.info(uxstring.UxString.list_all, fg="green")
 
     current_page = 0
     total_pages = get_search_results(client, search_string, current_page)
@@ -105,16 +105,16 @@ def get_search_results(client, search_string, page):
     search_results = resp_json["results"]
     if search_results is None or len(search_results) == 0:
         if search_string:
-            click.secho(uxstring.UxString.empty_listing.format(search_string))
+            logger.info(uxstring.UxString.empty_listing.format(search_string))
         else:
-            click.secho(uxstring.UxString.no_app_in_marketplace)
+            logger.info(uxstring.UxString.no_app_in_marketplace)
 
         return 0
 
     total_pages = resp_json["total_pages"]
-    click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
+    logger.info("\nPage {}/{}".format(page + 1, total_pages), fg="green")
     content = market_search_formatter(search_results, page)
-    click.echo(content)
+    logger.info(content)
     return total_pages
 
 
@@ -194,7 +194,7 @@ def display_search_info(config, client, listing_id):
         resp = client.get_listing_info(listing_id)
     except exceptions.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(uxstring.UxString.app_does_not_exist.format(listing_id))
+            logger.info(uxstring.UxString.app_does_not_exist.format(listing_id))
             return
         else:
             raise e

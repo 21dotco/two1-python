@@ -53,7 +53,7 @@ def _send(wallet, address, satoshis, use_unconfirmed=False):
         txids = wallet.send_to(address=address, amount=satoshis, use_unconfirmed=use_unconfirmed)
         # For now there is only a single txn created, so assume it's 0
         txid, txn = txids[0]["txid"], txids[0]["txn"]
-        click.echo(uxstring.UxString.send_success.format(satoshis, address, txid, txn))
+        logger.info(uxstring.UxString.send_success.format(satoshis, address, txid, txn))
     except ValueError as e:
         # This will trigger if there's a below dust-limit output.
         raise exceptions.Two1Error(str(e))

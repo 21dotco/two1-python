@@ -47,7 +47,7 @@ $ 21 rate --list
     else:
         if not (app_id and rating):
             # print help and exit
-            click.secho(ctx.command.help)
+            logger.info(ctx.command.help)
             return
         _rate(ctx.obj["config"], ctx.obj["client"], app_id, rating)
 
@@ -65,7 +65,7 @@ def _list(config, client):
     Raises:
         ServerRequestError: If server error occurs other than a 404
     """
-    click.secho(uxstring.UxString.rating_list)
+    logger.info(uxstring.UxString.rating_list)
 
     try:
         ratings = client.get_ratings()
@@ -79,11 +79,11 @@ def _list(config, client):
             rows.append([rating["app_id"], rating["app_title"], rating["app_creator"],
                          rating_score, rating_date])
 
-        click.echo(tabulate(rows, headers, tablefmt="grid"))
+        logger.info(tabulate(rows, headers, tablefmt="grid"))
 
     except exceptions.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(uxstring.UxString.no_ratings)
+            logger.info(uxstring.UxString.no_ratings)
             return
         else:
             raise e
@@ -103,15 +103,15 @@ def _rate(config, client, app_id, rating):
         ServerRequestError: If any other server error occurs other than a 404
     """
     if rating < 1 or rating > 5:
-        click.secho(uxstring.UxString.bad_rating, fg="red")
+        logger.info(uxstring.UxString.bad_rating, fg="red")
         return
 
     try:
         client.rate_app(app_id, rating)
     except exceptions.ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(uxstring.UxString.rating_app_not_found.format(app_id))
+            logger.info(uxstring.UxString.rating_app_not_found.format(app_id))
             return
         raise e
 
-    click.secho(uxstring.UxString.rating_success.format(rating, app_id))
+    logger.info(uxstring.UxString.rating_success.format(rating, app_id))

@@ -27,7 +27,7 @@ class Two1Error(click.ClickException):
             prefixes "Error:" to the error message which causes some undesireable
             UX effects.
         """
-        click.echo(str(self.format_message()), file=file)
+        logger.info(str(self.format_message()), file=file)
 
 
 class UnloggedException(Two1Error):

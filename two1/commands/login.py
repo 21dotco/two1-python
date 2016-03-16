@@ -70,7 +70,7 @@ def login_account(config, machine_auth, username=None, password=None):
         password (str): optional command line are to skip password prompt
     """
     # prints the sign up page link
-    click.secho(uxstring.UxString.signin_title)
+    logger.info(uxstring.UxString.signin_title)
 
     # uses specifies username or asks for a different one
     username = username or get_username_interactive()
@@ -83,7 +83,7 @@ def login_account(config, machine_auth, username=None, password=None):
     machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
     payout_address = machine_auth.wallet.current_address
 
-    click.secho(uxstring.UxString.login_in_progress.format(username))
+    logger.info(uxstring.UxString.login_in_progress.format(username))
     try:
         _ = rest_client.login(payout_address=payout_address, password=password)
     # handles 401 gracefully
@@ -97,7 +97,7 @@ def login_account(config, machine_auth, username=None, password=None):
         else:
             raise ex
 
-    click.echo(uxstring.UxString.payout_address % payout_address)
+    logger.info(uxstring.UxString.payout_address % payout_address)
 
     # Save the new username and auth key
     config.set("username", username)
@@ -119,7 +119,7 @@ def create_account_on_bc(config, machine_auth):
     machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
     payout_address = machine_auth.wallet.current_address
 
-    click.echo(uxstring.UxString.missing_account)
+    logger.info(uxstring.UxString.missing_account)
     email = None
     username = None
     while True:
@@ -129,10 +129,10 @@ def create_account_on_bc(config, machine_auth):
         # prompts for a username and password
         if not username:
             try:
-                click.echo("")
+                logger.info("")
                 username = click.prompt(uxstring.UxString.enter_username, type=Username())
-                click.echo("")
-                click.echo(uxstring.UxString.creating_account % username)
+                logger.info("")
+                logger.info(uxstring.UxString.creating_account % username)
                 password = click.prompt(uxstring.UxString.set_new_password.format(username),
                                         hide_input=True, confirmation_prompt=True, type=Password())
             except click.Abort:
@@ -154,12 +154,12 @@ def create_account_on_bc(config, machine_auth):
                     error_code = ex.data["error"]
                     # email exists
                     if error_code == "TO401":
-                        click.echo(uxstring.UxString.email_exists.format(email))
+                        logger.info(uxstring.UxString.email_exists.format(email))
                         email = None
                         continue
                     # username exists
                     elif error_code == "TO402":
-                        click.echo(uxstring.UxString.username_exists % username)
+                        logger.info(uxstring.UxString.username_exists % username)
                         username = None
                         continue
                 # unexpected 400 error
@@ -169,19 +169,19 @@ def create_account_on_bc(config, machine_auth):
 
             # handle an invalid username format
             elif ex.status_code == 404:
-                click.echo(uxstring.UxString.Error.invalid_username)
+                logger.info(uxstring.UxString.Error.invalid_username)
             # handle an error where a bitcoin computer is necessary
             elif ex.status_code == 403:
                 r = ex.data
                 if "detail" in r and "TO200" in r["detail"]:
                     raise exceptions.UnloggedException(uxstring.UxString.max_accounts_reached)
             else:
-                click.echo(uxstring.UxString.Error.account_failed)
+                logger.info(uxstring.UxString.Error.account_failed)
             username = None
 
         # created account successfully
         else:
-            click.echo(uxstring.UxString.payout_address % payout_address)
+            logger.info(uxstring.UxString.payout_address % payout_address)
 
             # save new username and password
             config.set("username", username)
@@ -201,9 +201,9 @@ def analytics_optin(config):
     """
     if click.confirm(uxstring.UxString.analytics_optin):
         config.set("collect_analytics", True, should_save=True)
-        click.echo(uxstring.UxString.analytics_thankyou)
+        logger.info(uxstring.UxString.analytics_thankyou)
     else:
-        click.echo("")
+        logger.info("")
 
 
 def get_username_interactive():
@@ -227,7 +227,7 @@ def set_password(config, machine_auth):
             sending authenticated requests to the TwentyOne backend.
     """
     if not config.username:
-        click.echo(uxstring.UxString.login_required)
+        logger.info(uxstring.UxString.login_required)
         return
 
     # use existing username in config

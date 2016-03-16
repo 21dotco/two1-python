@@ -89,8 +89,8 @@ def buybitcoin_show_status(config, client, exchange):
         if coinbase["payment_method"] is not None:
             payment_method_string = coinbase["payment_method"]["name"]
 
-        click.secho(uxstring.UxString.exchange_info_header)
-        click.secho(uxstring.UxString.exchange_info.format(exchange.capitalize(), coinbase["name"],
+        logger.info(uxstring.UxString.exchange_info_header)
+        logger.info(uxstring.UxString.exchange_info.format(exchange.capitalize(), coinbase["name"],
                                                            coinbase["account_name"], payment_method_string))
         if coinbase["payment_method"] is None:
             ADD_PAYMENT_METHOD_URL = "https://coinbase.com/quickstarts/payment"
@@ -99,7 +99,7 @@ def buybitcoin_show_status(config, client, exchange):
                 click.style(ADD_PAYMENT_METHOD_URL, fg="blue", bold=True)
             ))
         else:
-            click.secho(uxstring.UxString.buybitcoin_instruction_header)
+            logger.info(uxstring.UxString.buybitcoin_instruction_header)
             logger.info(uxstring.UxString.buybitcoin_instructions.format(exchange.capitalize()))
         return coinbase
 
@@ -149,7 +149,7 @@ def buybitcoin_buy(config, client, exchange, amount):
     try:
         buy_bitcoin(client, amount, deposit_type)
     except click.exceptions.Abort:
-        click.secho("\nPurchase canceled", fg="magenta")
+        logger.info("\nPurchase canceled", fg="magenta")
 
 
 def get_price_quote(client, amount, deposit_type):
@@ -162,7 +162,7 @@ def get_price_quote(client, amount, deposit_type):
     buy_result = resp.json()
     if "err" in buy_result:
         #TODO: remove the secho and use the exception to print message
-        click.secho(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
+        logger.info(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
         raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 
     fees = buy_result["fees"]
@@ -174,18 +174,18 @@ def get_price_quote(client, amount, deposit_type):
     bitcoin_amount = click.style("{} {}".format(int(amount), "Satoshis"), bold=True)
 
     deposit_type = {"TO_BALANCE": "21.co balance", "WALLET": "Blockchain balance"}[deposit_type]
-    click.secho(uxstring.UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees,
+    logger.info(uxstring.UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees,
                                                                  deposit_type))
 
 
 def buy_bitcoin(client, amount, deposit_type):
     if click.confirm(uxstring.UxString.buybitcoin_confirmation_prompt):
-        click.secho(uxstring.UxString.coinbase_purchase_in_progress)
+        logger.info(uxstring.UxString.coinbase_purchase_in_progress)
         resp = client.buy_bitcoin_from_exchange(amount, "satoshi", commit=True,
                                                 deposit_type=deposit_type)
         buy_result = resp.json()
         if buy_result["status"] == "canceled":
-            click.secho(uxstring.UxString.buybitcoin_error.format(click.style("Buy was canceled.", bold=True, fg="red")))
+            logger.info(uxstring.UxString.buybitcoin_error.format(click.style("Buy was canceled.", bold=True, fg="red")))
 
             return buy_result
 
@@ -196,45 +196,45 @@ def buy_bitcoin(client, amount, deposit_type):
         dollars_paid = "{} {}".format(buy_result["total"]["amount"],
                                       buy_result["total"]["currency"])
 
-        click.secho(uxstring.UxString.buybitcoin_success.format(btc_bought, dollars_paid))
+        logger.info(uxstring.UxString.buybitcoin_success.format(btc_bought, dollars_paid))
 
         if deposit_type == "TO_BALANCE":
-            click.secho(uxstring.UxString.buybitcoin_21_balance_success)
+            logger.info(uxstring.UxString.buybitcoin_21_balance_success)
             if "payout_at" in buy_result:
                 payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
                                                                                        "%H:%M:%S")
 
-                click.secho(uxstring.UxString.buybitcoin_21_balance_time.format(payout_time,
+                logger.info(uxstring.UxString.buybitcoin_21_balance_time.format(payout_time,
                                                                                 int(amount_bought),
                                                                                 "Satoshis"))
 
         elif "instant" in buy_result and buy_result["instant"]:
-            click.secho(uxstring.UxString.buybitcoin_success_instant)
+            logger.info(uxstring.UxString.buybitcoin_success_instant)
         elif "payout_at" in buy_result:
             payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
                                                                                    "%H:%M:%S")
 
-            click.secho(uxstring.UxString.buybitcoin_success_payout_time.format(payout_time))
+            logger.info(uxstring.UxString.buybitcoin_success_payout_time.format(payout_time))
     else:
-        click.secho("\nPurchase canceled", fg="magenta")
+        logger.info("\nPurchase canceled", fg="magenta")
 
 
 def get_deposit_info():
-    click.secho(uxstring.UxString.deposit_type_question)
+    logger.info(uxstring.UxString.deposit_type_question)
     deposit_types = [{"msg": uxstring.UxString.deposit_type_off_chain, "value": "TO_BALANCE"},
                      {"msg": uxstring.UxString.deposit_type_on_chain, "value": "WALLET"}]
     index_to_deposit = {}
     for i, deposit_type in enumerate(deposit_types):
-        click.secho("{}. {}".format(i + 1, deposit_type["msg"]))
+        logger.info("{}. {}".format(i + 1, deposit_type["msg"]))
         index_to_deposit[i] = deposit_types[i]["value"]
 
-    click.secho(uxstring.UxString.deposit_type_explanation)
+    logger.info(uxstring.UxString.deposit_type_explanation)
     try:
         deposit_index = -1
         while deposit_index <= 0 or deposit_index > len(deposit_types):
             deposit_index = click.prompt(uxstring.UxString.deposit_type_prompt, type=int)
             if deposit_index <= 0 or deposit_index > len(deposit_types):
-                click.secho(uxstring.UxString.deposit_type_invalid_index.format(1, len(deposit_types)))
+                logger.info(uxstring.UxString.deposit_type_invalid_index.format(1, len(deposit_types)))
 
         deposit_type = index_to_deposit[deposit_index - 1]
         return deposit_type

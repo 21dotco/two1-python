@@ -50,7 +50,7 @@ def get_or_create_wallet(config, wallet_path):
         if wallet.Two1Wallet.is_configured() and not os.environ.get("VIRTUAL_ENV") and not d.started():
             d.start()
             if d.started():
-                click.echo(uxstring.UxString.wallet_daemon_started)
+                logger.info(uxstring.UxString.wallet_daemon_started)
     except (OSError, exceptions.DaemonizerError):
         pass
 
