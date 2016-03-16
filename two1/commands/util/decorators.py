@@ -4,6 +4,7 @@ import json as jsonlib
 import functools
 import platform
 import traceback
+import logging
 
 # 3rd party imports
 import requests
@@ -14,6 +15,10 @@ import two1
 import two1.commands.util.uxstring as uxstring
 import two1.commands.util.exceptions as exceptions
 import two1.lib.server.rest_client as rest_client
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 def docstring_parameter(*args, **kwargs):
