@@ -19,8 +19,12 @@ from codecs import open
 from path import path
 import click
 from path import path
+import logging
 
 import two1
+import two1.commands.util.logger
+logger = logging.getLogger(__name__)
+
 from two1.commands.util import bitcoin_computer
 from two1.lib.server import rest_client
 from two1.lib.server import machine_auth_wallet
@@ -46,6 +50,7 @@ from two1.commands.search import search
 from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.join import join
+
 
 
 CLI_NAME = str(path(sys.argv[0]).name)
