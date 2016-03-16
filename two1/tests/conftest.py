@@ -8,6 +8,7 @@ import mnemonic
 
 # two1 imports
 import two1
+import two1.commands.util.logger
 from two1.lib import wallet as _wallet
 from two1.lib.blockchain import twentyone_provider
 from two1.lib import server
@@ -201,23 +202,29 @@ def mock_wallet():
 
 
 @pytest.fixture()
+def mock_machine_auth(mock_wallet):
+    """ Fixture that injects a MachineAuthWallet using a MockWallet
+
+    Returns:
+        MockTwo1Wallet: an initialized mock two1 wallet
+    """
+    return MachineAuthWallet(mock_wallet)
+
+
+@pytest.fixture()
 def mock_config(mock_wallet):
     """ Fixture that injects a MockConfig
-
-    Config.log is mocked to capture all log calls to test for
-    appropriate output being printed to stdout.
 
     Returns:
         MockConfig: an mock config object initialized with a mock wallet
     """
     _mock_config = mock_objects.MockConfig()
-    _mock_config.log = mock.Mock()
     _mock_config.machine_auth = MachineAuthWallet(mock_wallet)
     return _mock_config
 
 
 @pytest.fixture()
-def mock_rest_client(mock_config, mock_wallet):
+def mock_rest_client(monkeypatch, mock_config, mock_wallet):
     """ Fixture that injects a MockTwentyOneRestClient
 
     Returns:
@@ -225,6 +232,8 @@ def mock_rest_client(mock_config, mock_wallet):
     """
     machine_auth = MachineAuthWallet(mock_wallet)
     _mock_rest_client = mock_objects.MockTwentyOneRestClient(None, machine_auth, mock_config.username)
+    for func_name in mock_objects.MockTwentyOneRestClient.DEFAULT_VALUES.keys():
+        monkeypatch.setattr(server.rest_client.TwentyOneRestClient, func_name, getattr(_mock_rest_client, func_name))
     return _mock_rest_client
 
 
@@ -248,15 +257,19 @@ def patch_click():
 
 
 @pytest.fixture()
-def patch_bitrequests(monkeypatch, mock_config, mock_wallet):
+def patch_bitrequests(monkeypatch, mock_config, mock_machine_auth):
     """ Fixture that injects a MockBitRequests monketpatches the regular BitRequests
 
     Returns:
         MockBitRequests: a mock bitrequests object
     """
-    _patch_bitrequests = mock_objects.MockBitRequests(MachineAuthWallet(mock_wallet), mock_config.username)
+    _patch_bitrequests = mock_objects.MockBitRequests(mock_machine_auth, mock_config.username)
     monkeypatch.setattr(bitrequests.BitTransferRequests, 'request', _patch_bitrequests.request)
     monkeypatch.setattr(bitrequests.BitTransferRequests, 'get_402_info', _patch_bitrequests.get_402_info)
+    monkeypatch.setattr(bitrequests.OnChainRequests, 'request', _patch_bitrequests.request)
+    monkeypatch.setattr(bitrequests.OnChainRequests, 'get_402_info', _patch_bitrequests.get_402_info)
+    monkeypatch.setattr(bitrequests.ChannelRequests, 'request', _patch_bitrequests.request)
+    monkeypatch.setattr(bitrequests.ChannelRequests, 'get_402_info', _patch_bitrequests.get_402_info)
     return _patch_bitrequests
 
 
