@@ -18,4 +18,4 @@ logger = logging.getLogger(__name__)
 def help(ctx):
     """Show help and exit."""
     #pylint: disable=redefined-builtin
-    print(ctx.parent.get_help())
+    logger.info(ctx.parent.get_help())

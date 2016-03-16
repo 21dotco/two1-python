@@ -201,7 +201,7 @@ class Doctor(object):
         Raises:
             KeyError: if check_type not in self.HEADERS
         """
-        self.config.log("\n{}\n".format(self.SPECIALTIES[check_type]))
+        logger.info("\n{}\n".format(self.SPECIALTIES[check_type]))
 
         for attr_name in dir(self):
             if attr_name.startswith("check_{}".format(check_type)):
@@ -214,7 +214,7 @@ class Doctor(object):
                         value = "{}...".format(value[:Check.WIDTH-3])
 
                     check = Check(func.__name__, message, value, result)
-                    self.config.log(check)
+                    logger.info(str(check))
                     self.checks[check_type].append(check)
 
         self.print_results(check_type)
@@ -233,7 +233,7 @@ class Doctor(object):
 
         # breaks down checks into Check.Result buckets
         summary = {result.name: [check for check in checks if check.result == result] for result in Check.Result}
-        self.config.log("\n{}/{} Checks passed, {} failed, {} warnings, and {} skipped".format(
+        logger.info("\n{}/{} Checks passed, {} failed, {} warnings, and {} skipped".format(
             len(summary['PASS']),
             len(checks),
             len(summary['FAIL']),
@@ -588,7 +588,7 @@ def doctor(ctx):
 def _doctor(two1_config):
 
     # warm welcome message
-    two1_config.log(uxstring.UxString.doctor_start)
+    logger.info(uxstring.UxString.doctor_start)
 
     # Get an appointment with the doctor
     doc = Doctor(two1_config)
@@ -598,7 +598,7 @@ def _doctor(two1_config):
     doc.checkup("dependency")
     doc.checkup("server")
 
-    two1_config.log("\n" + uxstring.UxString.doctor_total)
+    logger.info("\n" + uxstring.UxString.doctor_total)
 
     # groups all checks into one class for reuse of print_summary
     doc.print_results()

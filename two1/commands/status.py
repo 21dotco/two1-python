@@ -52,7 +52,7 @@ def status_mining(config, client):
             is_mining = uxstring.UxString.status_mining_success
 
         mined = client.get_mined_satoshis()
-        config.log(uxstring.UxString.status_mining.format(is_mining, hashrate, mined))
+        logger.info(uxstring.UxString.status_mining.format(is_mining, hashrate, mined))
 
     return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
 
@@ -92,8 +92,6 @@ def _status(config, client, wallet, detail):
         "wallet": status_wallet(config, client, wallet, detail)
     }
 
-    config.log("")
-
     return status
 
 
@@ -110,7 +108,7 @@ def status_account(config, wallet):
         "username": config.username,
         "address": wallet.current_address
     }
-    config.log(uxstring.UxString.status_account.format(status_account["username"]))
+    logger.info(uxstring.UxString.status_account.format(status_account["username"]))
     return status_account
 
 SEARCH_UNIT_PRICE = 3500
@@ -138,7 +136,7 @@ def status_wallet(config, client, wallet, detail=False):
         "flushing": user_balances.flushed,
         "channels_balance": user_balances.channels
     }
-    config.log(uxstring.UxString.status_wallet.format(**status_wallet))
+    logger.info(uxstring.UxString.status_wallet.format(**status_wallet))
 
     if detail:
         # show balances by address for default wallet
@@ -160,10 +158,10 @@ def status_wallet(config, client, wallet, detail=False):
         if not len(status_channels):
             status_channels = [uxstring.UxString.status_wallet_channels_none]
 
-        config.log(uxstring.UxString.status_wallet_detail_on.format(
+        logger.info(uxstring.UxString.status_wallet_detail_on.format(
             addresses=''.join(status_addresses), channels=''.join(status_channels)))
     else:
-        config.log(uxstring.UxString.status_wallet_detail_off)
+        logger.info(uxstring.UxString.status_wallet_detail_off)
 
     total_balance = user_balances.twentyone + user_balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
@@ -174,16 +172,15 @@ def status_wallet(config, client, wallet, detail=False):
         "buyable_sms": buyable_sms,
         "sms_unit_price": SMS_UNIT_PRICE
     }
-    config.log(uxstring.UxString.status_buyable.format(**status_buyable), nl=False)
+    logger.info(uxstring.UxString.status_buyable.format(**status_buyable), nl=False)
 
     if total_balance == 0:
-        config.log(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
+        logger.info(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
                                                                    bold=True)))
     else:
         buy21 = click.style("21 buy", bold=True)
         buy21help = click.style("21 buy --help", bold=True)
-        config.log(uxstring.UxString.status_exit_message.format(buy21, buy21help),
-                   nl=False)
+        logger.info(uxstring.UxString.status_exit_message.format(buy21, buy21help))
 
     return {
         "wallet" : status_wallet,

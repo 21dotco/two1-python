@@ -25,7 +25,7 @@ def flush(ctx, amount):
     """ Flush your 21.co buffer to the blockchain."""
     config = ctx.obj['config']
     _flush(config, ctx.obj['client'], ctx.obj['wallet'], amount)
-    config.log("")
+    logger.info("")
 
 
 def _flush(config, client, wallet, amount=None):
@@ -49,7 +49,7 @@ def _flush(config, client, wallet, amount=None):
                 click.style("Flush to Blockchain", fg='magenta'),
                 wallet.current_address,
                 click.style("21 mine", bold=True))
-            config.log(success_msg, nl=False)
+            logger.info(success_msg)
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
             click.echo(uxstring.UxString.flush_insufficient_earnings)

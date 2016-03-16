@@ -76,29 +76,29 @@ Host said app on host (0.0.0.0/) using nginx + gunicorn
     """
     config = ctx.obj["config"]
     if validate_directory(dirname):
-        config.log(UxString.app_directory_valid)
+        logger.info(UxString.app_directory_valid)
     else:
-        config.log(UxString.app_directory_invalid)
+        logger.info(UxString.app_directory_invalid)
         return
-    config.log(UxString.check_or_create_manifest_file)
+    logger.info(UxString.check_or_create_manifest_file)
     if check_or_create_manifest(dirname):
-        config.log(UxString.success_manifest)
+        logger.info(UxString.success_manifest)
     else:
-        config.log(UxString.manifest_fail)
-    config.log(UxString.installing_requirements)
+        logger.info(UxString.manifest_fail)
+    logger.info(UxString.installing_requirements)
     install_requirements()
-    config.log(UxString.installed_requirements)
+    logger.info(UxString.installed_requirements)
     create_default_nginx_server()
-    config.log(UxString.created_nginx_server)
+    logger.info(UxString.created_nginx_server)
     create_site_includes()
-    config.log(UxString.created_site_includes)
+    logger.info(UxString.created_site_includes)
     create_systemd_file(dirname)
-    config.log(UxString.created_systemd_file)
+    logger.info(UxString.created_systemd_file)
     create_nginx_config(dirname)
-    config.log(UxString.created_app_nginx_file)
+    logger.info(UxString.created_app_nginx_file)
     appdir = dir_to_absolute(dirname)
     appname = absolute_path_to_foldername(appdir)
-    config.log(UxString.hosted_app_location.format(appname))
+    logger.info(UxString.hosted_app_location.format(appname))
 
 
 @sell.command()
@@ -114,7 +114,7 @@ def list(ctx):
     if os.path.isdir("/etc/nginx/site-includes/") \
             and len(os.listdir("/etc/nginx/site-includes/")) > 0:
         enabled_apps = os.listdir("/etc/nginx/site-includes/")
-        config.log(UxString.listing_enabled_apps)
+        logger.info(UxString.listing_enabled_apps)
         enabled_apps_table = []
         headers = ('No.', 'App name', 'Url')
         for i, enabled_app in enumerate(enabled_apps):
@@ -123,12 +123,12 @@ def list(ctx):
                 enabled_app,
                 "http://0.0.0.0/{}".format(enabled_app)
                 ])
-        config.log(tabulate(
+        logger.info(tabulate(
             enabled_apps_table,
             headers=headers,
             tablefmt="psql",))
     else:
-        config.log(UxString.no_apps_currently_running)
+        logger.info(UxString.no_apps_currently_running)
 
 
 @sell.command()
@@ -146,8 +146,8 @@ Stop worker processes and disable site from sites-enabled
     config = ctx.obj["config"]
     if appname in os.listdir("/etc/nginx/site-includes/"):
         if destroy_app(appname):
-            config.log(UxString.successfully_stopped_app.format(appname))
+            logger.info(UxString.successfully_stopped_app.format(appname))
         else:
-            config.log(UxString.failed_to_destroy_app)
+            logger.info(UxString.failed_to_destroy_app)
     else:
-        config.log(UxString.app_not_enabled)
+        logger.info(UxString.app_not_enabled)

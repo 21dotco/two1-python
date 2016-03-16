@@ -84,7 +84,7 @@ def _mine(config, client, wallet, dashboard=False):
         else:
             start_cpu_mining(config,  client, wallet)
     else:
-        config.log(uxstring.UxString.buy_ad, fg="magenta")
+        logger.info(uxstring.UxString.buy_ad, fg="magenta")
         start_cpu_mining(config, client, wallet)
 
 
@@ -129,7 +129,7 @@ def start_minerd(config, show_dashboard=False):
     """
     # Check if it's already up and running by checking pid file.
     minerd_pid_file = "/run/minerd.pid"
-    config.log(uxstring.UxString.mining_chip_start)
+    logger.info(uxstring.UxString.mining_chip_start)
     # Read the PID and check if the process is running
     if os.path.isfile(minerd_pid_file):
         pid = None
@@ -154,7 +154,7 @@ def start_minerd(config, show_dashboard=False):
     try:
         o = subprocess.check_output(minerd_cmd, universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        config.log("\nError starting minerd: %r" % e)
+        logger.info("\nError starting minerd: {}".format(e))
 
     # Now call minertop after it's started
     show_minertop(show_dashboard)
@@ -172,7 +172,7 @@ def start_cpu_mining(config, client, wallet):
     enonce1, enonce2_size, reward = set_payout_address(client, wallet)
 
     start_time = time.time()
-    config.log(uxstring.UxString.mining_start.format(config.username, reward))
+    logger.info(uxstring.UxString.mining_start.format(config.username, reward))
 
     # gets work from the server
     work = get_work(config, client)
@@ -185,7 +185,7 @@ def start_cpu_mining(config, client, wallet):
     end_time = time.time()
     duration = end_time - start_time
 
-    config.log(
+    logger.info(
         uxstring.UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="magenta")
 
