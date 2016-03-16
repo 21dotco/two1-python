@@ -35,9 +35,9 @@ def test_status_with_chip(mock_config, mock_rest_client, mock_wallet, patch_rest
     assert status_rv['wallet']['wallet']['flushing'] == mock_rest_client.FLUSHED
     assert status_rv['wallet']['wallet']['channels_balance'] == 0
 
-    mock_config.log.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
-    mock_config.log.assert_any_call(uxstring.UxString.status_mining.format(status_rv['mining']['is_mining'], status_rv['mining']['hashrate'], status_rv['mining']['mined']))
-    mock_config.log.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
+    patch_click.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
+    patch_click.assert_any_call(uxstring.UxString.status_mining.format(status_rv['mining']['is_mining'], status_rv['mining']['hashrate'], status_rv['mining']['mined']))
+    patch_click.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
 
 
 @pytest.mark.unit
@@ -56,9 +56,9 @@ def test_status_no_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_c
     assert status_rv['wallet']['wallet']['flushing'] == mock_rest_client.FLUSHED
     assert status_rv['wallet']['wallet']['channels_balance'] == 0
 
-    mock_config.log.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
-    mock_config.log.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
-    for _, status_detail, _ in mock_config.log.mock_calls:
+    patch_click.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
+    patch_click.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
+    for _, status_detail, _ in patch_click.mock_calls:
         assert 'Hashrate' not in status_detail
         assert 'Mined (all time)' not in status_detail
 
@@ -78,10 +78,10 @@ def test_status_detail(mock_config, mock_rest_client, mock_wallet, patch_rest_cl
     assert status_rv['wallet']['wallet']['flushing'] == mock_rest_client.FLUSHED
     assert status_rv['wallet']['wallet']['channels_balance'] == mock_objects.MockChannelClient.BALANCE
 
-    mock_config.log.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
-    mock_config.log.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
+    patch_click.assert_any_call(uxstring.UxString.status_account.format(mock_config.username))
+    patch_click.assert_any_call(uxstring.UxString.status_wallet.format(**status_rv['wallet']['wallet']))
 
-    _, status_detail, _ = mock_config.log.mock_calls[3]
+    _, status_detail, _ = patch_click.mock_calls[3]
     assert mock_wallet.current_address in status_detail[0]
     assert mock_objects.MockChannelClient.URL in status_detail[0]
     assert str(mock_objects.MockChannelClient.BALANCE) in status_detail[0]
