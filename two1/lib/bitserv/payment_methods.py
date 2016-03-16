@@ -220,16 +220,19 @@ class BitTransfer(PaymentBase):
     verification_url = two1.TWO1_HOST + '/pool/account/{}/bittransfer/'
     account_file = two1.TWO1_CONFIG_FILE
 
-    def __init__(self, wallet, verification_url=None, seller_account=None):
+    def __init__(self, wallet, verification_url=None, username=None, seller_account=None):
         """Initialize payment handling for on-chain payments."""
         self.address = wallet.get_payout_address()
         self.verification_url = verification_url or BitTransfer.verification_url
-        acct = seller_account or BitTransfer.account_file
 
-        with open(acct, 'r') as f:
-            account = json.loads(f.read())
-        seller = account['username']
-        self.seller_username = seller
+        if username:
+            self.seller_username = username
+        else:
+            acct = seller_account or BitTransfer.account_file
+            with open(acct, 'r') as f:
+                account = json.loads(f.read())
+            seller = account['username']
+            self.seller_username = seller
 
     @property
     def payment_headers(self):

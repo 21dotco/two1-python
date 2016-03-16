@@ -1,4 +1,5 @@
 """Django bitserv payment library for selling 402 API endpoints."""
+import os
 from functools import wraps
 from rest_framework import status
 from rest_framework.response import Response
@@ -34,7 +35,7 @@ class Payment:
             self.allowed_methods = [
                 bitserv.PaymentChannel(self.server, '/payments/channel'),
                 bitserv.OnChain(wallet, bitserv.OnChainDjango(BlockchainTransaction)),
-                bitserv.BitTransfer(wallet)]
+                bitserv.BitTransfer(wallet, username=os.environ.get('TWO1_USERNAME', None))]
 
     def required(self, price, **kwargs):
         """API route decorator to request payment for a resource.
