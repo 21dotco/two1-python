@@ -55,7 +55,7 @@ def show_network_status():
     """
     networks_info = zerotier.get_all_addresses()
     if len(networks_info) == 0:
-        click.secho(uxstring.UxString.no_network)
+        logger.info(uxstring.UxString.no_network)
         return
 
     headers = ["Network Name", "Your IP"]
@@ -63,7 +63,7 @@ def show_network_status():
     for name, ip in networks_info.items():
         rows.append([name, ip])
 
-    click.echo(tabulate(rows, headers, tablefmt="grid"))
+    logger.info(tabulate(rows, headers, tablefmt="grid"))
 
 
 def _join(config, client, network):

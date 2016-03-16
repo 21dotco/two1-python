@@ -43,7 +43,7 @@ $ 21 update
 
 
 def _update(config, version):
-    click.echo(uxstring.UxString.update_check)
+    logger.info(uxstring.UxString.update_check)
     update_two1_package(config, version, force_update_check=True)
 
 
@@ -111,13 +111,13 @@ def update_two1_package(config, version, force_update_check=False):
             # The update is performed either using pip or apt-get depending
             # on how two1 was installed in the first place.
 
-            click.echo(uxstring.UxString.update_package % latest_version)
+            logger.info(uxstring.UxString.update_package % latest_version)
             # Detect if the package was installed using apt-get
             # This detection only works for deb based linux systems
             ret['update_successful'] = _do_update(latest_version)
         else:
             # Alert the user if there is no newer version available
-            click.echo(uxstring.UxString.update_not_needed)
+            logger.info(uxstring.UxString.update_not_needed)
 
     return ret
 
@@ -266,13 +266,13 @@ def perform_pip_based_update(version):
         if hasattr(sys, "real_prefix"):
             subprocess.check_call(install_command)
         else:
-            click.echo(uxstring.UxString.update_superuser)
+            logger.info(uxstring.UxString.update_superuser)
             # If not in a virtual environment, run the install command
             # with sudo permissions.
             subprocess.check_call(["sudo"] + install_command)
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         # TODO: log this error on the server backend for diagnostics
-        click.echo(uxstring.UxString.Error.update_failed)
+        logger.info(uxstring.UxString.Error.update_failed)
         return False
 
     return True
@@ -302,6 +302,6 @@ def perform_apt_based_update():
         ret = True
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         # TODO: log this error on the server backend for diagnostics
-        click.echo(uxstring.UxString.Error.update_failed)
+        logger.info(uxstring.UxString.Error.update_failed)
 
     return ret

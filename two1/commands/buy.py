@@ -118,7 +118,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
     # Retrieve 402-related header information, print it, then exit
     if info_only:
         response = requests.get_402_info(resource)
-        return click.echo('\n'.join(['{}: {}'.format(key, val) for key, val in response.items()]))
+        return logger.info('\n'.join(['{}: {}'.format(key, val) for key, val in response.items()]))
 
     # Collect HTTP header parameters into a single dictionary
     headers = {key.strip(): value.strip() for key, value in (h.split(':') for h in header)}
@@ -137,7 +137,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(e)
 
     # Write response text to stdout or a filename if provided
-    click.echo(response.text, file=output_file)
+    logger.info(response.text, file=output_file)
 
     # Exit successfully if no amount was paid for the resource (standard HTTP request)
     if not hasattr(response, 'amount_paid'):
@@ -146,16 +146,16 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
     # Fetch and write out diagnostic payment information for balances
     if payment_method == 'offchain':
         twentyone_balance = client.get_earnings()["total_earnings"]
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, '21.co', twentyone_balance), err=True)
+        logger.info(uxstring.UxString.buy_balances.format(response.amount_paid, '21.co', twentyone_balance), err=True)
     elif payment_method == 'onchain':
         onchain_balance = min(requests.wallet.confirmed_balance(), requests.wallet.unconfirmed_balance())
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'blockchain', onchain_balance), err=True)
+        logger.info(uxstring.UxString.buy_balances.format(response.amount_paid, 'blockchain', onchain_balance), err=True)
     elif payment_method == 'channel':
         channel_client = requests._channelclient
         channel_client.sync()
         channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_client.list())
                                if s.state == channels.PaymentChannelState.READY)
-        click.echo(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', channels_balance), err=True)
+        logger.info(uxstring.UxString.buy_balances.format(response.amount_paid, 'payment channels', channels_balance), err=True)
 
 
 def _parse_post_data(data):

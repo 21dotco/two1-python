@@ -149,7 +149,7 @@ port        : The port on which the app is running.
         try:
             parameters = _parse_parameters(parameters)
         except:
-            click.secho(uxstring.UxString.invalid_parameter, fg="red")
+            logger.error(uxstring.UxString.invalid_parameter, fg="red")
             return
 
     _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip, parameters)
@@ -205,7 +205,7 @@ def _list_apps(config, client):
         client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
     """
-    click.secho(uxstring.UxString.my_apps.format(config.username), fg="green")
+    logger.info(uxstring.UxString.my_apps.format(config.username), fg="green")
     current_page = 0
     total_pages = get_search_results(config, client, current_page)
     if total_pages < 1:
@@ -245,12 +245,12 @@ def _delete_app(config, client, app_id):
             resp = client.delete_app(config.username, app_id)
             resp_json = resp.json()
             deleted_title = resp_json["deleted_title"]
-            click.secho(uxstring.UxString.delete_success.format(app_id, deleted_title))
+            logger.info(uxstring.UxString.delete_success.format(app_id, deleted_title))
         except ServerRequestError as e:
             if e.status_code == 404:
-                click.secho(uxstring.UxString.delete_app_not_exist.format(app_id), fg="red")
+                logger.info(uxstring.UxString.delete_app_not_exist.format(app_id), fg="red")
             elif e.status_code == 403:
-                click.secho(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
+                logger.info(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
 
 
 def _publish(config, client, manifest_path, marketplace, skip, overrides):
@@ -279,7 +279,7 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
 
             if address != app_ip:
                 if not click.confirm(uxstring.UxString.wrong_ip.format(app_ip, address, app_ip)):
-                    click.secho(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
+                    logger.info(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
                     return
 
     except exceptions.ValidationError as ex:
@@ -292,11 +292,11 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
                                       manifest_json["host"],
                                       manifest_json["basePath"])
 
-    click.secho(uxstring.UxString.publish_start.format(app_name, app_endpoint, marketplace))
+    logger.info(uxstring.UxString.publish_start.format(app_name, app_endpoint, marketplace))
     payload = {"manifest": manifest_json, "marketplace": marketplace}
     response = client.publish(payload)
     if response.status_code == 201:
-        click.secho(uxstring.UxString.publish_success.format(app_name, marketplace))
+        logger.info(uxstring.UxString.publish_success.format(app_name, marketplace))
 
 
 def get_search_results(config, client, page):
@@ -314,11 +314,11 @@ def get_search_results(config, client, page):
     resp_json = resp.json()
     search_results = resp_json["results"]
     if search_results is None or len(search_results) == 0:
-        click.secho(uxstring.UxString.no_published_apps, fg="blue")
+        logger.info(uxstring.UxString.no_published_apps, fg="blue")
         return 0
 
     total_pages = resp_json["total_pages"]
-    click.secho("\nPage {}/{}".format(page + 1, total_pages), fg="green")
+    logger.info("\nPage {}/{}".format(page + 1, total_pages), fg="green")
     headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime",
                "Last Update"]
     rows = []
@@ -340,7 +340,7 @@ def get_search_results(config, client, page):
                      datetime.datetime.fromtimestamp(r["last_update"]).strftime(
                          "%Y-%m-%d %H:%M")])
 
-    click.echo(tabulate(rows, headers, tablefmt="grid"))
+    logger.info(tabulate(rows, headers, tablefmt="grid"))
 
     return total_pages
 
@@ -430,7 +430,7 @@ def display_app_info(config, client, app_id):
 
     except ServerRequestError as e:
         if e.status_code == 404:
-            click.secho(uxstring.UxString.app_does_not_exist.format(app_id))
+            logger.info(uxstring.UxString.app_does_not_exist.format(app_id))
         else:
             raise e
 
@@ -628,7 +628,7 @@ def get_zerotier_address(marketplace):
     Raises:
         UnloggedException: if the zt network doesn't exist
     """
-    click.secho(uxstring.UxString.update_superuser)
+    logger.info(uxstring.UxString.update_superuser)
     address = zerotier.get_address(marketplace)
     if not address:
         raise UnloggedException(uxstring.UxString.no_zt_network.format(marketplace))

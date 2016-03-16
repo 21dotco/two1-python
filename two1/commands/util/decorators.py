@@ -49,11 +49,11 @@ def json_output(f):
             if (json):
                 err_json = e._json
                 err_json["error"] = e._msg
-                click.echo(jsonlib.dumps(err_json, indent=4, separators=(',', ': ')))
+                logger.info(jsonlib.dumps(err_json, indent=4, separators=(',', ': ')))
             raise e
         else:
             if (json):
-                click.echo(jsonlib.dumps(result, indent=4, separators=(',', ': ')))
+                logger.info(jsonlib.dumps(result, indent=4, separators=(',', ': ')))
 
         return result
 
@@ -79,7 +79,7 @@ def check_notifications(func):
             notification_json = notifications_resp.json()
             urgent_notifications = notification_json["urgent_count"]
             if urgent_notifications > 0:
-                click.secho(uxstring.UxString.unread_notifications.format(urgent_notifications))
+                logger.info(uxstring.UxString.unread_notifications.format(urgent_notifications))
 
         return res
 
@@ -182,13 +182,13 @@ def catch_all(func):
 
         except Exception:
             # generic error string
-            click.echo(uxstring.UxString.Error.server_err)
+            logger.error(uxstring.UxString.Error.server_err)
 
             # only dump the stack traces if the debug flag is set
             if "TWO1_DEBUG" in  os.environ:
-                click.secho("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
-                click.secho("Args: {}".format(args), fg="red")
-                click.secho("Kwargs: {}".format(kwargs), fg="red")
-                click.secho("{}".format(traceback.format_exc()), fg="red")
+                logger.error("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
+                logger.error("Args: {}".format(args), fg="red")
+                logger.error("Kwargs: {}".format(kwargs), fg="red")
+                logger.error("{}".format(traceback.format_exc()), fg="red")
 
     return functools.update_wrapper(_catch_all, func)

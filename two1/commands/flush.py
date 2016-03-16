@@ -52,6 +52,6 @@ def _flush(config, client, wallet, amount=None):
             logger.info(success_msg)
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
-            click.echo(uxstring.UxString.flush_insufficient_earnings)
+            logger.info(uxstring.UxString.flush_insufficient_earnings)
         else:
             raise ex

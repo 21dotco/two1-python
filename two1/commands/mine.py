@@ -117,7 +117,7 @@ def show_minertop(show_dashboard):
         click.pause(uxstring.UxString.mining_show_dashboard_prompt)
         subprocess.call("minertop")
     else:
-        click.echo(uxstring.UxString.mining_show_dashboard_context)
+        logger.info(uxstring.UxString.mining_show_dashboard_context)
 
 
 def start_minerd(config, show_dashboard=False):
@@ -139,7 +139,7 @@ def start_minerd(config, show_dashboard=False):
         if pid is not None:
             if check_pid(pid):
                 # Running, so fire up minertop...
-                click.echo(uxstring.UxString.mining_chip_running)
+                logger.info(uxstring.UxString.mining_chip_running)
                 show_minertop(show_dashboard)
                 return
             else:
@@ -189,10 +189,10 @@ def start_cpu_mining(config, client, wallet):
         uxstring.UxString.mining_success.format(config.username, paid_satoshis, duration),
         fg="magenta")
 
-    click.echo(uxstring.UxString.mining_status)
+    logger.info(uxstring.UxString.mining_status)
     status.status_wallet(config, client, wallet)
 
-    click.echo(uxstring.UxString.mining_finish.format(
+    logger.info(uxstring.UxString.mining_finish.format(
         click.style("21 status", bold=True), click.style("21 buy", bold=True)))
 
 
@@ -313,11 +313,11 @@ def mine_work(work_msg, enonce1, enonce2_size):
         for nonce in range(0xffffffff):
 
             if nonce % 6e3 == 0:
-                click.echo(click.style(u'█', fg='green'), nl=False)
+                logger.info(click.style(u'█', fg='green'), nl=False)
                 row_counter += 1
             if row_counter > 40:
                 row_counter = 0
-                click.echo("")
+                logger.info("")
 
             cb.block_header.nonce = nonce
             h = cb.block_header.hash.to_int('little')
@@ -328,10 +328,10 @@ def mine_work(work_msg, enonce1, enonce2_size):
                     work_id=work_msg.work_id,
                     otime=int(time.time()))
                 # adds a new line at the end of progress bar
-                click.echo("")
+                logger.info("")
                 return share
 
-        click.echo("Exhausted enonce1 space. Changing enonce2")
+        logger.info("Exhausted enonce1 space. Changing enonce2")
 
 
 def save_work(client, share, username):
