@@ -496,6 +496,9 @@ refer to 21.co/app for futher instructions.", fg="red")
         (click.style("21 mine", bold=True), click.style("21 flush", bold=True)))
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
 
+    # logger
+    less_env = '-RPpress h for help, q for quit'
+
     class Error:
         # network errors
         connection = click.style("Error: Cannot connect to {}. Please check your Internet connection.", fg="red")
