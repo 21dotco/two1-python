@@ -46,7 +46,7 @@ class ClickLogFormatter(logging.Formatter):
 
 class ClickLogHandler(logging.Handler):
 
-    ECHO_KWARGS = ("nl", "err", "color")
+    ECHO_KWARGS = ("nl", "err", "color", "file")
 
     def emit(self, record):
         """ Echos the record.msg string by using click.echo()
