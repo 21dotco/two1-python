@@ -6,6 +6,7 @@
     `logging.getLogger()` to ClickLogger.
 """
 # standard python imports
+import os
 import logging
 
 # 3rd party imports
@@ -68,7 +69,24 @@ class ClickLogHandler(logging.Handler):
 
             # user wants to use a pager to show message
             if hasattr(record, "pager") and record.pager:
-                click.echo_via_pager(formatted_record.msg, color=record.color if hasattr(record, "color") else None)
+                # save the original eviron dict
+                original_env = dict(os.environ)
+
+                # Force system to use pager and add default prompt at bottom left of the screen
+                os.environ['PAGER'] = "less"
+                os.environ['LESS'] = '-RPpress h for help, q for quit'
+                try:
+                    click.echo_via_pager(formatted_record.msg,
+                                         color=record.color if hasattr(record, "color") else None)
+
+                # being paranoid here because we do NOT want to mess with people's environment
+                except:
+                    os.environ.clear()
+                    os.environ.update(original_env)
+                    raise
+                else:
+                    os.environ.clear()
+                    os.environ.update(original_env)
             else:
                 # Sets the default kwargs
                 kwargs = dict()
