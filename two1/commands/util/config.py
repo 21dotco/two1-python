@@ -34,9 +34,6 @@ class Config:
         # Load configuration defaults
         self.state = {key: val for key, val in Config.DEFAULTS.items()}
 
-        # disables json_output val by default
-        self.set_json_output(False)
-
         # Override defaults with any custom configuration
         self.load_dict_config(config) if config else self.load_file_config(config_file)
 
@@ -100,11 +97,3 @@ class Config:
         """
         # read all right now. TODO: read the most recent ones only
         return []
-
-    def set_json_output(self, value):
-        """ Sets the json output which is printed after the command is finished
-
-        Args:
-            value (dict):
-        """
-        self.json_output = value
