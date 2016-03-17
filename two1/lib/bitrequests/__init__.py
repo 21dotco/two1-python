@@ -11,25 +11,40 @@ from .bitrequests import BitRequestsError
 from .bitrequests import UnsupportedPaymentMethodError
 from .bitrequests import ResourcePriceGreaterThanMaxPriceError
 
-_requests = None
+OFF_CHAIN = 'offchain'
+ON_CHAIN = 'onchain'
+CHANNEL = 'channel'
+_requests = {}
+_current_method = OFF_CHAIN
 
 
-def request(*args, payment_method='offchain', **kwargs):
+def use(payment_method):
+    """Set the payment method to be used in the request."""
+    global _current_method
+    if payment_method not in [OFF_CHAIN, ON_CHAIN, CHANNEL]:
+        raise ValueError('That method is not supported.')
+    _current_method = payment_method
+
+
+def request(*args, payment_method=None, **kwargs):
+    """Instantiate, or use a cached BitRequests object, and make a request."""
     global _requests
+    global _current_method
+    payment_method = payment_method or _current_method
 
-    if _requests is None:
+    if payment_method not in _requests:
         from two1.lib.wallet import Wallet
-        if payment_method == 'offchain':
+        if payment_method == OFF_CHAIN:
             from two1.lib.server.machine_auth_wallet import MachineAuthWallet
-            _requests = BitTransferRequests(MachineAuthWallet(Wallet()))
-        elif payment_method == 'onchain':
-            _requests = OnChainRequests(Wallet())
-        elif payment_method == 'channel':
-            _requests = ChannelRequests(Wallet())
+            _requests[_current_method] = BitTransferRequests(MachineAuthWallet(Wallet()))
+        elif payment_method == ON_CHAIN:
+            _requests[_current_method] = OnChainRequests(Wallet())
+        elif payment_method == CHANNEL:
+            _requests[_current_method] = ChannelRequests(Wallet())
         else:
             raise ValueError('That method is not supported.')
 
-    return _requests.request(*args, **kwargs)
+    return _requests[payment_method].request(*args, **kwargs)
 
 
 def get(*args, **kwargs):
