@@ -65,6 +65,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=['two1',
               'two1.mkt',
+              'two1.lib',
               'two1.commands',
               'two1.commands.helpers',
               'two1.bitcoin',

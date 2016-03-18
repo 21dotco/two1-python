@@ -509,6 +509,10 @@ refer to 21.co/app for futher instructions.", fg="red")
 
     # logger
     less_env = '-RPpress h for help, q for quit'
+    lib_import_warning = click.style(
+        "{}\n{: ^80}\n{}".format("#" * 80,
+                                     "Warning: two1.lib* pakages have been moved under two1. Update your imports asap!",
+                                     "#" * 80), fg="yellow")
 
     class Error:
         # network errors
