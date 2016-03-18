@@ -4,7 +4,7 @@
 
 BitRequests wraps the python HTTP [Requests](http://docs.python-requests.org/en/latest/) library, adding a simple API for users to pay for resources. It enables a client (also referred to as a customer) to pay a server (also referred to as a merchant) for a resource.
 
-![402 flow](https://github.com/21dotco/two1/blob/devel/two1/lib/bitrequests/docs/bitrequests.png)
+![402 flow](https://github.com/21dotco/two1/blob/devel/two1/bitrequests/docs/bitrequests.png)
 
 The 402 payment-resource exchange adds an intermediary negotiation step between a standard HTTP request/response session. The following is how the transaction would occur for a `GET` request.
 
@@ -137,18 +137,18 @@ The API for using payment methods has aimed to be as consistent as possible. Thi
     # BitTransferRequests
     from two1.commands.util import config
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import BitTransferRequests
+    from two1.bitrequests import BitTransferRequests
     requests = BitTransferRequests(Wallet(), config.Config().username)
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # OnChainRequests
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import OnChainRequests
+    from two1.bitrequests import OnChainRequests
     requests = OnChainRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # ChannelRequests
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import ChannelRequests
+    from two1.bitrequests import ChannelRequests
     requests = ChannelRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text

@@ -236,7 +236,7 @@ Set up a ``client.py`` to consume the server's REST API.
 .. code:: python
 
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import ChannelRequests
+    from two1.bitrequests import ChannelRequests
 
     requests = ChannelRequests(Wallet())
 

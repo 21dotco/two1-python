@@ -2,7 +2,7 @@
 
 ## Overview
 
-The BitServ library adds a simple API for servers to create payable resources in both Flask and Django frameworks. It enables a server (also referred to as a merchant) to receive payment from a client (also referred to as a customer) for a resource. See the [bitrequests readme](https://github.com/21dotco/two1/blob/devel/two1/lib/bitrequests/docs/README.md) for more information on the `402 payment-resource exchange`.
+The BitServ library adds a simple API for servers to create payable resources in both Flask and Django frameworks. It enables a server (also referred to as a merchant) to receive payment from a client (also referred to as a customer) for a resource. See the [bitrequests readme](https://github.com/21dotco/two1/blob/devel/two1/bitrequests/docs/README.md) for more information on the `402 payment-resource exchange`.
 
 
 ## Payment Methods
