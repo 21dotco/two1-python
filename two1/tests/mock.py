@@ -5,7 +5,7 @@ import collections
 import unittest.mock
 
 import two1.bitcoin as bitcoin
-import two1.lib.channels as channels
+import two1.channels as channels
 
 
 class MockTwo1Wallet:

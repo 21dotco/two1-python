@@ -6,8 +6,8 @@ import threading
 
 from two1.bitcoin.utils import pack_u32
 from two1.bitcoin import PublicKey, Transaction, Hash, Signature, Script
-from two1.lib.channels.statemachine import PaymentChannelRedeemScript
-from two1.lib.channels.blockchain import TwentyOneBlockchain
+from two1.channels.statemachine import PaymentChannelRedeemScript
+from two1.channels.blockchain import TwentyOneBlockchain
 
 from .wallet import Two1WalletWrapper
 from .models import DatabaseSQLite3, ChannelSQLite3, Channel

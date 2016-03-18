@@ -112,7 +112,7 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         Args:
             wallet (two1.lib.wallet.Wallet): Wallet instance.
-            blockchain (two1.lib.channels.blockchain.Blockchain): Blockchain
+            blockchain (two1.channels.blockchain.Blockchain): Blockchain
                 data provider.
 
         Returns:

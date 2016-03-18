@@ -10,7 +10,7 @@ from two1.bitcoin import Script, Hash
 from two1.bitcoin import PrivateKey, PublicKey
 from two1.bitcoin import Transaction, TransactionInput, TransactionOutput
 from two1.bitcoin.script_interpreter import ScriptInterpreter
-from two1.lib.channels.statemachine import PaymentChannelRedeemScript
+from two1.channels.statemachine import PaymentChannelRedeemScript
 from two1.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.bitserv.payment_server import TransactionVerificationError

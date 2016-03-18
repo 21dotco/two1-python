@@ -13,12 +13,12 @@ import click
 import two1
 import two1.lib.server as server
 import two1.lib.wallet.fees as fees
-import two1.lib.channels as channels
+import two1.channels as channels
 import two1.commands.status as status
 import two1.commands.util.uxstring as uxstring
 import two1.bitrequests as bitrequests
 import two1.commands.util.decorators as decorators
-import two1.lib.channels.statemachine as statemachine
+import two1.channels.statemachine as statemachine
 
 
 # Creates a ClickLogger

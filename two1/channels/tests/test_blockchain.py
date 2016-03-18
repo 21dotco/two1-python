@@ -1,6 +1,6 @@
 import pytest
 
-import two1.lib.channels.blockchain as blockchain
+import two1.channels.blockchain as blockchain
 
 
 @pytest.fixture(params=[

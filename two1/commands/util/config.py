@@ -6,7 +6,7 @@ import json
 # two1 imports
 import two1
 import two1.lib.wallet as wallet
-import two1.lib.channels as channels
+import two1.channels as channels
 import two1.commands.util.exceptions as exceptions
 
 

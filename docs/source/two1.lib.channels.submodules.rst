@@ -1,23 +1,23 @@
-two1.lib.channels.paymentchannelclient
+two1.channels.paymentchannelclient
 --------------------------------------
 
-.. automodule:: two1.lib.channels.paymentchannelclient
+.. automodule:: two1.channels.paymentchannelclient
     :members:
     :undoc-members:
     :show-inheritance:
 
-two1.lib.channels.paymentchannel
+two1.channels.paymentchannel
 --------------------------------
 
-.. automodule:: two1.lib.channels.paymentchannel
+.. automodule:: two1.channels.paymentchannel
     :members:
     :undoc-members:
     :show-inheritance:
 
-two1.lib.channels.statemachine
+two1.channels.statemachine
 ------------------------------
 
-.. automodule:: two1.lib.channels.statemachine
+.. automodule:: two1.channels.statemachine
     :members:
     :undoc-members:
     :show-inheritance:
