@@ -131,12 +131,6 @@ $ py.test
  - [statemachine.py](two1/channels/statemachine.py): Manages state transitions for PaymentChannel objects.
  - [walletwrapper.py](two1/channels/walletwrapper.py): Wraps the Two1 `Wallet` to provide methods for payment channel management.
 
-## The `two1/lib/mining` directory
- - [client.py](two1/lib/mining/client.py): Mining client that communicates with the pool.
- - [client_message_handler.py](two1/lib/mining/client_message_handler.py): Encode and send to server. Receive and parse messages from server.
- - [coinbase.py](two1/lib/mining/coinbase.py): Builds the coinbase transaction
- - [cpu_miner.py](two1/lib/mining/cpu_miner.py): CPU-based miner
-
 ## The `two1/server` directory
  - [login.py](two1/server/login.py): Handles client-side user account setup and authentication.
  - [machine_auth.py](two1/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
@@ -155,8 +149,4 @@ $ py.test
 ## The `two1/tests/commands/util` directory
  - [test_config.py](two1/tests/commands/util/test_config.py): Unit tests for `21 config`.
  - [test_zerotier.py](two1/tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
-
-## The `two1/lib/util` directory
- - [uxstring.py](two1/lib/util/uxstring.py): Strings for the two1 CLI user interface
- - [zerotier.py](two1/lib/util/zerotier.py): Simple wrapper for zerotier-cli
 
