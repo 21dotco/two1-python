@@ -242,27 +242,27 @@ payment methods without too much extra configuration.
     # BitTransferRequests
     from two1.commands.util import config
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import BitTransferRequests
+    from two1.bitrequests import BitTransferRequests
     requests = BitTransferRequests(Wallet(), config.Config().username)
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # OnChainRequests
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import OnChainRequests
+    from two1.bitrequests import OnChainRequests
     requests = OnChainRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # ChannelRequests
     from two1.lib.wallet import Wallet
-    from two1.lib.bitrequests import ChannelRequests
+    from two1.bitrequests import ChannelRequests
     requests = ChannelRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text
 
 
-``two1.lib.bitrequests``: module contents
+``two1.bitrequests``: module contents
 =========================================
-The ``two1.lib.bitrequests`` module is organized into the following submodules:
+The ``two1.bitrequests`` module is organized into the following submodules:
 
 .. toctree::
 
-   two1.lib.bitrequests.submodules
+   two1.bitrequests.submodules

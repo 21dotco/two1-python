@@ -11,7 +11,7 @@ Subpackages
    two1.lib.crypto
    two1.lib.wallet
    two1.lib.channels
-   two1.lib.bitrequests
+   two1.bitrequests
    two1.lib.bitserv
 
 

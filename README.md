@@ -86,9 +86,9 @@ $ py.test
  - [txn.py](two1/bitcoin/txn.py): This submodule provides Transaction, Coinbase, TransactionInput,
  - [utils.py](two1/bitcoin/utils.py): This submodule provides functions for accomplishing common tasks encountered
 
-## The `two1/lib/bitrequests` directory
- - [__init__.py](two1/lib/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users
- - [bitrequests.py](two1/lib/bitrequests/bitrequests.py): This module provides various BitRequests methods, including:
+## The `two1/bitrequests` directory
+ - [__init__.py](two1/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users
+ - [bitrequests.py](two1/bitrequests/bitrequests.py): This module provides various BitRequests methods, including:
 
 ## The `two1/lib/bitserv` directory
  - [__init__.py](two1/lib/bitserv/__init__.py): The BitServ library adds a simple API for servers to create payable

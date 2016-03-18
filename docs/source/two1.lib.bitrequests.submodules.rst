@@ -1,7 +1,7 @@
-two1.lib.bitrequests.bitrequests
+two1.bitrequests.bitrequests
 --------------------------------
 
-.. automodule:: two1.lib.bitrequests.bitrequests
+.. automodule:: two1.bitrequests.bitrequests
     :members:
     :undoc-members:
 	:special-members: __init__

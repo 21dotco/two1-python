@@ -77,7 +77,7 @@ setup(
               'two1.lib.bitserv.django',
               'two1.lib.bitserv.flask',
               'two1.lib.blockchain',
-              'two1.lib.bitrequests',
+              'two1.bitrequests',
               'two1.commands.util',],
 
     # List run-time dependencies here.  These will be installed by pip when

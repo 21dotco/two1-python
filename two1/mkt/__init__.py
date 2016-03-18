@@ -1,6 +1,6 @@
 """Make purchases in the 21 marketplace."""
 import sys
-import two1.lib.bitrequests as bitrequests
+import two1.bitrequests as bitrequests
 
 
 class Market:
