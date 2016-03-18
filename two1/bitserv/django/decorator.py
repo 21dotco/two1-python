@@ -4,7 +4,7 @@ from functools import wraps
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
-import two1.lib.bitserv as bitserv
+import two1.bitserv as bitserv
 
 
 class PaymentRequiredResponse(Response):

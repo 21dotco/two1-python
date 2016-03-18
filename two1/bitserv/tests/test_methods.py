@@ -2,17 +2,17 @@ import codecs
 import pytest
 import two1.bitcoin as bitcoin
 
-from two1.lib.bitserv import OnChain
-from two1.lib.bitserv.models import OnChainSQLite3
+from two1.bitserv import OnChain
+from two1.bitserv.models import OnChainSQLite3
 from two1.lib.wallet import Two1Wallet
 from two1.lib.blockchain import TwentyOneProvider
 
-from two1.lib.bitserv.payment_methods import InsufficientPaymentError
-from two1.lib.bitserv.payment_methods import InvalidPaymentParameterError
-from two1.lib.bitserv.payment_methods import DuplicatePaymentError
-from two1.lib.bitserv.payment_methods import TransactionBroadcastError
-from two1.lib.bitserv.payment_methods import PaymentBelowDustLimitError
-from two1.lib.bitserv.payment_methods import ServerError
+from two1.bitserv.payment_methods import InsufficientPaymentError
+from two1.bitserv.payment_methods import InvalidPaymentParameterError
+from two1.bitserv.payment_methods import DuplicatePaymentError
+from two1.bitserv.payment_methods import TransactionBroadcastError
+from two1.bitserv.payment_methods import PaymentBelowDustLimitError
+from two1.bitserv.payment_methods import ServerError
 
 
 test_wallet = Two1Wallet.import_from_mnemonic(TwentyOneProvider(),

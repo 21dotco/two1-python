@@ -7,7 +7,7 @@ The BitServ library adds a simple API for servers to create payable resources in
 
 ## Payment Methods
 
-The bitserv library provides a base set of [payment_methods](https://github.com/21dotco/two1/blob/devel/two1/lib/bitserv/payment_methods.py) that framework-specific decorators can use to accept different payment types (e.g. `OnChain`, `Payment Channel` and `BitTransfer` types). Payment methods should implement the following methods:
+The bitserv library provides a base set of [payment_methods](https://github.com/21dotco/two1/blob/devel/two1/bitserv/payment_methods.py) that framework-specific decorators can use to accept different payment types (e.g. `OnChain`, `Payment Channel` and `BitTransfer` types). Payment methods should implement the following methods:
 
   * **get_402_headers()** provides a list of headers that the *server* returns to the client in the initial `402 PAYMENT REQUIRED` response.
 
@@ -42,7 +42,7 @@ The decorator for the [Flask](http://flask.pocoo.org/) framework acts by attachi
 ``` python
 from flask import Flask
 from two1.lib.wallet import Wallet
-from two1.lib.bitserv.flask import Payment
+from two1.bitserv.flask import Payment
 
 app = Flask(__name__)
 wallet = Wallet()
@@ -62,7 +62,7 @@ The decorator for the [Django](https://www.djangoproject.com/) framework is an i
 ``` python
 packages=[
       . . .
-    'two1.lib.bitserv.django'
+    'two1.bitserv.django'
 ]
 ```
 
@@ -73,7 +73,7 @@ from two1.lib.wallet import Wallet
 
 INSTALLED_APPS = (
       . . .  
-   'two1.lib.bitserv.django'
+   'two1.bitserv.django'
 )
 
 WALLET = Wallet()
@@ -84,12 +84,12 @@ APPEND_SLASH = False
 `urls.py`
 
 ``` python
-url(r'^payments/', include('two1.lib.bitserv.django.urls'))
+url(r'^payments/', include('two1.bitserv.django.urls'))
 ```
 
 `views.py`
 ``` python
-from two1.lib.bitserv.django import payment
+from two1.bitserv.django import payment
 ```
 
 To finalize Django setup, be sure to run the following command (or equivalent) to make sure that the database models are properly added to your project.
@@ -100,15 +100,15 @@ python manage.py migrate
 
 ## Payment Server
 
-[payment_server.py](https://github.com/21dotco/two1/blob/devel/two1/lib/bitserv/payment_server.py) is concerned with managing the server side of payment channels. The `PaymentServer` object is generic enough to be used by various communication protocols, though it is presently only implemented over HTTP REST as a core part of the `bitserv` library.
+[payment_server.py](https://github.com/21dotco/two1/blob/devel/two1/bitserv/payment_server.py) is concerned with managing the server side of payment channels. The `PaymentServer` object is generic enough to be used by various communication protocols, though it is presently only implemented over HTTP REST as a core part of the `bitserv` library.
 
-The `PaymentServer` - and to some extent, each `PaymentBase` method - relies on state being maintained by the application. It consumes the [models.py](https://github.com/21dotco/two1/blob/devel/two1/lib/bitserv/models.py) API in order to store and retrieve channel state. The default database implementation uses the `sqlite3` standard library to communicate with an SQLite database. The django-specific database implementation provides an adapter that hooks into the django ORM to allow payment methods to keep their data with the rest of the django application.
+The `PaymentServer` - and to some extent, each `PaymentBase` method - relies on state being maintained by the application. It consumes the [models.py](https://github.com/21dotco/two1/blob/devel/two1/bitserv/models.py) API in order to store and retrieve channel state. The default database implementation uses the `sqlite3` standard library to communicate with an SQLite database. The django-specific database implementation provides an adapter that hooks into the django ORM to allow payment methods to keep their data with the rest of the django application.
 
 The `PaymentServer` also uses a custom `wallet.py` wrapper to provide added transaction-building functionality. You can set up a barebones payment server by passing it a two1 wallet instance
 
 ``` python
 from two1.lib.wallet import Wallet
-from two1.lib.bitserv import PaymentServer
+from two1.bitserv import PaymentServer
 
 wallet = Wallet()
 payment_server = PaymentServer(wallet)

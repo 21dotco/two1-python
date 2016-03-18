@@ -10,7 +10,7 @@ This flask module exposes a `402: Payment Required` api route decorator for use 
 ``` python
 from flask import Flask, request
 from two1.lib.wallet import Wallet
-from two1.lib.bitserv.flask import Payment
+from two1.bitserv.flask import Payment
 
 app = Flask(__name__)
 wallet = Wallet()
