@@ -2,11 +2,11 @@ import time
 import pytest
 
 import two1.bitcoin as bitcoin
-import two1.lib.channels.paymentchannelclient as paymentchannelclient
-import two1.lib.channels.statemachine as statemachine
-import two1.lib.channels.paymentchannel as paymentchannel
-import two1.lib.channels.database as database
-import two1.lib.channels.tests.mock as mock
+import two1.channels.paymentchannelclient as paymentchannelclient
+import two1.channels.statemachine as statemachine
+import two1.channels.paymentchannel as paymentchannel
+import two1.channels.database as database
+import two1.channels.tests.mock as mock
 
 
 # Monkey-patch mock payment channel server protocol

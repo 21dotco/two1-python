@@ -1,8 +1,8 @@
 import pytest
 
 import two1.bitcoin as bitcoin
-import two1.lib.channels.statemachine as statemachine
-import two1.lib.channels.database as database
+import two1.channels.statemachine as statemachine
+import two1.channels.database as database
 
 
 @pytest.fixture(params=[

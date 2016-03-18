@@ -268,10 +268,10 @@ And use the ``channels`` CLI tool to check the status of your channels:
     channels list
 
 
-``two1.lib.channels``: module contents
+``two1.channels``: module contents
 =========================================
-The ``two1.lib.channels`` module is organized into the following submodules:
+The ``two1.channels`` module is organized into the following submodules:
 
 .. toctree::
 
-   two1.lib.channels.submodules
+   two1.channels.submodules

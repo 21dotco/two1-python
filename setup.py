@@ -73,7 +73,7 @@ setup(
               'two1.lib.wallet',
               'two1.lib.crypto',
               'two1.bitserv',
-              'two1.lib.channels',
+              'two1.channels',
               'two1.bitserv.django',
               'two1.bitserv.flask',
               'two1.blockchain',
@@ -122,7 +122,7 @@ setup(
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
             'walletd=two1.lib.wallet.daemon:main',
-            'channels=two1.lib.channels.cli:main',
+            'channels=two1.channels.cli:main',
         ],
     },
 )

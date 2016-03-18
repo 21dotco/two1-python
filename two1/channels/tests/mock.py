@@ -2,9 +2,9 @@ import codecs
 import two1.bitcoin as bitcoin
 import two1.bitcoin.utils as utils
 
-import two1.lib.channels.server as server
-import two1.lib.channels.blockchain as blockchain
-import two1.lib.channels.statemachine as statemachine
+import two1.channels.server as server
+import two1.channels.blockchain as blockchain
+import two1.channels.statemachine as statemachine
 
 
 class MockTwo1Wallet:

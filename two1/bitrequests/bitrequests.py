@@ -264,7 +264,7 @@ class OnChainRequests(BitRequests):
 class ChannelRequests(BitRequests):
     """BitRequests for making channel payments."""
 
-    import two1.lib.channels as channels
+    import two1.channels as channels
 
     HTTP_BITCOIN_PRICE = 'price'
     HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER = 'bitcoin-payment-channel-server'

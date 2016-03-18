@@ -120,16 +120,16 @@ $ py.test
  - [mock_provider.py](two1/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
  - [twentyone_provider.py](two1/blockchain/twentyone_provider.py): This submodule provides a concrete `TwentyOneProvider` class that provides
 
-## The `two1/lib/channels` directory
- - [__init__.py](two1/lib/channels/__init__.py): The payment channel protocol allows for fast, high-volume payments to occur
- - [blockchain.py](two1/lib/channels/blockchain.py): Wraps various blockchain data sources to provide convenience methods for
- - [cli.py](two1/lib/channels/cli.py): Command-line interface for managing client-side payment channel management.
- - [database.py](two1/lib/channels/database.py): Provides persistent storage and retrieval of payment channel state.
- - [paymentchannel.py](two1/lib/channels/paymentchannel.py): Provides and object to represent and manage a payment channel.
- - [paymentchannelclient.py](two1/lib/channels/paymentchannelclient.py): A high-level client that can open, close, and pay across many channels.
- - [server.py](two1/lib/channels/server.py): Interfaces with a payment channel server over `http` and `mock` protocols.
- - [statemachine.py](two1/lib/channels/statemachine.py): Manages state transitions for PaymentChannel objects.
- - [walletwrapper.py](two1/lib/channels/walletwrapper.py): Wraps the Two1 `Wallet` to provide methods for payment channel management.
+## The `two1/channels` directory
+ - [__init__.py](two1/channels/__init__.py): The payment channel protocol allows for fast, high-volume payments to occur
+ - [blockchain.py](two1/channels/blockchain.py): Wraps various blockchain data sources to provide convenience methods for
+ - [cli.py](two1/channels/cli.py): Command-line interface for managing client-side payment channel management.
+ - [database.py](two1/channels/database.py): Provides persistent storage and retrieval of payment channel state.
+ - [paymentchannel.py](two1/channels/paymentchannel.py): Provides and object to represent and manage a payment channel.
+ - [paymentchannelclient.py](two1/channels/paymentchannelclient.py): A high-level client that can open, close, and pay across many channels.
+ - [server.py](two1/channels/server.py): Interfaces with a payment channel server over `http` and `mock` protocols.
+ - [statemachine.py](two1/channels/statemachine.py): Manages state transitions for PaymentChannel objects.
+ - [walletwrapper.py](two1/channels/walletwrapper.py): Wraps the Two1 `Wallet` to provide methods for payment channel management.
 
 ## The `two1/lib/mining` directory
  - [client.py](two1/lib/mining/client.py): Mining client that communicates with the pool.

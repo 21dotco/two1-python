@@ -11,8 +11,8 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-import two1.lib.channels as channels
-from two1.lib.channels.cli import format_expiration_time
+import two1.channels as channels
+from two1.channels.cli import format_expiration_time
 from two1.lib.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring

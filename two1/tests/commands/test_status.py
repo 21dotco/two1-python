@@ -67,7 +67,7 @@ def test_status_no_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_c
 @mock.patch('two1.commands.status.has_mining_chip', return_value=True)
 def test_status_detail(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click):
     """Test 21 status detail view."""
-    with mock.patch('two1.lib.channels.PaymentChannelClient', mock_objects.MockChannelClient):
+    with mock.patch('two1.channels.PaymentChannelClient', mock_objects.MockChannelClient):
         status_rv = status._status(mock_config, mock_rest_client, mock_wallet, True)
 
     assert mock_rest_client.mock_get_earnings.call_count == 1

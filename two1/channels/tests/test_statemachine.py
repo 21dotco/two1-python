@@ -2,9 +2,9 @@ import codecs
 import pytest
 
 import two1.bitcoin as bitcoin
-import two1.lib.channels.statemachine as statemachine
-import two1.lib.channels.walletwrapper as walletwrapper
-import two1.lib.channels.tests.mock as mock
+import two1.channels.statemachine as statemachine
+import two1.channels.walletwrapper as walletwrapper
+import two1.channels.tests.mock as mock
 
 
 def test_redeem_script():
