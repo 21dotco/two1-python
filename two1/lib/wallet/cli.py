@@ -13,8 +13,8 @@ import click
 from mnemonic import Mnemonic
 from jsonrpcclient.exceptions import ReceivedErrorResponse
 from path import Path
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
-from two1.lib.blockchain.insight_provider import InsightProvider
+from two1.blockchain.twentyone_provider import TwentyOneProvider
+from two1.blockchain.insight_provider import InsightProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.base_wallet import convert_to_btc
 from two1.lib.wallet.base_wallet import convert_to_satoshis

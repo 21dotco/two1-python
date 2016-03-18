@@ -7,8 +7,8 @@ import arrow
 
 from urllib.parse import urljoin
 
-from two1.lib.blockchain import exceptions
-from two1.lib.blockchain.base_provider import BaseProvider
+from two1.blockchain import exceptions
+from two1.blockchain.base_provider import BaseProvider
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import CoinbaseInput
 from two1.bitcoin.txn import TransactionInput

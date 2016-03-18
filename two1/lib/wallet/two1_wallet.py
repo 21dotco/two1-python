@@ -20,8 +20,8 @@ from two1.bitcoin.txn import Transaction
 from two1.bitcoin.txn import TransactionInput
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin import utils
-from two1.lib.blockchain.base_provider import BaseProvider
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.blockchain.base_provider import BaseProvider
+from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.hd_account import HDAccount

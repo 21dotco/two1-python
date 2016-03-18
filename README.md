@@ -111,14 +111,14 @@ $ py.test
 ## The `two1/bitserv/tests` directory
  - [test_channels.py](two1/bitserv/tests/test_channels.py): Tests for payment channel functionality.
 
-## The `two1/lib/blockchain` directory
- - [__init__.py](two1/lib/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive
- - [base_provider.py](two1/lib/blockchain/base_provider.py): This submodule provides an abstract base class for a Provider, which
- - [block_cypher_provider.py](two1/lib/blockchain/block_cypher_provider.py): This submodule provides a concrete `BlockCypherProvider` class that provides
- - [exceptions.py](two1/lib/blockchain/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
- - [insight_provider.py](two1/lib/blockchain/insight_provider.py): This submodule provides a concrete `InsightProvider` class that provides
- - [mock_provider.py](two1/lib/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
- - [twentyone_provider.py](two1/lib/blockchain/twentyone_provider.py): This submodule provides a concrete `TwentyOneProvider` class that provides
+## The `two1/blockchain` directory
+ - [__init__.py](two1/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive
+ - [base_provider.py](two1/blockchain/base_provider.py): This submodule provides an abstract base class for a Provider, which
+ - [block_cypher_provider.py](two1/blockchain/block_cypher_provider.py): This submodule provides a concrete `BlockCypherProvider` class that provides
+ - [exceptions.py](two1/blockchain/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
+ - [insight_provider.py](two1/blockchain/insight_provider.py): This submodule provides a concrete `InsightProvider` class that provides
+ - [mock_provider.py](two1/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
+ - [twentyone_provider.py](two1/blockchain/twentyone_provider.py): This submodule provides a concrete `TwentyOneProvider` class that provides
 
 ## The `two1/lib/channels` directory
  - [__init__.py](two1/lib/channels/__init__.py): The payment channel protocol allows for fast, high-volume payments to occur

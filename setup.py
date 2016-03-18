@@ -76,7 +76,7 @@ setup(
               'two1.lib.channels',
               'two1.bitserv.django',
               'two1.bitserv.flask',
-              'two1.lib.blockchain',
+              'two1.blockchain',
               'two1.bitrequests',
               'two1.commands.util',],
 
