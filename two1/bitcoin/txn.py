@@ -5,20 +5,20 @@ import copy
 import hashlib
 import struct
 
-from two1.lib.bitcoin import crypto
-from two1.lib.bitcoin.exceptions import ScriptInterpreterError
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.script_interpreter import ScriptInterpreter
-from two1.lib.bitcoin.utils import address_to_key_hash
-from two1.lib.bitcoin.utils import bytes_to_str
-from two1.lib.bitcoin.utils import pack_compact_int
-from two1.lib.bitcoin.utils import pack_u32
-from two1.lib.bitcoin.utils import pack_u64
-from two1.lib.bitcoin.utils import pack_var_str
-from two1.lib.bitcoin.utils import unpack_compact_int
-from two1.lib.bitcoin.utils import unpack_u32
-from two1.lib.bitcoin.utils import unpack_u64
+from two1.bitcoin import crypto
+from two1.bitcoin.exceptions import ScriptInterpreterError
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
+from two1.bitcoin.script_interpreter import ScriptInterpreter
+from two1.bitcoin.utils import address_to_key_hash
+from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.utils import pack_compact_int
+from two1.bitcoin.utils import pack_u32
+from two1.bitcoin.utils import pack_u64
+from two1.bitcoin.utils import pack_var_str
+from two1.bitcoin.utils import unpack_compact_int
+from two1.bitcoin.utils import unpack_u32
+from two1.bitcoin.utils import unpack_u64
 
 
 class TransactionInput(object):

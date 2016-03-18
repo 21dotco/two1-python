@@ -1,6 +1,6 @@
 import codecs
-import two1.lib.bitcoin as bitcoin
-import two1.lib.bitcoin.utils as utils
+import two1.bitcoin as bitcoin
+import two1.bitcoin.utils as utils
 
 import two1.lib.channels.server as server
 import two1.lib.channels.blockchain as blockchain

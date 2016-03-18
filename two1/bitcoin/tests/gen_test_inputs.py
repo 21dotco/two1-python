@@ -5,7 +5,7 @@ import requests
 import sys
 import time
 
-from two1.lib.bitcoin.utils import *
+from two1.bitcoin.utils import *
 
 CHAIN_API_KEY = os.environ.get('CHAIN_API_KEY', None)
 CHAIN_API_SECRET = os.environ.get('CHAIN_API_SECRET', None)

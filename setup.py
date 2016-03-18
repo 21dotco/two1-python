@@ -63,11 +63,22 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.mkt', 'two1.lib', 'two1.commands', 'two1.commands.helpers', 'two1.lib.bitcoin',
-              'two1.lib.server', 'two1.lib.wallet',
-              'two1.lib.crypto', 'two1.lib.bitserv', 'two1.lib.channels',
-              'two1.lib.bitserv.django', 'two1.lib.bitserv.flask',
-              'two1.lib.blockchain', 'two1.lib.bitrequests', 'two1.commands.util',],
+    packages=['two1',
+              'two1.mkt',
+              'two1.lib',
+              'two1.commands',
+              'two1.commands.helpers',
+              'two1.bitcoin',
+              'two1.lib.server',
+              'two1.lib.wallet',
+              'two1.lib.crypto',
+              'two1.lib.bitserv',
+              'two1.lib.channels',
+              'two1.lib.bitserv.django',
+              'two1.lib.bitserv.flask',
+              'two1.lib.blockchain',
+              'two1.lib.bitrequests',
+              'two1.commands.util',],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's

@@ -6,6 +6,6 @@ Submodules
 
 .. toctree::
 
-    two1.lib.bitcoin.tests.submodules
+    two1.bitcoin.tests.submodules
 
 

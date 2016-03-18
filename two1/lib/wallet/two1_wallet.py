@@ -11,15 +11,15 @@ import os
 import pyaes
 from jsonrpcclient.exceptions import ReceivedErrorResponse
 from pbkdf2 import PBKDF2
-from two1.lib.bitcoin.crypto import HDKey
-from two1.lib.bitcoin.crypto import HDPrivateKey
-from two1.lib.bitcoin.crypto import HDPublicKey
-from two1.lib.bitcoin.crypto import PublicKey
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.txn import TransactionInput
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin import utils
+from two1.bitcoin.crypto import HDKey
+from two1.bitcoin.crypto import HDPrivateKey
+from two1.bitcoin.crypto import HDPublicKey
+from two1.bitcoin.crypto import PublicKey
+from two1.bitcoin.script import Script
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.txn import TransactionInput
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin import utils
 from two1.lib.blockchain.base_provider import BaseProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet import exceptions

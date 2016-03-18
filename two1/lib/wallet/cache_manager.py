@@ -2,14 +2,14 @@ import json
 import os
 import time
 
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import CoinbaseInput
-from two1.lib.bitcoin.txn import TransactionInput
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.txn import UnspentTransactionOutput
-from two1.lib.bitcoin.utils import key_hash_to_address
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
+from two1.bitcoin.txn import CoinbaseInput
+from two1.bitcoin.txn import TransactionInput
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.txn import UnspentTransactionOutput
+from two1.bitcoin.utils import key_hash_to_address
 from two1.lib.wallet.wallet_txn import WalletTransaction
 
 

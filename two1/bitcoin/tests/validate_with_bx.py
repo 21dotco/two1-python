@@ -2,7 +2,7 @@ import random
 import string
 import subprocess
 
-from two1.lib.bitcoin import crypto
+from two1.bitcoin import crypto
 
 allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits + " "
 

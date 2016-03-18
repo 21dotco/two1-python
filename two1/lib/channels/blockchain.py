@@ -2,7 +2,7 @@
 payment channel management."""
 import requests
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 
 
 class BlockchainError(Exception):

@@ -5,12 +5,12 @@ import copy
 import hashlib
 import struct
 
-from two1.lib.bitcoin.crypto import PublicKey
-from two1.lib.bitcoin.crypto import Signature
-from two1.lib.bitcoin.exceptions import ScriptInterpreterError
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin import utils
+from two1.bitcoin.crypto import PublicKey
+from two1.bitcoin.crypto import Signature
+from two1.bitcoin.exceptions import ScriptInterpreterError
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
+from two1.bitcoin import utils
 
 
 class ScriptInterpreter(object):
@@ -169,7 +169,7 @@ class ScriptInterpreter(object):
         Raises:
             ValueError: If there is no Transaction object in self._data
         """
-        from two1.lib.bitcoin.txn import Transaction
+        from two1.bitcoin.txn import Transaction
         if not isinstance(self._txn, Transaction):
             raise ScriptInterpreterError("No transaction found!")
 

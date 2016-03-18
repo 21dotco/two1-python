@@ -4,7 +4,7 @@ import codecs
 import collections
 import unittest.mock
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 import two1.lib.channels as channels
 
 

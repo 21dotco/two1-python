@@ -1,7 +1,7 @@
 import copy
 
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.txn import Transaction
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.txn import Transaction
 
 
 class WalletTransaction(Transaction):

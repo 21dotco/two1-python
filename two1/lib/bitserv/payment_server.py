@@ -4,8 +4,8 @@ import time
 import codecs
 import threading
 
-from two1.lib.bitcoin.utils import pack_u32
-from two1.lib.bitcoin import PublicKey, Transaction, Hash, Signature, Script
+from two1.bitcoin.utils import pack_u32
+from two1.bitcoin import PublicKey, Transaction, Hash, Signature, Script
 from two1.lib.channels.statemachine import PaymentChannelRedeemScript
 from two1.lib.channels.blockchain import TwentyOneBlockchain
 
@@ -269,7 +269,7 @@ class PaymentServer:
         Args:
             deposit_txid (string): string representation of the deposit
                 transaction hash. This is used to look up the payment channel.
-            deposit_txid_signature (two1.lib.bitcoin.Signature): a signature
+            deposit_txid_signature (two1.bitcoin.Signature): a signature
                 consisting solely of the deposit_txid to verify the
                 authenticity of the close request.
         """

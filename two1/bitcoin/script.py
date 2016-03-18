@@ -8,15 +8,15 @@ import copy
 import re
 import struct
 
-from two1.lib.bitcoin.crypto import PublicKey
-from two1.lib.bitcoin.crypto import Signature
-from two1.lib.bitcoin.exceptions import ScriptParsingError
-from two1.lib.bitcoin.utils import bytes_to_str
-from two1.lib.bitcoin.utils import hash160
-from two1.lib.bitcoin.utils import key_hash_to_address
-from two1.lib.bitcoin.utils import pack_var_str
-from two1.lib.bitcoin.utils import unpack_var_str
-from two1.lib.bitcoin.utils import render_int
+from two1.bitcoin.crypto import PublicKey
+from two1.bitcoin.crypto import Signature
+from two1.bitcoin.exceptions import ScriptParsingError
+from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.utils import hash160
+from two1.bitcoin.utils import key_hash_to_address
+from two1.bitcoin.utils import pack_var_str
+from two1.bitcoin.utils import unpack_var_str
+from two1.bitcoin.utils import render_int
 
 
 class Script(object):

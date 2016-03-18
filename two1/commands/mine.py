@@ -16,16 +16,16 @@ import click
 
 # two1 imports
 import two1
-from two1.lib.bitcoin.block import CompactBlock
-from two1.lib.bitcoin.txn import Transaction
+from two1.bitcoin.block import CompactBlock
+from two1.bitcoin.txn import Transaction
 from two1.lib.server import rest_client, message_factory
 from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
-from two1.lib.bitcoin.hash import Hash
+from two1.bitcoin.hash import Hash
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
-import two1.lib.bitcoin.utils as utils
+import two1.bitcoin.utils as utils
 
 
 # Creates a ClickLogger

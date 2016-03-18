@@ -4,7 +4,7 @@ import fcntl
 import sqlite3
 import threading
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 
 from .statemachine import PaymentChannelModel, PaymentChannelState
 

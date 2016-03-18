@@ -5,7 +5,7 @@ import requests
 import threading
 
 import two1
-from two1.lib.bitcoin.txn import Transaction
+from two1.bitcoin.txn import Transaction
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from .models import OnChainSQLite3
 from .payment_server import PaymentServer

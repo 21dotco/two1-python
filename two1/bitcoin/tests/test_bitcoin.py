@@ -1,20 +1,20 @@
 import arrow
 from calendar import timegm
-from two1.lib.bitcoin.block import Block
-from two1.lib.bitcoin.crypto import HDKey
-from two1.lib.bitcoin.crypto import HDPrivateKey
-from two1.lib.bitcoin.crypto import HDPublicKey
-from two1.lib.bitcoin.crypto import PrivateKey
-from two1.lib.bitcoin.crypto import PublicKey
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import CoinbaseInput
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.txn import TransactionInput
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin.utils import bytes_to_str
-from two1.lib.bitcoin.utils import difficulty_to_target
-from two1.lib.bitcoin.utils import target_to_bits
+from two1.bitcoin.block import Block
+from two1.bitcoin.crypto import HDKey
+from two1.bitcoin.crypto import HDPrivateKey
+from two1.bitcoin.crypto import HDPublicKey
+from two1.bitcoin.crypto import PrivateKey
+from two1.bitcoin.crypto import PublicKey
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
+from two1.bitcoin.txn import CoinbaseInput
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.txn import TransactionInput
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.utils import difficulty_to_target
+from two1.bitcoin.utils import target_to_bits
 
 
 def txn_from_json(txn_json):

@@ -1,13 +1,13 @@
 import pytest
 
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.exceptions import ScriptInterpreterError
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.script_interpreter import ScriptInterpreter
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.txn import TransactionInput
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin import utils
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.exceptions import ScriptInterpreterError
+from two1.bitcoin.script import Script
+from two1.bitcoin.script_interpreter import ScriptInterpreter
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.txn import TransactionInput
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin import utils
 
 def test_op_0():
     s = Script("OP_0")
