@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from two1.lib.wallet import fees
+from two1.wallet import fees
 
 
 def test_get_fees():

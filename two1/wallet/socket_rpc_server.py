@@ -10,8 +10,8 @@ from jsonrpcserver.request import Request
 from jsonrpcserver.response import ErrorResponse
 from jsonrpcserver.status import HTTP_STATUS_CODES
 from jsonrpcclient.server import Server
-from two1.lib.wallet.exceptions import DaemonRunningError
-from two1.lib.wallet.exceptions import DaemonNotRunningError
+from two1.wallet.exceptions import DaemonRunningError
+from two1.wallet.exceptions import DaemonNotRunningError
 
 
 class UnixSocketJSONRPCServer(socketserver.ThreadingMixIn,

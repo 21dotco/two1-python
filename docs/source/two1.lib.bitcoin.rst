@@ -246,7 +246,7 @@ verify it, and serialize the entire transaction into a form that
 If you want to do this example with a proper UTXO, replace the line
 referencing the ``private_key`` with
 ``wallet.get_private_key(utxo_addr)``. This is an example of using the
-``two1.lib.wallet`` module programmatically. See also the `Bitcoin
+``two1.wallet`` module programmatically. See also the `Bitcoin
 Notary Public <../../learn/bitcoin-notary-public>`_ tutorial for a
 worked example.
 

@@ -7,7 +7,7 @@ import click
 from two1.commands import send
 from two1.commands.util import uxstring
 from two1.blockchain import exceptions as bc_exceptions
-from two1.lib.wallet import exceptions as w_exceptions
+from two1.wallet import exceptions as w_exceptions
 
 
 @pytest.mark.unit

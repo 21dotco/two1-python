@@ -7,8 +7,8 @@ import re
 import shutil
 import tempfile
 from path import Path
-from two1.lib.wallet.exceptions import DaemonizerError
-from two1.lib.wallet.exceptions import WalletError
+from two1.wallet.exceptions import DaemonizerError
+from two1.wallet.exceptions import WalletError
 
 
 def get_daemonizer():

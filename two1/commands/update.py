@@ -138,8 +138,8 @@ def stop_walletd():
     """Stops the walletd process if it is running.
     """
 
-    from two1.lib.wallet import daemonizer
-    from two1.lib.wallet.exceptions import DaemonizerError
+    from two1.wallet import daemonizer
+    from two1.wallet.exceptions import DaemonizerError
     failed = False
     try:
         d = daemonizer.get_daemonizer()

@@ -16,7 +16,7 @@ packages=[
 `settings.py`
 
 ``` python
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 
 INSTALLED_APPS = (
       . . .  

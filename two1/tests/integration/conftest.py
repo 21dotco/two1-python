@@ -219,7 +219,7 @@ class CLI21():
         assert response.status_code == 200
 
     def sync_onchain_balance(self):
-        from two1.lib.wallet import Wallet
+        from two1.wallet import Wallet
         # explicitly sync wallet cache (auto-synced w/ 25 sec period)
         wallet = Wallet(self.wallet_path)
         wallet.sync_wallet_file()

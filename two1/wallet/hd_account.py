@@ -1,7 +1,7 @@
 import time
 from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
-from two1.lib.wallet.cache_manager import CacheManager
-from two1.lib.wallet.wallet_txn import WalletTransaction
+from two1.wallet.cache_manager import CacheManager
+from two1.wallet.wallet_txn import WalletTransaction
 
 
 class HDAccount(object):

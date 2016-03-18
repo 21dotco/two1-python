@@ -3,9 +3,9 @@ import subprocess
 import sys
 from unittest.mock import MagicMock
 
-from two1.lib.wallet.daemonizer import get_daemonizer
-from two1.lib.wallet.daemonizer import Launchd
-from two1.lib.wallet.daemonizer import Systemd
+from two1.wallet.daemonizer import get_daemonizer
+from two1.wallet.daemonizer import Launchd
+from two1.wallet.daemonizer import Systemd
 
 
 def test_get_daemonizer():

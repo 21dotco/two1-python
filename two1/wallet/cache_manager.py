@@ -10,7 +10,7 @@ from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.txn import Transaction
 from two1.bitcoin.txn import UnspentTransactionOutput
 from two1.bitcoin.utils import key_hash_to_address
-from two1.lib.wallet.wallet_txn import WalletTransaction
+from two1.wallet.wallet_txn import WalletTransaction
 
 
 class CacheManager(object):

@@ -9,7 +9,7 @@ import mnemonic
 # two1 imports
 import two1
 import two1.commands.util.logger
-from two1.lib import wallet as _wallet
+from two1 import wallet as _wallet
 from two1.blockchain import twentyone_provider
 from two1 import server
 from two1 import bitrequests
@@ -103,7 +103,7 @@ def wallet(config):
         WALLET_MNEMONIC is not set then a new wallet is created.
 
     Returns:
-        two1.lib.wallet.Two1Wallet: initialized wallet with a wallet path in a
+        two1.wallet.Two1Wallet: initialized wallet with a wallet path in a
             temp directory.
     """
     # use standard provider

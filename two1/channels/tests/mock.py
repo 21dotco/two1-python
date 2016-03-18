@@ -8,7 +8,7 @@ import two1.channels.statemachine as statemachine
 
 
 class MockTwo1Wallet:
-    """Mock Two1 Wallet interface for unit testing. See two1.lib.wallet.Two1Wallet for API."""
+    """Mock Two1 Wallet interface for unit testing. See two1.wallet.Two1Wallet for API."""
 
     PRIVATE_KEY = bitcoin.PrivateKey.from_bytes(codecs.decode("83407377a24a5cef75dedb0445d2da3a5389ed34c0f0c57266b1ed0a5ebb30c1", 'hex_codec'))
     "Customer private key."

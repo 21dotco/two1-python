@@ -6,9 +6,9 @@ import os
 import logging
 
 import two1
-import two1.lib.wallet as wallet
-import two1.lib.wallet.daemonizer as daemonizer
-import two1.lib.wallet.exceptions as exceptions
+import two1.wallet as wallet
+import two1.wallet.daemonizer as daemonizer
+import two1.wallet.exceptions as exceptions
 from two1.commands.util import uxstring
 from two1.blockchain import twentyone_provider
 

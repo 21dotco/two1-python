@@ -127,7 +127,7 @@ Convenience wrappers around `request()` to make a HTTP requests
 
 **get_402_info()** - A function for returning only the 402 payment headers for a resource.
 
-**init** - The class constructor should accept objects necessary to create payments. In the case of the three implementations listed above, the primary payment-creation object is a `two1.lib.Wallet` object.
+**init** - The class constructor should accept objects necessary to create payments. In the case of the three implementations listed above, the primary payment-creation object is a `two1.wallet.Wallet` object.
 
 ### Usage
 
@@ -136,19 +136,19 @@ The API for using payment methods has aimed to be as consistent as possible. Thi
 
     # BitTransferRequests
     from two1.commands.util import config
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitrequests import BitTransferRequests
     requests = BitTransferRequests(Wallet(), config.Config().username)
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # OnChainRequests
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitrequests import OnChainRequests
     requests = OnChainRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text
 
     # ChannelRequests
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitrequests import ChannelRequests
     requests = ChannelRequests(Wallet())
     requests.get('http://localhost:5000/my-test-endpoint').text

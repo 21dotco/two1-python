@@ -1,4 +1,4 @@
-from two1.lib.wallet.fees import get_fees
+from two1.wallet.fees import get_fees
 
 
 def _get_utxos_addr_tuple_list(utxos_by_addr):

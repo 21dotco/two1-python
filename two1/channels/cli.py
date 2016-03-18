@@ -6,7 +6,7 @@ import time
 import sys
 import os
 
-from two1.lib.wallet import Wallet, Two1Wallet
+from two1.wallet import Wallet, Two1Wallet
 
 from . import PaymentChannelClient
 from . import PaymentChannelError

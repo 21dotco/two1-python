@@ -79,7 +79,7 @@ def _status(config, client, wallet, detail):
         config (Config): config object used for getting .two1 information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        wallet (two1.lib.wallet.Wallet): a user's wallet instance
+        wallet (two1.wallet.Wallet): a user's wallet instance
         detail (bool): Lists all balance details in status report
 
     Returns:

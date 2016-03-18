@@ -14,7 +14,7 @@ Contents:
    two1.bitcoin
    two1.blockchain
    two1.crypto
-   two1.lib.wallet
+   two1.wallet
    two1.channels
    two1.bitrequests
    two1.bitserv

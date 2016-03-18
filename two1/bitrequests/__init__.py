@@ -33,7 +33,7 @@ def request(*args, payment_method=None, **kwargs):
     payment_method = payment_method or _current_method
 
     if payment_method not in _requests:
-        from two1.lib.wallet import Wallet
+        from two1.wallet import Wallet
         if payment_method == OFF_CHAIN:
             from two1.server.machine_auth_wallet import MachineAuthWallet
             _requests[_current_method] = BitTransferRequests(MachineAuthWallet(Wallet()))

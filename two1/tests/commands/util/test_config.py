@@ -3,7 +3,7 @@ import json
 import pytest
 import unittest.mock as mock
 
-import two1.lib.wallet as wallet
+import two1.wallet as wallet
 import two1.commands.util.config as config
 import two1.commands.util.exceptions as exceptions
 
