@@ -90,7 +90,7 @@ class PaymentServer:
                 'merchant', 'customer', 'default', etc).
             testnet (boolean): whether or not the server should broadcast and
                 verify transactions against the bitcoin testnet blockchain.
-            blockchain (two1.lib.blockchain.provider): a blockchain data
+            blockchain (two1.blockchain.provider): a blockchain data
                 provider capable of broadcasting raw transactions.
             zeroconf (boolean): whether or not to use a payment channel before
                 the deposit transaction has been confirmed by the network.

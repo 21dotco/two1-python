@@ -86,7 +86,7 @@ Using ``two1.lib.wallet`` programmatically
 To create a wallet programmatically, the easiest way is to use
 ``Two1Wallet.configure()``::
 
-  from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+  from two1.blockchain.twentyone_provider import TwentyOneProvider
   from two1.lib.wallet.two1_wallet import Two1Wallet
 
   options = dict(account_type="BIP32",
@@ -111,7 +111,7 @@ information such as:
 It also uses the data provider to broadcast transactions to the
 blockchain. The wallet is agnostic as to where it gets required data
 as long as the data provider meets the API specification in
-``two1.lib.blockchain.base_provider``. This means you can write your
+``two1.blockchain.base_provider``. This means you can write your
 own provider should you want to use something other than the default
 ``TwentyOneProvider``.
 

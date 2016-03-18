@@ -9,7 +9,7 @@ import click
 
 # two1 imports
 import two1
-from two1.lib.blockchain import exceptions as blockchain_exceptions
+from two1.blockchain import exceptions as blockchain_exceptions
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.commands.util import decorators

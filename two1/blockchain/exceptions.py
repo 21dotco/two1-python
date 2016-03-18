@@ -1,5 +1,5 @@
 """This is a simple submodule that enumerates the different kinds of exceptions
-that the `two1.lib.bkicjcgaub` module raises."""
+that the `two1.blockchain` module raises."""
 
 
 class DataProviderUnavailableError(Exception):

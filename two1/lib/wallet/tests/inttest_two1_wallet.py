@@ -1,7 +1,7 @@
 import time
 
 import random
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.wallet.two1_wallet import Two1Wallet
 
 mnemonics = ['absent paddle capable spell bag reflect rally there swear swallow cook rubber',

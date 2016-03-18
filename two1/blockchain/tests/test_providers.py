@@ -2,9 +2,9 @@ import pytest
 from unittest.mock import MagicMock
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
-from two1.lib.blockchain.insight_provider import InsightProvider
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
-from two1.lib.blockchain.exceptions import DataProviderError
+from two1.blockchain.insight_provider import InsightProvider
+from two1.blockchain.twentyone_provider import TwentyOneProvider
+from two1.blockchain.exceptions import DataProviderError
 
 
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")

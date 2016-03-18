@@ -3,7 +3,7 @@ import pytest
 import os.path
 import time
 
-from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
+from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.txn import Transaction
 from two1.lib.wallet.cache_manager import CacheManager

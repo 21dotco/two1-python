@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
 
    two1.bitcoin
-   two1.lib.blockchain
+   two1.blockchain
    two1.lib.crypto
    two1.lib.wallet
    two1.lib.channels

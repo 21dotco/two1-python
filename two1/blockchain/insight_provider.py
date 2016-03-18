@@ -6,8 +6,8 @@ import json
 from urllib.parse import urljoin
 
 from collections import defaultdict
-from two1.lib.blockchain import exceptions
-from two1.lib.blockchain.base_provider import BaseProvider
+from two1.blockchain import exceptions
+from two1.blockchain.base_provider import BaseProvider
 from two1.bitcoin.txn import CoinbaseInput
 from two1.bitcoin.txn import TransactionInput
 from two1.bitcoin.txn import TransactionOutput

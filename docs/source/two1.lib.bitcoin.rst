@@ -241,7 +241,7 @@ network (since the UTXO we referenced doesn't exist), we were able to
 create a single input/single output transaction, sign the input,
 verify it, and serialize the entire transaction into a form that
 `could` be submitted. To see how to broadcast a raw transaction, see
-``provider.broadcast_transaction`` in `two1.lib.blockchain <../../learn/21-lib-blockchain>`_.
+``provider.broadcast_transaction`` in `two1.blockchain <../../learn/21-lib-blockchain>`_.
 
 If you want to do this example with a proper UTXO, replace the line
 referencing the ``private_key`` with

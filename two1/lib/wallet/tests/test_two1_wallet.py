@@ -13,7 +13,7 @@ from two1.bitcoin.txn import UnspentTransactionOutput
 from two1.bitcoin.utils import address_to_key_hash
 from two1.bitcoin.utils import bytes_to_str
 from two1.bitcoin.utils import rand_bytes
-from two1.lib.blockchain.mock_provider import MockProvider
+from two1.blockchain.mock_provider import MockProvider
 from two1.lib.wallet import exceptions
 from two1.lib.wallet.two1_wallet import Two1Wallet
 
