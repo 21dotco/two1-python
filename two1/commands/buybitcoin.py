@@ -7,7 +7,7 @@ import click
 
 # two1 imports
 from two1.commands.util import exceptions
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 

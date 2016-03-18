@@ -4,7 +4,7 @@ import logging
 
 import codecs
 import struct
-from two1.lib.server import swirl_pb3
+from two1.server import swirl_pb3
 
 decode_hex = codecs.getdecoder("hex_codec")
 

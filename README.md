@@ -137,12 +137,11 @@ $ py.test
  - [coinbase.py](two1/lib/mining/coinbase.py): Builds the coinbase transaction
  - [cpu_miner.py](two1/lib/mining/cpu_miner.py): CPU-based miner
 
-## The `two1/lib/server` directory
- - [analytics.py](two1/lib/server/analytics.py): Handles usage and error statistics and communication
- - [login.py](two1/lib/server/login.py): Handles client-side user account setup and authentication.
- - [machine_auth.py](two1/lib/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
- - [machine_auth_wallet.py](two1/lib/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
- - [message_factory.py](two1/lib/server/message_factory.py): Generates new swirl messages.
+## The `two1/server` directory
+ - [login.py](two1/server/login.py): Handles client-side user account setup and authentication.
+ - [machine_auth.py](two1/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
+ - [machine_auth_wallet.py](two1/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
+ - [message_factory.py](two1/server/message_factory.py): Generates new swirl messages.
 
 ## The `two1/tests` directory
  - [mock.py](two1/tests/mock.py): Mock objects for testing.

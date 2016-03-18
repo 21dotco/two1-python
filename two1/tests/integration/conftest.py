@@ -187,7 +187,7 @@ class CLI21():
     def _flush_21_satoshis(self):
         # FIXME Find a user-visible to perform that type of operation. For now, using the code.
         # Keeping the hack contained here as much as possible.
-        from two1.lib.server import rest_client
+        from two1.server import rest_client
         from two1.commands.config import TWO1_HOST
 
         config = self.config

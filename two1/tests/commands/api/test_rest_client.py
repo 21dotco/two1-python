@@ -10,8 +10,8 @@ import requests
 # two1 imports
 import two1
 from two1.commands.util import exceptions
-from two1.lib.server import rest_client
-from two1.lib.server import machine_auth_wallet
+from two1.server import rest_client
+from two1.server import machine_auth_wallet
 from two1.commands.util import exceptions
 from two1.tests.mock import MockHttpResponse
 
@@ -41,7 +41,7 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
     machine_auth = machine_auth_wallet.MachineAuthWallet(mock_wallet)
     rc = rest_client.TwentyOneRestClient("", machine_auth)
 
-    with mock.patch("two1.lib.server.rest_client.requests.Session.request") as mock_request:
+    with mock.patch("two1.server.rest_client.requests.Session.request") as mock_request:
         if request_side_effect:
             mock_request.side_effect = request_side_effect
             with pytest.raises(raised_exception):
@@ -96,7 +96,7 @@ def test_check_headers(mock_wallet, device_id, data):
     if data:
         expected_headers['Content-Type'] = 'application/json'
 
-    with mock.patch("two1.lib.server.rest_client.requests.Session.request") as mock_request:
+    with mock.patch("two1.server.rest_client.requests.Session.request") as mock_request:
         mock_request.return_value = MockHttpResponse(status_code=200, data=None)
         rc._request(data=data)
         call_args = mock_request.call_args

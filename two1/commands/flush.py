@@ -5,7 +5,7 @@ import logging
 import click
 
 # two1 imports
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
@@ -33,7 +33,7 @@ def _flush(config, client, wallet, amount=None):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         wallet (two1.lib.wallet.Wallet): a user's wallet instance
         amount (int): The amount to be flushed. Should be more than 10k

@@ -11,7 +11,7 @@ import click
 
 # two1 imports
 import two1
-import two1.lib.server as server
+import two1.server as server
 import two1.lib.wallet.fees as fees
 import two1.channels as channels
 import two1.commands.status as status
@@ -69,7 +69,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         config (two1.commands.config.Config): an object necessary for various
             user-specific actions, as well as for using the `capture_usage`
             function decorator.
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         machine_auth (two1.server.machine_auth.MachineAuthWallet): a wallet used
             for machine authentication.

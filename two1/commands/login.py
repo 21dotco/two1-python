@@ -14,9 +14,9 @@ from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import wallet as wallet_util
-from two1.lib.server import rest_client as _rest_client
+from two1.server import rest_client as _rest_client
 from two1.lib.wallet import two1_wallet
-from two1.lib.server import machine_auth_wallet
+from two1.server import machine_auth_wallet
 
 
 # Creates a ClickLogger
@@ -223,7 +223,7 @@ def set_password(config, machine_auth):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
     """
     if not config.username:

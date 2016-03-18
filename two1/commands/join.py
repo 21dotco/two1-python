@@ -8,7 +8,7 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
@@ -71,7 +71,7 @@ def _join(config, client, network):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         network (str): the name of the network being joined. Defaults to 21market
 

@@ -13,7 +13,7 @@ from tabulate import tabulate
 # two1 imports
 import two1.channels as channels
 from two1.channels.cli import format_expiration_time
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
@@ -77,7 +77,7 @@ def _status(config, client, wallet, detail):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         wallet (two1.lib.wallet.Wallet): a user's wallet instance
         detail (bool): Lists all balance details in status report
