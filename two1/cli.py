@@ -50,6 +50,7 @@ from two1.commands.search import search
 from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.join import join
+from two1.commands.sell import sell
 
 
 
@@ -87,7 +88,7 @@ $ {0} buy search "Satoshi Nakamoto"
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'sell', 'login')
+    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'login')
 
     # sets UUID if avaliable
     uuid = bitcoin_computer.get_device_uuid()
@@ -119,6 +120,8 @@ main.add_command(help)
 main.add_command(send)
 main.add_command(search)
 main.add_command(rate)
+main.add_command(inbox)
+main.add_command(sell)
 main.add_command(publish)
 main.add_command(login)
 main.add_command(join)

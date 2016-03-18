@@ -417,6 +417,16 @@ class UxString:
                                 "can only delete apps that you have published."
 
     # sell
+    install_brew = "Please install brew to continue\, visit http://brew.sh/"
+    unsupported_platform = "Unsupported platform"
+    enabling_endpoints = click.style("Enabling endpoints...")
+    hosted_market_app_revenue = "- 21.co/{} at {} cents/request...\t" + \
+        click.style("[LIVE]", fg="green")
+    estimated_daily_revenue = click.style("Estimated revenue: {} cents/day")
+    unsuccessfull_python_requirements = click.style(
+        "Unsuccessfully installed python requirements: {}", fg="red")
+    unsuccessfull_server_requirements = click.style(
+        "Unsuccessfully installed server requirements: {}", fg="red")
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
     app_directory_invalid = click.style("App Directory Invalid. Please ensure \
 your directory and it's contents are correct,\
@@ -427,6 +437,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         "Successfully installed requirements...", fg="magenta")
     created_nginx_server = click.style(
         "Created default 21 nginx server...", fg="magenta")
+    failed_configuring_nginx = "Failed to configure nginx {}"
     created_site_includes = click.style(
         "Created site-includes to host apps...",
         fg="magenta")
@@ -437,7 +448,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="magenta")
     listing_enabled_apps = click.style("Listing enabled apps...", fg="magenta")
     no_apps_currently_running = click.style(
-            "No apps currently running, refer to 21.co/sell to host some...",
+            "No apps currently running, refer to 21.co/mkt to sell some...",
             fg="red")
     successfully_stopped_app = click.style(
         "Successfully stopped {}...",
@@ -547,3 +558,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         # account errors
         login_error_username = "Can not log into account, username not set"
         login_error_mining_auth_pubkey = "Can not log into account, username not set"
+
+        # sell creation errors
+        url_not_supported = "Url type is not supported"
+        repo_clone_fail = "Failed to clone repo {}"

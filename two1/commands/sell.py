@@ -3,47 +3,68 @@ Launch a machine-payable endpoint on the current machine
 """
 # standard python imports
 import os
+import time
 import logging
+import requests
 
 # 3rd party imports
 import click
 from tabulate import tabulate
 
 # two1 imports
+import two1.commands.util.decorators as decorators
 from two1.commands.util.uxstring import UxString
-from two1.commands.helpers.sell_helpers import install_requirements
-from two1.commands.helpers.sell_helpers import validate_directory
+from two1.commands.helpers.sell_helpers import install_server_requirements
+from two1.commands.helpers.sell_helpers import install_python_requirements
 from two1.commands.helpers.sell_helpers import create_site_includes
 from two1.commands.helpers.sell_helpers import create_default_nginx_server
 from two1.commands.helpers.sell_helpers import create_systemd_file
 from two1.commands.helpers.sell_helpers import create_nginx_config
 from two1.commands.helpers.sell_helpers import destroy_app
-from two1.commands.helpers.sell_helpers import dir_to_absolute
-from two1.commands.helpers.sell_helpers import absolute_path_to_foldername
-from two1.commands.helpers.sell_helpers import check_or_create_manifest
+from two1.commands.helpers.sell_helpers import detect_url
+from two1.commands.helpers.sell_helpers import clone_repo
+from two1.commands.publish import _publish
+from two1.commands.publish import get_zerotier_address
+from two1.commands.join import _join as join_zerotier_network
+from two1.commands.util import zerotier
 
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
 
+# satoshi to usd cents, should be moved to rest_client,
+# data supplied via api.
+satoshi_price = lambda : float(
+        requests.get(
+            "https://www.google.com/finance/getprices?q=BTCUSD&x=CURRENCY&i=60&p=1&f=c"
+        ).text.split()[-1]
+    ) / 1e8
+satoshi_to_usd = lambda x: round(x * satoshi_price() * 100, 2)
 
-@click.group()
-def sell():
+# whitelisted apps
+# also tobe done by 21.co api.
+WHITELISTED_APPS = ['ping21']
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+@decorators.catch_all
+@decorators.capture_usage
+@click.option('-a', '--all',
+              is_flag=True, help="Sell all available apps on 21.co/mkt")
+def sell(ctx, **options):
     """
     Sell 21 Apps on your 21 Bitcoin Computer.
 
 \b
 Usage
 _____
-Host your app in a production environment
-$ 21 sell create myapp/
+\b
+Sell all of the apps on the 21.co marketplace.
+$ 21 sell --all
 
 \b
-See the help for create
-$ 21 sell create --help
-
-\b
-List all of your currently running apps
+List all of the apps you're currently selling.
 $ 21 sell list
 
 \b
@@ -58,47 +79,85 @@ $ 21 sell destroy myapp
 See the help for list
 $ 21 sell destroy --help
     """
-    pass
+    if options['all']:
+        # Fetch all valid 21.co sellable apps
+        # on the market.
+        # These apps have ben pre-approved and have
+        # a style of standardization to them,
+        # ie, a Procfile or standard index.py with variable "app"
+        # that belongs to flask etc.
+        # join zerotier network
+        if not zerotier.get_address('21market'):
+            join_zerotier_network(
+                ctx.obj['config'],
+                ctx.obj['client'],
+                '21market'
+            )
+            tries = 0
+            while not zerotier.get_address('21market') and tries < 7:
+                time.sleep(1)
+                tries += 1
+        logger.info(UxString.enabling_endpoints)
+        total_daily_revenue = 0
+        for app in ctx.obj['client'].get_sellable_apps():
+            if _enable_endpoint(
+                app["name"],
+                app["git"]
+            ):
+                logger.info(UxString.hosted_market_app_revenue.format(
+                    app["name"],
+                    satoshi_to_usd(app["avg_earnings_request"]),
+                    )
+                )
+                _publish(
+                    ctx.obj['config'],
+                    ctx.obj['client'],
+                    app["name"] + "/manifest.yaml",
+                    '21market',
+                    False,
+                    {'host': get_zerotier_address('21market') +
+                        "/" + app["name"]}
+                    )
+                total_daily_revenue += app["avg_earnings_day"]
+        logger.info(UxString.estimated_daily_revenue.format(
+                satoshi_to_usd(total_daily_revenue)
+            )
+        )
 
 
-@sell.command()
-@click.argument('dirname', type=click.Path(exists=True))
-@click.pass_context
-def create(ctx, dirname):
+def _enable_endpoint(appname, app_url):
+    """Enable an endpoint, (Clone + Run)
+
+    Does the following:
+        Checks compatibility with the current machine.
+        Installs requirements. (requirements.txt)
+        Runs app under nginx + unicorn.
+    Args:
+        appame (str): name of the application.
+        app_url (str): url of the application (should be github friendly).
+
+    Returns:
+        bool : app is correctly installed.
+
+    Raises:
+        OSError: if the appication is not compatible with the
+            target system.
     """
-    Host your app on your 21 Bitcoin Computer in a production environment.
-
-Given a folder with specific files inside:
-\n    -index.py
-\n    -requirements.txt
-\n
-Host said app on host (0.0.0.0/) using nginx + gunicorn
-    """
-    config = ctx.obj["config"]
-    if validate_directory(dirname):
-        logger.info(UxString.app_directory_valid)
-    else:
-        logger.info(UxString.app_directory_invalid)
-        return
-    logger.info(UxString.check_or_create_manifest_file)
-    if check_or_create_manifest(dirname):
-        logger.info(UxString.success_manifest)
-    else:
-        logger.info(UxString.manifest_fail)
-    logger.info(UxString.installing_requirements)
-    install_requirements()
-    logger.info(UxString.installed_requirements)
-    create_default_nginx_server()
-    logger.info(UxString.created_nginx_server)
-    create_site_includes()
-    logger.info(UxString.created_site_includes)
-    create_systemd_file(dirname)
-    logger.info(UxString.created_systemd_file)
-    create_nginx_config(dirname)
-    logger.info(UxString.created_app_nginx_file)
-    appdir = dir_to_absolute(dirname)
-    appname = absolute_path_to_foldername(appdir)
-    logger.info(UxString.hosted_app_location.format(appname))
+    if appname not in WHITELISTED_APPS:
+        raise NotImplementedError(
+            "App is not supported yet. Please stay tuned for updates."
+        )
+    if detect_url(app_url) == "git":
+        clone_repo(appname, app_url)
+        if not install_python_requirements(appname):
+            return False
+        if not install_server_requirements(appname):
+            return False
+        create_default_nginx_server()
+        create_site_includes()
+        create_systemd_file(appname)
+        create_nginx_config(appname)
+        return True
 
 
 @sell.command()
@@ -109,8 +168,6 @@ def list(ctx):
 \b
 (as seen in /etc/nginx/site-includes/)
     """
-    #pylint: disable=redefined-builtin
-    config = ctx.obj["config"]
     if os.path.isdir("/etc/nginx/site-includes/") \
             and len(os.listdir("/etc/nginx/site-includes/")) > 0:
         enabled_apps = os.listdir("/etc/nginx/site-includes/")
@@ -142,8 +199,6 @@ def destroy(ctx, appname):
 \b
 Stop worker processes and disable site from sites-enabled
     """
-    #pylint: disable=redefined-builtin
-    config = ctx.obj["config"]
     if appname in os.listdir("/etc/nginx/site-includes/"):
         if destroy_app(appname):
             logger.info(UxString.successfully_stopped_app.format(appname))
