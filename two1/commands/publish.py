@@ -426,7 +426,7 @@ def display_app_info(config, client, app_id):
         if usage_docs:
             page_components.append(usage_docs + "\n")
         final_str = "\n".join(page_components)
-        logger.info_pager(final_str)
+        logger.info(final_str, pager=True)
 
     except ServerRequestError as e:
         if e.status_code == 404:
