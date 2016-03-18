@@ -165,7 +165,10 @@ def test_echo(capsys, message, kwargs, expected_output):
             assert out == expected_output
 
 
-def test_pager(monkeypatch, capsys):
+# patch these to make click to think the captured std io file descriptors are legit
+@mock.patch("sys.stdin.isatty", return_value=True)
+@mock.patch("sys.stdout.isatty", return_value=True)
+def test_pager(patch_stdout, patch_stdin, monkeypatch):
     """ Pager test to ensure the pager is getting called AND that the env is getting set correctly """
     # click does some thing where it looks for an encoding type. Set a default value here as a workaround
     mock_popen = mock.Mock()
@@ -174,8 +177,6 @@ def test_pager(monkeypatch, capsys):
     # patch subprocess.Popen as a mock which returns another mock object
     monkeypatch.setattr(subprocess, "Popen", mock.Mock(return_value=mock_popen))
 
-    # disable capturing to allow the pager to "work"
-    capsys.close()
     # log to the pager
     logger.info("this will go to a pager", pager=True)
 
