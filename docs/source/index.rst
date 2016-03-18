@@ -17,7 +17,7 @@ Contents:
    two1.lib.wallet
    two1.lib.channels
    two1.bitrequests
-   two1.lib.bitserv
+   two1.bitserv
 
 Indices and tables
 ==================

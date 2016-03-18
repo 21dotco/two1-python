@@ -90,26 +90,26 @@ $ py.test
  - [__init__.py](two1/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users
  - [bitrequests.py](two1/bitrequests/bitrequests.py): This module provides various BitRequests methods, including:
 
-## The `two1/lib/bitserv` directory
- - [__init__.py](two1/lib/bitserv/__init__.py): The BitServ library adds a simple API for servers to create payable
- - [models.py](two1/lib/bitserv/models.py): This module provides data management for payment servers.
- - [payment_methods.py](two1/lib/bitserv/payment_methods.py): This module contains methods for making paid HTTP requests to 402-enabled servers.
- - [payment_server.py](two1/lib/bitserv/payment_server.py): This module implements the server side of payment channels.
- - [wallet.py](two1/lib/bitserv/wallet.py): Wrapper around the two1 wallet for payment channels.
+## The `two1/bitserv` directory
+ - [__init__.py](two1/bitserv/__init__.py): The BitServ library adds a simple API for servers to create payable
+ - [models.py](two1/bitserv/models.py): This module provides data management for payment servers.
+ - [payment_methods.py](two1/bitserv/payment_methods.py): This module contains methods for making paid HTTP requests to 402-enabled servers.
+ - [payment_server.py](two1/bitserv/payment_server.py): This module implements the server side of payment channels.
+ - [wallet.py](two1/bitserv/wallet.py): Wrapper around the two1 wallet for payment channels.
 
-## The `two1/lib/bitserv/django` directory
- - [__init__.py](two1/lib/bitserv/django/__init__.py): Bitserv implementation for Django.
- - [decorator.py](two1/lib/bitserv/django/decorator.py): Django bitserv payment library for selling 402 API endpoints.
- - [models.py](two1/lib/bitserv/django/models.py): Payment models for a bitserv server.
- - [urls.py](two1/lib/bitserv/django/urls.py): Added URLs for a bitserv server.
- - [views.py](two1/lib/bitserv/django/views.py): Added views for a bitserv server.
+## The `two1/bitserv/django` directory
+ - [__init__.py](two1/bitserv/django/__init__.py): Bitserv implementation for Django.
+ - [decorator.py](two1/bitserv/django/decorator.py): Django bitserv payment library for selling 402 API endpoints.
+ - [models.py](two1/bitserv/django/models.py): Payment models for a bitserv server.
+ - [urls.py](two1/bitserv/django/urls.py): Added URLs for a bitserv server.
+ - [views.py](two1/bitserv/django/views.py): Added views for a bitserv server.
 
-## The `two1/lib/bitserv/flask` directory
- - [__init__.py](two1/lib/bitserv/flask/__init__.py): Bitserv implementation for Flask.
- - [decorator.py](two1/lib/bitserv/flask/decorator.py): Flask bitserv payment library for selling 402 API endpoints.
+## The `two1/bitserv/flask` directory
+ - [__init__.py](two1/bitserv/flask/__init__.py): Bitserv implementation for Flask.
+ - [decorator.py](two1/bitserv/flask/decorator.py): Flask bitserv payment library for selling 402 API endpoints.
 
-## The `two1/lib/bitserv/tests` directory
- - [test_channels.py](two1/lib/bitserv/tests/test_channels.py): Tests for payment channel functionality.
+## The `two1/bitserv/tests` directory
+ - [test_channels.py](two1/bitserv/tests/test_channels.py): Tests for payment channel functionality.
 
 ## The `two1/lib/blockchain` directory
  - [__init__.py](two1/lib/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive

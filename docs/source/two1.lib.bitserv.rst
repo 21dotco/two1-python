@@ -67,7 +67,7 @@ injecting wallet functionality with a ``two1.lib.wallet.Wallet`` object.
 
     from flask import Flask
     from two1.lib.wallet import Wallet
-    from two1.lib.bitserv.flask import Payment
+    from two1.bitserv.flask import Payment
 
     app = Flask(__name__)
     wallet = Wallet()
@@ -93,7 +93,7 @@ module a little simpler, but adds a few extra configuration steps.
 
     packages=[
           . . .
-        'two1.lib.bitserv.django'
+        'two1.bitserv.django'
     ]
 
 ``settings.py``
@@ -104,7 +104,7 @@ module a little simpler, but adds a few extra configuration steps.
 
     INSTALLED_APPS = (
           . . .
-       'two1.lib.bitserv.django'
+       'two1.bitserv.django'
     )
 
     WALLET = Wallet()
@@ -115,13 +115,13 @@ module a little simpler, but adds a few extra configuration steps.
 
 .. code:: python
 
-    url(r'^payments/', include('two1.lib.bitserv.django.urls'))
+    url(r'^payments/', include('two1.bitserv.django.urls'))
 
 ``views.py``
 
 .. code:: python
 
-    from two1.lib.bitserv.django import payment
+    from two1.bitserv.django import payment
 
 To finalize Django setup, be sure to run the following command (or
 equivalent) to make sure that the database models are properly added to
@@ -156,15 +156,15 @@ barebones payment server by passing it a two1 wallet instance
 .. code:: python
 
     from two1.lib.wallet import Wallet
-    from two1.lib.bitserv import PaymentServer
+    from two1.bitserv import PaymentServer
 
     wallet = Wallet()
     payment_server = PaymentServer(wallet)
 
-``two1.lib.bitserv``: module contents
+``two1.bitserv``: module contents
 =====================================
-The ``two1.lib.bitserv`` module is organized into the following submodules:
+The ``two1.bitserv`` module is organized into the following submodules:
 
 .. toctree::
 
-   two1.lib.bitserv.submodules
+   two1.bitserv.submodules

@@ -9,7 +9,7 @@ This django app exposes a `402: Payment Required` api route decorator for use wi
 ``` python
 packages=[
       . . .
-    'two1.lib.bitserv.django'
+    'two1.bitserv.django'
 ]
 ```
 
@@ -20,7 +20,7 @@ from two1.lib.wallet import Wallet
 
 INSTALLED_APPS = (
       . . .  
-   'two1.lib.bitserv.django'
+   'two1.bitserv.django'
 )
 
 WALLET = Wallet()
@@ -31,7 +31,7 @@ APPEND_SLASH = False
 urls.py
 
 ``` python
-url(r'^payments/', include('two1.lib.bitserv.django.urls'))
+url(r'^payments/', include('two1.bitserv.django.urls'))
 ```
 
 
@@ -42,7 +42,7 @@ url(r'^payments/', include('two1.lib.bitserv.django.urls'))
 ``` python
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
-from two1.lib.bitserv.django import payment
+from two1.bitserv.django import payment
 
 
 @api_view(['GET'])

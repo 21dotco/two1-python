@@ -142,7 +142,7 @@ Fire up a barebones payment channel flask `server.py`:
 ``` python
 import flask
 from two1.lib.wallet import Wallet
-from two1.lib.bitserv.flask import Payment
+from two1.bitserv.flask import Payment
 
 app = flask.Flask(__name__)
 payment = Payment(app, Wallet())
