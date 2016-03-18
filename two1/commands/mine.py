@@ -18,7 +18,7 @@ import click
 import two1
 from two1.bitcoin.block import CompactBlock
 from two1.bitcoin.txn import Transaction
-from two1.lib.server import rest_client, message_factory
+from two1.server import rest_client, message_factory
 from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
@@ -68,7 +68,7 @@ def _mine(config, client, wallet, dashboard=False):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         wallet (two1.lib.wallet.Wallet): a user's wallet instance
         dashboard (bool): shows minertop dashboard if True

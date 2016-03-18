@@ -14,7 +14,7 @@ import click
 import two1
 import two1.commands.util.uxstring as uxstring
 import two1.commands.util.exceptions as exceptions
-import two1.lib.server.rest_client as rest_client
+import two1.server.rest_client as rest_client
 
 
 # Creates a ClickLogger

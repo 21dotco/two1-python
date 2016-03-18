@@ -7,7 +7,7 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
@@ -59,7 +59,7 @@ def _list(config, client):
 
     Args:
         config (Config): Config object used for user specific information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
 
     Raises:
@@ -94,7 +94,7 @@ def _rate(config, client, app_id, rating):
 
     Args:
         config (Config): Config object used for user specific information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         app_id (str): Unique app id used to identify which app to rate
         rating (int): rating number (1-5)

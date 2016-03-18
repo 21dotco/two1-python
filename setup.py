@@ -69,7 +69,7 @@ setup(
               'two1.commands',
               'two1.commands.helpers',
               'two1.bitcoin',
-              'two1.lib.server',
+              'two1.server',
               'two1.lib.wallet',
               'two1.bitserv',
               'two1.channels',

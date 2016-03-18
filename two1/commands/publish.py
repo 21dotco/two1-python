@@ -13,7 +13,7 @@ from yaml.error import YAMLError
 from tabulate import tabulate
 
 # two1 imports
-from two1.lib.server import rest_client
+from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.commands.util import uxstring
@@ -202,7 +202,7 @@ def _list_apps(config, client):
 
     Args:
         config (Config): config object used for getting .two1 information.
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
     """
     logger.info(uxstring.UxString.my_apps.format(config.username), fg="green")
@@ -236,7 +236,7 @@ def _delete_app(config, client, app_id):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         app_id (str): a unique string that identifies the application.
     """
@@ -258,7 +258,7 @@ def _publish(config, client, manifest_path, marketplace, skip, overrides):
 
     Args:
         config (Config): config object used for getting .two1 information
-        client (two1.lib.server.rest_client.TwentyOneRestClient) an object for
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         manifest_path (str): the path to the manifest file.
         marketplace (str): the zerotier marketplace name.

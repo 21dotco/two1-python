@@ -11,14 +11,14 @@ import two1
 import two1.commands.util.logger
 from two1.lib import wallet as _wallet
 from two1.blockchain import twentyone_provider
-from two1.lib import server
+from two1 import server
 from two1 import bitrequests
 from two1.tests import mock as mock_objects
 from two1.commands import doctor as doc
 # importing classes here to fix name conflicts
 from two1.commands.util.config import Config
-from two1.lib.server.rest_client import TwentyOneRestClient
-from two1.lib.server.machine_auth_wallet  import MachineAuthWallet
+from two1.server.rest_client import TwentyOneRestClient
+from two1.server.machine_auth_wallet  import MachineAuthWallet
 
 
 ### py.test hooks

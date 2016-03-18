@@ -26,8 +26,8 @@ import two1.commands.util.logger
 logger = logging.getLogger(__name__)
 
 from two1.commands.util import bitcoin_computer
-from two1.lib.server import rest_client
-from two1.lib.server import machine_auth_wallet
+from two1.server import rest_client
+from two1.server import machine_auth_wallet
 from two1.commands.util import config as two1_config
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
