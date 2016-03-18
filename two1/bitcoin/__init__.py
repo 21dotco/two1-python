@@ -1,4 +1,4 @@
-"""The bitcoin module within the 21 Bitcoin Library (``two1.lib.bitcoin``) provides
+"""The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
 the following functionality:
 
 1. Serialization/deserialization of all Bitcoin data structures:

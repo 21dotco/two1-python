@@ -1,6 +1,6 @@
 import pytest
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 import two1.lib.channels.statemachine as statemachine
 import two1.lib.channels.database as database
 

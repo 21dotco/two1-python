@@ -1,6 +1,6 @@
 """Uses a PrivateKey to provide signing capabilities for authentication."""
 import keyring
-from two1.lib.bitcoin.crypto import PrivateKey
+from two1.bitcoin.crypto import PrivateKey
 
 
 class MachineAuth(object):

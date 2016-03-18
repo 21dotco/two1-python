@@ -8,13 +8,13 @@ from urllib.parse import urljoin
 from collections import defaultdict
 from two1.lib.blockchain import exceptions
 from two1.lib.blockchain.base_provider import BaseProvider
-from two1.lib.bitcoin.txn import CoinbaseInput
-from two1.lib.bitcoin.txn import TransactionInput
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.utils import bytes_to_str
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
+from two1.bitcoin.txn import CoinbaseInput
+from two1.bitcoin.txn import TransactionInput
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.utils import bytes_to_str
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
 
 
 class InsightProvider(BaseProvider):
@@ -119,7 +119,7 @@ class InsightProvider(BaseProvider):
         Transaction.DEFAULT_TRANSACTION_VERSION
 
         Returns:
-            two1.lib.bitcoin.Transaction: a deserialized transaction derived
+            two1.bitcoin.Transaction: a deserialized transaction derived
                 from the provided json.
 
         """

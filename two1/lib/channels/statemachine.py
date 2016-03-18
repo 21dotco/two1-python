@@ -4,7 +4,7 @@ import time
 import enum
 import math
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 from . import walletwrapper
 
 

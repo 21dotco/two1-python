@@ -1,8 +1,8 @@
 """Wrapper around the two1 wallet for payment channels."""
 import codecs
-import two1.lib.bitcoin.utils as utils
-from two1.lib.bitcoin import Script
-from two1.lib.bitcoin import Transaction
+import two1.bitcoin.utils as utils
+from two1.bitcoin import Script
+from two1.bitcoin import Transaction
 
 
 class WalletError(Exception):
@@ -60,12 +60,12 @@ class Two1WalletWrapper(WalletWrapperBase):
         """Sign a half-signed payment transaction.
 
         Args:
-            payment_tx (two1.lib.bitcoin.Transaction): an object that
+            payment_tx (two1.bitcoin.Transaction): an object that
                 contains a transaction from a customer, whether for a refund
                 or general payment, to be signed by the merchant.
 
         Returns:
-            two1.lib.bitcoin.Transaction: an object that contains a transaction
+            two1.bitcoin.Transaction: an object that contains a transaction
                 that has been signed by both the customer and the merchant.
         """
         # Verify that the deposit spend has only one input
@@ -89,7 +89,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         """Validate that a public key exists in the merchants wallet.
 
         Args:
-            public_key (two1.lib.bitcoin.PublicKey): the public key to test.
+            public_key (two1.bitcoin.PublicKey): the public key to test.
 
         Returns:
             bool: True if the merchant owns the public key, False otherwise.

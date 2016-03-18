@@ -1,5 +1,5 @@
 """Wraps the Two1 `Wallet` to provide methods for payment channel management."""
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 import two1.lib.wallet as wallet
 import two1.lib.wallet.exceptions
 

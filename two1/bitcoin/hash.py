@@ -2,7 +2,7 @@
 in a user-friendly way."""
 import hashlib
 
-from two1.lib.bitcoin.utils import bytes_to_str
+from two1.bitcoin.utils import bytes_to_str
 
 
 class Hash(object):

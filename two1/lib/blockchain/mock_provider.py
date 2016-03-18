@@ -3,12 +3,12 @@ information about a blockchain by contacting a server."""
 import math
 from unittest.mock import MagicMock
 
-from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
-from two1.lib.bitcoin.txn import TransactionOutput
-from two1.lib.bitcoin.txn import Transaction
-from two1.lib.bitcoin.utils import address_to_key_hash
+from two1.bitcoin.crypto import HDKey, HDPrivateKey, HDPublicKey
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
+from two1.bitcoin.txn import TransactionOutput
+from two1.bitcoin.txn import Transaction
+from two1.bitcoin.utils import address_to_key_hash
 from two1.lib.blockchain.base_provider import BaseProvider
 from two1.lib.wallet.account_types import AccountType
 from two1.lib.wallet.account_types import account_types

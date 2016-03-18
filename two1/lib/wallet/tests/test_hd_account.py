@@ -1,6 +1,6 @@
 import pytest
 
-from two1.lib.bitcoin.crypto import HDKey, HDPrivateKey
+from two1.bitcoin.crypto import HDKey, HDPrivateKey
 from two1.lib.blockchain.mock_provider import MockProvider
 from two1.lib.wallet.account_types import account_types
 from two1.lib.wallet.cache_manager import CacheManager

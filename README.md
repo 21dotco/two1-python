@@ -75,16 +75,16 @@ $ py.test
  - [wallet.py](two1/commands/util/wallet.py): Utility functions for user wallets.
  - [zerotier.py](two1/commands/util/zerotier.py): Simple wrapper for zerotier-cli
 
-## The `two1/lib/bitcoin` directory
- - [__init__.py](two1/lib/bitcoin/__init__.py): The bitcoin module within the 21 Bitcoin Library (``two1.lib.bitcoin``) provides
- - [block.py](two1/lib/bitcoin/block.py): This submodule provides the MerkleNode, Block, BlockHeader, and CompactBlock
- - [crypto.py](two1/lib/bitcoin/crypto.py): This submodule provides the PublicKey, PrivateKey, and Signature classes.
- - [exceptions.py](two1/lib/bitcoin/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
- - [hash.py](two1/lib/bitcoin/hash.py): this submodule provides a Hash class for interacting with SHA-256 hashes
- - [script.py](two1/lib/bitcoin/script.py): This submodule provides a single Script class that has knowledge of all
- - [script_interpreter.py](two1/lib/bitcoin/script_interpreter.py): This submodule provides a single ScriptInterpreter class to be used in
- - [txn.py](two1/lib/bitcoin/txn.py): This submodule provides Transaction, Coinbase, TransactionInput,
- - [utils.py](two1/lib/bitcoin/utils.py): This submodule provides functions for accomplishing common tasks encountered
+## The `two1/bitcoin` directory
+ - [__init__.py](two1/bitcoin/__init__.py): The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
+ - [block.py](two1/bitcoin/block.py): This submodule provides the MerkleNode, Block, BlockHeader, and CompactBlock
+ - [crypto.py](two1/bitcoin/crypto.py): This submodule provides the PublicKey, PrivateKey, and Signature classes.
+ - [exceptions.py](two1/bitcoin/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
+ - [hash.py](two1/bitcoin/hash.py): this submodule provides a Hash class for interacting with SHA-256 hashes
+ - [script.py](two1/bitcoin/script.py): This submodule provides a single Script class that has knowledge of all
+ - [script_interpreter.py](two1/bitcoin/script_interpreter.py): This submodule provides a single ScriptInterpreter class to be used in
+ - [txn.py](two1/bitcoin/txn.py): This submodule provides Transaction, Coinbase, TransactionInput,
+ - [utils.py](two1/bitcoin/utils.py): This submodule provides functions for accomplishing common tasks encountered
 
 ## The `two1/lib/bitrequests` directory
  - [__init__.py](two1/lib/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users

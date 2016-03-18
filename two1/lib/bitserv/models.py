@@ -5,7 +5,7 @@ import codecs
 import sqlite3
 import datetime
 import collections
-from two1.lib.bitcoin import Transaction
+from two1.bitcoin import Transaction
 
 Channel = collections.namedtuple('Channel', [
     'deposit_txid', 'state', 'deposit_tx', 'payment_tx', 'merchant_pubkey',
@@ -46,7 +46,7 @@ class ChannelDatabase:
         """Create a payment channel entry.
 
         Args:
-            deposit_tx (two1.lib.bitcoin.Transaction): initial deposit used to
+            deposit_tx (two1.bitcoin.Transaction): initial deposit used to
                 open the payment channel.
             merch_pubkey (str): the merchant public key used in the channel.
             amount (int): the opening balance of the payment channel.
@@ -71,7 +71,7 @@ class ChannelDatabase:
 
         Args:
             deposit_txid (str): deposit txid used to identify the channel.
-            payment_tx (two1.lib.bitcoin.Transaction): payment transaction made
+            payment_tx (two1.bitcoin.Transaction): payment transaction made
                 within the channel.
             payment_amount (int): incremental payment amount of the tx.
         """
@@ -99,7 +99,7 @@ class PaymentDatabase:
 
         Args:
             deposit_txid (str): deposit txid used to identify the channel.
-            payment_tx (two1.lib.bitcoin.Transaction): payment transaction made
+            payment_tx (two1.bitcoin.Transaction): payment transaction made
                 within the channel.
             amount (int): the opening balance of the payment channel.
             payment_amount (int): incremental payment amount of the tx.

@@ -1,7 +1,7 @@
 import time
 import pytest
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 import two1.lib.channels.paymentchannelclient as paymentchannelclient
 import two1.lib.channels.statemachine as statemachine
 import two1.lib.channels.paymentchannel as paymentchannel

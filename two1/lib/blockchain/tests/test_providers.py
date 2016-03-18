@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
-from two1.lib.bitcoin.crypto import HDPublicKey
-from two1.lib.bitcoin.txn import Transaction
+from two1.bitcoin.crypto import HDPublicKey
+from two1.bitcoin.txn import Transaction
 from two1.lib.blockchain.insight_provider import InsightProvider
 from two1.lib.blockchain.twentyone_provider import TwentyOneProvider
 from two1.lib.blockchain.exceptions import DataProviderError

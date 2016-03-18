@@ -2,7 +2,7 @@
 two1.bitcoin.tests.conftest
 ---------------------------
 
-.. automodule:: two1.lib.bitcoin.tests.conftest
+.. automodule:: two1.bitcoin.tests.conftest
     :members:
     :undoc-members:
     :show-inheritance:
@@ -10,7 +10,7 @@ two1.bitcoin.tests.conftest
 two1.bitcoin.tests.test_bitcoin module
 --------------------------------------
 
-.. automodule:: two1.lib.bitcoin.tests.test_bitcoin
+.. automodule:: two1.bitcoin.tests.test_bitcoin
     :members:
     :undoc-members:
     :show-inheritance:
@@ -19,7 +19,7 @@ two1.bitcoin.tests.test_bitcoin module
 Module contents
 ---------------
 
-.. automodule:: two1.lib.bitcoin.tests
+.. automodule:: two1.bitcoin.tests
     :members:
     :undoc-members:
     :show-inheritance:

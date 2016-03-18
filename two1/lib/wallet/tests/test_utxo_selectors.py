@@ -1,8 +1,8 @@
 import random
 
-from two1.lib.bitcoin.txn import UnspentTransactionOutput
-from two1.lib.bitcoin.hash import Hash
-from two1.lib.bitcoin.script import Script
+from two1.bitcoin.txn import UnspentTransactionOutput
+from two1.bitcoin.hash import Hash
+from two1.bitcoin.script import Script
 from two1.lib.wallet.exceptions import WalletBalanceError
 from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
 

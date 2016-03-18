@@ -1,5 +1,5 @@
 """This is a simple submodule that enumerates the different kinds of exceptions
-that the `two1.lib.bitcoin` module raises."""
+that the `two1.bitcoin` module raises."""
 
 
 class DeserializationError(Exception):

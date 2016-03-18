@@ -1,6 +1,6 @@
-The 21 Bitcoin Library (``two1.lib.bitcoin``)
+The 21 Bitcoin Library (``two1.bitcoin``)
 =============================================
-The bitcoin module within the 21 Bitcoin Library (``two1.lib.bitcoin``) provides
+The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
 the following functionality:
 
 1. Serialization/deserialization of all Bitcoin data structures:
@@ -19,7 +19,7 @@ Bitcoin data structures after learning the functions in this module.
 
 Quickstart
 ==========
-We will illustrate the use of the ``two1.lib.bitcoin`` module by showing
+We will illustrate the use of the ``two1.bitcoin`` module by showing
 how to parse, create, and sign a transaction.
 
 Parsing a transaction
@@ -31,7 +31,7 @@ can be deserialized as follows::
 
   import requests
 
-  from two1.lib.bitcoin.txn import Transaction
+  from two1.bitcoin.txn import Transaction
 
   tx_hex = requests.request("GET", "https://blockchain.info/rawtx/039fc554371f9381376b3ea7a3f22009709f05a993fa90a919ac73c1713bba3b?format=hex").text
 
@@ -99,10 +99,10 @@ A transaction can be created from scratch by creating and inserting
 inputs and outputs. As outputs don't require any signing, let's start
 by creating the first output in the above transacion::
 
-  from two1.lib.bitcoin.txn import TransactionOutput
-  from two1.lib.bitcoin.script import Script
-  from two1.lib.bitcoin.utils import address_to_key_hash
-  from two1.lib.bitcoin.utils import bytes_to_str
+  from two1.bitcoin.txn import TransactionOutput
+  from two1.bitcoin.script import Script
+  from two1.bitcoin.utils import address_to_key_hash
+  from two1.bitcoin.utils import bytes_to_str
 
   address = '137KzxStaf6vw5yGujViK3Tkigoix9N3v7'
   _, hash160 = address_to_key_hash(address)
@@ -143,9 +143,9 @@ an input, we need to prove we have ownership of the key that contains
 the input funds. Since we do not have the private key associated with
 the inputs in the above transaction, we will create a new key pair and
 sign a fake input. To do this, we will use the
-``two1.lib.bitcoin.crypto`` module::
+``two1.bitcoin.crypto`` module::
 
-  from two1.lib.bitcoin.crypto import PrivateKey
+  from two1.bitcoin.crypto import PrivateKey
 
   private_key = PrivateKey.from_random()
 
@@ -160,14 +160,14 @@ A complete example: creating and signing a transaction
 ------------------------------------------------------
 Let's put it all together::
 
-  from two1.lib.bitcoin.crypto import PrivateKey
-  from two1.lib.bitcoin.hash import Hash
-  from two1.lib.bitcoin.txn import TransactionInput
-  from two1.lib.bitcoin.txn import TransactionOutput
-  from two1.lib.bitcoin.txn import Transaction
-  from two1.lib.bitcoin.script import Script
-  from two1.lib.bitcoin.utils import address_to_key_hash
-  from two1.lib.bitcoin.utils import bytes_to_str
+  from two1.bitcoin.crypto import PrivateKey
+  from two1.bitcoin.hash import Hash
+  from two1.bitcoin.txn import TransactionInput
+  from two1.bitcoin.txn import TransactionOutput
+  from two1.bitcoin.txn import Transaction
+  from two1.bitcoin.script import Script
+  from two1.bitcoin.utils import address_to_key_hash
+  from two1.bitcoin.utils import bytes_to_str
 
   # We use a random private key.
   # If you wanted to use a real one, you'd import the wallet
@@ -251,10 +251,10 @@ Notary Public <../../learn/bitcoin-notary-public>`_ tutorial for a
 worked example.
 
 
-``two1.lib.bitcoin``: module contents
+``two1.bitcoin``: module contents
 =====================================
-The ``two1.lib.bitcoin`` module is organized into the following submodules:
+The ``two1.bitcoin`` module is organized into the following submodules:
    
 .. toctree::
 
-   two1.lib.bitcoin.submodules
+   two1.bitcoin.submodules

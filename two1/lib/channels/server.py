@@ -5,7 +5,7 @@ import requests
 import json
 import functools
 
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 from two1.lib.wallet import Wallet
 
 from . import blockchain

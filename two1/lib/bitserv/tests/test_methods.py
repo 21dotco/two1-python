@@ -1,6 +1,6 @@
 import codecs
 import pytest
-import two1.lib.bitcoin as bitcoin
+import two1.bitcoin as bitcoin
 
 from two1.lib.bitserv import OnChain
 from two1.lib.bitserv.models import OnChainSQLite3
