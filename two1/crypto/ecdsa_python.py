@@ -6,7 +6,7 @@ import random
 
 from collections import namedtuple
 
-from two1.lib.crypto.ecdsa_base import EllipticCurveBase
+from two1.crypto.ecdsa_base import EllipticCurveBase
 
 # Links
 # https://en.wikibooks.org/wiki/Cryptography/Elliptic_curve

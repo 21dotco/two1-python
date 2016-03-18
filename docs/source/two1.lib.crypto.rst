@@ -1,23 +1,23 @@
-The 21 Crypto Library (``two1.lib.crypto``)
+The 21 Crypto Library (``two1.crypto``)
 ===========================================
-The crypto module within the 21 Bitcoin Library (``two1.lib.crypto``)
+The crypto module within the 21 Bitcoin Library (``two1.crypto``)
 provides an interface to the low-level cryptographic functions used in
 Bitcoin to create public keys and signatures using the Elliptic Curve
 Digital Signature Algorithm (ECDSA) on the secp256k1 curve.
 
 Two modules are provided:
 
-1. `two1.lib.crypto.ecdsa_openssl`: An OpenSSL-using module that's
+1. `two1.crypto.ecdsa_openssl`: An OpenSSL-using module that's
    available if OpenSSL is available on the system.
 
-2. `two1.lib.crypto.ecdsa`: A pure Python module that's always
+2. `two1.crypto.ecdsa`: A pure Python module that's always
    available and is very portable, but which does not contain as many
    performance optimizations and which has not been as well audited as
    the Bitcoin-related parts of OpenSSL.
    
 Quickstart
 ==========
-We will illustrate the use of the ``two1.lib.crypto`` module by going
+We will illustrate the use of the ``two1.crypto`` module by going
 through a simple example:
 
 Generate an ECDSA key pair
@@ -25,7 +25,7 @@ Generate an ECDSA key pair
 Start our simple example by importing the library and loading the
 secp256k1 elliptical curve Bitcoin uses for cryptography::
 
-  >>> from two1.lib.crypto import ecdsa
+  >>> from two1.crypto import ecdsa
   >>> ec = ecdsa.secp256k1()
 
 Generate an ECDSA key pair from random data, which is the way all non-HD
@@ -83,10 +83,10 @@ verify that signature::
   >>> ec.verify(b'21', signature.__getitem__(0), pub)
   True
 
-``two1.lib.crypto``: module contents
+``two1.crypto``: module contents
 ====================================
-The ``two1.lib.crypto`` module is organized into the following submodules:
+The ``two1.crypto`` module is organized into the following submodules:
    
 .. toctree::
 
-   two1.lib.crypto.submodules
+   two1.crypto.submodules
