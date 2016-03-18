@@ -228,6 +228,22 @@ class TwentyOneRestClient(object):
 
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    def get_sellable_apps(self):
+        # currently a fixture until endpoint is in working state.
+        return [
+            {
+                "name"  : "ping21",
+                "git"   : "https://github.com/21dotco/ping21.git",
+                "avg_earnings_day" : 10000,
+                "avg_earnings_request" : 1000,
+                "resources:" : {
+                    "bandwidth" : "40kb",
+                    "hdd" : "40kb",
+                    "mem" : "128mb"
+                }
+            }
+        ]
+
     def get_listing_info(self, listing_id):
         path = "/market/apps/{}".format(listing_id)
         return self._request(sign_username=self.username, method="GET", path=path)

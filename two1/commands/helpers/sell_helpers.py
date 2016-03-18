@@ -3,9 +3,74 @@
 import os
 import tempfile
 import subprocess
+import platform
+import shutil
 
-# 3rd party imports
-import requests
+from two1.commands.util import exceptions
+from two1.commands.util.uxstring import UxString
+
+
+def detect_url(url):
+    """Detect type of url specified,
+    ie. git style or tarball
+    Args:
+        url (str): specified url
+    Rasies:
+        NotImplementedError: if url type
+            is not supported yet.
+    Returns:
+        str: type of path
+    """
+    rv = ""
+    if url.endswith(".git"):
+        rv = "git"
+    else:
+        raise exceptions.Two1Error(UxString.error.url_not_supported)
+    return rv
+
+
+def clone_repo(appname, url):
+    """Clone a git repo.
+    Args:
+        appame (str): name of the application.
+        url (str): git repo url
+    Returns:
+        bool: success of the cloned repo.
+    """
+    rv = False
+    if not os.path.exists(appname):
+        try:
+            subprocess.check_output([
+                "git",
+                "clone",
+                url
+                ])
+            rv = True
+        except subprocess.CalledProcessError as e:
+            raise exceptions.Two1Error(
+                UxString.error.repo_clone_fail.format(e))
+    else:
+        rv = True
+    return rv
+
+
+def detect_os():
+    """Detect if the operating system
+    that is running is either osx, debian-based
+    or other.
+
+    Returns:
+        str: platform name
+    Raises:
+        OSError: if platform is not supported
+    """
+    plat = platform.system().lower()
+    if plat in ['debian', 'linux']:
+        return 'debian'
+    elif 'darwin' in plat:
+        return 'darwin'
+    else:
+        raise exceptions.Two1Error(UxString.unsupported_platform)
 
 
 def dir_to_absolute(dirname):
@@ -24,7 +89,31 @@ def absolute_path_to_foldername(absolute_dir):
     return os.path.split(absolute_dir.rstrip('/'))[-1]
 
 
-def install_requirements():
+def install_python_requirements(dirname):
+    """Install the python requirements needed
+    to run the app
+
+    Args:
+        dirname (str) : directory of the app
+    Returns:
+        bool: True if successfully installed,
+            False otherwise.
+    """
+    rv = False
+    appdir = dir_to_absolute(dirname)
+    try:
+        subprocess.check_output(
+            "sudo -H pip3 install -r {}requirements.txt".format(appdir),
+            shell=True
+            )
+        rv = True
+    except subprocess.CalledProcessError as e:
+        raise exceptions.Two1Error(
+            UxString.unsuccessfull_python_requirements.fomat(e))
+    return rv
+
+
+def install_server_requirements(dirname):
     """Install requirements needed to host an app
     using nginx.
 
@@ -34,66 +123,28 @@ def install_requirements():
     """
     rv = False
     try:
-        subprocess.check_output(
-            "sudo apt-get install -y nginx && sudo pip3 install gunicorn",
-            shell=True
-        )
+        if "debian" in detect_os():
+            subprocess.check_output(
+                "sudo apt-get install -y nginx \
+                && sudo -H pip3 install gunicorn",
+                shell=True
+            )
+        if "darwin" in detect_os():
+            if not shutil.which("brew"):
+                raise exceptions.Two1Error(
+                    UxString.install_brew
+                )
+            subprocess.check_output(
+                "brew install nginx",
+                shell=True)
+            subprocess.check_output(
+                "sudo pip3 install gunicorn",
+                shell=True
+            )
         rv = True
-    except subprocess.CalledProcessError as e:
-        raise e
-    return rv
-
-
-def check_or_create_manifest(dirname):
-    """Create a manifest.json in application directory if it does not already
-    exist.
-
-    Returns:
-        bool: True if the manifest was successfully found or created,
-            False otherwise.
-    """
-    rv = False
-    manifest_exists = False
-    appdir = dir_to_absolute(dirname)
-    manifest_path = appdir + "manifest.json"
-    try:
-        os.stat(manifest_path)
-        manifest_exists = True
-    except FileNotFoundError:
-        pass
-    if not manifest_exists:
-        manifest_req = requests.get(
-            "https://manifest.21.co/",
-        )
-        if manifest_req.ok:
-            with tempfile.NamedTemporaryFile() as tf:
-                tf.write(manifest_req.text.encode())
-                tf.flush()
-                cp = False
-                ed = False
-                try:
-                    subprocess.check_output([
-                        "cp",
-                        tf.name,
-                        manifest_path
-                    ])
-                    cp = True
-                except subprocess.CalledProcessError as e:
-                    raise subprocess.CalledProcessError(
-                        "Failed to copy manifest to your local directory: {}".format(e))
-                try:
-                    subprocess.check_call([
-                        "editor",
-                        manifest_path
-                        ])
-                    ed = True
-                except subprocess.CalledProcessError as e:
-                    raise subprocess.CalledProcessError(
-                        "Failed to edit your manifest: {}".format(e)
-                    )
-                rv = cp and ed
-    else:
-        rv = True
+    except (subprocess.CalledProcessError, OSError) as e:
+        raise exceptions.Two1Error(
+            UxString.unsuccessfull_server_requirements.fomat(e))
     return rv
 
 
@@ -136,20 +187,28 @@ def create_site_includes():
         bool: True if the process was successfully completed,
             False otherwise.
     """
+    plat = detect_os()
     rv = False
-    if os.path.isfile("/etc/nginx/sites-enabled/default"):
+
+    if os.path.isfile("{}/etc/nginx/sites-enabled/default".format(
+        "/usr/local" if "darwin" in plat else "")
+    ):
         subprocess.check_output([
             "sudo",
             "rm",
             "-f",
-            "/etc/nginx/sites-enabled/default"
+            "{}/etc/nginx/sites-enabled/default".format(
+                "/usr/local" if "darwin" in plat else "")
             ])
-    if not os.path.isdir("/etc/nginx/site-includes"):
+    if not os.path.isdir("{}/etc/nginx/site-includes".format(
+        "/usr/local" if "darwin" in plat else "")
+    ):
         subprocess.check_output([
             "sudo",
             "mkdir",
             "-p",
-            "/etc/nginx/site-includes"
+            "{}/etc/nginx/site-includes".format(
+                "/usr/local" if "darwin" in plat else "")
             ])
         rv = True
     return rv
@@ -163,24 +222,30 @@ def create_default_nginx_server():
         bool: True if the process was successfully completed,
             False otherwise.
     """
+    plat = detect_os()
     rv = False
     with tempfile.NamedTemporaryFile() as tf:
-        tf.write("""server {
-       include /etc/nginx/site-includes/*;
-}""".encode())
+        server = """server {
+       include %s/etc/nginx/site-includes/*;
+}""" % ("/usr/local" if "darwin" in plat else "")
+        tf.write(server.encode())
         tf.flush()
         try:
             subprocess.check_output([
                 "sudo",
                 "cp",
                 tf.name,
-                "/etc/nginx/sites-enabled/two1baseserver"
+                "{}/etc/nginx/sites-enabled/two1baseserver".format(
+                    "/usr/local" if "darwin" in plat else ""
+                )
             ])
             subprocess.check_output([
                 "sudo",
                 "chmod",
                 "644",
-                "/etc/nginx/sites-enabled/two1baseserver"
+                "{}/etc/nginx/sites-enabled/two1baseserver".format(
+                    "/usr/local" if "darwin" in plat else ""
+                )
             ])
             rv = True
         except subprocess.CalledProcessError:
@@ -203,6 +268,11 @@ def create_systemd_file(dirname):
             False otherwise.
     """
     rv = False
+    plat = detect_os()
+    if "darwin" in plat:
+        raise exceptions.Two1Error(
+                UxString.unsupported_platform
+            )
     appdir = dir_to_absolute(dirname)
     appname = absolute_path_to_foldername(appdir)
     with tempfile.NamedTemporaryFile() as tf:
@@ -212,7 +282,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=%s
-ExecStart=/usr/local/bin/gunicorn index:app --workers 1 --bind unix:%s%s.sock --access-logfile %sgunicorn.access.log --error-logfile %sgunicorn.error.log
+ExecStart=/usr/local/bin/gunicorn ping21-server:app --workers 1 --bind unix:%s%s.sock --access-logfile %sgunicorn.access.log --error-logfile %sgunicorn.error.log
 
 [Install]
 WantedBy=default.target
@@ -275,6 +345,7 @@ def create_nginx_config(dirname):
         bool: True if the process was successfully completed,
             False otherwise.
     """
+    plat = detect_os()
     rv = False
     appdir = dir_to_absolute(dirname)
     appname = absolute_path_to_foldername(appdir)
@@ -292,36 +363,55 @@ def create_nginx_config(dirname):
                 "sudo",
                 "cp",
                 tf.name,
-                "/etc/nginx/sites-available/{}".format(appname)
+                "{}/etc/nginx/sites-available/{}".format(
+                    "/usr/local" if "darwin" in plat else "",
+                    appname
+                )
             ])
             subprocess.check_output([
                 "sudo",
                 "chmod",
                 "644",
-                "/etc/nginx/sites-available/{}".format(appname)
+                "{}/etc/nginx/sites-available/{}".format(
+                        "/usr/local" if "darwin" in plat else "",
+                        appname
+                    )
             ])
             subprocess.check_output([
                 "sudo",
                 "rm",
                 "-f",
-                "/etc/nginx/site-includes/{}".format(appname)
+                "{}/etc/nginx/site-includes/{}".format(
+                        "/usr/local" if "darwin" in plat else "",
+                        appname
+                    )
             ])
             subprocess.check_output([
                 "sudo",
                 "ln",
                 "-s",
-                "/etc/nginx/sites-available/{}".format(appname),
-                "/etc/nginx/site-includes/{}".format(appname),
+                "{}/etc/nginx/sites-available/{}".format(
+                    "/usr/local" if "darwin" in plat else "",
+                    appname),
+                "{}/etc/nginx/site-includes/{}".format(
+                    "/usr/local" if "darwin" in plat else "",
+                    appname)
             ])
-            subprocess.check_output([
-                "sudo",
-                "service",
-                "nginx",
-                "restart"
-            ])
+            if "darwin" in plat:
+                if os.path.exists("/usr/local/var/run/nginx.pid"):
+                    subprocess.check_output("sudo nginx -s stop", shell=True)
+                subprocess.check_output("sudo nginx", shell=True)
+            else:
+                subprocess.check_output([
+                    "sudo",
+                    "service",
+                    "nginx",
+                    "restart"
+                ])
             rv = True
         except subprocess.CalledProcessError as e:
-            raise e
+            raise exceptions.Two1Error(
+                UxString.failed_configuring_nginx.format(e))
     return rv
 
 
