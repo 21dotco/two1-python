@@ -1,7 +1,7 @@
 try:
-    from two1.lib.crypto import ecdsa_openssl as _ecdsa
+    from two1.crypto import ecdsa_openssl as _ecdsa
 except:
-    from two1.lib.crypto import ecdsa_python as _ecdsa
+    from two1.crypto import ecdsa_python as _ecdsa
 
 ECPointAffine = _ecdsa.ECPointAffine
 EllipticCurve = _ecdsa.EllipticCurve

@@ -71,7 +71,6 @@ setup(
               'two1.bitcoin',
               'two1.lib.server',
               'two1.lib.wallet',
-              'two1.lib.crypto',
               'two1.bitserv',
               'two1.channels',
               'two1.bitserv.django',
