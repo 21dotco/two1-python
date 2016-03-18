@@ -10,9 +10,9 @@ from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin.txn import Transaction
 from two1.bitcoin.utils import address_to_key_hash
 from two1.blockchain.base_provider import BaseProvider
-from two1.lib.wallet.account_types import AccountType
-from two1.lib.wallet.account_types import account_types
-from two1.lib.wallet.hd_account import HDAccount
+from two1.wallet.account_types import AccountType
+from two1.wallet.account_types import account_types
+from two1.wallet.hd_account import HDAccount
 
 
 class MockTxnDict(dict):

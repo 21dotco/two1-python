@@ -61,12 +61,12 @@ Flask
 
 The decorator for the `Flask <http://flask.pocoo.org/>`__ framework acts
 by attaching itself to an instance of a flask app and then further
-injecting wallet functionality with a ``two1.lib.wallet.Wallet`` object.
+injecting wallet functionality with a ``two1.wallet.Wallet`` object.
 
 .. code:: python
 
     from flask import Flask
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitserv.flask import Payment
 
     app = Flask(__name__)
@@ -100,7 +100,7 @@ module a little simpler, but adds a few extra configuration steps.
 
 .. code:: python
 
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
 
     INSTALLED_APPS = (
           . . .
@@ -155,7 +155,7 @@ barebones payment server by passing it a two1 wallet instance
 
 .. code:: python
 
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitserv import PaymentServer
 
     wallet = Wallet()

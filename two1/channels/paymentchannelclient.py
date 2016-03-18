@@ -42,7 +42,7 @@ class PaymentChannelClient:
         channel database.
 
         Args:
-            wallet (two1.lib.wallet.Wallet): Instance of the two1 wallet.
+            wallet (two1.wallet.Wallet): Instance of the two1 wallet.
             db_path (str): Payment channel database path.
 
         Returns:

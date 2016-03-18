@@ -22,18 +22,18 @@ from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin import utils
 from two1.blockchain.base_provider import BaseProvider
 from two1.blockchain.twentyone_provider import TwentyOneProvider
-from two1.lib.wallet import exceptions
-from two1.lib.wallet.account_types import account_types
-from two1.lib.wallet.hd_account import HDAccount
-from two1.lib.wallet.base_wallet import BaseWallet
-from two1.lib.wallet.cache_manager import CacheManager
-from two1.lib.wallet import exceptions
-from two1.lib.wallet.wallet_txn import WalletTransaction
-from two1.lib.wallet import fees as txn_fees
-from two1.lib.wallet.socket_rpc_server import UnixSocketServerProxy
-from two1.lib.wallet.utxo_selectors import utxo_selector_smallest_first
+from two1.wallet import exceptions
+from two1.wallet.account_types import account_types
+from two1.wallet.hd_account import HDAccount
+from two1.wallet.base_wallet import BaseWallet
+from two1.wallet.cache_manager import CacheManager
+from two1.wallet import exceptions
+from two1.wallet.wallet_txn import WalletTransaction
+from two1.wallet import fees as txn_fees
+from two1.wallet.socket_rpc_server import UnixSocketServerProxy
+from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
-from two1.lib.wallet import daemonizable
+from two1.wallet import daemonizable
 
 
 def _public_key_serializer(public_key):

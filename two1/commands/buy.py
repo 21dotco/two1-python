@@ -12,7 +12,7 @@ import click
 # two1 imports
 import two1
 import two1.server as server
-import two1.lib.wallet.fees as fees
+import two1.wallet.fees as fees
 import two1.channels as channels
 import two1.commands.status as status
 import two1.commands.util.uxstring as uxstring

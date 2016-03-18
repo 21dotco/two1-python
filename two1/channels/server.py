@@ -6,7 +6,7 @@ import json
 import functools
 
 import two1.bitcoin as bitcoin
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 
 from . import blockchain
 from .statemachine import PaymentChannelRedeemScript
@@ -190,7 +190,7 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
 
         Args:
             url (str): URL of Test server.
-            wallet (two1.lib.wallet.Wallet): Wallet instance.
+            wallet (two1.wallet.Wallet): Wallet instance.
 
         Returns:
             TestPaymentChannelServer: instance of TestPaymentChannelServer.

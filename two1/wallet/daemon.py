@@ -13,17 +13,17 @@ from jsonrpcserver.exceptions import ServerError
 from path import Path
 from two1.bitcoin.crypto import PublicKey
 from two1.bitcoin.crypto import HDPublicKey
-from two1.lib.wallet import daemonizable
-from two1.lib.wallet.socket_rpc_server import UnixSocketJSONRPCServer
-from two1.lib.wallet.exceptions import AccountCreationError
-from two1.lib.wallet.exceptions import DaemonRunningError
-from two1.lib.wallet.exceptions import WalletBalanceError
-from two1.lib.wallet.exceptions import WalletLockedError
-from two1.lib.wallet.exceptions import WalletNotLoadedError
-from two1.lib.wallet.two1_wallet import Two1Wallet
-from two1.lib.wallet.two1_wallet import Wallet
-from two1.lib.wallet.cli import validate_data_provider
-from two1.lib.wallet.cli import WALLET_VERSION
+from two1.wallet import daemonizable
+from two1.wallet.socket_rpc_server import UnixSocketJSONRPCServer
+from two1.wallet.exceptions import AccountCreationError
+from two1.wallet.exceptions import DaemonRunningError
+from two1.wallet.exceptions import WalletBalanceError
+from two1.wallet.exceptions import WalletLockedError
+from two1.wallet.exceptions import WalletNotLoadedError
+from two1.wallet.two1_wallet import Two1Wallet
+from two1.wallet.two1_wallet import Wallet
+from two1.wallet.cli import validate_data_provider
+from two1.wallet.cli import WALLET_VERSION
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEF_WALLET_UPDATE_INTERVAL = 25   # seconds

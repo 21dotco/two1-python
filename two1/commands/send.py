@@ -6,7 +6,7 @@ import click
 
 # two1 imports
 from two1.blockchain.exceptions import DataProviderError
-from two1.lib.wallet.exceptions import WalletBalanceError
+from two1.wallet.exceptions import WalletBalanceError
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions

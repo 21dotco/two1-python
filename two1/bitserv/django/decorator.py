@@ -26,7 +26,7 @@ class Payment:
         """Configure bitserv settings.
 
         Args:
-            wallet (two1.lib.wallet.Wallet): The merchant's wallet instance.
+            wallet (two1.wallet.Wallet): The merchant's wallet instance.
         """
         from .models import PaymentChannel, PaymentChannelSpend, BlockchainTransaction
         if allowed_methods is None:

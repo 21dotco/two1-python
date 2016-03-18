@@ -15,7 +15,7 @@ from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import wallet as wallet_util
 from two1.server import rest_client as _rest_client
-from two1.lib.wallet import two1_wallet
+from two1.wallet import two1_wallet
 from two1.server import machine_auth_wallet
 
 

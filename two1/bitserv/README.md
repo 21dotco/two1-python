@@ -37,11 +37,11 @@ def current_temperature():
 
 ### Flask
 
-The decorator for the [Flask](http://flask.pocoo.org/) framework acts by attaching itself to an instance of a flask app and then further injecting wallet functionality with a `two1.lib.wallet.Wallet` object.
+The decorator for the [Flask](http://flask.pocoo.org/) framework acts by attaching itself to an instance of a flask app and then further injecting wallet functionality with a `two1.wallet.Wallet` object.
 
 ``` python
 from flask import Flask
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 from two1.bitserv.flask import Payment
 
 app = Flask(__name__)
@@ -69,7 +69,7 @@ packages=[
 `settings.py`
 
 ``` python
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 
 INSTALLED_APPS = (
       . . .  
@@ -107,7 +107,7 @@ The `PaymentServer` - and to some extent, each `PaymentBase` method - relies on 
 The `PaymentServer` also uses a custom `wallet.py` wrapper to provide added transaction-building functionality. You can set up a barebones payment server by passing it a two1 wallet instance
 
 ``` python
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 from two1.bitserv import PaymentServer
 
 wallet = Wallet()

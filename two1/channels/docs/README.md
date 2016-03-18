@@ -128,7 +128,7 @@ The `PaymentChannelClient` class ([two1/channels/paymentchannelclient.py](https:
 
 Finally, the `channels` cli is click-based cli implemented in [two1/channels/cli.py](https://github.com/21dotco/two1/blob/devel/two1/channels/cli.py).
 
-The `ChannelRequests` class ([two1/lib/bitcurl/bitrequests.py](https://github.com/21dotco/two1/blob/devel/two1/lib/bitcurl/bitrequests.py]) takes in a wallet and creates a `PaymentChannelClient` in its constructor. It uses the `PaymentChannelClient` and `PaymentChannel` APIs to lookup and operate payment channels, subject to an overridable hard-coded policy (initial deposit amount = 100000, expiration time = 86400 seconds, and close out amount = 1000).
+The `ChannelRequests` class ([two1/bitrequests/bitrequests.py](https://github.com/21dotco/two1/blob/devel/two1/bitrequests/bitrequests.py]) takes in a wallet and creates a `PaymentChannelClient` in its constructor. It uses the `PaymentChannelClient` and `PaymentChannel` APIs to lookup and operate payment channels, subject to an overridable hard-coded policy (initial deposit amount = 100000, expiration time = 86400 seconds, and close out amount = 1000).
 
 
 ## Developer Testing
@@ -141,7 +141,7 @@ Fire up a barebones payment channel flask `server.py`:
 
 ``` python
 import flask
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 from two1.bitserv.flask import Payment
 
 app = flask.Flask(__name__)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 Set up a `client.py` to consume the server's REST API.
 
 ``` python
-from two1.lib.wallet import Wallet
+from two1.wallet import Wallet
 from two1.bitrequests import ChannelRequests
 
 requests = ChannelRequests(Wallet())

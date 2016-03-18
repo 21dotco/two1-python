@@ -217,7 +217,7 @@ Fire up a barebones payment channel flask ``server.py``:
 .. code:: python
 
     import flask
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitserv.flask import Payment
 
     app = flask.Flask(__name__)
@@ -235,7 +235,7 @@ Set up a ``client.py`` to consume the server's REST API.
 
 .. code:: python
 
-    from two1.lib.wallet import Wallet
+    from two1.wallet import Wallet
     from two1.bitrequests import ChannelRequests
 
     requests = ChannelRequests(Wallet())

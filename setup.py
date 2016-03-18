@@ -70,8 +70,9 @@ setup(
               'two1.commands.helpers',
               'two1.bitcoin',
               'two1.server',
-              'two1.lib.wallet',
               'two1.bitserv',
+              'two1.wallet',
+              'two1.crypto',
               'two1.channels',
               'two1.bitserv.django',
               'two1.bitserv.flask',
@@ -117,10 +118,10 @@ setup(
     entry_points={
         'console_scripts': [
             'two1=two1.cli:main',
-            'wallet=two1.lib.wallet.cli:main',
+            'wallet=two1.wallet.cli:main',
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
-            'walletd=two1.lib.wallet.daemon:main',
+            'walletd=two1.wallet.daemon:main',
             'channels=two1.channels.cli:main',
         ],
     },

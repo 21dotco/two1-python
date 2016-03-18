@@ -1,7 +1,7 @@
 """Wraps the Two1 `Wallet` to provide methods for payment channel management."""
 import two1.bitcoin as bitcoin
-import two1.lib.wallet as wallet
-import two1.lib.wallet.exceptions
+import two1.wallet as wallet
+import two1.wallet.exceptions
 
 
 class WalletError(Exception):
@@ -111,7 +111,7 @@ class Two1WalletWrapper(WalletWrapperBase):
         """Instantiate a wallet wrapper interface with the specified Wallet.
 
         Args:
-            wallet (two1.lib.wallet.Wallet): Wallet instance.
+            wallet (two1.wallet.Wallet): Wallet instance.
             blockchain (two1.channels.blockchain.Blockchain): Blockchain
                 data provider.
 

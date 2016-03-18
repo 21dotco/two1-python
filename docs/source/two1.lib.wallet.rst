@@ -1,6 +1,6 @@
-The 21 Machine Wallet (``two1.lib.wallet``)
+The 21 Machine Wallet (``two1.wallet``)
 ===========================================
-The wallet module within the 21 Bitcoin Library (``two1.lib.wallet``)
+The wallet module within the 21 Bitcoin Library (``two1.wallet``)
 provides a fully-functional HD wallet that integrates with the bitcoin
 mined by a 21 Mining Chip and is optimized for machine-to-machine
 transactions. The wallet conforms to both `BIP-32
@@ -12,14 +12,14 @@ can be accessed both via the command line and programmatically.
 Quickstart
 ==========
 
-Using ``two1.lib.wallet`` via the ``wallet`` command line
+Using ``two1.wallet`` via the ``wallet`` command line
 ---------------------------------------------------------
 
 Command-line interaction with the wallet is provided via a `click
 <http://click.pocoo.org/4/>`_ based CLI implemented in
-:file:`two1/lib/wallet/cli.py` which, after ``two1`` package
+:file:`two1/wallet/cli.py` which, after ``two1`` package
 installation, is accessible as ``wallet``. A multi-threaded JSON-RPC
-daemon is also implemented in :file:`two1/lib/wallet/daemon.py` to
+daemon is also implemented in :file:`two1/wallet/daemon.py` to
 provide faster access for repeated calls. The daemon removes the
 overhead of account discovery, transaction downloads, balance updates,
 etc.
@@ -81,13 +81,13 @@ automatically, it can be manually started::
     -h, --help                      Show this message and exit.
 
 
-Using ``two1.lib.wallet`` programmatically
+Using ``two1.wallet`` programmatically
 ------------------------------------------
 To create a wallet programmatically, the easiest way is to use
 ``Two1Wallet.configure()``::
 
   from two1.blockchain.twentyone_provider import TwentyOneProvider
-  from two1.lib.wallet.two1_wallet import Two1Wallet
+  from two1.wallet.two1_wallet import Two1Wallet
 
   options = dict(account_type="BIP32",
                  data_provider=TwentyOneProvider(),
@@ -116,13 +116,13 @@ own provider should you want to use something other than the default
 ``TwentyOneProvider``.
 
 The recommended way to interact with the created wallet is to make use
-of ``two1.lib.wallet.two1_wallet.Wallet`` which abstracts daemon vs
+of ``two1.wallet.two1_wallet.Wallet`` which abstracts daemon vs
 object usage. If a daemon is found running on the system, a ``Wallet``
 instance will connect to it and use it. If not, the ``Wallet``
 instance will instead instantiate a ``Two1Wallet`` object. A very
 simple example to get the wallet's current payout address is::
 
-  from two1.lib.wallet.two1_wallet import Wallet
+  from two1.wallet.two1_wallet import Wallet
 
   w = Wallet()
 
@@ -135,7 +135,7 @@ logged-in user's default wallet (found in
 desired wallet be different than this, the ``wallet_path`` argument
 can be provided::
 
-  from two1.lib.wallet.two1_wallet import Wallet
+  from two1.wallet.two1_wallet import Wallet
 
   w = Wallet(wallet_path=...)
 
@@ -148,10 +148,10 @@ ensure that the daemon has been started with the correct
 for the desired wallet and operate directly on that object.
 
 
-``two1.lib.wallet``: module contents
+``two1.wallet``: module contents
 ====================================
-The ``two1.lib.wallet`` module is organized into the following submodules:
+The ``two1.wallet`` module is organized into the following submodules:
    
 .. toctree::
 
-   two1.lib.wallet.submodules
+   two1.wallet.submodules

@@ -15,14 +15,14 @@ from jsonrpcclient.exceptions import ReceivedErrorResponse
 from path import Path
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
-from two1.lib.wallet.account_types import account_types
-from two1.lib.wallet.base_wallet import convert_to_btc
-from two1.lib.wallet.base_wallet import convert_to_satoshis
-from two1.lib.wallet.base_wallet import satoshi_to_btc
-from two1.lib.wallet import exceptions
-from two1.lib.wallet.two1_wallet import Two1Wallet
-from two1.lib.wallet.two1_wallet import Wallet
-from two1.lib.wallet.daemonizer import get_daemonizer
+from two1.wallet.account_types import account_types
+from two1.wallet.base_wallet import convert_to_btc
+from two1.wallet.base_wallet import convert_to_satoshis
+from two1.wallet.base_wallet import satoshi_to_btc
+from two1.wallet import exceptions
+from two1.wallet.two1_wallet import Two1Wallet
+from two1.wallet.two1_wallet import Wallet
+from two1.wallet.daemonizer import get_daemonizer
 
 
 WALLET_VERSION = "0.1.0"
