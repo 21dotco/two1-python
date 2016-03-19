@@ -63,7 +63,7 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=['two1', 'two1.lib', 'two1.commands', 'two1.commands.helpers', 'two1.lib.bitcoin',
+    packages=['two1', 'two1.mkt', 'two1.lib', 'two1.commands', 'two1.commands.helpers', 'two1.lib.bitcoin',
               'two1.lib.server', 'two1.lib.wallet',
               'two1.lib.crypto', 'two1.lib.bitserv', 'two1.lib.channels',
               'two1.lib.bitserv.django', 'two1.lib.bitserv.flask',
