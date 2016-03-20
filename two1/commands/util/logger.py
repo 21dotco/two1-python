@@ -49,6 +49,7 @@ class ClickLogFormatter(logging.Formatter):
 
 
 class ClickLogHandler(logging.Handler):
+    """ Logs messages using click.echo() """
 
     ECHO_KWARGS = ("nl", "err", "color", "file")
 

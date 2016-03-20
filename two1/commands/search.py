@@ -1,3 +1,4 @@
+""" Two1 command to search the 21 Marketplace """
 # standard python imports
 import datetime
 from textwrap import wrap
@@ -8,7 +9,6 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
@@ -46,10 +46,10 @@ Use 'n' to move to the next page and 'p' to move to the previous page.
 You can also enter an app id to view detailed information about the app.
 
     """
-    _search(ctx.obj['config'], ctx.obj['client'], search_string)
+    _search(ctx.obj['client'], search_string)
 
 
-def _search(config, client, search_string):
+def _search(client, search_string):
     """ Searches the marketplace for apps by the given search_string
 
         Apps are then displayed in a pager in which the user can get more
@@ -79,7 +79,7 @@ def _search(config, client, search_string):
             next_page = get_next_page(prompt_resp, current_page)
             if next_page == -1:
                 model_id = prompt_resp
-                display_search_info(config, client, model_id)
+                display_search_info(client, model_id)
             elif next_page >= total_pages or next_page < 0:
                 continue
             elif next_page != current_page:
@@ -113,7 +113,7 @@ def get_search_results(client, search_string, page):
 
     total_pages = resp_json["total_pages"]
     logger.info("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-    content = market_search_formatter(search_results, page)
+    content = market_search_formatter(search_results)
     logger.info(content)
     return total_pages
 
@@ -121,20 +121,18 @@ def get_search_results(client, search_string, page):
 MAX_PAGE_SIZE = 10
 
 
-def market_search_formatter(search_results, current_page):
+def market_search_formatter(search_results):
     """ Formats the search results into a tabular paginated format
 
     Args:
         search_results (list): a list of results in dict format returned from the REST API
-        current_page (int): current page used to go to next or previous pages
 
     Returs:
         str: formatted results in tabular format
     """
     headers = ["id", "Details", "Creator", "Price", "Category", "Rating"]
     rows = []
-    for i, item in enumerate(search_results):
-        id = item["id"]
+    for _, item in enumerate(search_results):
         if item["min_price"] != item["max_price"]:
             price_range = click.style("Variable", fg="blue")
         else:
@@ -150,8 +148,8 @@ def market_search_formatter(search_results, current_page):
                 rating += "s"
             rating += ")"
         rating = click.style(rating, fg="blue")
-        rows.append([id, title, creator, price_range, category, rating])
-        for indx, l in enumerate(wrap(item["description"])):
+        rows.append([item["id"], title, creator, price_range, category, rating])
+        for _, l in enumerate(wrap(item["description"])):
             rows.append(["", l, "", "", "", ""])
         rows.append(["", "", "", "", "", ""])
 
@@ -179,11 +177,10 @@ def get_next_page(prompt_response, current_page):
         return -1
 
 
-def display_search_info(config, client, listing_id):
+def display_search_info(client, listing_id):
     """ Given a listing id, format and print detailed information to the command line
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (TwentyOneRestClient): rest client used for communication with the backend api
         listing_id (str): unique marketplace listing id
 

@@ -8,12 +8,10 @@ import logging
 
 # 3rd party imports
 import click
-from tabulate import tabulate
 
 # two1 imports
 import two1.channels as channels
 from two1.channels.cli import format_expiration_time
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
@@ -23,38 +21,6 @@ Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending'
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
-
-
-def status_mining(config, client):
-    """ Prints the mining status if the device has a mining chip
-
-    Args:
-        config (Config): config object used for getting .two1 information
-        client (TwentyOneRestClient): rest client used for communication with the backend api
-
-    Returns:
-        dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
-    """
-    has_chip = has_mining_chip()
-    is_mining, mined, hashrate = None, None, None
-    if has_chip:
-        try:
-            hashrate = get_hashrate("15min")
-            if hashrate > 0:
-                hashrate = uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
-            else:
-                hashrate = uxstring.UxString.status_mining_hashrate_unknown
-        except FileNotFoundError:
-            is_mining = uxstring.UxString.status_mining_file_not_found
-        except TimeoutError:
-            is_mining = uxstring.UxString.status_mining_timeout
-        else:
-            is_mining = uxstring.UxString.status_mining_success
-
-        mined = client.get_mined_satoshis()
-        logger.info(uxstring.UxString.status_mining.format(is_mining, hashrate, mined))
-
-    return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
 
 
 @click.command("status")
@@ -86,13 +52,44 @@ def _status(config, client, wallet, detail):
         dict: a dictionary of 'account', 'mining', and 'wallet' items with formatted
             strings for each value
     """
-    status = {
+    status_dict = {
         "account": status_account(config, wallet),
-        "mining": status_mining(config, client),
-        "wallet": status_wallet(config, client, wallet, detail)
+        "mining": status_mining(client),
+        "wallet": status_wallet(client, wallet, detail)
     }
 
-    return status
+    return status_dict
+
+
+def status_mining(client):
+    """ Prints the mining status if the device has a mining chip
+
+    Args:
+        client (TwentyOneRestClient): rest client used for communication with the backend api
+
+    Returns:
+        dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
+    """
+    has_chip = has_mining_chip()
+    is_mining, mined, hashrate = None, None, None
+    if has_chip:
+        try:
+            hashrate = get_hashrate("15min")
+            if hashrate > 0:
+                hashrate = uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
+            else:
+                hashrate = uxstring.UxString.status_mining_hashrate_unknown
+        except FileNotFoundError:
+            is_mining = uxstring.UxString.status_mining_file_not_found
+        except TimeoutError:
+            is_mining = uxstring.UxString.status_mining_timeout
+        else:
+            is_mining = uxstring.UxString.status_mining_success
+
+        mined = client.get_mined_satoshis()
+        logger.info(uxstring.UxString.status_mining.format(is_mining, hashrate, mined))
+
+    return dict(is_mining=is_mining, hashrate=hashrate, mined=mined)
 
 
 def status_account(config, wallet):
@@ -104,22 +101,21 @@ def status_account(config, wallet):
     Returns:
         str: formatted string displaying account status
     """
-    status_account = {
+    status_account_dict = {
         "username": config.username,
         "address": wallet.current_address
     }
-    logger.info(uxstring.UxString.status_account.format(status_account["username"]))
-    return status_account
+    logger.info(uxstring.UxString.status_account.format(status_account_dict["username"]))
+    return status_account_dict
 
 SEARCH_UNIT_PRICE = 3500
 SMS_UNIT_PRICE = 3000
 
 
-def status_wallet(config, client, wallet, detail=False):
+def status_wallet(client, wallet, detail=False):
     """ Logs a formatted string displaying wallet status to the command line
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (TwentyOneRestClient): rest client used for communication with the backend api
         detail (bool): Lists all balance details in status report
 
@@ -130,13 +126,13 @@ def status_wallet(config, client, wallet, detail=False):
     channel_client = channels.PaymentChannelClient(wallet)
     user_balances = _get_balances(client, wallet, channel_client)
 
-    status_wallet = {
+    status_wallet_dict = {
         "twentyone_balance": user_balances.twentyone,
         "onchain": user_balances.onchain,
         "flushing": user_balances.flushed,
         "channels_balance": user_balances.channels
     }
-    logger.info(uxstring.UxString.status_wallet.format(**status_wallet))
+    logger.info(uxstring.UxString.status_wallet.format(**status_wallet_dict))
 
     if detail:
         # show balances by address for default wallet
@@ -150,11 +146,11 @@ def status_wallet(config, client, wallet, detail=False):
         # Display status for all payment channels
         status_channels = []
         for url in channel_client.list():
-            status = channel_client.status(url)
+            status_resp = channel_client.status(url)
             url = urllib.parse.urlparse(url)
             status_channels.append(uxstring.UxString.status_wallet_channel.format(
-                url.scheme, url.netloc, status.state, status.balance,
-                format_expiration_time(status.expiration_time)))
+                url.scheme, url.netloc, status_resp .state, status_resp .balance,
+                format_expiration_time(status_resp .expiration_time)))
         if not len(status_channels):
             status_channels = [uxstring.UxString.status_wallet_channels_none]
 
@@ -166,25 +162,25 @@ def status_wallet(config, client, wallet, detail=False):
     total_balance = user_balances.twentyone + user_balances.onchain
     buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
     buyable_sms = int(total_balance / SMS_UNIT_PRICE)
-    status_buyable = {
+    status_buyable_dict = {
         "buyable_searches": buyable_searches,
         "search_unit_price": SEARCH_UNIT_PRICE,
         "buyable_sms": buyable_sms,
         "sms_unit_price": SMS_UNIT_PRICE
     }
-    logger.info(uxstring.UxString.status_buyable.format(**status_buyable), nl=False)
+    logger.info(uxstring.UxString.status_buyable.format(**status_buyable_dict), nl=False)
 
     if total_balance == 0:
         logger.info(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
-                                                                   bold=True)))
+                                                                             bold=True)))
     else:
         buy21 = click.style("21 buy", bold=True)
         buy21help = click.style("21 buy --help", bold=True)
         logger.info(uxstring.UxString.status_exit_message.format(buy21, buy21help))
 
     return {
-        "wallet" : status_wallet,
-        "buyable": status_buyable
+        "wallet" : status_wallet_dict,
+        "buyable": status_buyable_dict
     }
 
 

@@ -6,7 +6,6 @@ import json
 # two1 imports
 import two1
 import two1.wallet as wallet
-import two1.channels as channels
 import two1.commands.util.exceptions as exceptions
 
 
@@ -77,6 +76,7 @@ class Config:
             self.save()
 
     def save(self):
+        """ Saves the config values to a file """
         with open(self.config_abs_path, mode='w') as f:
             f.write(json.dumps(self.state, indent=2, sort_keys=True))
 

@@ -1,23 +1,26 @@
 """Utility functions for user wallets."""
 # standard python imports
-import click
 import json
 import os
 import logging
 
+# 3rd party imports
+import click
+
+# two1 imports
 import two1
 import two1.wallet as wallet
 import two1.wallet.daemonizer as daemonizer
 import two1.wallet.exceptions as exceptions
-from two1.commands.util import uxstring
-from two1.blockchain import twentyone_provider
+import two1.commands.util.uxstring as uxstring
+import two1.blockchain.twentyone_provider as twentyone_provider
 
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
 
 
-def get_or_create_wallet(config, wallet_path):
+def get_or_create_wallet(wallet_path):
     """Create a new wallet or return the currently existing one."""
     data_provider = twentyone_provider.TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
 

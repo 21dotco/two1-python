@@ -21,7 +21,6 @@ import requests
 # two1 imports
 import two1
 from two1.commands import update
-from two1.commands import status
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
@@ -60,12 +59,8 @@ class Check(object):
 
     def to_dict(self):
         """ Returns a dict of all of the Checks data members """
-        return {
-            "name": self.name,
-            "message": self.message,
-            "value": self.value,
-            "result": self.result.name
-            }
+        return {"name": self.name, "message": self.message, "value": self.value, "result": self.result.name}
+
 
 class Doctor(object):
     """ Get an installation checkup with the doctor
@@ -87,12 +82,12 @@ class Doctor(object):
     # OS dictionary of operating system name to version
     SUPPORTED_OS = {
         "Linux": "4.0.0",
-        "Darwin": "14.0.0",}
-        #"Windows": [10, 0, 0]}
+        "Darwin": "14.0.0"
+        }
     UNMAINTAINED_OS = {
         "Linux": "3.13.0",
-        "Darwin": "14.0.0",}
-        #"Windows": [10, 0, 0]}
+        "Darwin": "14.0.0"
+        }
 
     # python version
     SUPPORTED_PYTHON_VERSION = "3.3.0"
@@ -211,7 +206,7 @@ class Doctor(object):
 
                     # truncate the string if value is too long
                     if isinstance(value, str) and len(value) > Check.WIDTH:
-                        value = "{}...".format(value[:Check.WIDTH-3])
+                        value = "{}...".format(value[:Check.WIDTH - 3])
 
                     check = Check(func.__name__, message, value, result)
                     logger.info(str(check))
@@ -425,7 +420,6 @@ class Doctor(object):
             return Check.Result.FAIL, check_str, "minerd not installed"
         else:
             return Check.Result.WARN, check_str, "minerd not installed"
-
 
     def check_dependency_wallet_cli(self):
         """ Checks if the two1 wallet is properly installed

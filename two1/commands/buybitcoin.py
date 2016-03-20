@@ -7,7 +7,6 @@ import click
 
 # two1 imports
 from two1.commands.util import exceptions
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -161,7 +160,7 @@ def get_price_quote(client, amount, deposit_type):
 
     buy_result = resp.json()
     if "err" in buy_result:
-        #TODO: remove the secho and use the exception to print message
+        # TODO: remove the secho and use the exception to print message
         logger.info(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
         raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
 

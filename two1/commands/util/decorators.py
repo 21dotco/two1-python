@@ -1,3 +1,4 @@
+""" All two1 command line related decorators """
 # standard python imports
 import os
 import json as jsonlib
@@ -14,18 +15,10 @@ import click
 import two1
 import two1.commands.util.uxstring as uxstring
 import two1.commands.util.exceptions as exceptions
-import two1.server.rest_client as rest_client
 
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
-
-
-def docstring_parameter(*args, **kwargs):
-    def dec(obj):
-        obj.__doc__ = obj.__doc__.format(*args, **kwargs)
-        return obj
-    return dec
 
 
 def json_output(f):
