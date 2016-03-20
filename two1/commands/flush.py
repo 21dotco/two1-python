@@ -1,3 +1,4 @@
+""" Flushes current off-chain balance to the blockchain """
 # standard python imports
 import logging
 
@@ -5,7 +6,6 @@ import logging
 import click
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
@@ -23,16 +23,13 @@ logger = logging.getLogger(__name__)
               help="The amount to be flush out of your account.")
 def flush(ctx, amount):
     """ Flush your 21.co buffer to the blockchain."""
-    config = ctx.obj['config']
-    _flush(config, ctx.obj['client'], ctx.obj['wallet'], amount)
-    logger.info("")
+    _flush(ctx.obj['client'], ctx.obj['wallet'], amount)
 
 
-def _flush(config, client, wallet, amount=None):
+def _flush(client, wallet, amount=None):
     """ Flushes current off-chain balance to the blockchain
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         wallet (two1.wallet.Wallet): a user's wallet instance

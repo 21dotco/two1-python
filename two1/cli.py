@@ -11,12 +11,6 @@ import os
 import sys
 import platform
 import locale
-import os
-import sys
-import json
-import getpass
-from codecs import open
-from path import path
 import click
 from path import path
 import logging
@@ -54,7 +48,6 @@ from two1.commands.sell import sell
 
 
 
-CLI_NAME = str(path(sys.argv[0]).name)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -72,7 +65,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
 @decorators.catch_all
-@decorators.docstring_parameter(CLI_NAME)
 def main(ctx, config_file, config_dict):
     """Mine bitcoin and use it to buy and sell digital goods.
 
@@ -80,9 +72,9 @@ def main(ctx, config_file, config_dict):
 Usage
 -----
 Mine bitcoin, list your balance, and buy a search query without ads.
-$ {0} mine
-$ {0} status
-$ {0} buy search "Satoshi Nakamoto"
+$ 21 mine
+$ 21 status
+$ 21 buy search "Satoshi Nakamoto"
 
 \b
 For further details on how you can use your mined bitcoin to buy digital
@@ -102,7 +94,7 @@ goods both at the command line and programmatically, visit 21.co/learn
         raise click.ClickException(uxstring.UxString.Error.file_decode.format((str(e))))
 
     if need_wallet_and_account:
-        ctx.obj['wallet'] = wallet_utils.get_or_create_wallet(config, config.wallet_path)
+        ctx.obj['wallet'] = wallet_utils.get_or_create_wallet(config.wallet_path)
         ctx.obj['machine_auth'] = machine_auth_wallet.MachineAuthWallet(ctx.obj['wallet'])
         config.username = account_utils.get_or_create_username(config, ctx.obj['machine_auth'])
         ctx.obj['client'] = rest_client.TwentyOneRestClient(two1.TWO1_HOST, ctx.obj['machine_auth'], config.username)

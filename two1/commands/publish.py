@@ -1,3 +1,4 @@
+""" Two1 command to publish an app to the 21 Marketplace """
 # standard python imports
 import json
 import re
@@ -13,7 +14,6 @@ from yaml.error import YAMLError
 from tabulate import tabulate
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.commands.util import uxstring
@@ -152,7 +152,7 @@ port        : The port on which the app is running.
             logger.error(uxstring.UxString.invalid_parameter, fg="red")
             return
 
-    _publish(ctx.obj['config'], ctx.obj['client'], manifest_path, marketplace, skip, parameters)
+    _publish(ctx.obj['client'], manifest_path, marketplace, skip, parameters)
 
 
 def _parse_parameters(parameters):
@@ -253,11 +253,10 @@ def _delete_app(config, client, app_id):
                 logger.info(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
 
 
-def _publish(config, client, manifest_path, marketplace, skip, overrides):
+def _publish(client, manifest_path, marketplace, skip, overrides):
     """ Publishes application by uploading the manifest to the given marketplace
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         manifest_path (str): the path to the manifest file.

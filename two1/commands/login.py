@@ -1,5 +1,5 @@
+""" Logs a user into their 21.co account """
 # standard python imports
-import sys
 import base64
 import re
 import logging
@@ -9,13 +9,11 @@ import click
 
 # two1 imports
 import two1
-from two1.blockchain import exceptions as blockchain_exceptions
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import wallet as wallet_util
 from two1.server import rest_client as _rest_client
-from two1.wallet import two1_wallet
 from two1.server import machine_auth_wallet
 
 
@@ -52,7 +50,7 @@ $ 21 login -sp
     config = ctx.obj['config']
 
     # A user needs to have a machine auth wallet in order to login to anything
-    wallet = wallet_util.get_or_create_wallet(config, config.wallet_path)
+    wallet = wallet_util.get_or_create_wallet(config.wallet_path)
     machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
 
     if setpassword:
@@ -97,7 +95,7 @@ def login_account(config, machine_auth, username=None, password=None):
         else:
             raise ex
 
-    logger.info(uxstring.UxString.payout_address % payout_address)
+    logger.info(uxstring.UxString.payout_address.format(payout_address))
 
     # Save the new username and auth key
     config.set("username", username)
@@ -132,7 +130,7 @@ def create_account_on_bc(config, machine_auth):
                 logger.info("")
                 username = click.prompt(uxstring.UxString.enter_username, type=Username())
                 logger.info("")
-                logger.info(uxstring.UxString.creating_account % username)
+                logger.info(uxstring.UxString.creating_account.format(username))
                 password = click.prompt(uxstring.UxString.set_new_password.format(username),
                                         hide_input=True, confirmation_prompt=True, type=Password())
             except click.Abort:
@@ -159,7 +157,7 @@ def create_account_on_bc(config, machine_auth):
                         continue
                     # username exists
                     elif error_code == "TO402":
-                        logger.info(uxstring.UxString.username_exists % username)
+                        logger.info(uxstring.UxString.username_exists.format(username))
                         username = None
                         continue
                 # unexpected 400 error
@@ -181,7 +179,7 @@ def create_account_on_bc(config, machine_auth):
 
         # created account successfully
         else:
-            logger.info(uxstring.UxString.payout_address % payout_address)
+            logger.info(uxstring.UxString.payout_address.format(payout_address))
 
             # save new username and password
             config.set("username", username)

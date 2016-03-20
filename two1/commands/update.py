@@ -1,3 +1,4 @@
+""" Two1 command to update to the latest version of two1 and it's dependencies """
 # standard python imports
 import sys
 import re
@@ -111,7 +112,7 @@ def update_two1_package(config, version, force_update_check=False):
             # The update is performed either using pip or apt-get depending
             # on how two1 was installed in the first place.
 
-            logger.info(uxstring.UxString.update_package % latest_version)
+            logger.info(uxstring.UxString.update_package.format(latest_version))
             # Detect if the package was installed using apt-get
             # This detection only works for deb based linux systems
             ret['update_successful'] = _do_update(latest_version)

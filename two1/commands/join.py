@@ -1,5 +1,5 @@
+""" Two1 command to join various zerotier networks """
 # standard python imports
-import platform
 import subprocess
 import logging
 
@@ -8,7 +8,6 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
@@ -44,15 +43,11 @@ Shows the status of all the networks that you have joined
     if status:
         show_network_status()
     else:
-        _join(ctx.obj['config'], ctx.obj['client'], network)
+        _join(ctx.obj['client'], network)
 
 
 def show_network_status():
-    """ Prints the network status of the zerotier networks
-
-    Args:
-        config (Config): config object used for getting .two1 information
-    """
+    """ Prints the network status of the zerotier networks """
     networks_info = zerotier.get_all_addresses()
     if len(networks_info) == 0:
         logger.info(uxstring.UxString.no_network)
@@ -66,11 +61,10 @@ def show_network_status():
     logger.info(tabulate(rows, headers, tablefmt="grid"))
 
 
-def _join(config, client, network):
+def _join(client, network):
     """ Joins the given zerotier network
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         network (str): the name of the network being joined. Defaults to 21market

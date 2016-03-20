@@ -1,5 +1,5 @@
+""" Utility to make a two1 release """
 import os
-import re
 import subprocess
 
 

@@ -18,7 +18,7 @@ import click
 import two1
 from two1.bitcoin.block import CompactBlock
 from two1.bitcoin.txn import Transaction
-from two1.server import rest_client, message_factory
+from two1.server import message_factory
 from two1.commands.util import decorators
 from two1.commands import status
 from two1.commands.util.bitcoin_computer import has_mining_chip
@@ -73,7 +73,6 @@ def _mine(config, client, wallet, dashboard=False):
         wallet (two1.wallet.Wallet): a user's wallet instance
         dashboard (bool): shows minertop dashboard if True
     """
-
     if has_mining_chip():
         if not is_minerd_running():
             start_minerd(config, dashboard)
@@ -82,7 +81,7 @@ def _mine(config, client, wallet, dashboard=False):
         # if minerd is running and we have not specified a dashboard flag
         # do a cpu mine
         else:
-            start_cpu_mining(config,  client, wallet)
+            start_cpu_mining(config, client, wallet)
     else:
         logger.info(uxstring.UxString.buy_ad, fg="magenta")
         start_cpu_mining(config, client, wallet)
@@ -147,12 +146,10 @@ def start_minerd(config, show_dashboard=False):
                 subprocess.call(["sudo", "minerd", "--stop"])
 
     # Not running, let's start it
-    # TODO: make sure config exists in /etc
-    # TODO: replace with sys-ctrl command
     minerd_cmd = ["sudo", "minerd", "-u", config.username,
                   two1.TWO1_POOL_URL]
     try:
-        o = subprocess.check_output(minerd_cmd, universal_newlines=True)
+        subprocess.check_output(minerd_cmd, universal_newlines=True)
     except subprocess.CalledProcessError as e:
         logger.info("\nError starting minerd: {}".format(e))
 
@@ -175,12 +172,12 @@ def start_cpu_mining(config, client, wallet):
     logger.info(uxstring.UxString.mining_start.format(config.username, reward))
 
     # gets work from the server
-    work = get_work(config, client)
+    work = get_work(client)
 
     # kicks off cpu miner to find a solution
     found_share = mine_work(work, enonce1=enonce1, enonce2_size=enonce2_size)
 
-    paid_satoshis = save_work(client, found_share, config.username)
+    paid_satoshis = save_work(client, found_share)
 
     end_time = time.time()
     duration = end_time - start_time
@@ -190,7 +187,7 @@ def start_cpu_mining(config, client, wallet):
         fg="magenta")
 
     logger.info(uxstring.UxString.mining_status)
-    status.status_wallet(config, client, wallet)
+    status.status_wallet(client, wallet)
 
     logger.info(uxstring.UxString.mining_finish.format(
         click.style("21 status", bold=True), click.style("21 buy", bold=True)))
@@ -250,11 +247,10 @@ def check_pid(pid):
     return True
 
 
-def get_work(config, client):
+def get_work(client):
     """ Gets work from the pool using the rest client
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (TwentyOneRestClient): rest client used for communication with the backend api
 
     Returns:
@@ -334,7 +330,7 @@ def mine_work(work_msg, enonce1, enonce2_size):
         logger.info("Exhausted enonce1 space. Changing enonce2")
 
 
-def save_work(client, share, username):
+def save_work(client, share):
     """ Submits the share to the pool using the rest client
 
     Args:

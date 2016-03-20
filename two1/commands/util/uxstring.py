@@ -5,6 +5,7 @@ import click
 
 
 class UxString:
+    """ Class to namespace all user experience strings """
 
     # general
     update_required = click.style("You are using an old version of 21 CLI. Please update using the '21 " \
@@ -14,20 +15,17 @@ class UxString:
                                           "this service. If you believe you have received this " \
                                           "message in error, please contact support@21.co.",
                                           fg="red")
-    max_accounts_reached = click.style(
-        "You have reached the maximum number of 21.co accounts that you can create. "
-        "Use ",
-        fg="red") + click.style(
-        "21 login", fg="red", bold=True) + click.style(
-        " to switch between your available accounts.",
-        fg="red")
-    # account creation
+    max_accounts_reached = click.style("You have reached the maximum number of 21.co accounts that you can create. ", fg="red")+\
+                           click.style("Use ", fg="red")+\
+                           click.style("21 login ", fg="red", bold=True)+\
+                           click.style("to switch between your available accounts.", fg="red")
 
-    creating_account = "Creating 21.co account. Username: %s."
+    # account creation
+    creating_account = "Creating 21.co account. Username: {}"
     missing_account = "Looks like you do not have a 21.co account. Let's create one..."
 
     account_failed = "Failed to create 21.co account."
-    username_exists = "User %s already exists."
+    username_exists = "User {} already exists."
     email_exists = "Email {} already exists."
     enter_username = "Enter a username for your 21.co account"
     enter_email = "Enter your email address"
@@ -42,7 +40,7 @@ class UxString:
                          "Press any key ..."
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
-    payout_address = "Setting mining payout address: %s."
+    payout_address = "Setting mining payout address: {}"
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
         "This may help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
@@ -75,16 +73,17 @@ class UxString:
                                 "corresponding username"
     login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet.\n"
 
-    existing_account = click.style(
-            "There is already a username associated with your current wallet. Use ",
-            fg="red") + click.style("21 login -u {}", bold=True, fg="red") + click.style(
-        " to login.", fg="red")
+    existing_account = click.style("There is already a username associated with your current wallet. Use ", fg="red") +\
+                       click.style("21 login -u {}", bold=True, fg="red") +\
+                       click.style(" to login.", fg="red")
 
-    set_new_password = "Please set a password for" + click.style(
-            " {}.", bold=True) + click.style(" (typing will be hidden)")
+    set_new_password = "Please set a password for" +\
+                       click.style(" {}.", bold=True) +\
+                       click.style(" (typing will be hidden)")
 
-    no_account_found = "You have not created any accounts yet. Use " + click.style(
-            "21 login", bold=True) + " to create an account first."
+    no_account_found = "You have not created any accounts yet. Use " +\
+                       click.style("21 login", bold=True) +\
+                       " to create an account first."
 
     short_password = "Password must be at least 5 characters long."
     capitalize_password = "Password must contain mix of uppercase or lowercase letters."
@@ -96,11 +95,13 @@ class UxString:
 
     status_account = click.style("Logged in as: ", fg='magenta') + "{}\n"
 
-    status_mining = mining=click.style("Mining", fg='magenta') + "\n"\
-       "    Status           : {}\n"\
-       "    Hashrate         : {}\n"\
-       "    Mined (all time) : {} Satoshis\n\n"\
-       "Type " + click.style("21 mine --dashboard", bold=True) + " to see a detailed view. Hit q to exit.\n"
+    status_mining = mining = click.style("Mining", fg='magenta') + "\n" +\
+                             "    Status           : {}\n" +\
+                             "    Hashrate         : {}\n" +\
+                             "    Mined (all time) : {} Satoshis\n\n" +\
+                             "Type " +\
+                             click.style("21 mine --dashboard", bold=True) +\
+                             " to see a detailed view. Hit q to exit.\n"
 
     status_wallet = click.style("Total Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
@@ -181,10 +182,9 @@ class UxString:
                     "    Linked Exchange Wallet : {}\n" \
                     "    Linked Payment Method  : {}\n"
     buybitcoin_instruction_header = click.style("Buying Bitcoin:", fg="magenta")
-    buybitcoin_instructions = "    Use " + click.style(
-            "21 buybitcoin k",
-            bold=True) + " to buy k Satoshis from {}.\n    The bought Bitcoins will automatically " \
-                         "appear into your 21 wallet\n\n"
+    buybitcoin_instructions = "    Use " + click.style("21 buybitcoin", bold=True) +\
+                              " to buy k Satoshis from {}.\n" +\
+                              "    The bought Bitcoins will automatically appear into your 21 wallet\n\n"
     buybitcoin_pairing = \
         "To buy bitcoin, you need to pair your 21 and {} account.\n\n" + \
         "If you already haven't, create a password for your account by " \
@@ -199,9 +199,10 @@ class UxString:
                               "Your Bitcoins will be deposited to your {}.\n"
     buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase ?"
     buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
-    buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") + click.style(
-            "{} ", fg="magenta", bold=True) + click.style("for", fg="magenta") + click.style(
-        " {}.\n", bold=True, fg="magenta")
+    buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") +\
+                         click.style("{} ", fg="magenta", bold=True) +\
+                         click.style("for", fg="magenta") +\
+                         click.style(" {}.\n", bold=True, fg="magenta")
 
     buybitcoin_success_payout_time = "The Bitcoins will be deposited to your 21 wallet on {}."
     buybitcoin_success_instant = "The Bitcoins will be deposited to your 21 wallet in the next " \
@@ -215,7 +216,7 @@ class UxString:
     coinbase_purchase_in_progress = "\nPurchasing Bitcoins From Coinbase...\n"
 
     coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance",
-                                      "TO_BALANCE": "your 21.co balance"}
+                                     "TO_BALANCE": "your 21.co balance"}
     coinbase_wallet_completed = "The Bitcoins were deposited to your wallet on {}"
     coinbase_21_completed = "The Bitcoins were added to your balance immediately. " \
                             "Around {}, {} BTC amount were withdrawn from your " \
@@ -253,16 +254,14 @@ class UxString:
     mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
                            "Please try again in a few hours"
 
-    mining_bitcoin_computer_needed = click.style(
-            "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ",
-            fg="red") + click.style("21 buybitcoin", bold=True, fg="red") + click.style(
-        " to add Bitcoins to your account instead. \nIf you believe you have received this "
-        "message in error, please contact support@21.co.",
-        fg="red")
+    mining_bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
+                                     click.style("21 buybitcoin", bold=True, fg="red") +\
+                                     click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
+                                     click.style("message in error, please contact support@21.co.", fg="red")
 
     # updater
     update_check = "Checking for application updates..."
-    update_package = "Updating to version %s..."
+    update_package = "Updating to version {}..."
     update_superuser = "You might need to enter superuser password."
     update_not_needed = "Already up to date!"
 
@@ -305,10 +304,9 @@ class UxString:
     buy_message = "You bought {} from {}"
     sell_message = "You sold {} to {}"
 
-    unread_notifications = click.style("\nYou have {} unread notifications. Type ",
-                                       fg="blue") + click.style("21 inbox",
-                                                                bold=True, fg="blue") + click.style(
-            " to view your notifications.", fg="blue")
+    unread_notifications = click.style("\nYou have {} unread notifications. Type ", fg="blue") +\
+                           click.style("21 inbox", bold=True, fg="blue") +\
+                           click.style(" to view your notifications.", fg="blue")
 
     # join
     successful_join = "Joined network {}. It may take a few seconds for joining " \
@@ -343,25 +341,20 @@ class UxString:
     invalid_price_format = "Price should be a non-negative integer."
     invalid_port_format = "Port should be an integer between 0 and 65536."
 
-    invalid_parameter = "Manifest parameter overrides should be in the form 'key1=\"value1\" " \
-                        "key2=\"value2\"."
+    wrong_ip = click.style("It seems that the IP address that you put in your manifest file (") +\
+               click.style("{}", bold=True) +\
+               click.style(") is different than your current 21market IP (") +\
+               click.style("{}", bold=True) +\
+               click.style(")\nAre you sure you want to continue publishing with ") +\
+               click.style("{}", bold=True) +\
+               click.style("?")
 
-    invalid_price_format = "Price should be a non-negative integer."
-    invalid_port_format = "Port should be an integer between 0 and 65536."
-
-    wrong_ip = click.style(
-        "It seems that the IP address "
-        "that you put in your manifest file (") + click.style(
-        "{}", bold=True) + click.style(
-        ") is different than your current 21market IP (") + click.style(
-        "{}", bold=True) + click.style(
-        ")\nAre you sure you want to continue publishing with ") + click.style(
-        "{}", bold=True) + click.style(" ?")
-
-    switch_host = click.style(
-        "Please edit ") + click.style("{}", bold=True) + click.style(
-        " and replace ") + click.style("{}", bold=True) + click.style(
-        " with ") + click.style("{}.", bold=True)
+    switch_host = click.style("Please edit ") +\
+                  click.style("{}", bold=True) +\
+                  click.style(" and replace ") +\
+                  click.style("{}", bold=True) +\
+                  click.style(" with ") +\
+                  click.style("{}.", bold=True)
 
     publish_start = click.style("Publishing {} at ") + click.style(
         "{}", bold=True) + click.style(" to {}.")
@@ -384,9 +377,8 @@ class UxString:
                                               fg="red")
 
     manifest_contact_fields = {"name", "email"}
-    manifest_contact_field_missing = click.style("Field '{}' is missing from the manifest file under the " \
-                                                "'contact' section.",
-                                                fg="red")
+    manifest_contact_field_missing = click.style("Field '{}' is missing from the manifest file under the 'contact' section.",
+                                                 fg="red")
 
     price_fields = ["min", "max"]
     price_fields_missing = click.style("Field '{}' is missing from the manifest file under the " \
@@ -400,11 +392,9 @@ class UxString:
 
     # publish-list
     my_apps = "Listing all the published apps by {}: "
-    no_published_apps = click.style(
-        "You haven't published any apps to the marketplace yet. Use ",
-        fg="blue") + click.style(
-            "21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") + click.style(
-            " to publish your apps to the marketplace.", fg="blue")
+    no_published_apps = click.style("You haven't published any apps to the marketplace yet. Use ", fg="blue") +\
+                        click.style("21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") +\
+                        click.style(" to publish your apps to the marketplace.", fg="blue")
 
     app_does_not_exist = "The specified id for the app ({}) does not match any apps in the " \
                          "marketplace."
@@ -443,52 +433,38 @@ refer to 21.co/app for futher instructions.", fg="red")
         fg="magenta")
     created_systemd_file = click.style("Systemd file created...", fg="magenta")
     created_app_nginx_file = click.style("Nginx file created...", fg="magenta")
-    hosted_app_location = click.style(
-        "Your app is now hosted at http://0.0.0.0/{}",
-        fg="magenta")
+    hosted_app_location = click.style("Your app is now hosted at http://0.0.0.0/{}", fg="magenta")
     listing_enabled_apps = click.style("Listing enabled apps...", fg="magenta")
-    no_apps_currently_running = click.style(
-            "No apps currently running, refer to 21.co/mkt to sell some...",
-            fg="red")
-    successfully_stopped_app = click.style(
-        "Successfully stopped {}...",
-        fg="magenta")
-    app_not_enabled = click.style(
-        "This app is not within your enabled apps.", fg="red")
-    failed_to_destroy_app = click.style(
-        "Failed to destroy app, please contact support@21.co", fg="red")
-    check_or_create_manifest_file = click.style(
-        "Checking or creating manifest file...", fg="magenta")
-    success_manifest = click.style(
-        "Successfully found or created manifest file...", fg="magenta")
-    manifest_fail = click.style(
-        "Failed to create manifest file, please contact support@21.co",
-        fg="red")
+    no_apps_currently_running = click.style("No apps currently running, refer to 21.co/sell to host some...", fg="red")
+    successfully_stopped_app = click.style("Successfully stopped {}...", fg="magenta")
+    app_not_enabled = click.style("This app is not within your enabled apps.", fg="red")
+    failed_to_destroy_app = click.style("Failed to destroy app, please contact support@21.co", fg="red")
+    check_or_create_manifest_file = click.style("Checking or creating manifest file...", fg="magenta")
+    success_manifest = click.style("Successfully found or created manifest file...", fg="magenta")
+    manifest_fail = click.style("Failed to create manifest file, please contact support@21.co", fg="red")
 
     # search
     list_all = "Listing all apps in the 21 Marketplace: "
-    pagination = click.style("\nEnter the id of the app for more info, ",
-                             fg="blue") + click.style(
-        "n", bold=True, fg="blue") + click.style(
-        " for next page, ", fg="blue") + click.style(
-        "p", bold=True,fg="blue") + click.style(
-        " for the previous page, ", fg="blue") + click.style(
-        "q", bold=True, fg="blue") + click.style(
-        " to stop search.", fg="blue")
+    pagination = click.style("\nEnter the id of the app for more info, ", fg="blue") +\
+                 click.style("n", bold=True, fg="blue") +\
+                 click.style(" for next page, ", fg="blue") +\
+                 click.style("p", bold=True, fg="blue") +\
+                 click.style(" for the previous page, ", fg="blue") +\
+                 click.style("q", bold=True, fg="blue") +\
+                 click.style(" to stop search.", fg="blue")
 
-    empty_listing = click.style("\nCouldn't find any listings that match: '{}'.\n",
-                                fg='blue')
-    no_app_in_marketplace = click.style("\nThere are currently no apps in the marketplace.",
-                                        fg="blue")
+    empty_listing = click.style("\nCouldn't find any listings that match: '{}'.\n", fg='blue')
+    no_app_in_marketplace = click.style("\nThere are currently no apps in the marketplace.", fg="blue")
     # rate
     bad_rating = "App ratings must be between 1 to 5."
-    rating_success = click.style("Giving a ") + click.style("{}/5", bold=True) + click.style(
-            " rating to the app with id ") + click.style("{}.", bold=True)
+    rating_success = click.style("Giving a ") +\
+                     click.style("{}/5", bold=True) +\
+                     click.style(" rating to the app with id ") +\
+                     click.style("{}.", bold=True)
 
-    rating_app_not_found = click.style("App with id {} does not exist in 21 marketplace. Use ",
-                                       fg="red") + click.style("21 search", bold=True,
-                                                               fg="red") + click.style(
-        " to verify the id of the app.", fg="red")
+    rating_app_not_found = click.style("App with id {} does not exist in 21 marketplace. Use ", fg="red") +\
+                           click.style("21 search", bold=True, fg="red") +\
+                           click.style(" to verify the id of the app.", fg="red")
 
     rating_list = click.style("Listing all the apps that you have rated. \nNote that you can "
                               "update your ratings at anytime with ") + click.style("21 rate\n",
@@ -511,10 +487,11 @@ refer to 21.co/app for futher instructions.", fg="red")
     less_env = '-RPpress h for help, q for quit'
     lib_import_warning = click.style(
         "{}\n{: ^80}\n{}".format("#" * 80,
-                                     "Warning: two1.lib* pakages have been moved under two1. Update your imports asap!",
-                                     "#" * 80), fg="yellow")
+                                 "Warning: two1.lib* pakages have been moved under two1. Update your imports asap!",
+                                 "#" * 80), fg="yellow")
 
     class Error:
+        """ Put all Error type uxstrings here """
         # network errors
         connection = click.style("Error: Cannot connect to {}. Please check your Internet connection.", fg="red")
         connection_cli = "An internet connection is required to run this command."
@@ -552,13 +529,12 @@ refer to 21.co/app for futher instructions.", fg="red")
                                            "Try reinstalling or contact support@21.co.",
                                            fg="red")
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
-        insufficient_funds_mine_more = "Insufficient satoshis for off-chain (zero-fee) transaction. "\
-            "Type {} to get more.*\n\n"\
-            "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee."\
-            "To use on-chain balance add {} to your buy command*".format(
-                    click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True)
-                )
-
+        insufficient_funds_mine_more = str("Insufficient satoshis for off-chain (zero-fee) transaction. " +\
+                                           "Type {} to get more.*\n\n" +\
+                                           "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee." +\
+                                           "To use on-chain balance add {} to your buy command*").format(click.style("21 mine", bold=True),
+                                                                                                         {},
+                                                                                                         click.style("-p onchain", bold=True))
         # account errors
         login_error_username = "Can not log into account, username not set"
         login_error_mining_auth_pubkey = "Can not log into account, username not set"

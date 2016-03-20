@@ -1,3 +1,4 @@
+""" Two1 command module for getting and displaying messages in your inbox """
 # standard python imports
 from datetime import datetime
 import logging
@@ -6,7 +7,6 @@ import logging
 import click
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 

@@ -1,3 +1,4 @@
+""" All command line related exceptions """
 # standart python imports
 import logging
 
@@ -12,9 +13,9 @@ logger = logging.getLogger(__name__)
 class Two1Error(click.ClickException):
     """ A generic Two1Error """
 
-    def __init__(self, msg="", json={}):
+    def __init__(self, msg="", json=None):
         self._msg = msg
-        self._json = json
+        self._json = json if json else None
         super(Two1Error, self).__init__(self._msg)
 
     def __str__(self):

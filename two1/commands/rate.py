@@ -1,3 +1,4 @@
+""" Two1 command to rate a marketplace app """
 # standard python imports
 import datetime
 import logging
@@ -7,7 +8,6 @@ import click
 from tabulate import tabulate
 
 # two1 imports
-from two1.server import rest_client
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
@@ -43,22 +43,21 @@ $ 21 rate --list
     """
     #pylint: disable=redefined-builtin
     if list:
-        _list(ctx.obj["config"], ctx.obj["client"])
+        _list(ctx.obj["client"])
     else:
         if not (app_id and rating):
             # print help and exit
             logger.info(ctx.command.help)
             return
-        _rate(ctx.obj["config"], ctx.obj["client"], app_id, rating)
+        _rate(ctx.obj["client"], app_id, rating)
 
 
-def _list(config, client):
+def _list(client):
     """ Lists all of the apps that the user has rated
 
     If no apps have been rated, then an empty formatted list is printed
 
     Args:
-        config (Config): Config object used for user specific information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
 
@@ -89,11 +88,10 @@ def _list(config, client):
             raise e
 
 
-def _rate(config, client, app_id, rating):
+def _rate(client, app_id, rating):
     """ Rate an app listed in the marketplace
 
     Args:
-        config (Config): Config object used for user specific information
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         app_id (str): Unique app id used to identify which app to rate

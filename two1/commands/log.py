@@ -1,5 +1,6 @@
+""" Log command that show a list of notifications """
 # standart python imports
-from datetime import date, datetime
+from datetime import datetime
 import logging
 
 # 3rd party imports
@@ -34,7 +35,15 @@ def log(ctx, debug):
 
 
 def get_bc_logs(client, debug):
+    """ Gets a list of formatted logs messages
 
+    Args:
+        client (TwentyOneRestClient): rest client used for communication with the backend api.
+        debug (bool): If True then no messages will be filtered out.
+
+    Returns:
+        list: A list of formatted log messages.
+    """
     prints = []
     response = client.get_earning_logs()
     logs = response["logs"]
@@ -42,19 +51,19 @@ def get_bc_logs(client, debug):
     prints.append(uxstring.UxString.log_intro)
 
     if not debug:
-        logs = filter_rollbacks(logs)
+        logs = _filter_rollbacks(logs)
 
     for entry in logs:
 
-        prints.append(get_headline(entry))
+        prints.append(_get_headline(entry))
 
         # reason
-        prints.append(get_description(entry))
+        prints.append(_get_description(entry))
         prints.append("\n")
 
         # transaction details
         if entry["amount"] < 0 and "paid_to" in entry and "txns" in entry:
-            prints.append(get_txn_details(entry))
+            prints.append(_get_txn_details(entry))
             prints.append("\n")
 
     if len(prints) == 1:
@@ -63,14 +72,14 @@ def get_bc_logs(client, debug):
     return prints
 
 
-def get_headline(entry):
+def _get_headline(entry):
     # headline
     local_date = datetime.fromtimestamp(entry["date"]).strftime("%Y-%m-%d %H:%M:%S")
     if entry["amount"] > 0:
         headline = uxstring.UxString.debit_message.format(local_date, entry["amount"])
     elif entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout":
         headline = uxstring.UxString.blockchain_credit_message.format(local_date, entry["amount"],
-                                                             -entry["amount"])
+                                                                      -entry["amount"])
     else:
         headline = uxstring.UxString.credit_message.format(local_date, entry["amount"])
 
@@ -78,12 +87,12 @@ def get_headline(entry):
     return headline
 
 
-def get_description(entry):
+def _get_description(entry):
     reason = uxstring.UxString.reasons.get(entry["reason"], entry["reason"])
 
     if "-" in entry["reason"]:
         buy_str = entry["reason"].split("-", 1)
-        if entry["amount"] < 0 :
+        if entry["amount"] < 0:
             reason = uxstring.UxString.buy_message.format(buy_str[1], buy_str[0])
         else:
             reason = uxstring.UxString.sell_message.format(buy_str[1], buy_str[0])
@@ -92,7 +101,7 @@ def get_description(entry):
     return description
 
 
-def get_txn_details(entry):
+def _get_txn_details(entry):
     paid = click.style("    Address paid to            : {}".format(entry["paid_to"]),
                        fg="cyan")
     txns = "    Blockchain Transaction(s)  : "
@@ -105,7 +114,7 @@ def get_txn_details(entry):
     return text
 
 
-def filter_rollbacks(logs):
+def _filter_rollbacks(logs):
     # due to the payout schedule, it is guaranteed that a rollback debit is preceded by a
     # payout credit. When we see a rollback, we need to both filter that rollback and
     # its matching payout. We are bound to find the matching payout in the next iteration

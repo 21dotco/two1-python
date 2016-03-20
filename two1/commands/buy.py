@@ -2,7 +2,6 @@
 # standart python imports
 import re
 import json
-import datetime
 import urllib.parse
 import logging
 
@@ -10,11 +9,7 @@ import logging
 import click
 
 # two1 imports
-import two1
-import two1.server as server
-import two1.wallet.fees as fees
 import two1.channels as channels
-import two1.commands.status as status
 import two1.commands.util.uxstring as uxstring
 import two1.bitrequests as bitrequests
 import two1.commands.util.decorators as decorators
