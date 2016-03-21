@@ -49,6 +49,10 @@ class Market:
             requests.exceptions.HTTPError: 4xx or 5xx response from the server.
 
         """
+        # Reset resource value for subsequent calls
+        resource = self.resource
+        self.resource = ''
+
         # GET request with the keyword arguments passed
         if not _data:
             method = 'get'
@@ -61,18 +65,15 @@ class Market:
 
         # Otherwise raise on bad input error
         else:
-            raise ValueError('Bad input provided to mkt.{}()'.format(self.resource[1:]))
+            raise ValueError('Bad input provided to mkt.{}()'.format(resource[1:]))
 
         try:
-            response = self.bitrequests.request(method, self.host + self.resource, **options)
+            response = self.bitrequests.request(method, self.host + resource, **options)
         except bitrequests.bitrequests.requests.exceptions.ConnectionError:
             raise ConnectionError('Could not connect to host.') from None
 
         # Raise errors on any 4xx or 5xx server response
         response.raise_for_status()
-
-        # Reset resource value for subsequent calls
-        self.resource = ''
 
         try:
             return response.json()
