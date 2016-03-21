@@ -65,7 +65,7 @@ class Market:
 
         # Otherwise raise on bad input error
         else:
-            raise ValueError('Bad input provided to mkt.{}()'.format(resource[1:]))
+            raise ValueError('Bad input provided to mkt{}()'.format(resource.replace('/', '.')))
 
         try:
             response = self.bitrequests.request(method, self.host + resource, **options)
