@@ -2,7 +2,7 @@ import pytest
 import unittest.mock as mock
 
 import two1
-from two1.tests import mock as mock_objects
+from tests import mock as mock_objects
 from two1.commands import login, status
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring

@@ -5,8 +5,8 @@ import json
 import os
 import math
 import time
-from two1.tests import test_utils
-from two1.tests.integration.decorators import verify_balances
+from tests import test_utils
+from tests.integration.decorators import verify_balances
 from two1.commands.util import bitcoin_computer
 
 # test constants (in satoshi)

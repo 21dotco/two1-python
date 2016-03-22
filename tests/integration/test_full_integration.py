@@ -3,22 +3,22 @@ import pexpect
 import random
 import json
 import os
-from two1.tests import test_utils
+from tests import test_utils
 
-import two1.tests.integration.test_basic_commands
+import tests.integration.test_basic_commands
 
 test_map = {
-    "21-mine": (two1.tests.integration.test_basic_commands.test_21_mine, 5),
-    "21-status": (two1.tests.integration.test_basic_commands.test_21_status, 7),
-    "21-log": (two1.tests.integration.test_basic_commands.test_21_log, 4),
-    "21-log-raw": (two1.tests.integration.test_basic_commands.test_21_log_raw, 4),
-    "21-status-raw": (two1.tests.integration.test_basic_commands.test_21_status_raw, 4),
-    "21-buy-search": (two1.tests.integration.test_basic_commands.test_21_buy_search, 10),
-    "21-buy-search-onchain": (two1.tests.integration.test_basic_commands.test_21_buy_search_onchain, 1),
-    "21-buy-sms": (two1.tests.integration.test_basic_commands.test_21_buy_sms, 10),
-    "21-buy-sms-onchain": (two1.tests.integration.test_basic_commands.test_21_buy_sms_onchain, 1),
-    "User-sleep": (two1.tests.integration.test_basic_commands.random_sleep, 0),
-    "21-flush": (two1.tests.integration.test_basic_commands.test_21_flush, 0),
+    "21-mine": (tests.integration.test_basic_commands.test_21_mine, 5),
+    "21-status": (tests.integration.test_basic_commands.test_21_status, 7),
+    "21-log": (tests.integration.test_basic_commands.test_21_log, 4),
+    "21-log-raw": (tests.integration.test_basic_commands.test_21_log_raw, 4),
+    "21-status-raw": (tests.integration.test_basic_commands.test_21_status_raw, 4),
+    "21-buy-search": (tests.integration.test_basic_commands.test_21_buy_search, 10),
+    "21-buy-search-onchain": (tests.integration.test_basic_commands.test_21_buy_search_onchain, 1),
+    "21-buy-sms": (tests.integration.test_basic_commands.test_21_buy_sms, 10),
+    "21-buy-sms-onchain": (tests.integration.test_basic_commands.test_21_buy_sms_onchain, 1),
+    "User-sleep": (tests.integration.test_basic_commands.random_sleep, 0),
+    "21-flush": (tests.integration.test_basic_commands.test_21_flush, 0),
 }
 
 

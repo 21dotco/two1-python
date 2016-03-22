@@ -4,7 +4,7 @@ import click
 import pytest
 import unittest.mock
 
-import two1.tests.mock as mock
+import tests.mock as mock
 import two1.commands.buy as buy
 import two1.commands.util.uxstring as uxstring
 

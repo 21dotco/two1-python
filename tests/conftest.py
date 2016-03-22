@@ -13,7 +13,7 @@ from two1 import wallet as _wallet
 from two1.blockchain import twentyone_provider
 from two1 import server
 from two1 import bitrequests
-from two1.tests import mock as mock_objects
+from tests import mock as mock_objects
 from two1.commands import doctor as doc
 # importing classes here to fix name conflicts
 from two1.commands.util.config import Config
