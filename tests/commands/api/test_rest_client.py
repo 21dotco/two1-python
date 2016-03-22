@@ -13,7 +13,7 @@ from two1.commands.util import exceptions
 from two1.server import rest_client
 from two1.server import machine_auth_wallet
 from two1.commands.util import exceptions
-from two1.tests.mock import MockHttpResponse
+from tests.mock import MockHttpResponse
 
 
 @pytest.mark.parametrize("request_side_effect, status_code, data, raised_exception", [

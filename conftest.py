@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 import shutil
-from two1.tests.integration.util import random_str
+from tests.integration.util import random_str
 import pytest
 from click.testing import CliRunner
 import pexpect

@@ -137,16 +137,16 @@ $ py.test
  - [machine_auth_wallet.py](two1/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
  - [message_factory.py](two1/server/message_factory.py): Generates new swirl messages.
 
-## The `two1/tests` directory
- - [mock.py](two1/tests/mock.py): Mock objects for testing.
+## The `tests` directory
+ - [mock.py](tests/mock.py): Mock objects for testing.
 
-## The `two1/tests/commands` directory
- - [test_buy.py](two1/tests/commands/test_buy.py): Unit tests for `21 buy`.
- - [test_doctor.py](two1/tests/commands/test_doctor.py): Doctor command unit tests
- - [test_flush.py](two1/tests/commands/test_flush.py): Flush command unit tests.
- - [test_send.py](two1/tests/commands/test_send.py): Unit tests for `21 send`.
+## The `tests/commands` directory
+ - [test_buy.py](tests/commands/test_buy.py): Unit tests for `21 buy`.
+ - [test_doctor.py](tests/commands/test_doctor.py): Doctor command unit tests
+ - [test_flush.py](tests/commands/test_flush.py): Flush command unit tests.
+ - [test_send.py](tests/commands/test_send.py): Unit tests for `21 send`.
 
-## The `two1/tests/commands/util` directory
- - [test_config.py](two1/tests/commands/util/test_config.py): Unit tests for `21 config`.
- - [test_zerotier.py](two1/tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
+## The `tests/commands/util` directory
+ - [test_config.py](tests/commands/util/test_config.py): Unit tests for `21 config`.
+ - [test_zerotier.py](tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
 

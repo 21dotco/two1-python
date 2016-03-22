@@ -5,7 +5,7 @@ import two1.channels.statemachine as statemachine
 import two1.channels.paymentchannel as paymentchannel
 import two1.channels.walletwrapper as walletwrapper
 import two1.channels.database as database
-import two1.tests.channels.mock as mock
+import tests.channels.mock as mock
 
 
 # Monkey-patch mock payment channel server protocol
