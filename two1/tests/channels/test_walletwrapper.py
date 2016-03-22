@@ -4,7 +4,7 @@ import pytest
 import two1.bitcoin as bitcoin
 import two1.channels.statemachine as statemachine
 import two1.channels.walletwrapper as walletwrapper
-import two1.channels.tests.mock as mock
+import two1.tests.channels.mock as mock
 
 
 @pytest.fixture(params=[
