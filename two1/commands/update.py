@@ -5,12 +5,13 @@ import re
 import os
 import logging
 import subprocess
-from urllib.parse import urljoin
-from datetime import date
 from datetime import datetime
+from datetime import date
+from urllib.parse import urljoin
 from distutils.version import LooseVersion
 
-# 3rd party imports
+# 3rd party requests
+import requests
 import click
 
 # two1 imports
@@ -18,6 +19,7 @@ import two1
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
+
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
 
@@ -88,7 +90,7 @@ def update_two1_package(config, version, force_update_check=False):
         # Set the update check date to today. There are several schools of
         # thought on this. This could be done after a successful update as
         # well.
-        set_update_check_date(config, date.today())
+        config.set('last_update_check', date.today().strftime("%Y-%m-%d"), should_save=True)
 
         installed_version = two1.TWO1_VERSION
 
@@ -101,8 +103,7 @@ def update_two1_package(config, version, force_update_check=False):
         except exceptions.Two1Error:
             raise
         except Exception:
-            ret['update_successful'] = _do_update('latest')
-            return ret
+            _do_update('latest')
 
         # Check if available version is more recent than the installed version.
         if (LooseVersion(latest_version) > LooseVersion(installed_version) or
@@ -111,14 +112,16 @@ def update_two1_package(config, version, force_update_check=False):
             # An updated version of the package is available.
             # The update is performed either using pip or apt-get depending
             # on how two1 was installed in the first place.
-
             logger.info(uxstring.UxString.update_package.format(latest_version))
+
             # Detect if the package was installed using apt-get
             # This detection only works for deb based linux systems
-            ret['update_successful'] = _do_update(latest_version)
+            _do_update(latest_version)
         else:
             # Alert the user if there is no newer version available
             logger.info(uxstring.UxString.update_not_needed)
+
+        ret["update_successful"] = True
 
     return ret
 
@@ -126,19 +129,15 @@ def update_two1_package(config, version, force_update_check=False):
 def _do_update(version):
     """ Actually does the update
     """
-    rv = False
     if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
-        rv = perform_apt_based_update()
+        perform_apt_based_update()
     else:
-        rv = perform_pip_based_update(version)
-
-    return rv
+        perform_pip_based_update(version)
 
 
 def stop_walletd():
     """Stops the walletd process if it is running.
     """
-
     from two1.wallet import daemonizer
     from two1.wallet.exceptions import DaemonizerError
     failed = False
@@ -168,14 +167,16 @@ def lookup_pypi_version(version='latest'):
         minor, and patch numbers.
         Example: '0.2.1'
     """
-    import requests
     try:
-        url = urljoin(two1.TWO1_PYPI_HOST,
-                      "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
+        url = urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
         r = requests.get(url)
-        data = r.json()
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         raise exceptions.Two1Error(uxstring.UxString.Error.update_server_connection)
+
+    try:
+        data = r.json()
+    except ValueError:
+        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
 
     pypi_version = None
 
@@ -187,12 +188,10 @@ def lookup_pypi_version(version='latest'):
             data = next((p for p in packages if version == p["version"]), None)
             # Prefer stable versions over unstable (e.g. exact matches first)
             if not data:
-                data = next((p for p in packages if
-                             version in p["version"]), None)
+                data = next((p for p in packages if version in p["version"]), None)
         else:
             # Find the latest stable version matching '1.2' or '1.2.3'
-            data = next((p for p in packages if
-                         re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
+            data = next((p for p in packages if re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
 
         if not data:
             raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
@@ -200,7 +199,7 @@ def lookup_pypi_version(version='latest'):
             pypi_version = data["version"]
 
     except (AttributeError, KeyError, TypeError):
-        raise exceptions.Two1Error(uxstring.UxString.Error.server_err)
+        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
 
     return pypi_version
 
@@ -233,18 +232,6 @@ def checked_for_an_update_today(config):
     return ret
 
 
-def set_update_check_date(config, update_date):
-    """ Set's the date on which the last update check was performed.
-
-    Args:
-        config (Config): Config context object
-        update_date (date): Set this as the last update check date
-    """
-
-    # Save the date in a locked down string format
-    config.set('last_update_check', update_date.strftime("%Y-%m-%d"))
-
-
 def perform_pip_based_update(version):
     """ This will use pip3 to update the package (without dependency update)
     """
@@ -272,11 +259,7 @@ def perform_pip_based_update(version):
             # with sudo permissions.
             subprocess.check_call(["sudo"] + install_command)
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
-        # TODO: log this error on the server backend for diagnostics
-        logger.info(uxstring.UxString.Error.update_failed)
-        return False
-
-    return True
+        raise exceptions.Two1Error(uxstring.UxString.Error.update_failed)
 
 
 def perform_apt_based_update():
@@ -296,13 +279,8 @@ def perform_apt_based_update():
                        two1.TWO1_PACKAGE_NAME,
                        "minerd",
                        "zerotier-one"]
-    ret = False
     try:
         subprocess.check_call(update_command)
         subprocess.check_call(upgrade_command)
-        ret = True
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
-        # TODO: log this error on the server backend for diagnostics
-        logger.info(uxstring.UxString.Error.update_failed)
-
-    return ret
+        raise exceptions.Two1Error(uxstring.UxString.Error.update_failed)
