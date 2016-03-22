@@ -109,7 +109,7 @@ def install_python_requirements(dirname):
         rv = True
     except subprocess.CalledProcessError as e:
         raise exceptions.Two1Error(
-            UxString.unsuccessfull_python_requirements.fomat(e))
+            UxString.unsuccessfull_python_requirements.format(e))
     return rv
 
 
@@ -144,7 +144,7 @@ def install_server_requirements(dirname):
         rv = True
     except (subprocess.CalledProcessError, OSError) as e:
         raise exceptions.Two1Error(
-            UxString.unsuccessfull_server_requirements.fomat(e))
+            UxString.unsuccessfull_server_requirements.format(e))
     return rv
 
 
