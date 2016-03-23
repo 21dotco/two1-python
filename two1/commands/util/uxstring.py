@@ -407,30 +407,24 @@ class UxString:
                                 "can only delete apps that you have published."
 
     # sell
-    install_brew = "Please install brew to continue\, visit http://brew.sh/"
+    unsupported_package_manager = click.style("Sorry your package manager is not supported. ", fg="red") +\
+                                  click.style("Currently two1 only suports: {}", fg="red")
+    install_brew = "Please install brew to continue, visit http://brew.sh/"
     unsupported_platform = "Unsupported platform"
     enabling_endpoints = click.style("Enabling endpoints...")
-    hosted_market_app_revenue = "- 21.co/{} at {} cents/request...\t" + \
-        click.style("[LIVE]", fg="green")
+    hosted_market_app_revenue = "- 21.co/{} at {} cents/request...\t" + click.style("[LIVE]", fg="green")
     estimated_daily_revenue = click.style("Estimated revenue: {} cents/day")
-    unsuccessfull_python_requirements = click.style(
-        "Unsuccessfully installed python requirements: {}", fg="red")
-    unsuccessfull_server_requirements = click.style(
-        "Unsuccessfully installed server requirements: {}", fg="red")
+    unsuccessfull_python_requirements = click.style("Unsuccessfully installed python requirements: {}", fg="red")
+    unsuccessfull_server_requirements = click.style("Unsuccessfully installed server requirements: {}", fg="red")
     app_directory_valid = click.style("App Directory Valid...", fg="magenta")
-    app_directory_invalid = click.style("App Directory Invalid. Please ensure \
-your directory and it's contents are correct,\
-refer to 21.co/app for futher instructions.", fg="red")
-    installing_requirements = click.style(
-        "Installing requirements...", fg="magenta")
-    installed_requirements = click.style(
-        "Successfully installed requirements...", fg="magenta")
-    created_nginx_server = click.style(
-        "Created default 21 nginx server...", fg="magenta")
+    app_directory_invalid = click.style("App Directory Invalid. Please ensure" +
+                                        "your directory and it's contents are correct, " +
+                                        "refer to 21.co/app for futher instructions.", fg="red")
+    installing_requirements = click.style("Installing requirements...", fg="magenta")
+    installed_requirements = click.style("Successfully installed requirements...", fg="magenta")
+    created_nginx_server = click.style("Created default 21 nginx server...", fg="magenta")
     failed_configuring_nginx = "Failed to configure nginx {}"
-    created_site_includes = click.style(
-        "Created site-includes to host apps...",
-        fg="magenta")
+    created_site_includes = click.style("Created site-includes to host apps...", fg="magenta")
     created_systemd_file = click.style("Systemd file created...", fg="magenta")
     created_app_nginx_file = click.style("Nginx file created...", fg="magenta")
     hosted_app_location = click.style("Your app is now hosted at http://0.0.0.0/{}", fg="magenta")
