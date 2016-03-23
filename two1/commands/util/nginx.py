@@ -1,179 +1,14 @@
-"""Helper methods for the 21 sell command."""
+""" Utility to bring up and tear down an nginx server """
 # standard python imports
 import os
-import tempfile
 import subprocess
+import tempfile
 import platform
-import shutil
-
-from two1.commands.util import exceptions
-from two1.commands.util.uxstring import UxString
 
 
-def detect_url(url):
-    """Detect type of url specified,
-    ie. git style or tarball
-    Args:
-        url (str): specified url
-    Rasies:
-        NotImplementedError: if url type
-            is not supported yet.
-    Returns:
-        str: type of path
-    """
-    rv = ""
-    if url.endswith(".git"):
-        rv = "git"
-    else:
-        raise exceptions.Two1Error(UxString.error.url_not_supported)
-    return rv
-
-
-def clone_repo(appname, url):
-    """Clone a git repo.
-    Args:
-        appame (str): name of the application.
-        url (str): git repo url
-    Returns:
-        bool: success of the cloned repo.
-    """
-    rv = False
-    if not os.path.exists(appname):
-        try:
-            subprocess.check_output([
-                "git",
-                "clone",
-                url
-                ])
-            rv = True
-        except subprocess.CalledProcessError as e:
-            raise exceptions.Two1Error(
-                UxString.error.repo_clone_fail.format(e))
-    else:
-        rv = True
-    return rv
-
-
-def detect_os():
-    """Detect if the operating system
-    that is running is either osx, debian-based
-    or other.
-
-    Returns:
-        str: platform name
-    Raises:
-        OSError: if platform is not supported
-    """
-    plat = platform.system().lower()
-    if plat in ['debian', 'linux']:
-        return 'debian'
-    elif 'darwin' in plat:
-        return 'darwin'
-    else:
-        raise exceptions.Two1Error(UxString.unsupported_platform)
-
-
-def dir_to_absolute(dirname):
-    """Return absolute directory if only
-    folder name is provided."""
-    if dirname[-1] != "/":
-        dirname = dirname + '/'
-    if dirname[0] != "/":
-        dirname = os.getcwd() + "/" + dirname
-    return dirname
-
-
-def absolute_path_to_foldername(absolute_dir):
-    """Return the name of the folder given
-    an absolute path."""
-    return os.path.split(absolute_dir.rstrip('/'))[-1]
-
-
-def install_python_requirements(dirname):
-    """Install the python requirements needed
-    to run the app
-
-    Args:
-        dirname (str) : directory of the app
-    Returns:
-        bool: True if successfully installed,
-            False otherwise.
-    """
-    rv = False
-    appdir = dir_to_absolute(dirname)
-    try:
-        subprocess.check_output(
-            "sudo -H pip3 install -r {}requirements.txt".format(appdir),
-            shell=True
-            )
-        rv = True
-    except subprocess.CalledProcessError as e:
-        raise exceptions.Two1Error(
-            UxString.unsuccessfull_python_requirements.format(e))
-    return rv
-
-
-def install_server_requirements(dirname):
-    """Install requirements needed to host an app
-    using nginx.
-
-    Returns:
-        bool: True if the requirements were successfully installed,
-            False otherwise.
-    """
-    rv = False
-    try:
-        if "debian" in detect_os():
-            subprocess.check_output(
-                "sudo apt-get install -y nginx \
-                && sudo -H pip3 install gunicorn",
-                shell=True
-            )
-        if "darwin" in detect_os():
-            if not shutil.which("brew"):
-                raise exceptions.Two1Error(
-                    UxString.install_brew
-                )
-            subprocess.check_output(
-                "brew install nginx",
-                shell=True)
-            subprocess.check_output(
-                "sudo pip3 install gunicorn",
-                shell=True
-            )
-        rv = True
-    except (subprocess.CalledProcessError, OSError) as e:
-        raise exceptions.Two1Error(
-            UxString.unsuccessfull_server_requirements.format(e))
-    return rv
-
-
-def validate_directory(dirname):
-    """Validate that the directory specified
-    has correct contents within it.
-
-    ie. file with name "index.py"
-        - which has a variable "app" within it.
-
-    Args:
-        dirname (string): directory the app is located in.
-
-    Returns:
-        bool: True if the directory structure is valid,
-            False otherwise.
-    """
-    rv = False
-    try:
-        appdir = dir_to_absolute(dirname)
-        os.stat(appdir)
-        indexpath = appdir + "index.py"
-        with open(indexpath, "r") as indexfile:
-            lines = indexfile.readlines()
-            # quick check
-            rv = len([l for l in lines if "app=" in l or "app =" in l]) > 0
-    except (FileNotFoundError, OSError):
-        pass
-    return rv
+# two1 imports
+import two1.commands.util.exceptions as exceptions
+import two1.commands.util.uxstring as uxstring
 
 
 def create_site_includes():
@@ -191,8 +26,7 @@ def create_site_includes():
     rv = False
 
     if os.path.isfile("{}/etc/nginx/sites-enabled/default".format(
-        "/usr/local" if "darwin" in plat else "")
-    ):
+            "/usr/local" if "darwin" in plat else "")):
         subprocess.check_output([
             "sudo",
             "rm",
@@ -201,8 +35,7 @@ def create_site_includes():
                 "/usr/local" if "darwin" in plat else "")
             ])
     if not os.path.isdir("{}/etc/nginx/site-includes".format(
-        "/usr/local" if "darwin" in plat else "")
-    ):
+            "/usr/local" if "darwin" in plat else "")):
         subprocess.check_output([
             "sudo",
             "mkdir",
@@ -214,7 +47,7 @@ def create_site_includes():
     return rv
 
 
-def create_default_nginx_server():
+def create_default_server():
     """Creates a default server that hosts multiple
     nginx locations.
 
@@ -270,9 +103,8 @@ def create_systemd_file(dirname):
     rv = False
     plat = detect_os()
     if "darwin" in plat:
-        raise exceptions.Two1Error(
-                UxString.unsupported_platform
-            )
+        raise exceptions.Two1Error(uxstring.UxString.unsupported_platform)
+
     appdir = dir_to_absolute(dirname)
     appname = absolute_path_to_foldername(appdir)
     with tempfile.NamedTemporaryFile() as tf:
@@ -327,7 +159,7 @@ WantedBy=default.target
     return rv
 
 
-def create_nginx_config(dirname):
+def create_config(dirname):
     """Create a nginx location file that redirects
     all requests with the prefix of the appname to the
     correct socket & process belonging to that app.
@@ -342,8 +174,7 @@ def create_nginx_config(dirname):
         dirname (string): directory the app is located in.
 
     Returns:
-        bool: True if the process was successfully completed,
-            False otherwise.
+        bool: True if the process was successfully completed, False otherwise.
     """
     plat = detect_os()
     rv = False
@@ -373,8 +204,8 @@ def create_nginx_config(dirname):
                 "chmod",
                 "644",
                 "{}/etc/nginx/sites-available/{}".format(
-                        "/usr/local" if "darwin" in plat else "",
-                        appname
+                    "/usr/local" if "darwin" in plat else "",
+                    appname
                     )
             ])
             subprocess.check_output([
@@ -382,8 +213,8 @@ def create_nginx_config(dirname):
                 "rm",
                 "-f",
                 "{}/etc/nginx/site-includes/{}".format(
-                        "/usr/local" if "darwin" in plat else "",
-                        appname
+                    "/usr/local" if "darwin" in plat else "",
+                    appname
                     )
             ])
             subprocess.check_output([
@@ -411,20 +242,19 @@ def create_nginx_config(dirname):
             rv = True
         except subprocess.CalledProcessError as e:
             raise exceptions.Two1Error(
-                UxString.failed_configuring_nginx.format(e))
+                uxstring.UxString.failed_configuring_nginx.format(e))
     return rv
 
 
 def destroy_app(appname):
-    """Removes nginx/systemd files from the system
+    """ Removes nginx/systemd files from the system
     pertaining to the app specified.
 
     Args:
         appname (str): name of the enabled app.
 
     Returns:
-        bool: True if the app was successfully destroyed,
-            False otherwise.
+        bool: True if the app was successfully destroyed, False otherwise.
     """
     rv = False
     try:
@@ -456,3 +286,37 @@ def destroy_app(appname):
     except subprocess.CalledProcessError:
         pass
     return rv
+
+
+def detect_os():
+    """ Detect if the operating system
+    that is running is either osx, debian-based
+    or other.
+
+    Returns:
+        str: platform name
+
+    Raises:
+        OSError: if platform is not supported
+    """
+    plat = platform.system().lower()
+    if plat in ['debian', 'linux']:
+        return 'debian'
+    elif 'darwin' in plat:
+        return 'darwin'
+    else:
+        raise exceptions.Two1Error(uxstring.UxString.unsupported_platform)
+
+
+def dir_to_absolute(dirname):
+    """ Return absolute directory if only folder name is provided."""
+    if dirname[-1] != "/":
+        dirname = dirname + '/'
+    if dirname[0] != "/":
+        dirname = os.getcwd() + "/" + dirname
+    return dirname
+
+
+def absolute_path_to_foldername(absolute_dir):
+    """ Return the name of the folder given an absolute path."""
+    return os.path.split(absolute_dir.rstrip('/'))[-1]
