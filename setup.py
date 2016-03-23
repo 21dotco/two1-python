@@ -67,7 +67,6 @@ setup(
               'two1.mkt',
               'two1.lib',
               'two1.commands',
-              'two1.commands.helpers',
               'two1.bitcoin',
               'two1.server',
               'two1.bitserv',
