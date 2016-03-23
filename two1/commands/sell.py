@@ -110,7 +110,10 @@ def _sell(client, **options):
                 "{}/{}".format(app["name"], "/manifest.yaml"),
                 '21market',
                 True,
-                {'host': "{}/{}".format(zt_address, app["name"])}
+                {
+                    'host': "{}".format(zt_address),
+                    'basePath': "/{}".format(app['name'])
+                }
                 )
 
             total_daily_revenue += app["avg_earnings_day"]
