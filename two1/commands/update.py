@@ -8,6 +8,8 @@ import subprocess
 from datetime import datetime
 from datetime import date
 from urllib.parse import urljoin
+# distutils.version is changed when running in a venv
+#pylint: disable=no-name-in-module,import-error
 from distutils.version import LooseVersion
 
 # 3rd party requests
@@ -22,14 +24,14 @@ from two1.commands.util import exceptions
 
 
 TWO1_APT_INSTALL_PACKAGE_PATH = "/usr/lib/python3/dist-packages/" + two1.TWO1_PACKAGE_NAME
-
+LAST_CHECKED_FORMAT = "%Y-%m-%d"
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.argument('version', nargs=1, required=False, default='latest')
+@click.argument('version', nargs=1, required=False, default='')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
@@ -42,27 +44,24 @@ Usage
 Invoke this with no arguments to update the CLI.
 $ 21 update
 """
-    _update(ctx.obj['config'], version)
+    _update(ctx.obj['config'], version, True)
 
 
-def _update(config, version):
-    logger.info(uxstring.UxString.update_check)
-    update_two1_package(config, version, force_update_check=True)
-
-
-def update_two1_package(config, version, force_update_check=False):
-    """ Handles the updating of the CLI software including any dependencies.
+def _update(config, version, force_update_check=False):
+    """ Handles updating the CLI software including any dependencies.
 
         How does the update work?
-        The entry point function to run the updater is update(self).
-        Update steps
+
         1) If update check has not been performed today, check to see if an
            update is available.
+
+            Note: running `21 update` will always force the update
+
         2) If a new version is available, run the updater and reset the update
            check.
 
         Key State Variables in the config:
-            config.last_update_check (string): This stores the last date on
+            config.last_update_check (str): This stores the last date on
             which an update check was performed in %Y-%m-%d format.
 
         Args:
@@ -78,66 +77,45 @@ def update_two1_package(config, version, force_update_check=False):
                   update_successful (bool): Whether the update was successfully
                   downloaded and installed.
     """
-    ret = dict(
-        update_available=False,
-        update_successful=None
-    )
+    logger.info(uxstring.UxString.update_check)
+
     # Has update been already performed today?
     if not force_update_check and checked_for_an_update_today(config):
-        # do nothing
-        pass
-    else:
-        # Set the update check date to today. There are several schools of
-        # thought on this. This could be done after a successful update as
-        # well.
-        config.set('last_update_check', date.today().strftime("%Y-%m-%d"), should_save=True)
+        return
 
-        installed_version = two1.TWO1_VERSION
+    # current two1 version installed
+    installed_version = two1.TWO1_VERSION
 
-        if installed_version == '':
-            # This has occured when local git commits have happened
-            raise exceptions.Two1Error(uxstring.UxString.Error.version_not_detected)
+    # This should never be the case
+    if not installed_version:
+        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_detected)
 
-        try:
-            latest_version = lookup_pypi_version(version)
-        except exceptions.Two1Error:
-            raise
-        except Exception:
-            _do_update('latest')
+    # Set the update check date to today and saves to config file
+    config.set('last_update_check', date.today().strftime(LAST_CHECKED_FORMAT), should_save=True)
 
-        # Check if available version is more recent than the installed version.
-        if (LooseVersion(latest_version) > LooseVersion(installed_version) or
-                version != 'latest'):
-            ret["update_available"] = True
-            # An updated version of the package is available.
-            # The update is performed either using pip or apt-get depending
-            # on how two1 was installed in the first place.
-            logger.info(uxstring.UxString.update_package.format(latest_version))
+    # go and get the latest version from pypi
+    latest_version = lookup_pypi_version(version)
 
-            # Detect if the package was installed using apt-get
-            # This detection only works for deb based linux systems
-            _do_update(latest_version)
+    # Check if available version is more recent than the installed version.
+    if version or LooseVersion(latest_version) > LooseVersion(installed_version):
+        # An updated version of the package is available.
+        # The update is performed either using pip or apt-get depending
+        # on how two1 was installed in the first place.
+        logger.info(uxstring.UxString.update_package.format(latest_version))
+
+        # This detection only works for deb based linux systems
+        # Detect if the package was installed using apt-get
+        if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
+            perform_apt_based_update(latest_version)
         else:
-            # Alert the user if there is no newer version available
-            logger.info(uxstring.UxString.update_not_needed)
-
-        ret["update_successful"] = True
-
-    return ret
-
-
-def _do_update(version):
-    """ Actually does the update
-    """
-    if os.path.isdir(TWO1_APT_INSTALL_PACKAGE_PATH):
-        perform_apt_based_update()
+            perform_pip_based_update(latest_version)
     else:
-        perform_pip_based_update(version)
+        # Alert the user if there is no newer version available
+        logger.info(uxstring.UxString.update_not_needed)
 
 
 def stop_walletd():
-    """Stops the walletd process if it is running.
-    """
+    """ Stops the walletd process if it is running. """
     from two1.wallet import daemonizer
     from two1.wallet.exceptions import DaemonizerError
     failed = False
@@ -154,18 +132,18 @@ def stop_walletd():
     return not failed
 
 
-def lookup_pypi_version(version='latest'):
-    """Get the latest version of the software from the PyPi service.
+def lookup_pypi_version(version=None):
+    """ Get the latest version of the software from the PyPi service
 
     Args:
-        version (string): The requested version number, sha hash, or relative
-        timing of the released package to install.
-        Example: '0.2.1', '8e15eb1', 'latest'
+        version (str): The requested version number or None to get latest version
 
     Returns:
-        version (string): A version string with period delimited major,
-        minor, and patch numbers.
-        Example: '0.2.1'
+        version (str): A version string with period delimited major, minor, and patch numbers.
+
+    Raises:
+        Two1Error: if pypi server cannot be reached, the data returned from the server is
+            incorrect, or the version specified is not available.
     """
     try:
         url = urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
@@ -183,9 +161,10 @@ def lookup_pypi_version(version='latest'):
     try:
         packages = data["packages"]
 
-        if version != "latest":
+        if version:
             # Find the requested version or commit
             data = next((p for p in packages if version == p["version"]), None)
+
             # Prefer stable versions over unstable (e.g. exact matches first)
             if not data:
                 data = next((p for p in packages if version in p["version"]), None)
@@ -216,7 +195,7 @@ def checked_for_an_update_today(config):
     """
     try:
         last_update_check = config.last_update_check
-        last_update_check_date = datetime.strptime(last_update_check, "%Y-%m-%d").date()
+        last_update_check_date = datetime.strptime(last_update_check, LAST_CHECKED_FORMAT).date()
         today_date = date.today()
         # Check if last_update_check was performed before today
         if today_date > last_update_check_date:
@@ -233,9 +212,11 @@ def checked_for_an_update_today(config):
 
 
 def perform_pip_based_update(version):
-    """ This will use pip3 to update the package (without dependency update)
-    """
+    """ Performs a pip3 based update
 
+    Raises:
+        Two1Error: if the update subprocess call is not successfull
+    """
     install_command = ["pip3",
                        "install",
                        "-i",
@@ -262,10 +243,12 @@ def perform_pip_based_update(version):
         raise exceptions.Two1Error(uxstring.UxString.Error.update_failed)
 
 
-def perform_apt_based_update():
-    """ This will perform an apt-get based update.
-    """
+def perform_apt_based_update(version):
+    """ Performs an apt-get based update
 
+    Raises:
+        Two1Error: if the update subprocess call is not successfull
+    """
     stop_walletd()
 
     update_command = ["sudo",
@@ -276,7 +259,7 @@ def perform_apt_based_update():
                        "-y",
                        "install",
                        "--only-upgrade",
-                       two1.TWO1_PACKAGE_NAME,
+                       "{}={}-1".format(two1.TWO1_PACKAGE_NAME, version),
                        "minerd",
                        "zerotier-one"]
     try:
