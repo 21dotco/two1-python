@@ -16,31 +16,45 @@ ON_CHAIN = 'onchain'
 CHANNEL = 'channel'
 _requests = {}
 _current_method = OFF_CHAIN
+_current_wallet = None
 
 
-def use(payment_method):
+def use(payment_method=None, wallet=None):
     """Set the payment method to be used in the request."""
     global _current_method
-    if payment_method not in [OFF_CHAIN, ON_CHAIN, CHANNEL]:
-        raise ValueError('That method is not supported.')
-    _current_method = payment_method
+    global _current_wallet
+
+    if payment_method:
+        if payment_method not in [OFF_CHAIN, ON_CHAIN, CHANNEL]:
+            raise ValueError('Method not supported.')
+        _current_method = payment_method
+
+    if wallet:
+        from two1.wallet import Two1Wallet, Wallet
+        if not isinstance(wallet, Wallet) and not isinstance(wallet, Two1Wallet):
+            raise ValueError('Invalid wallet type.')
+        _current_wallet = wallet
 
 
 def request(*args, payment_method=None, **kwargs):
     """Instantiate, or use a cached BitRequests object, and make a request."""
     global _requests
     global _current_method
+    global _current_wallet
     payment_method = payment_method or _current_method
 
-    if payment_method not in _requests:
+    if not _current_wallet:
         from two1.wallet import Wallet
+        _current_wallet = Wallet()
+
+    if payment_method not in _requests:
         if payment_method == OFF_CHAIN:
             from two1.server.machine_auth_wallet import MachineAuthWallet
-            _requests[_current_method] = BitTransferRequests(MachineAuthWallet(Wallet()))
+            _requests[_current_method] = BitTransferRequests(MachineAuthWallet(_current_wallet))
         elif payment_method == ON_CHAIN:
-            _requests[_current_method] = OnChainRequests(Wallet())
+            _requests[_current_method] = OnChainRequests(_current_wallet)
         elif payment_method == CHANNEL:
-            _requests[_current_method] = ChannelRequests(Wallet())
+            _requests[_current_method] = ChannelRequests(_current_wallet)
         else:
             raise ValueError('That method is not supported.')
 
