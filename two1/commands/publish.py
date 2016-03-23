@@ -548,6 +548,8 @@ def override_manifest(manifest_json, overrides, marketplace):
             raise exceptions.ValidationError(uxstring.UxString.invalid_port_format)
         host += ":{}".format(port)
         manifest_json["host"] = host
+    if "basePath" in overrides:
+        manifest_json["basePath"] = overrides["basePath"]
 
     new_host = manifest_json["host"]
     if new_host != old_host:
