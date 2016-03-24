@@ -147,14 +147,14 @@ def lookup_pypi_version(version=None):
     """
     try:
         url = urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
-        r = requests.get(url)
+        response = requests.get(url)
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
         raise exceptions.Two1Error(uxstring.UxString.Error.update_server_connection)
 
     try:
-        data = r.json()
+        data = response.json()
     except ValueError:
-        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
+        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
 
     pypi_version = None
 
@@ -173,12 +173,12 @@ def lookup_pypi_version(version=None):
             data = next((p for p in packages if re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
 
         if not data:
-            raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
+            raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
         else:
             pypi_version = data["version"]
 
     except (AttributeError, KeyError, TypeError):
-        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found.format(version))
+        raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
 
     return pypi_version
 
