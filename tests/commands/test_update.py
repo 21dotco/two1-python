@@ -7,6 +7,7 @@ import unittest.mock as mock
 import sys
 
 # 3rd party imports
+import requests
 import click
 import pytest
 
@@ -14,6 +15,7 @@ import pytest
 import two1
 import two1.commands.update as update
 import two1.commands.util.exceptions as exceptions
+import two1.commands.util.uxstring as uxstring
 
 
 @pytest.mark.parametrize("timedelta_kwargs, outcome", [
@@ -87,3 +89,39 @@ def test_update(mock_config, two1_version_reset, two1_version, should_update, py
             # if an update is NOT happening make sure no update calls occured
             mock_subprocess.check_call.assert_not_called()
 
+
+def test_two1_version_error(patch_click, two1_version_reset, mock_config):
+    """ This test makes sure that a Two1Error is raised when two1.TWO1_VERSION is set """
+    two1.TWO1_VERSION = ""
+    with pytest.raises(exceptions.Two1Error) as ex:
+        update._update(mock_config, None)
+
+    assert ex.value._msg == uxstring.UxString.Error.version_not_detected
+
+
+@pytest.mark.parametrize("side_effect, mock_json, error_string", [
+    # check to make sure request connection errors are handled
+    (requests.exceptions.Timeout, None, uxstring.UxString.Error.update_server_connection),
+    (requests.exceptions.ConnectionError, None, uxstring.UxString.Error.update_server_connection),
+
+    # check to make sure invalid json from the server is handled
+    (None, mock.Mock(side_effect=ValueError), uxstring.UxString.Error.version_not_found),
+    (None, mock.Mock(return_value={"json": "without pakages"}), uxstring.UxString.Error.version_not_found),
+    (None, mock.Mock(return_value={"packages": [{"json": "without version"}]}), uxstring.UxString.Error.version_not_found),
+    ])
+def test_lookup_pypi_version_errors(mock_config, side_effect, mock_json, error_string):
+    with mock.patch("two1.commands.update.requests.get") as mock_get:
+        # side effect will raise an exception during the get request
+        mock_get.side_effect = side_effect
+
+        # set up mock response from get call
+        mock_response = mock.Mock()
+        mock_response.json = mock_json
+
+        # get return value is a mock
+        mock_get.return_value = mock_response
+
+        with pytest.raises(exceptions.Two1Error) as ex:
+            update.lookup_pypi_version()
+
+        assert ex.value._msg == error_string
