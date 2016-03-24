@@ -40,7 +40,7 @@ WHITELISTED_APPS = ['ping21']
               help="Sell all aggregatable apps on 21.co/mkt")
 def sell(ctx, **options):
     """
-    Sell 21 Apps on your 21 Bitcoin Computer.
+    Sell 21 apps on your 21 Bitcoin Computer.
 
 \b
 Usage
