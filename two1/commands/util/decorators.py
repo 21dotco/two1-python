@@ -138,7 +138,8 @@ def capture_usage(func):
             "channel": "cli",
             "level": "info",
             "username": username,
-            "command": func.__name__[1:],
+            "command": ctx.command.name,
+            "params": ctx.params,
             "platform": "{}-{}".format(platform.system(), platform.release()),
             "version" : two1.TWO1_VERSION
         }
