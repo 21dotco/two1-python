@@ -504,6 +504,11 @@ refer to 21.co/app for futher instructions.", fg="red")
                                  fg="red")
         non_existing_user = "Error: Username %s does not exist."
 
+        # 403 errors
+        server_403 = click.style("Received forbidden error (403). Login in with ", fg="red") +\
+                     click.style("21 login ", bold=True, fg="red") +\
+                     click.style("and try again.", fg="red")
+
         # wallet errors
         create_wallet_failed = "Error: Could not create wallet."
 
