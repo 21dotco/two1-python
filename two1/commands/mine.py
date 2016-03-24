@@ -114,7 +114,7 @@ def show_minertop(show_dashboard):
     """
     if show_dashboard:
         click.pause(uxstring.UxString.mining_show_dashboard_prompt)
-        subprocess.call("minertop")
+        subprocess.call("minertop", shell=True)
     else:
         logger.info(uxstring.UxString.mining_show_dashboard_context)
 
