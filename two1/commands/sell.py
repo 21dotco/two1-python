@@ -37,7 +37,6 @@ WHITELISTED_APPS = ['ping21']
 @decorators.capture_usage
 @click.option('-a', '--all',
               is_flag=True,
-              default=True, # for now make this default
               help="Sell all aggregatable apps on 21.co/mkt")
 def sell(ctx, **options):
     """
@@ -66,8 +65,12 @@ $ 21 sell destroy myapp
 See the help for list
 $ 21 sell destroy --help
     """
-    if ctx.invoked_subcommand is None:
+    if options['all']:
         _sell(ctx.obj['client'], **options)
+    else:
+        # prints help messge when no subcommand is given
+        if ctx.invoked_subcommand is None:
+            logger.info(ctx.command.get_help(ctx))
 
 
 def _sell(client, **options):
