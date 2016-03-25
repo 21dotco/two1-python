@@ -114,13 +114,14 @@ After=network.target
 
 [Service]
 WorkingDirectory=%s
-ExecStart=/usr/local/bin/gunicorn ping21-server:app --workers 1 --bind unix:%s%s.sock --access-logfile %sgunicorn.access.log --error-logfile %sgunicorn.error.log
+ExecStart=/usr/local/bin/gunicorn %s-server:app --workers 1 --bind unix:%s%s.sock --access-logfile %sgunicorn.access.log --error-logfile %sgunicorn.error.log
 
 [Install]
 WantedBy=default.target
         """ % (
             appname,
             appdir,
+            appname,
             appdir,
             appname,
             appdir,
