@@ -38,7 +38,7 @@ def pytest_cmdline_preparse(args):
         --durations=N         show N slowest setup/test durations (N=0 for all).
         --strict              run pytest in strict mode, warnings become errors.
     """
-    args += ['-r fExw', '--color=yes', '--durations=5', '--strict']
+    args += ['-r fExw', '--color=yes', '--durations=5', '--strict', '--ignore=venv']
 
 
 def pytest_configure(config):
