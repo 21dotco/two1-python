@@ -27,4 +27,4 @@ install:
     - pip install -r requirements.txt
     - python two1/commands/util/mkrelease.py
 # run those tests!
-script: py.test
+script: python -m pytest
