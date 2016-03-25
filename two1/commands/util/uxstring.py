@@ -522,6 +522,7 @@ refer to 21.co/app for futher instructions.", fg="red")
         # Updater
         update_failed = click.style("Error occurred during update process. Please run a manual update.", fg="red")
         version_not_found = click.style("Could not determine latest two1 version.", fg="red")
+        version_does_not_exist = click.style("Version {} doesn't exist. Latest version is {}", fg="red")
         retry_update_after_reboot = "Could not stop wallet daemon. Please reboot your system and retry 21 update."
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
