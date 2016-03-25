@@ -161,21 +161,24 @@ def lookup_pypi_version(version=None):
     try:
         packages = data["packages"]
 
-        if version:
-            # Find the requested version or commit
-            data = next((p for p in packages if version == p["version"]), None)
+        # gets all stable versions from list of packages
+        versions = [package['version'] for package in packages if re.search(r'\d\.\d(\.\d)?$', package['version'])]
 
-            # Prefer stable versions over unstable (e.g. exact matches first)
-            if not data:
-                data = next((p for p in packages if version in p["version"]), None)
-        else:
-            # Find the latest stable version matching '1.2' or '1.2.3'
-            data = next((p for p in packages if re.search(r'\d\.\d(\.\d)?$', p["version"])), None)
-
-        if not data:
+        if not versions:
             raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
+
+        # gets the max version from all available versions
+        latest_version = max(versions, key=lambda version: int(version.replace(".", "")))
+
+        # make sure version given is valid
+        if version:
+            if version in versions:
+                return version
+            else:
+                raise exceptions.Two1Error(
+                        uxstring.UxString.Error.version_does_not_exist.format(version, latest_version))
         else:
-            pypi_version = data["version"]
+            return latest_version
 
     except (AttributeError, KeyError, TypeError):
         raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
