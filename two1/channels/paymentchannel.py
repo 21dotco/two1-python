@@ -11,6 +11,7 @@ from .statemachine import PaymentChannelStateMachine
 
 SupportedProtocols = {
     "http": server.HTTPPaymentChannelServer,
+    "https": server.HTTPPaymentChannelServer,
     "test": server.TestPaymentChannelServer,
 }
 """Supported protocols table."""
