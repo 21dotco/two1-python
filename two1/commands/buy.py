@@ -132,7 +132,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(e)
 
     # Write response text to stdout or a filename if provided
-    logger.info(response.content, file=output_file)
+    logger.info(response.content, file=output_file, nl=False)
 
     # Exit successfully if no amount was paid for the resource (standard HTTP request)
     if not hasattr(response, 'amount_paid'):
