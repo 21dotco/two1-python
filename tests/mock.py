@@ -64,14 +64,14 @@ class MockBitResponse:
         if method.upper() == 'GET':
             self.status_code = 200
             self.amount_paid = self.GET_COST
-            self.text = self.SUCCESS_RESPONSE
+            self.content = self.text = self.SUCCESS_RESPONSE
         elif method.upper() == 'POST':
             self.status_code = 201
             self.amount_paid = self.POST_COST
-            self.text = json.dumps(data)
+            self.content = self.text = json.dumps(data)
         else:
             self.status_code = 405
-            self.text = self.FAILURE_RESPONSE
+            self.content = self.text = self.FAILURE_RESPONSE
 
 
 class MockBitRequests:
