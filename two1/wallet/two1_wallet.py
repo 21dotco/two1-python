@@ -1170,16 +1170,10 @@ class Two1Wallet(BaseWallet):
         # the dust limit as they would make the transaction non-standard
         for addr, amount in addresses_and_amounts.items():
             if amount <= txn_fees.DUST_LIMIT:
-                raise ValueError(
-                    "Can't send %d satoshis to %s: amount is below dust limit! "
-                    "Use off-chain transactions or payment channels instead. "
-                    "Within a python script, you would do one of the following:\n"
-                    "\n"
-                    "mkt.bitrequests.use(mkt.bitrequests.OFF_CHAIN)\n"
-                    "mkt.bitrequests.use(mkt.bitrequests.CHANNEL)" %
+                raise exceptions.DustLimitError(
+                    "Can't send %d satoshis to %s: amount is below dust limit!" %
                     (amount, addr))
             total_amount += amount
-
 
         if not accounts:
             accts = self._accounts

@@ -29,6 +29,7 @@ class PassphraseError(WalletError):
 class DaemonRunningError(WalletError):
     pass
 
+
 class DaemonNotRunningError(WalletError):
     pass
 
@@ -50,4 +51,8 @@ class AccountCreationError(WalletError):
 
 
 class DaemonizerError(WalletError):
+    pass
+
+
+class DustLimitError(WalletError, ValueError):
     pass
