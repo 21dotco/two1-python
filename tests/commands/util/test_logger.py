@@ -38,8 +38,8 @@ def test_logger_import():
     # debug level is less than info
     (logging.DEBUG, "info", True),
 
-    # same level logs work when using disable
-    (logging.INFO, "info", True),
+    # same level logs do NOT work when using disable
+    (logging.INFO, "info", False),
 
     # Critical is higher than info
     (logging.CRITICAL, "info", False),
@@ -49,8 +49,8 @@ def test_logger_import():
     ])
 def test_disable_levels(patch_click, level, log_cmd, should_call):
     """ Test to ensure that the ClickLogger adheres to logging levels """
-    # gets the original level from the root logger so the test can also restore it
-    original_level = logging.getLogger('').getEffectiveLevel()
+    # gets the original disabled level from the root manager
+    original_level = logging.getLogger('').manager.disable
 
     try:
         # Sets global logging level
