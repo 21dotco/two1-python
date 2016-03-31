@@ -7,6 +7,7 @@ import time
 import json
 import logging
 import requests
+import itertools
 
 logger = logging.getLogger('bitrequests')
 
@@ -92,6 +93,23 @@ class BitRequests(object):
         logger.debug('[BitRequests] 402 payment required: {} satoshi.'.format(
             response.headers['price']))
         payment_headers = self.make_402_payment(response, max_price)
+
+        # Reset the position of any files that have been used
+        if 'files' in kwargs:
+            # Verify `files` argument type
+            if isinstance(kwargs['files'], dict):
+                files = kwargs['files'].values()
+            elif isinstance(kwargs['files'], list) or isinstance(kwargs['files'], tuple):
+                files = list(zip(*kwargs['files']))[1]
+                # Allow for one level of nesting for file fields
+                if isinstance(files[0], list) or isinstance(files[0], tuple):
+                    files = itertools.chain.from_iterable(files)
+            else:
+                raise TypeError('Argument \'files\' must be a dictionary or iterable.')
+
+            # Only seek the files if they are seekable
+            for f in filter(lambda f: hasattr(f, 'seek'), files):
+                f.seek(0)
 
         # Add any user-provided headers to the payment headers dict
         if 'headers' in kwargs:
