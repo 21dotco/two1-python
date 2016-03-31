@@ -115,18 +115,25 @@ class ClickLogger(logging.getLoggerClass()):
         given key-value pair as an attribute making for easy to style and echo records.
     """
 
-    # logger commands to create synamic functions
-    LOG_COMMANDS = ('debug', 'info', 'warning', 'error', 'critical')
+    def debug(self, msg, *args, **kwargs):
+        """ Calls Logger.debug with extra set to kwargs """
+        super(ClickLogger, self).debug(msg, *args, extra=kwargs)
 
-    def __init__(self, name):
-        super(ClickLogger, self).__init__(name)
+    def info(self, msg, *args, **kwargs):
+        """ Calls Logger.info with extra set to kwargs """
+        super(ClickLogger, self).info(msg, *args, extra=kwargs)
 
-        for command in self.LOG_COMMANDS:
-            # super class log command
-            log_func = getattr(super(ClickLogger, self), command)
+    def warning(self, msg, *args, **kwargs):
+        """ Calls Logger.warning with extra set to kwargs """
+        super(ClickLogger, self).warning(msg, *args, extra=kwargs)
 
-            # Create dynamic function to pass kwargs as extra param
-            setattr(self, command, lambda msg, **kwargs: log_func(msg, extra=kwargs))
+    def error(self, msg, *args, **kwargs):
+        """ Calls Logger.error with extra set to kwargs """
+        super(ClickLogger, self).error(msg, *args, extra=kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        """ Calls Logger.critical with extra set to kwargs """
+        super(ClickLogger, self).critical(msg, *args, extra=kwargs)
 
 
 # creates the handler which prints records
