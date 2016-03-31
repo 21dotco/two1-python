@@ -1,5 +1,7 @@
 """Make purchases in the 21 marketplace."""
 import sys
+
+from two1.wallet import exceptions
 import two1.bitrequests as bitrequests
 
 
@@ -71,6 +73,16 @@ class Market:
             response = self.bitrequests.request(method, self.host + resource, **options)
         except bitrequests.bitrequests.requests.exceptions.ConnectionError:
             raise ConnectionError('Could not connect to host.') from None
+        except exceptions.DustLimitError as error:
+            message = (
+                "{}\n"
+                "\n"
+                "Within a python script, you would do one of the following:\n"
+                "\n"
+                "mkt.bitrequests.use(mkt.bitrequests.OFF_CHAIN)\n"
+                "mkt.bitrequests.use(mkt.bitrequests.CHANNEL)"
+                ).format(error)
+            raise ValueError(message) from None
 
         # Raise errors on any 4xx or 5xx server response
         response.raise_for_status()
