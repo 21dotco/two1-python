@@ -170,15 +170,16 @@ def _parse_post_data(data):
     JSON_HEADER = 'application/json'
     FORM_URLENCODED_HEADER = 'application/x-www-form-urlencoded'
 
+    # Attempt to decode data as json
+    try:
+        json.loads(data)
+        return data, JSON_HEADER
+    except ValueError:
+        pass
+
     # Attempt to decode data as form url-encoded
     url_data = {key: vals[0] for key, vals in urllib.parse.parse_qs(data).items()}
     if len(url_data.keys()):
         return data, FORM_URLENCODED_HEADER
 
-    # Attempt to decode data as json, but dont save the deserialized response
-    try:
-        json.loads(data)
-    except ValueError:
-        raise click.ClickException(uxstring.UxString.buy_bad_data_format)
-
-    return data, JSON_HEADER
+    raise click.ClickException(uxstring.UxString.buy_bad_data_format)
