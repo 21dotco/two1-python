@@ -9,7 +9,7 @@ def create_version_file(version):
     Args:
         version (string): string representing current repo version.
     """
-    version_file = 'VERSION = "{}"'.format(version)
+    version_file = 'VERSION = "{}"\n'.format(version)
     repo_dir = os.path.join(os.getcwd(), 'two1')
     f = open(repo_dir + '/version.py', 'w')
     f.write(version_file)
