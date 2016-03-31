@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 @click.option('-p', '--payment-method', default='offchain', type=click.Choice(['offchain', 'onchain', 'channel']))
 @click.option('-H', '--header', multiple=True, default=None, help="HTTP header to include with the request")
 @click.option('-X', '--request', 'method', default='GET', help="HTTP request method")
-@click.option('-o', '--output', 'output_file', default=None, type=click.File('w'), help="Output file")
+@click.option('-o', '--output', 'output_file', default=None, help="Output file")
 @click.option('-d', '--data', default=None, help="Data to send in HTTP body")
 @click.option('--data-file', type=click.File('rb'), help="Data file to send in HTTP body")
 @click.option('--maxprice', default=10000, help="Maximum amount to pay")
@@ -132,7 +132,11 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(e)
 
     # Write response text to stdout or a filename if provided
-    logger.info(response.content, file=output_file, nl=False)
+    if not output_file:
+        logger.info(response.content, nl=False)
+    else:
+        with open(output_file, 'wb') as f:
+            logger.info(response.content, file=f, nl=False)
 
     # Exit successfully if no amount was paid for the resource (standard HTTP request)
     if not hasattr(response, 'amount_paid'):
