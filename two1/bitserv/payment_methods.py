@@ -8,7 +8,6 @@ import two1
 from two1.bitcoin.txn import Transaction
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from .models import OnChainSQLite3
-from .payment_server import PaymentServer
 
 logger = logging.getLogger('bitserv')
 

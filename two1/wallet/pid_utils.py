@@ -73,7 +73,7 @@ def cleanup_pid_file():
         pid_file.unlink()
 
 
-# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid        
+# Copied from: http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
 def check_pid(pid):
     if pid < 0:
         return False

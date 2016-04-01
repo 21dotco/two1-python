@@ -6,6 +6,7 @@ from two1.bitcoin import crypto
 
 allowed_chars = string.ascii_uppercase + string.ascii_lowercase + string.digits + " "
 
+
 def get_random_string():
     size = random.randrange(1, 200)
     return bytes(''.join(random.choice(allowed_chars) for _ in range(size)), 'ascii')
@@ -30,8 +31,8 @@ for i in range(100000):
     if not crypto.PublicKey.verify_bitcoin(string, bx_sig, address):
         errors += 1
         print("bx sig did not verify for %s" % string)
-        
-    if i % 100 == 0:
-        print("\rCompleted %d messages." % i)    
 
-print("\nTotal number of errors: %d" % (errors))    
+    if i % 100 == 0:
+        print("\rCompleted %d messages." % i)
+
+print("\nTotal number of errors: %d" % (errors))

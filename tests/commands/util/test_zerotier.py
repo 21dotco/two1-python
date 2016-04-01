@@ -6,7 +6,6 @@
 # standard python imports
 import unittest.mock as mock
 import json
-import subprocess
 
 # 3rd party imports
 import pytest
@@ -80,7 +79,7 @@ def test_cli_json(args, outcome):
     ("0123456789", 16, False),
     ("0123456789ABCDEF", 10, False),
     ("False", 16, False),
-    ("False", "False", False), #fault tolerant inputs
+    ("False", "False", False),  # fault tolerant inputs
     ("", 0, False),
     ("1", 1, True),
     ])
@@ -272,4 +271,3 @@ def test_start_daemon(which_mock, system_mock, check_output_mock,
         check_output_mock.side_effect = outcome
         with pytest.raises(outcome):
             zerotier.start_daemon()
-

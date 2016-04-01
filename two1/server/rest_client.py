@@ -5,9 +5,7 @@ import json
 import datetime
 
 # 3rd party imports
-import click
 import requests
-from simplejson import JSONDecodeError
 
 # two1 imports
 import two1
@@ -232,14 +230,14 @@ class TwentyOneRestClient(object):
         # currently a fixture until endpoint is in working state.
         return [
             {
-                "name"  : "ping21",
-                "git"   : "https://github.com/21dotco/ping21.git",
-                "avg_earnings_day" : 10000,
-                "avg_earnings_request" : 1000,
-                "resources:" : {
-                    "bandwidth" : "40kb",
-                    "hdd" : "40kb",
-                    "mem" : "128mb"
+                "name": "ping21",
+                "git": "https://github.com/21dotco/ping21.git",
+                "avg_earnings_day": 10000,
+                "avg_earnings_request": 1000,
+                "resources:": {
+                    "bandwidth": "40kb",
+                    "hdd": "40kb",
+                    "mem": "128mb"
                 }
             }
         ]
@@ -262,7 +260,7 @@ class TwentyOneRestClient(object):
 
     def rate_app(self, app_id, rating):
         path = "/market/apps/{}/rating/".format(app_id)
-        data = json.dumps({"rating" : rating})
+        data = json.dumps({"rating": rating})
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
     def get_ratings(self):

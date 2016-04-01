@@ -1,7 +1,6 @@
 """This submodule provides a concrete `InsightProvider` class that provides
 information about a blockchain by contacting a server."""
 import decimal
-import json
 
 from urllib.parse import urljoin
 

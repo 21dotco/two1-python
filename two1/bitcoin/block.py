@@ -4,7 +4,7 @@ the Bitcoin blockchain."""
 from sha256 import sha256 as sha256_midstate
 
 from two1.bitcoin.hash import Hash
-from two1.bitcoin.txn import CoinbaseInput, Transaction
+from two1.bitcoin.txn import Transaction
 from two1.bitcoin.utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
@@ -282,7 +282,6 @@ class Block(object):
             return [bytes(node.right_child.hash)]
         else:
             return self._get_merkle_edge(node.left_child) + [bytes(node.right_child.hash)]
-
 
     @property
     def coinbase_transaction(self):

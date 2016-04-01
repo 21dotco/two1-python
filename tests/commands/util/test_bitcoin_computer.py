@@ -153,4 +153,3 @@ def test_get_hashrate_file_not_found():
 
     with pytest.raises(FileNotFoundError):
         bitcoin_computer.get_hashrate("15min")
-

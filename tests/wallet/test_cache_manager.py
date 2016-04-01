@@ -1,11 +1,9 @@
 import inspect
-import pytest
 import os.path
 import time
 
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.bitcoin.hash import Hash
-from two1.bitcoin.txn import Transaction
 from two1.wallet.cache_manager import CacheManager
 from two1.wallet.wallet_txn import WalletTransaction
 

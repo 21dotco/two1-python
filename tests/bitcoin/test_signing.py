@@ -1,6 +1,4 @@
-import base64
 import pytest
-import hashlib
 from two1.bitcoin import crypto, hash, script, txn, utils
 
 # The first key in this list had 10000 satoshis sent to it in block 369023
@@ -11,10 +9,12 @@ keys = [(crypto.PrivateKey.from_b58check('5JcjcDkFZ3Dz4RjnK3n9cyLVmNS3FzGdNRtNMG
          crypto.PublicKey(0x5866260447c0adfdb26dbe5060a7a298e17d051008ce1677d19fe3d3373284b9,
                           0xc384a3445dd96f96c11d3b33d82083e9ecc27d0abfa9fd433afaa5006186bf61))]
 
+
 @pytest.mark.parametrize("keypair", keys)
 def test_key_addresses(keypair):
     private_key, public_key = keypair
     assert private_key.public_key.point == public_key.point
+
 
 @pytest.mark.parametrize("message, keypair, exp_sig", [
     (b"Hello, World!!", keys[0], "G1axea+IdcHXdLH6mO5RLLFpwfLHq0aeCio2IBkntGPrBYKuLybWBoF/ZUivx179qGUU9/1kv9GND9sLvsSBlzw="),
@@ -32,12 +32,13 @@ def test_bitcoin_message_signing(message, keypair, exp_sig):
                                               sig_b64.decode('ascii'),
                                               message.decode('ascii')))
     print()
-    
+
     assert sig_b64.decode('ascii') == exp_sig
-    
+
     # Check to make sure the recovered public key is correct
     assert crypto.PublicKey.verify_bitcoin(message, sig_b64, address)
-    
+
+
 def test_sign_txn():
     # Let's create a txn trying to spend one of Satoshi's coins: block 1
     # We make the (false) assertion that we own the private key (private_key1)
@@ -45,7 +46,7 @@ def test_sign_txn():
     address1 = keys[0][1].address(compressed=False)
     address2 = keys[1][1].address(compressed=False)
 
-    prev_txn_hash = hash.Hash('6eae1e03964799c4e29039db459ea4fad4df57c2b06f730b60032a48fb075620') # Real txn in block 369023 to keys[0]
+    prev_txn_hash = hash.Hash('6eae1e03964799c4e29039db459ea4fad4df57c2b06f730b60032a48fb075620')  # Real txn in block 369023 to keys[0]
     prev_script_pub_key = script.Script.build_p2pkh(utils.address_to_key_hash(address1)[1])
     txn_input = txn.TransactionInput(prev_txn_hash,
                                      0,
@@ -54,7 +55,7 @@ def test_sign_txn():
 
     # Build the output so that it pays out to address2
     out_script_pub_key = script.Script.build_p2pkh(utils.address_to_key_hash(address2)[1])
-    txn_output = txn.TransactionOutput(9000, out_script_pub_key) # 1000 satoshi fee
+    txn_output = txn.TransactionOutput(9000, out_script_pub_key)  # 1000 satoshi fee
 
     # Create the txn
     transaction = txn.Transaction(txn.Transaction.DEFAULT_TRANSACTION_VERSION,

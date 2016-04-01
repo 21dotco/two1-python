@@ -1,3 +1,4 @@
+# flake8: noqa
 """The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
 the following functionality:
 

@@ -1,6 +1,5 @@
 """ Unit test to verify logger functionality """
-#standard python imports
-import sys
+# standard python imports
 import logging
 import io
 import unittest.mock as mock
@@ -16,7 +15,7 @@ import two1.commands.util.logger as _logger
 
 
 # Creates a ClickLogger
-logger = logging.getLogger("{}.{}".format("two1" ,__name__))
+logger = logging.getLogger("{}.{}".format("two1", __name__))
 
 
 def test_logger_import():
@@ -158,7 +157,7 @@ def test_echo(capsys, message, kwargs, expected_output):
     if kwargs.get("file", False):
         assert expected_output == kwargs['file'].getvalue()
     else:
-        out, err =  capsys.readouterr()
+        out, err = capsys.readouterr()
         if kwargs.get("err", False):
             assert err == expected_output
         else:

@@ -45,7 +45,6 @@ def test_walletwrapper(wallet):
     sig = wallet.sign(str(deposit_tx.hash).encode('ascii'), redeem_script.customer_public_key)
     assert sig.to_der() == codecs.decode("30450221008f51b6565a8ee67c32529ed840116c44e1f60a628c51ac59720cc8c6df1b5eab02204ccc32c89f81425f483c64c6f8dd77e57eefd3b6a5b7548d1875f5ef3f86cf27", 'hex_codec')
 
-
     # Payment Channel with 300000 deposit, 1000 minimum output, 20000 fee
     redeem_script = statemachine.PaymentChannelRedeemScript(mock.MockPaymentChannelServer.PRIVATE_KEY.public_key, mock.MockTwo1Wallet.PRIVATE_KEY.public_key, 1450223410)
 

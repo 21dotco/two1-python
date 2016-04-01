@@ -1,6 +1,5 @@
 import builtins
 import getpass
-import inspect
 import json
 import logging
 import random
@@ -27,7 +26,6 @@ from two1.wallet.account_types import account_types
 from two1.wallet.hd_account import HDAccount
 from two1.wallet.base_wallet import BaseWallet
 from two1.wallet.cache_manager import CacheManager
-from two1.wallet import exceptions
 from two1.wallet.wallet_txn import WalletTransaction
 from two1.wallet import fees as txn_fees
 from two1.wallet.socket_rpc_server import UnixSocketServerProxy
@@ -1601,7 +1599,6 @@ class Two1Wallet(BaseWallet):
                                            use_unconfirmed=False,
                                            fees=fees,
                                            accounts=[acct])
-
 
             self.utxo_selector = curr_utxo_selector
 

@@ -15,9 +15,9 @@ class UxString:
                                           "this service. If you believe you have received this " \
                                           "message in error, please contact support@21.co.",
                                           fg="red")
-    max_accounts_reached = click.style("You have reached the maximum number of 21.co accounts that you can create. ", fg="red")+\
-                           click.style("Use ", fg="red")+\
-                           click.style("21 login ", fg="red", bold=True)+\
+    max_accounts_reached = click.style("You have reached the maximum number of 21.co accounts that you can create. ", fg="red") +\
+                           click.style("Use ", fg="red") +\
+                           click.style("21 login ", fg="red", bold=True) +\
                            click.style("to switch between your available accounts.", fg="red")
 
     # account creation

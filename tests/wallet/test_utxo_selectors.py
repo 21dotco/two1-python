@@ -3,7 +3,6 @@ import random
 from two1.bitcoin.txn import UnspentTransactionOutput
 from two1.bitcoin.hash import Hash
 from two1.bitcoin.script import Script
-from two1.wallet.exceptions import WalletBalanceError
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 
 

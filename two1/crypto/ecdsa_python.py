@@ -1,6 +1,4 @@
-import codecs
 import hashlib
-import hmac
 import math
 import random
 
@@ -685,7 +683,7 @@ class EllipticCurve(EllipticCurveBase):
                 z = int.from_bytes(self.hash_function(message).digest()[:num_bytes], 'big')
 
                 zG = self.base_point * z
-                pub_key = ((R  * s - zG) * r_modinv).to_affine()
+                pub_key = ((R * s - zG) * r_modinv).to_affine()
 
                 rv.append((pub_key, 2 * i + k))
 
@@ -754,13 +752,13 @@ class EllipticCurve(EllipticCurveBase):
 class p256(EllipticCurve):
     """ P-256 NIST-defined curve
     """
-    P  = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
-    A  = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
-    B  = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b
-    N  = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+    P = 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
+    A = 0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc
+    B = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b
+    N = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
     Gx = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296
     Gy = 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
-    H  = 1
+    H = 1
 
     def __init__(self):
         EllipticCurve.__init__(
@@ -778,14 +776,14 @@ class p256(EllipticCurve):
 class secp256k1(EllipticCurve):
     """ Elliptic curve used in Bitcoin.
     """
-    P  = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
-    A  = 0
-    B  = 7
-    N  = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+    P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+    A = 0
+    B = 7
+    N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
     Gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
     Gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
-    H  = 1
-            
+    H = 1
+
     def __init__(self):
         EllipticCurve.__init__(
             self,

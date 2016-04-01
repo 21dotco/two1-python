@@ -1,14 +1,11 @@
 """ Unit test to verify update command """
 # standard python imports
-import subprocess
 import datetime
-import urllib
 import unittest.mock as mock
 import sys
 
 # 3rd party imports
 import requests
-import click
 import pytest
 
 # two1 imports
@@ -59,7 +56,7 @@ def test_update(mock_config, two1_version_reset, two1_version, should_update, py
         # only care about checking for venv when doing pip based update
         if apt_update is False:
             if in_venv:
-                sys.real_prefix=True
+                sys.real_prefix = True
             else:
                 if hasattr(sys, "real_prefix"):
                     del sys.real_prefix
