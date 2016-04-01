@@ -7,12 +7,9 @@ is preferred within Python or any context where the code needs to be
 imported. We have configured setup.py and this code such that the
 documentation dynamically updates based on this name.
 """
-import os
-import sys
 import platform
 import locale
 import click
-from path import path
 import logging
 
 import two1
@@ -45,7 +42,6 @@ from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.join import join
 from two1.commands.sell import sell
-
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

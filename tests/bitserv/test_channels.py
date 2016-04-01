@@ -1,5 +1,4 @@
 """Tests for payment channel functionality."""
-import os
 import time
 import codecs
 import pytest
@@ -7,14 +6,12 @@ import collections
 
 import two1.bitcoin.utils as utils
 from two1.bitcoin import Script, Hash
-from two1.bitcoin import PrivateKey, PublicKey
+from two1.bitcoin import PrivateKey
 from two1.bitcoin import Transaction, TransactionInput, TransactionOutput
-from two1.bitcoin.script_interpreter import ScriptInterpreter
 from two1.channels.statemachine import PaymentChannelRedeemScript
 from two1.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.bitserv.payment_server import TransactionVerificationError
-from two1.bitserv.payment_server import BadTransactionError
 from two1.bitserv.models import DatabaseSQLite3, ChannelSQLite3
 
 

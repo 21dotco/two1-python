@@ -139,7 +139,7 @@ def test_paymentchannelclient():
     status = pc.status(url1)
     url1_expected_status['state'] = statemachine.PaymentChannelState.CONFIRMING_SPEND
     url1_expected_status['ready'] = False
-    url1_expected_status['spend_txid'] =  str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
+    url1_expected_status['spend_txid'] = str(mock.MockPaymentChannelServer.channels[status.deposit_txid]['payment_tx'].hash)
     assert_paymentchannel_status(url1_expected_status, status)
 
     # Confirm close

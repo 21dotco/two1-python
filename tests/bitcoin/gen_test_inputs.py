@@ -16,17 +16,15 @@ def get_from_chain(url_adder):
     ok = False
     while not ok:
         try:
-            
             r = requests.get(url, auth=(CHAIN_API_KEY, CHAIN_API_SECRET))
             r.raise_for_status()
             ok = True
         except requests.HTTPError as e:
-            if r.status_code == 429: # Too many requests
+            if r.status_code == 429:  # Too many requests
                 time.sleep(1)
             else:
                 print("Request was to %s" % (url))
                 raise e
-        
     b = json.loads(r.text)
 
     return b
@@ -38,7 +36,6 @@ def get_block(block):
 def get_txn(tx):
     tx_json = _get_txn(tx)
     raw_txn = _get_txn(tx_json['hash'], True)
-    
     tx_json['hex'] = raw_txn['hex']
 
     return tx_json
@@ -85,22 +82,21 @@ if __name__ == "__main__":
 
             # Dump the file along the way
             with open("blocks.json", 'w') as f:
-                json.dump(blocks, f)    
+                json.dump(blocks, f)
         else:
             got_tx = False
             while not got_tx:
                 try:
                     tx_num = random.randrange(0, len(b['transaction_hashes']))
-                
+
                     tx = get_txn(b['transaction_hashes'][tx_num])
                     tx['block_version'] = b['version']
                     txns.append(tx)
                     got_tx = True
                 except:
                     pass
-                
+
             print("\rblock = %d (version: %d), used txn %d" % (bi, b['version'], tx_num))
 
         with open("txns.json", 'w') as f:
             json.dump(txns, f)
-        

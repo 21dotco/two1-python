@@ -2,7 +2,6 @@
 TransactionOutput, and UnspentTransactionOutput classes for building and
 parsing Bitcoin transactions and their constituent inputs and outputs."""
 import copy
-import hashlib
 import struct
 
 from two1.bitcoin import crypto
@@ -123,7 +122,7 @@ class CoinbaseInput(TransactionInput):
                              this must be 1.
     """
     NULL_OUTPOINT = Hash(bytes(32))
-    MAX_INT       = 0xffffffff
+    MAX_INT = 0xffffffff
 
     def __init__(self, height, raw_script, sequence=MAX_INT, block_version=3):
         self.height = height

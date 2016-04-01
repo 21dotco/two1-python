@@ -122,4 +122,3 @@ def get_hashrate(hashrate_sample):
                     return -1
 
     raise TimeoutError
-

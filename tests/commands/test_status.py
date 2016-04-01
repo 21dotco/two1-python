@@ -1,10 +1,8 @@
 import pytest
 import unittest.mock as mock
 
-import two1
 from tests import mock as mock_objects
-from two1.commands import login, status
-from two1.commands.util import exceptions
+from two1.commands import status
 from two1.commands.util import uxstring
 
 

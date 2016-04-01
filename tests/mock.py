@@ -38,7 +38,7 @@ class MockTwo1Wallet:
 
     def balances_by_address(self, account=0):
         """Return the wallet's balances by address."""
-        return { self.current_address: { 'confirmed': MockTwo1Wallet.BALANCE, 'total': MockTwo1Wallet.BALANCE } }
+        return {self.current_address: {'confirmed': MockTwo1Wallet.BALANCE, 'total': MockTwo1Wallet.BALANCE}}
 
     @property
     def current_address(self):

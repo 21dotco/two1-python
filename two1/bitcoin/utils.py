@@ -356,5 +356,5 @@ def compute_reward(height):
     base_subsidy = 50 * 100000000
     era = height // 210000
     if era == 0:
-      return base_subsidy
+        return base_subsidy
     return int(base_subsidy / 2 ** era)

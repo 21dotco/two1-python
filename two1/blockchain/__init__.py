@@ -1,3 +1,4 @@
+# flake8: noqa
 """The blockchain module within the 21 Blockchain Library allows you to receive
 data about transactions and blocks from a blockchain data provider, as well as
 submit new transactions to the provider for relay to the network and inclusion

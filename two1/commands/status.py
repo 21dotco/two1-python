@@ -179,7 +179,7 @@ def status_wallet(client, wallet, detail=False):
         logger.info(uxstring.UxString.status_exit_message.format(buy21, buy21help))
 
     return {
-        "wallet" : status_wallet_dict,
+        "wallet": status_wallet_dict,
         "buyable": status_buyable_dict
     }
 

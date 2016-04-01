@@ -296,7 +296,7 @@ class CacheManager(object):
         out_status = self.UNSPENT
         if not conf:
             status |= self.UNCONFIRMED
-            out_status |= self.UNCONFIRMED            
+            out_status |= self.UNCONFIRMED
         if mark_provisional:
             status |= self.PROVISIONAL
             out_status |= self.PROVISIONAL
@@ -470,7 +470,7 @@ class CacheManager(object):
         """ Returns whether or not there are any transactions in the cache.
 
         Args:
-            account_index (int): The account to check. If None, returns 
+            account_index (int): The account to check. If None, returns
                 whether there are any transactions in the cache.
 
         Returns:

@@ -30,7 +30,7 @@ def test_ecpoint(curve, point_type):
         base_point = ecdsa_python.ECPointJacobian(curve, curve.Gx, curve.Gy, 1)
     else:
         print("Unsupported point_type %s!" % (point_type))
-        
+
     res = base_point * curve.n
     assert res.infinity
 
@@ -76,6 +76,7 @@ def test_ecpoint(curve, point_type):
             return False
 
     return True
+
 
 @pytest.mark.parametrize("curve", [
     ecdsa_python.p256(),
@@ -124,7 +125,7 @@ def test_p256(curve):
         assert R.y == 0xf2504055c03cede12d22720dad69c745106b6607ec7e50dd35d54bd80f615275
     else:
         point_class = ecdsa_openssl.ECPointAffine
-        
+
     # First test nonce generation according to rfc6979
     private_key = 0xC9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721
     public_key_x = 0x60FED4BA255A9D31C961EB74C6356D68C049B8923B61FA6CE669622E60F29FB6
@@ -230,17 +231,17 @@ def test_secp256k1(curve):
     y1, y2 = curve.y_from_x(x)
 
     assert y1 == 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
-    
+
     # test the nonce generation, these test-vectors are taken from:
     # https://bitcointalk.org/index.php?topic=285142.25
     private_key = 0x1
     message = b"Satoshi Nakamoto"
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
-    
+
     assert k == 0x8F8A276C19F4149656B280621E358CCE24F5F52542772691EE69063B74F15D15
 
     sig_pt, rec_id = curve.sign(message, private_key)
-    sig_pt, _ = make_low_s(curve, sig_pt, rec_id)    
+    sig_pt, _ = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0x934b1ea10a4b3c1757e2b0c017d0b6143ce3c9a7e6a4a49860d7a6ab210ee3d82442ce9d2b916064108014783e923ec36b49743e2ffa1c4496f01a512aafd9e5
@@ -248,7 +249,7 @@ def test_secp256k1(curve):
     private_key = 0x1
     message = b"All those moments will be lost in time, like tears in rain. Time to die..."
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
-    
+
     assert k == 0x38AA22D72376B4DBC472E06C3BA403EE0A394DA63FC58D88686C611ABA98D6B3
 
     sig_pt, rec_id = curve.sign(message, private_key)
@@ -256,11 +257,11 @@ def test_secp256k1(curve):
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0x8600dbd41e348fe5c9465ab92d23e3db8b98b873beecd930736488696438cb6b547fe64427496db33bf66019dacbf0039c04199abb0122918601db38a72cfc21
-    
+
     private_key = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140
     message = b"Satoshi Nakamoto"
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
-    
+
     assert k == 0x33A19B60E25FB6F4435AF53A3D42D493644827367E6453928554F43E49AA6F90
 
     sig_pt, _ = curve.sign(message, private_key)
@@ -272,7 +273,7 @@ def test_secp256k1(curve):
     private_key = 0xf8b8af8ce3c7cca5e300d33939540c10d45ce001b8f252bfbc57ba0342904181
     message = b"Alan Turing"
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
-    
+
     assert k == 0x525A82B70E67874398067543FD84C83D30C175FDC45FDEEE082FE13B1D7CFDF1
 
     sig_pt, rec_id = curve.sign(message, private_key)
@@ -284,7 +285,7 @@ def test_secp256k1(curve):
     private_key = 0xe91671c46231f833a6406ccbea0e3e392c76c167bac1cb013f6f1013980455c2
     message = b"There is a computer disease that anybody who works with computers knows about. It's a very serious disease and it interferes completely with the work. The trouble with computers is that you 'play' with them!"
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
-    
+
     assert k == 0x1F4B84C23A86A221D233F2521BE018D9318639D5B8BBD6374A8A59232D16AD3D
 
     sig_pt, rec_id = curve.sign(message, private_key)
@@ -292,4 +293,3 @@ def test_secp256k1(curve):
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
     assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6
-

@@ -84,7 +84,7 @@ Use 'n' to move to the next page and 'p' to move to the previous page.
 You can view detailed admin information about an app by specifying it's id
 at the prompt.
     """
-    #pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin
     _list_apps(ctx.obj['config'], ctx.obj['client'])
 
 
@@ -471,7 +471,7 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         # ensure the manifest is valid
         validate_manifest(manifest_dict)
 
-            # write back the manifest in case some clean up or overriding has happend
+        # write back the manifest in case some clean up or overriding has happend
         if overrides is not None:
             with open(api_docs_path, "w") as f:
                 yaml.dump(manifest_dict, f)
@@ -608,7 +608,6 @@ def validate_manifest(manifest_json):
 
     if len(manifest_json["schemes"]) == 0:
         raise exceptions.ValidationError(uxstring.UxString.scheme_missing, json=manifest_json)
-
 
     if manifest_json["info"]["x-21-category"].lower() not in uxstring.UxString.valid_app_categories:
         valid_categories = ", ".join(uxstring.UxString.valid_app_categories)

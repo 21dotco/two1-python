@@ -5,7 +5,7 @@ import codecs
 import threading
 
 from two1.bitcoin.utils import pack_u32
-from two1.bitcoin import PublicKey, Transaction, Hash, Signature, Script
+from two1.bitcoin import Transaction, Hash, Signature, Script
 from two1.channels.statemachine import PaymentChannelRedeemScript
 from two1.channels.blockchain import TwentyOneBlockchain
 

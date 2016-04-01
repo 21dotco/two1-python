@@ -12,7 +12,6 @@ from two1.bitserv.payment_methods import InvalidPaymentParameterError
 from two1.bitserv.payment_methods import DuplicatePaymentError
 from two1.bitserv.payment_methods import TransactionBroadcastError
 from two1.bitserv.payment_methods import PaymentBelowDustLimitError
-from two1.bitserv.payment_methods import ServerError
 
 
 test_wallet = Two1Wallet.import_from_mnemonic(TwentyOneProvider(),

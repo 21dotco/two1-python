@@ -1,9 +1,7 @@
 """This module provides data management for payment servers."""
 import os
 import time
-import codecs
 import sqlite3
-import datetime
 import collections
 from two1.bitcoin import Transaction
 

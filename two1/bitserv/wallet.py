@@ -1,7 +1,6 @@
 """Wrapper around the two1 wallet for payment channels."""
 import codecs
 import two1.bitcoin.utils as utils
-from two1.bitcoin import Script
 from two1.bitcoin import Transaction
 
 

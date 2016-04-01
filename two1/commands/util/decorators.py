@@ -72,7 +72,6 @@ def json_output(f):
             # dumps the json result
             logger.info(jsonlib.dumps(result, indent=4, separators=(',', ': ')))
 
-
         return result
 
     return functools.update_wrapper(_json_output, f)
@@ -141,7 +140,7 @@ def capture_usage(func):
             "command": ctx.command.name,
             "params": ctx.params,
             "platform": "{}-{}".format(platform.system(), platform.release()),
-            "version" : two1.TWO1_VERSION
+            "version": two1.TWO1_VERSION
         }
 
         # send usage payload to the logging server
@@ -173,7 +172,6 @@ def capture_usage(func):
             requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
 
             raise ex
-
 
     return functools.update_wrapper(_capture_usage, func)
 
@@ -209,7 +207,7 @@ def catch_all(func):
             logger.error(uxstring.UxString.Error.server_err)
 
             # only dump the stack traces if the debug flag is set
-            if "TWO1_DEBUG" in  os.environ:
+            if "TWO1_DEBUG" in os.environ:
                 logger.error("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
                 logger.error("Args: {}".format(args), fg="red")
                 logger.error("Kwargs: {}".format(kwargs), fg="red")

@@ -2,14 +2,14 @@
 to pay for resources. It enables a client to pay a server for a resource. See
 `docs/README.md` for more information.
 """
-from .bitrequests import BitRequests
+from .bitrequests import BitRequests  # noqa
 from .bitrequests import BitTransferRequests
 from .bitrequests import OnChainRequests
 from .bitrequests import ChannelRequests
 
-from .bitrequests import BitRequestsError
-from .bitrequests import UnsupportedPaymentMethodError
-from .bitrequests import ResourcePriceGreaterThanMaxPriceError
+from .bitrequests import BitRequestsError  # noqa
+from .bitrequests import UnsupportedPaymentMethodError  # noqa
+from .bitrequests import ResourcePriceGreaterThanMaxPriceError  # noqa
 
 OFF_CHAIN = 'offchain'
 ON_CHAIN = 'onchain'

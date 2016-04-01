@@ -24,6 +24,7 @@ def test_init():
         HDAccount(master_key_passphrase, "default", 0, mock_provider,
                   CacheManager())
 
+
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
                          [(0, 0, {'confirmed': 0, 'total': 0}),
                           (1, 0, {'confirmed': 0, 'total': 10000}),
@@ -74,7 +75,7 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
         change_index += 1
 
     if acct._cache_manager.address_has_txns(payout_addr):
-        payout_index += 1    
+        payout_index += 1
 
     assert acct.get_next_address(True) == mk0['change_addresses'][change_index]
     assert acct.get_next_address(False) == mk0['payout_addresses'][payout_index]

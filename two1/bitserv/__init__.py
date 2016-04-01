@@ -1,3 +1,4 @@
+# flake8: noqa
 """The BitServ library adds a simple API for servers to create payable
 resources in both Flask and Django frameworks.
 """

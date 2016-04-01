@@ -1,5 +1,4 @@
 import json
-from unittest.mock import MagicMock
 import pytest
 from pbkdf2 import PBKDF2
 import random
@@ -7,10 +6,6 @@ import string
 import tempfile
 
 from two1.bitcoin.crypto import HDKey, HDPrivateKey
-from two1.bitcoin.hash import Hash
-from two1.bitcoin.script import Script
-from two1.bitcoin.txn import UnspentTransactionOutput
-from two1.bitcoin.utils import address_to_key_hash
 from two1.bitcoin.utils import bytes_to_str
 from two1.bitcoin.utils import rand_bytes
 from two1.blockchain.mock_provider import MockProvider

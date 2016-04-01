@@ -18,10 +18,10 @@ from two1.commands import doctor as doc
 # importing classes here to fix name conflicts
 from two1.commands.util.config import Config
 from two1.server.rest_client import TwentyOneRestClient
-from two1.server.machine_auth_wallet  import MachineAuthWallet
+from two1.server.machine_auth_wallet import MachineAuthWallet
 
 
-### py.test hooks
+# py.test hooks
 def pytest_cmdline_preparse(args):
     """ Auto adds a few usefull command line args
 
@@ -59,7 +59,7 @@ def pytest_runtest_setup(item):
         pytest.skip("test {} is an integration test")
 
 
-### fixtures
+# fixtures
 @pytest.fixture()
 def config(tmpdir):
     """ Fixture that injects a Config

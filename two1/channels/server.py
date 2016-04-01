@@ -8,7 +8,6 @@ import functools
 import two1.bitcoin as bitcoin
 from two1.wallet import Wallet
 
-from . import blockchain
 from .statemachine import PaymentChannelRedeemScript
 
 

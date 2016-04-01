@@ -15,8 +15,6 @@
 
 import sys
 import os
-import shlex
-import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -108,7 +106,7 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-html_style = 'css/custom.css' 
+html_style = 'css/custom.css'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []

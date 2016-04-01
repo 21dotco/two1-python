@@ -45,13 +45,13 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
         if request_side_effect:
             mock_request.side_effect = request_side_effect
             with pytest.raises(raised_exception):
-               rc._request()
+                rc._request()
         else:
             response = MockHttpResponse(status_code=status_code, data=data)
             mock_request.return_value = response
             if raised_exception:
                 with pytest.raises(raised_exception) as ex_info:
-                   rc._request()
+                    rc._request()
 
                 if data:
                     try:

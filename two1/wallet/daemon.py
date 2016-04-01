@@ -11,13 +11,9 @@ import json
 from jsonrpcserver import Methods
 from jsonrpcserver.exceptions import ServerError
 from path import Path
-from two1.bitcoin.crypto import PublicKey
-from two1.bitcoin.crypto import HDPublicKey
 from two1.wallet import daemonizable
 from two1.wallet.socket_rpc_server import UnixSocketJSONRPCServer
-from two1.wallet.exceptions import AccountCreationError
 from two1.wallet.exceptions import DaemonRunningError
-from two1.wallet.exceptions import WalletBalanceError
 from two1.wallet.exceptions import WalletLockedError
 from two1.wallet.exceptions import WalletNotLoadedError
 from two1.wallet.two1_wallet import Two1Wallet

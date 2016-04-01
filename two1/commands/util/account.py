@@ -37,4 +37,3 @@ def get_or_create_username(config, machine_auth):
         exceptions.Two1Error(uxstring.UxString.Error.login_error_mining_auth_pubkey)
 
     return config.username
-

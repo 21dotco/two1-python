@@ -1,7 +1,6 @@
 import json
 import pytest
 import requests
-import unittest.mock as mock
 from two1.commands.util import config
 from two1.bitrequests import BitTransferRequests
 from two1.bitrequests import OnChainRequests

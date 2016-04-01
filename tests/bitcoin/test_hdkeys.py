@@ -1,6 +1,6 @@
 import pytest
 
-from two1.bitcoin import crypto, utils
+from two1.bitcoin import crypto
 
 # Test vectors from:
 # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vectors
