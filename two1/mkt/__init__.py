@@ -90,7 +90,7 @@ class Market:
         try:
             return response.json()
         except ValueError:
-            return response.text
+            return response.content
 
 
 # Set the `mkt` module import to an instance of the `Market` object above
