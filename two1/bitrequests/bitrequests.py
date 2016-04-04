@@ -7,7 +7,6 @@ import time
 import json
 import logging
 import requests
-import itertools
 
 logger = logging.getLogger('bitrequests')
 
@@ -64,6 +63,36 @@ class BitRequests(object):
         """
         raise NotImplementedError()
 
+    def _reset_file_positions(self, files, data):
+        """Resets the `read` cursor position of a group of files.
+
+        This method will mutate all file-like objects in the `files` or `data`
+        parameters. It has no effect when `file` and `data` are None, or when
+        `data` is not a file type.
+
+        Args:
+            data (file): a file-like object.
+            files (dict or list): a key-value store of file identifiers and
+                file-like objects or tuples that contain file-like objects.
+
+        TODO: allow for `files` lists where there may be multiple values for
+            the same key, which currently collide when cast to a dict
+        """
+        if files:
+            file_list = list(dict(files).values())
+            # Allow for one level of nesting for file fields
+            if isinstance(file_list[0], (list, tuple)):
+                file_list = [f[1] for f in file_list]
+        elif data:
+            file_list = [data]
+        else:
+            return
+
+        # Only seek through the objects if they are seekable
+        for f in file_list:
+            if hasattr(f, 'seek'):
+                f.seek(0)
+
     def request(self, method, url, max_price=None, **kwargs):
         """Make a 402 request for a resource.
 
@@ -95,21 +124,7 @@ class BitRequests(object):
         payment_headers = self.make_402_payment(response, max_price)
 
         # Reset the position of any files that have been used
-        if 'files' in kwargs:
-            # Verify `files` argument type
-            if isinstance(kwargs['files'], dict):
-                files = kwargs['files'].values()
-            elif isinstance(kwargs['files'], list) or isinstance(kwargs['files'], tuple):
-                files = list(zip(*kwargs['files']))[1]
-                # Allow for one level of nesting for file fields
-                if isinstance(files[0], list) or isinstance(files[0], tuple):
-                    files = itertools.chain.from_iterable(files)
-            else:
-                raise TypeError('Argument \'files\' must be a dictionary or iterable.')
-
-            # Only seek the files if they are seekable
-            for f in filter(lambda f: hasattr(f, 'seek'), files):
-                f.seek(0)
+        self._reset_file_positions(kwargs.get('files'), kwargs.get('data'))
 
         # Add any user-provided headers to the payment headers dict
         if 'headers' in kwargs:
