@@ -54,5 +54,9 @@ class DaemonizerError(WalletError):
     pass
 
 
+class SatoshiUnitsError(WalletError, ValueError):
+    pass
+
+
 class DustLimitError(WalletError, ValueError):
     pass
