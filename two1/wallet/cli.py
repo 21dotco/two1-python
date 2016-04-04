@@ -567,8 +567,8 @@ def list_balances(ctx, byaddress):
 @click.argument('address',
                 type=click.STRING)
 @click.argument('amount',
-                type=click.STRING,
-                metavar="BTC")
+                type=click.INT,
+                metavar="satoshis")
 @click.option('--use-unconfirmed', '-uu',
               is_flag=True,
               default=False,
@@ -578,7 +578,7 @@ def list_balances(ctx, byaddress):
               type=click.INT,
               default=None,
               show_default=True,
-              help="Manually specify the fees (in Satoshis)")
+              help="Manually specify the fees (in satoshis)")
 @click.option('--account',
               metavar="STRING",
               multiple=True,
@@ -590,16 +590,10 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
 
     \b
-    IMPORTANT: The amount you specify should be in bitcoin, not satoshi!
+    The amount you specify should be in satoshis, and should be above the dust
+    limit.
     """
     w = ctx.obj['wallet']
-
-    # Do we want to confirm if it's larger than some amount?
-    try:
-        satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
-    except decimal.InvalidOperation as e:
-        ctx.fail("'%s' is not a valid amount. Amounts must be in BTC." %
-                 (amount))
 
     logger.info("Sending %d satoshis to %s from accounts = %r" %
                 (satoshis, address, list(account)))
@@ -610,7 +604,7 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
                       fees=fees,
                       accounts=list(account))
     if txids:
-        click.echo("Successfully sent %s BTC to %s. txids:" %
+        click.echo("Successfully sent %s satoshis to %s. txids:" %
                    (amount, address))
         for t in txids:
             click.echo(t['txid'])

@@ -1167,6 +1167,10 @@ class Two1Wallet(BaseWallet):
         # Add up total amount & check for any outputs that are below
         # the dust limit as they would make the transaction non-standard
         for addr, amount in addresses_and_amounts.items():
+            if not isinstance(amount, int):
+                raise exceptions.SatoshiUnitsError(
+                    "Can't send a non-integer amount of satoshis %s. Did you forget to convert from BTC?" %
+                    (amount,))
             if amount <= txn_fees.DUST_LIMIT:
                 raise exceptions.DustLimitError(
                     "Can't send %d satoshis to %s: amount is below dust limit!" %
@@ -1417,7 +1421,7 @@ class Two1Wallet(BaseWallet):
 
         Args:
             address (str): The address to send the Bitcoin too.
-            amount (number): The amount of Bitcoin to send.
+            amount (int): The amount of Bitcoin - *in satoshis* - to send.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             fees (int): Specify the fee amount manually.
             accounts (list(str or int)): List of accounts to use. If

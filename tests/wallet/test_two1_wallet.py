@@ -208,6 +208,12 @@ def test_rest():
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                        amount=544)
 
+    # Try sending a non-integer amount (mistaken user tries to send in btc
+    # instead of satoshi)
+    with pytest.raises(exceptions.SatoshiUnitsError):
+        wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+                       amount=0.0001)
+
     # Try sending more than we have and make sure it raises an exception
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
