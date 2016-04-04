@@ -1,5 +1,4 @@
 import datetime
-import decimal
 import getpass
 import json
 import logging
@@ -17,7 +16,6 @@ from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
 from two1.wallet.base_wallet import convert_to_btc
-from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.two1_wallet import Wallet
@@ -596,10 +594,10 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
     w = ctx.obj['wallet']
 
     logger.info("Sending %d satoshis to %s from accounts = %r" %
-                (satoshis, address, list(account)))
+                (amount, address, list(account)))
 
     txids = w.send_to(address=address,
-                      amount=satoshis,
+                      amount=amount,
                       use_unconfirmed=use_unconfirmed,
                       fees=fees,
                       accounts=list(account))
@@ -614,8 +612,8 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 @click.argument('num_addresses',
                 type=click.IntRange(min=2, max=100))
 @click.argument('threshold',
-                type=click.STRING,
-                metavar="BTC_THRESHOLD")
+                type=click.INT,
+                metavar="satoshis")
 @click.option('--account',
               type=click.STRING,
               multiple=True,
@@ -624,7 +622,7 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
 @handle_exceptions
 @log_usage
 def spread_utxos(ctx, num_addresses, threshold, account):
-    """ Spreads out all UTXOs with value > threshold
+    """ Spreads out all UTXOs with value > threshold (in satoshis)
 
     \b
     This command is useful when you have a few large UTXOs which
@@ -633,19 +631,14 @@ def spread_utxos(ctx, num_addresses, threshold, account):
     In such a situation, you can use this command to split the balance
     into more UTXOs with smaller individual balances.
 
-    Example spreading all UTXOs with 0.001 BTC or larger into
+    Example spreading all UTXOs with 500000 satoshis or larger into
     20 addresses:
 
-    wallet spreadutxos 20 0.001
+    wallet spreadutxos 20 500000
     """
     w = ctx.obj['wallet']
-    try:
-        satoshis = int(decimal.Decimal(threshold) * satoshi_to_btc)
-    except decimal.InvalidOperation:
-        ctx.fail("'%s' is an invalid value for threshold. It must be in BTC." %
-                 (threshold))
 
-    txids = w.spread_utxos(threshold=satoshis,
+    txids = w.spread_utxos(threshold=threshold,
                            num_addresses=num_addresses,
                            accounts=list(account))
     if txids:
