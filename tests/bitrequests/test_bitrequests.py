@@ -1,3 +1,4 @@
+import io
 import json
 import pytest
 import requests
@@ -212,3 +213,62 @@ def test_get_402_info(monkeypatch):
     assert headers['price'] == 1337
     assert headers['bitcoin-address'] == '3NEWADDRESS'
     assert headers['username'] == 'long john silver'
+
+
+def test_post_files():
+    bit_req = MockBitRequests()
+
+    # Test a full request with a `files` dict
+    test_file = io.BytesIO(b'Test message.')
+    with mock.patch('requests.request') as mock_request:
+        # Clear the initial read buffer
+        test_file.read()
+        mock_request.return_value.status_code = 402
+        assert test_file.read() == b''
+        # Issue the request
+        bit_req.post('http://upload_url', files=dict(file=test_file))
+    assert mock_request.call_args_list[1][1]['files']['file'].read() == b'Test message.'
+
+    # Test a full request with a file in the `data` body
+    test_file = io.BytesIO(b'Another message.')
+    with mock.patch('requests.request') as mock_request:
+        # Clear the initial read buffer
+        test_file.read()
+        mock_request.return_value.status_code = 402
+        assert test_file.read() == b''
+        # Issue the request
+        bit_req.post('http://upload_url', data=test_file)
+    assert mock_request.call_args_list[1][1]['data'].read() == b'Another message.'
+
+
+def test_reset_file_positions():
+    bit_req = MockBitRequests()
+    test_file_1 = io.BytesIO(b'First message.')
+    test_file_2 = io.BytesIO(b'Second message.')
+
+    # Test a dictionary of files
+    file_dict = dict(file1=test_file_1, file2=test_file_2)
+    test_file_1.read()
+    test_file_2.read()
+    assert test_file_1.read() == b''
+    assert test_file_2.read() == b''
+    bit_req._reset_file_positions(file_dict)
+    assert test_file_1.read() == b'First message.'
+    assert test_file_2.read() == b'Second message.'
+
+    # Test a list of 2-tuples
+    file_list = [('one', test_file_1), ('two', test_file_2)]
+    assert test_file_1.read() == b''
+    assert test_file_2.read() == b''
+    bit_req._reset_file_positions(file_dict)
+    assert test_file_1.read() == b'First message.'
+    assert test_file_2.read() == b'Second message.'
+
+    # Test a list of 2-tuples with a nested tuple
+    file_list = [('images', ('firstfile.png', test_file_1, 'image/png')),
+                 ('images', ('secondfile.png', test_file_2, 'image/png'))]
+    assert test_file_1.read() == b''
+    assert test_file_2.read() == b''
+    bit_req._reset_file_positions(file_dict)
+    assert test_file_1.read() == b'First message.'
+    assert test_file_2.read() == b'Second message.'
