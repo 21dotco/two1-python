@@ -1,7 +1,10 @@
 import io
 import json
+import unittest.mock as mock
+
 import pytest
 import requests
+
 from two1.commands.util import config
 from two1.bitrequests import BitTransferRequests
 from two1.bitrequests import OnChainRequests
@@ -216,6 +219,7 @@ def test_get_402_info(monkeypatch):
 
 
 def test_post_files():
+    """Tests that bitrequests sucessfully rewinds file streams in POSTs."""
     bit_req = MockBitRequests()
 
     # Test a full request with a `files` dict
@@ -242,6 +246,7 @@ def test_post_files():
 
 
 def test_reset_file_positions():
+    """Unit test for the utility function to reset file positions."""
     bit_req = MockBitRequests()
     test_file_1 = io.BytesIO(b'First message.')
     test_file_2 = io.BytesIO(b'Second message.')
@@ -252,7 +257,7 @@ def test_reset_file_positions():
     test_file_2.read()
     assert test_file_1.read() == b''
     assert test_file_2.read() == b''
-    bit_req._reset_file_positions(file_dict)
+    bit_req._reset_file_positions(file_dict, None)
     assert test_file_1.read() == b'First message.'
     assert test_file_2.read() == b'Second message.'
 
@@ -260,15 +265,21 @@ def test_reset_file_positions():
     file_list = [('one', test_file_1), ('two', test_file_2)]
     assert test_file_1.read() == b''
     assert test_file_2.read() == b''
-    bit_req._reset_file_positions(file_dict)
+    bit_req._reset_file_positions(file_dict, None)
     assert test_file_1.read() == b'First message.'
     assert test_file_2.read() == b'Second message.'
 
     # Test a list of 2-tuples with a nested tuple
-    file_list = [('images', ('firstfile.png', test_file_1, 'image/png')),
-                 ('images', ('secondfile.png', test_file_2, 'image/png'))]
+    file_tuple = [('image1', ('firstfile.png', test_file_1, 'image/png')),
+                  ('image2', ('secondfile.png', test_file_2, 'image/png'))]
     assert test_file_1.read() == b''
     assert test_file_2.read() == b''
-    bit_req._reset_file_positions(file_dict)
+    bit_req._reset_file_positions(file_tuple, None)
     assert test_file_1.read() == b'First message.'
     assert test_file_2.read() == b'Second message.'
+
+    # Test a single file
+    file_single = test_file_1
+    assert test_file_1.read() == b''
+    bit_req._reset_file_positions(None, file_single)
+    assert test_file_1.read() == b'First message.'
