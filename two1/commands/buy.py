@@ -40,7 +40,7 @@ def buy(ctx, resource, **options):
 Usage
 -----
 Send an SMS to a phone number.
-$ 21 buy https://market.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
+$ 21 buy https://mkt.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
 
 """
     # Get requested URL resource for `21 buy <URL>` syntax
