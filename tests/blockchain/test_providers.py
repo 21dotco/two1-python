@@ -10,7 +10,7 @@ from two1.blockchain.exceptions import DataProviderError
 acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 twentyone_provider = TwentyOneProvider()
-insight_provider = InsightProvider("http://insight.bitpay.com")
+insight_provider = InsightProvider("http://blockchain.21-stage.co:3001", insight_api_path="insight-api")
 testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
 
 
