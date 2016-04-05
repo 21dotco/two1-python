@@ -46,8 +46,8 @@ def json_output(f):
         if not json:
             return f(ctx, *args, **kwargs)
 
-        # gets the original level to the decorator can restore it
-        original_level = logging.getLogger('two1').getEffectiveLevel()
+        # gets the original level so the decorator can restore it
+        original_level = logging.getLogger('').manager.disable
 
         # disables ALL log messages critical and below
         logging.disable(logging.CRITICAL)
