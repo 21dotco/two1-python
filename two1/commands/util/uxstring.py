@@ -146,7 +146,7 @@ class UxString:
         "Proceed?"
     buy_bad_payment_method = "'{}' is not a supported payment method."
     buy_bad_uri_scheme = "Please provide a valid scheme for the request, such as `http://` and `https://`."
-    buy_bad_uri_host = "Please provide a valid hostname for the request, such as `market.21.co`."
+    buy_bad_uri_host = "Please provide a valid hostname for the request, such as `mkt.21.co`."
     buy_channel_aborted = "Payment aborted."
     buy_bad_data_format = "Unknown data format."
     buy_balances = "\nYou spent: {} Satoshis. Remaining {} balance: {} Satoshis."

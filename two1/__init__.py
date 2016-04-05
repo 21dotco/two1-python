@@ -44,5 +44,5 @@ TWO1_PROVIDER_HOST = os.environ.get('TWO1_PROVIDER_HOST', 'https://blockchain.21
 TWO1_PYPI_HOST = os.environ.get('TWO1_PYPI_HOST', 'https://pypi-3844.21.co')
 TWO1_LOGGER_SERVER = os.environ.get('TWO1_LOGGER_SERVER', 'http://logger.21.co')
 TWO1_POOL_URL = os.environ.get('TWO1_POOL_URL', 'swirl+tcp://grid.21.co:21006')
-TWO1_MERCHANT_HOST = os.environ.get('TWO1_MERCHANT_HOST', 'http://market.21.co')
+TWO1_MERCHANT_HOST = os.environ.get('TWO1_MERCHANT_HOST', 'http://mkt.21.co')
 TWO1_DEVICE_ID = os.environ.get('TWO1_DEVICE_ID')
