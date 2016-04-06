@@ -39,8 +39,8 @@ def buy(ctx, resource, **options):
 \b
 Usage
 -----
-Send an SMS to a phone number.
-$ 21 buy https://mkt.21.co/phone/send-sms --data 'phone=15005550002&text=hi'
+Get state, city, latitude, longitude, and estimated population for a given zip code.
+$ 21 buy "https://mkt.21.co/zipdata/collect?zip_code=94109" --maxprice 2750
 
 """
     # Get requested URL resource for `21 buy <URL>` syntax
