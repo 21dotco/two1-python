@@ -108,9 +108,6 @@ def status_account(config, wallet):
     logger.info(uxstring.UxString.status_account.format(status_account_dict["username"]))
     return status_account_dict
 
-SEARCH_UNIT_PRICE = 3500
-SMS_UNIT_PRICE = 3000
-
 
 def status_wallet(client, wallet, detail=False):
     """ Logs a formatted string displaying wallet status to the command line
@@ -160,15 +157,6 @@ def status_wallet(client, wallet, detail=False):
         logger.info(uxstring.UxString.status_wallet_detail_off)
 
     total_balance = user_balances.twentyone + user_balances.onchain
-    buyable_searches = int(total_balance / SEARCH_UNIT_PRICE)
-    buyable_sms = int(total_balance / SMS_UNIT_PRICE)
-    status_buyable_dict = {
-        "buyable_searches": buyable_searches,
-        "search_unit_price": SEARCH_UNIT_PRICE,
-        "buyable_sms": buyable_sms,
-        "sms_unit_price": SMS_UNIT_PRICE
-    }
-    logger.info(uxstring.UxString.status_buyable.format(**status_buyable_dict), nl=False)
 
     if total_balance == 0:
         logger.info(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
@@ -180,7 +168,6 @@ def status_wallet(client, wallet, detail=False):
 
     return {
         "wallet": status_wallet_dict,
-        "buyable": status_buyable_dict
     }
 
 

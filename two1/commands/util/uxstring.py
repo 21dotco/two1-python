@@ -133,11 +133,6 @@ class UxString:
     status_wallet_channel = "\t{}://{}/ {}, {} Satoshis, {}\n"
     status_wallet_channels_none = "\tNo payment channels have been created yet.\n"
 
-    status_buyable = click.style("How many API calls can you buy?", fg='magenta') + """
-    Search Queries        : {buyable_searches:<4} ({search_unit_price} Satoshis per search)
-    SMS Messages          : {buyable_sms:<4} ({sms_unit_price} Satoshis per SMS)
-    """
-
     # buy
     buy_channel_warning = "Note: The default payment channel size is " + \
         "{} Satoshis. \nIn order to open this channel you’ll need to " + \
