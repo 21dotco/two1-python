@@ -70,7 +70,6 @@ Usage
 Mine bitcoin, list your balance, and buy a search query without ads.
 $ 21 mine
 $ 21 status
-$ 21 buy search "Satoshi Nakamoto"
 
 \b
 For further details on how you can use your mined bitcoin to buy digital
