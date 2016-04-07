@@ -86,12 +86,13 @@ def login_account(config, machine_auth, username=None, password=None):
         _ = rest_client.login(payout_address=payout_address, password=password)
     # handles 401 gracefully
     except exceptions.ServerRequestError as ex:
-        if ex.status_code == 401:
-            raise exceptions.UnloggedException(uxstring.UxString.incorrect_password)
-        elif ex.status_code == 403 and "error" in ex.data and ex.data["error"] == "TO408":
+        if ex.status_code == 403 and "error" in ex.data and ex.data["error"] == "TO408":
             email = ex.data["email"]
-            raise exceptions.UnloggedException(click.style(uxstring.UxString.unconfirmed_email.format(email),
-                                                           fg="blue"))
+            raise exceptions.UnloggedException(
+                click.style(uxstring.UxString.unconfirmed_email.format(email),
+                            fg="blue"))
+        elif ex.status_code == 403:
+            raise exceptions.UnloggedException(uxstring.UxString.incorrect_password)
         else:
             raise ex
 
