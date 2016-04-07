@@ -76,7 +76,8 @@ setup(
               'two1.bitserv.flask',
               'two1.blockchain',
               'two1.bitrequests',
-              'two1.commands.util',],
+              'two1.commands.util',
+    ],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's

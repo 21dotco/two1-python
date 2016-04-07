@@ -3,12 +3,6 @@ import sys
 import logging
 import two1.commands.util.uxstring as uxstring
 
-
-# Warn the users to update thier imports
-logger = logging.getLogger(__name__)
-logger.warn(uxstring.UxString.lib_import_warning)
-
-
 # Import all of the libs as the package name
 import two1.bitcoin as bitcoin
 import two1.bitrequests as bitrequests
@@ -29,3 +23,7 @@ sys.modules["{}.{}".format(__name__, "channels")] = channels
 sys.modules["{}.{}".format(__name__, "crypto")] = crypto
 sys.modules["{}.{}".format(__name__, "server")] = server
 sys.modules["{}.{}".format(__name__, "wallet")] = wallet
+
+# Warn the users to update their imports
+logger = logging.getLogger(__name__)
+logger.warn(uxstring.UxString.lib_import_warning)

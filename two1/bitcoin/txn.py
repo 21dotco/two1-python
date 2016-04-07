@@ -603,7 +603,7 @@ class Transaction(object):
             sig_indices = {s['index']: s['signature'] for s in sigs}
 
             # Make sure there are no dups
-            all_indices = set(list(existing_sig_indices.keys()) + \
+            all_indices = set(list(existing_sig_indices.keys()) +
                               list(sig_indices.keys()))
             if len(all_indices) < len(existing_sig_indices) + len(sig_indices):
                 raise ValueError("At least one signature matches an existing signature.")

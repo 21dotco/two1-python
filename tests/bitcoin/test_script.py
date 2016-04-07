@@ -126,10 +126,10 @@ def test_is_p2pkh():
     addresses = s.get_addresses()
     assert len(addresses) == 1
     assert addresses[0] == '1AYrhH1SAQqhT8w5NguBSogN63ajS6PxNL'
-    
+
     s = Script.build_p2pkh(bytes.fromhex("68bf827a2fa3b31e53215e5dd19260d21fdf053e"))
     assert s.is_p2pkh()
-    
+
     s = Script("OP_ADD OP_HASH160 0x68bf827a2fa3b31e53215e5dd19260d21fdf053e OP_EQUALVERIFY")
     assert not s.is_p2pkh()
     assert not s.is_multisig_redeem()

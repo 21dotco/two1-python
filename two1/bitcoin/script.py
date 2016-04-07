@@ -275,7 +275,7 @@ class Script(object):
         rv = True
         if isinstance(opcode, str):
             # Make sure it's a valid opcode
-            if not opcode in self.BTC_OPCODE_TABLE and \
+            if opcode not in self.BTC_OPCODE_TABLE and \
                not opcode.startswith("0x") or \
                opcode in ['OP_PUSHDATA1', 'OP_PUSHDATA2', 'OP_PUSHDATA3']:
                 rv = False

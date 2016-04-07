@@ -61,7 +61,7 @@ def test_paymentchannel_typical():
         assert db.read(pc.url)
 
     # Check blockchain
-    assert bc.check_confirmed(pc.deposit_txid) == False
+    assert bc.check_confirmed(pc.deposit_txid) is False
     assert bc.lookup_tx(pc.deposit_txid) == pc.deposit_tx
 
     # Try premature payment

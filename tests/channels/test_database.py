@@ -11,6 +11,7 @@ import two1.channels.database as database
 def db(request):
     return request.param
 
+
 def test_database_sqlite3_create(db):
     # Model test vectors
     models = [

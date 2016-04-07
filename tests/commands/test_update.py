@@ -51,7 +51,7 @@ def test_update(mock_config, two1_version_reset, two1_version, should_update, py
     with mock.patch("two1.commands.update.lookup_pypi_version", return_value=pypi_version), \
          mock.patch("two1.commands.update.subprocess") as mock_subprocess, \
          mock.patch("two1.commands.update.os.path.isdir", return_value=apt_update), \
-         mock.patch("two1.commands.update.checked_for_an_update_today", return_value=False):
+         mock.patch("two1.commands.update.checked_for_an_update_today", return_value=False):  # noqa
 
         # only care about checking for venv when doing pip based update
         if apt_update is False:
@@ -103,7 +103,7 @@ def test_two1_version_error(patch_click, two1_version_reset, mock_config):
 
     # check to make sure invalid json from the server is handled
     (None, mock.Mock(side_effect=ValueError), uxstring.UxString.Error.version_not_found),
-    (None, mock.Mock(return_value={"json": "without pakages"}), uxstring.UxString.Error.version_not_found),
+    (None, mock.Mock(return_value={"json": "without packages"}), uxstring.UxString.Error.version_not_found),
     (None, mock.Mock(return_value={"packages": [{"json": "without version"}]}), uxstring.UxString.Error.version_not_found),
     ])
 def test_lookup_pypi_version_errors(mock_config, side_effect, mock_json, error_string):

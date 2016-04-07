@@ -44,6 +44,7 @@ test_vectors = [("000102030405060708090a0b0c0d0e0f",
                    "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                    "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt")])]
 
+
 @pytest.mark.parametrize("vector", test_vectors)
 def test_hdkeys(vector):
     seed = vector[0]
@@ -78,7 +79,7 @@ def test_hdkeys(vector):
                 assert not pub_key.hardened
                 assert not der_pub_key.hardened
                 assert der_pub_key.to_b58check() == checks[i][2]
-            
+
         assert priv_key.to_b58check() == checks[i][1]
         assert pub_key.to_b58check() == checks[i][2]
 
@@ -93,11 +94,12 @@ def test_hdkeys(vector):
                 assert isinstance(pair[0], crypto.HDPublicKey)
                 assert pair[0]._key.point.x == pair[1]._key.point.x
                 assert pair[0]._key.point.y == pair[1]._key.point.y
-                
+
             assert pair[0].chain_code == pair[1].chain_code
             assert pair[0].index == pair[1].index
             assert pair[0].depth == pair[1].depth
             assert pair[0].parent_fingerprint == pair[1].parent_fingerprint
+
 
 def test_mnemonic_key_generation():
     mnemonic = "tuna object element cancel hard nose faculty noble swear net subway offer"
@@ -135,7 +137,7 @@ def test_mnemonic_key_generation():
                      "1TJqdM2Hfw8SM26NdrBT1yVbqVcXoKdBQ"]
 
     assert [crypto.HDPublicKey.from_parent(int_chain_key, i).address() for i in range(20)] == int_addresses
-    
+
     assert ext_chain_key.to_b58check() == "xprvA1fFrEZ8jPQTA6nguZQauChJ8ubexZhRbyowy1kzi7WiAodkwWxM9w8NaCzhEWqMukV7zXwAdzRZJ5mVCwG8NmhVBkZfrjEa1aZUTnvzSDL"
     assert ext_chain_key.public_key.to_b58check() == "xpub6EecFk62ZkxkNasA1awbGLe2gwS9N2RGyCjYmQAcGT3h3bxuV4GbhjSrRTJBzbkmu8fMzoUDAixdHSuso7aw2BEPVfUh6R4AFJWLjps2JX6"
 
@@ -159,5 +161,5 @@ def test_mnemonic_key_generation():
                      "1GazoWKznZnkJs2rgUoADBfNoHcxWR6uS8",
                      "14AEZEacXmnBojoBcS9Er2Ma4sUG7Ey1pU",
                      "1LjBL9rDSNWqDZMyGr3h1H7XrSTxzLYhAu"]
-    
+
     assert [crypto.HDPublicKey.from_parent(ext_chain_key, i).address() for i in range(20)] == ext_addresses

@@ -79,6 +79,7 @@ def test_post_json_buy(patch_click, mock_config, mock_machine_auth, patch_bitreq
     assert patch_click.call_count == 2
     patch_click.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
+
 def test_buy_headers(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client):
     """Test a buy with custom headers."""
     resource = 'http://127.0.0.1:5000'

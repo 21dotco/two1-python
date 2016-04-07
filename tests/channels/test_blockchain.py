@@ -13,14 +13,14 @@ def bc(request):
 
 def test_blockchain(bc):
     # Check check_confirmed()
-    assert bc.check_confirmed("bed5c9871fbcb6f63cd629579f532ed5dc728136e027ffdf81ccfacb7b181967", num_confirmations=492) == True
-    assert bc.check_confirmed("101a4d5d9dcd7c73848f499c4c4dd5d114d9a0cb0622c34f29e5e0fa406f3f83") == False
+    assert bc.check_confirmed("bed5c9871fbcb6f63cd629579f532ed5dc728136e027ffdf81ccfacb7b181967", num_confirmations=492) is True
+    assert bc.check_confirmed("101a4d5d9dcd7c73848f499c4c4dd5d114d9a0cb0622c34f29e5e0fa406f3f83") is False
 
     # Check lookup_spend_txid()
     assert bc.lookup_spend_txid("5d72866a181e37c6fe1b2624f48955f75d6c08974004d43a3bbd1e62eddfef91", 0) == "ea756854b1254b87fe6aaed036ce67d5f0749ac86e2c7fd6a917d60fb4734369"
     # This fails when using TwentyOneProvider with newer Insight backend.
     # Commenting out for now.
-    #assert bc.lookup_spend_txid("5d72866a181e37c6fe1b2624f48955f75d6c08974004d43a3bbd1e62eddfef91", 1) == "bed5c9871fbcb6f63cd629579f532ed5dc728136e027ffdf81ccfacb7b181967"
+    # assert bc.lookup_spend_txid("5d72866a181e37c6fe1b2624f48955f75d6c08974004d43a3bbd1e62eddfef91", 1) == "bed5c9871fbcb6f63cd629579f532ed5dc728136e027ffdf81ccfacb7b181967"
     with pytest.raises(IndexError):
         bc.lookup_spend_txid("5d72866a181e37c6fe1b2624f48955f75d6c08974004d43a3bbd1e62eddfef91", 2)
 

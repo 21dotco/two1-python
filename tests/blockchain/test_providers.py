@@ -70,11 +70,11 @@ def test_get_transactions_by_id(provider, testnet):
 def test_provider_json_error(provider, testnet):
     cp = provider
 
-    cp._session.request = MagicMock(return_value=
-                                    type('obj', (object,), {'status_code': 400,
-                                                            "json": lambda: "Not Json",
-                                                            'text': "Error"})
-                                    )
+    cp._session.request = MagicMock(
+        return_value=type('obj', (object,), {'status_code': 400,
+                                             "json": lambda: "Not Json",
+                                             'text': "Error"})
+    )
     if testnet:
         txids = ["f19b101e3ede105b47c98dc54953f4dff195efb6654a168a22659585f92858b4"]
         exp_len = 1

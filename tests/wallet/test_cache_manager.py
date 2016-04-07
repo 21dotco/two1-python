@@ -13,6 +13,7 @@ this_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.current
 cm = CacheManager()
 dp = TwentyOneProvider()
 
+
 def test_addresses():
     cm.insert_address(0, 0, 0, "15qCydrcqURADXJHrtMW9m6SpPTa3kqkQb")
     cm.insert_address(0, 0, 1, "15hyvVXH2eJnakwhpqKBf5oTCa3o2bp8m8")
@@ -50,6 +51,7 @@ def test_addresses():
 
     assert cm.get_chain_indices(0, 0) == [0, 1, 19]
     assert cm.get_chain_indices(0, 1) == list(range(10))
+
 
 def test_txns():
     txn = WalletTransaction.from_hex('01000000029ccb0665ec780f8b05bf2315a48dfb154dc41f91e8046a59f1c75656826dea5d000000006b483045022100f4d2161473f9d0ba4b5cdbc9e5b7b1d8fca32e3b6bede307352bef6aaa3a08cd022023d8444f78f69de6fd0f6cc391a7ca4de3dc4181220932d01511eb1129fee09e01210328bd51733a7d5bee05368680adef9aaa3f9bb716ec716d5896b1d80afb734d6cffffffff2424cb910235b2059d59023aecfebf6fce4eee31c637e9a0b350491849688727020000006a473044022072de3d707f98adfed3266e0261750cd7b5162732e525d7df17f4e55a55e953b902205046b597acf7acf41e725b459ba6cfe8c03a9d877375cdf483cab9620f92961101210291cbb1304614d86b15f4e8f39e9d8299cd0304ff8b81b5bcf6d9a6f32be649bbffffffff0240420f00000000001976a91434fe777d676fceb3509584c1d7b9f13ee56514d488ace05a0000000000001976a9145237ba33122495420711b3f2cc0463dbb24c9d3988ac00000000')
@@ -377,7 +379,7 @@ def test_whole(cache, exp_conf_balance, exp_unconf_balance):
     cm.load_from_dict(cache, prune_provisional=False)
 
     addrs = cm.get_addresses_for_chain(0x80000000, 0) + \
-            cm.get_addresses_for_chain(0x80000000, 1)
+        cm.get_addresses_for_chain(0x80000000, 1)
 
     conf_balances = cm.get_balances(addrs)
     unconf_balances = cm.get_balances(addrs, True)

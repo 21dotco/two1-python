@@ -286,6 +286,7 @@ def patch_rest_client(monkeypatch, mock_config, mock_wallet):
         monkeypatch.setattr(server.rest_client.TwentyOneRestClient, mock_function, getattr(_patch_rest_client, mock_function))
     return _patch_rest_client
 
+
 @pytest.yield_fixture()
 def two1_version_reset():
     original_two1_version = two1.TWO1_VERSION

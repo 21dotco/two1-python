@@ -46,8 +46,8 @@ def test_cli(args, outcome):
 @pytest.mark.parametrize("args, outcome", [
     (None, ValueError),
     ((), ValueError),
-    (("sheep"), {"test":"dict"}),
-    ("goat", {"test":"dict"}),
+    (("sheep"), {"test": "dict"}),
+    ("goat", {"test": "dict"}),
     (("sheep"), '{"test":None}'.encode()),
     ])
 def test_cli_json(args, outcome):
@@ -230,6 +230,7 @@ def test_join_network(mock_cli, network_id, outcome):
     else:
         with pytest.raises(outcome):
             zerotier.join_network(network_id)
+
 
 @pytest.mark.parametrize("network_id, outcome", [
     ("0123456789", ValueError),
