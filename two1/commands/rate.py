@@ -41,7 +41,7 @@ You can update the rating for an app at anytime with `21 rate`.
 List all the apps that you have rated.
 $ 21 rate --list
     """
-    #pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin
     if list:
         _list(ctx.obj["client"])
     else:

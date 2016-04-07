@@ -6,6 +6,7 @@ import pytest
 
 this_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+
 @pytest.fixture(scope="session")
 def txns_json():
     with gzip.open(os.path.join(this_file_path, "txns.json.gz"), 'rt') as f:

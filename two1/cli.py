@@ -14,7 +14,6 @@ import logging
 
 import two1
 import two1.commands.util.logger
-logger = logging.getLogger(__name__)
 
 from two1.commands.util import bitcoin_computer
 from two1.server import rest_client
@@ -43,6 +42,8 @@ from two1.commands.publish import publish
 from two1.commands.join import join
 from two1.commands.sell import sell
 
+
+logger = logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

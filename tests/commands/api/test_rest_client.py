@@ -12,7 +12,6 @@ import two1
 from two1.commands.util import exceptions
 from two1.server import rest_client
 from two1.server import machine_auth_wallet
-from two1.commands.util import exceptions
 from tests.mock import MockHttpResponse
 
 

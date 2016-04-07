@@ -100,8 +100,7 @@ class ScriptInterpreter(object):
                     raise ScriptInterpreterError(
                         "len(data) != datalen in %s" % opcode)
                 self._op_pushdata(datalen, data)
-            elif op and op >= Script.BTC_OPCODE_TABLE['OP_1'] and \
-                op <= Script.BTC_OPCODE_TABLE['OP_16']:
+            elif op and op >= Script.BTC_OPCODE_TABLE['OP_1'] and op <= Script.BTC_OPCODE_TABLE['OP_16']:
                 self._op_pushnum(opcode)
             elif opcode in ['OP_IF', 'OP_NOTIF']:
                 self._op_if(opcode, args)

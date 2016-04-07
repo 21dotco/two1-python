@@ -276,7 +276,6 @@ class TwentyOneRestClient(object):
 
 if __name__ == "__main__":
     # host = "http://127.0.0.1:8000"
-    import two1
     from two1.commands.util import config
 
     conf = config.Config()

@@ -8,17 +8,17 @@ class UxString:
     """ Class to namespace all user experience strings """
 
     # general
-    update_required = click.style("You are using an old version of 21 CLI. Please update using the '21 " \
+    update_required = click.style("You are using an old version of 21 CLI. Please update using the '21 "
                                   "update' command.",
                                   fg="red")
-    bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access " \
-                                          "this service. If you believe you have received this " \
+    bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access "
+                                          "this service. If you believe you have received this "
                                           "message in error, please contact support@21.co.",
                                           fg="red")
     max_accounts_reached = click.style("You have reached the maximum number of 21.co accounts that you can create. ", fg="red") +\
-                           click.style("Use ", fg="red") +\
-                           click.style("21 login ", fg="red", bold=True) +\
-                           click.style("to switch between your available accounts.", fg="red")
+        click.style("Use ", fg="red") +\
+        click.style("21 login ", fg="red", bold=True) +\
+        click.style("to switch between your available accounts.", fg="red")
 
     # account creation
     creating_account = "Creating 21.co account. Username: {}"
@@ -74,8 +74,8 @@ class UxString:
     login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet.\n"
 
     existing_account = click.style("There is already a username associated with your current wallet. Use ", fg="red") +\
-                       click.style("21 login -u {}", bold=True, fg="red") +\
-                       click.style(" to login.", fg="red")
+        click.style("21 login -u {}", bold=True, fg="red") +\
+        click.style(" to login.", fg="red")
 
     set_new_password = "Please set a password for" +\
                        click.style(" {}.", bold=True) +\
@@ -96,12 +96,12 @@ class UxString:
     status_account = click.style("Logged in as: ", fg='magenta') + "{}\n"
 
     status_mining = mining = click.style("Mining", fg='magenta') + "\n" +\
-                             "    Status           : {}\n" +\
-                             "    Hashrate         : {}\n" +\
-                             "    Mined (all time) : {} Satoshis\n\n" +\
-                             "Type " +\
-                             click.style("21 mine --dashboard", bold=True) +\
-                             " to see a detailed view. Hit q to exit.\n"
+        "    Status           : {}\n" +\
+        "    Hashrate         : {}\n" +\
+        "    Mined (all time) : {} Satoshis\n\n" +\
+        "Type " +\
+        click.style("21 mine --dashboard", bold=True) +\
+        " to see a detailed view. Hit q to exit.\n"
 
     status_wallet = click.style("Total Balance", fg='magenta') + """
     Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
@@ -195,9 +195,9 @@ class UxString:
     buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase ?"
     buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
     buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") +\
-                         click.style("{} ", fg="magenta", bold=True) +\
-                         click.style("for", fg="magenta") +\
-                         click.style(" {}.\n", bold=True, fg="magenta")
+        click.style("{} ", fg="magenta", bold=True) +\
+        click.style("for", fg="magenta") +\
+        click.style(" {}.\n", bold=True, fg="magenta")
 
     buybitcoin_success_payout_time = "The Bitcoins will be deposited to your 21 wallet on {}."
     buybitcoin_success_instant = "The Bitcoins will be deposited to your 21 wallet in the next " \
@@ -250,9 +250,9 @@ class UxString:
                            "Please try again in a few hours"
 
     mining_bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
-                                     click.style("21 buybitcoin", bold=True, fg="red") +\
-                                     click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
-                                     click.style("message in error, please contact support@21.co.", fg="red")
+        click.style("21 buybitcoin", bold=True, fg="red") +\
+        click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
+        click.style("message in error, please contact support@21.co.", fg="red")
 
     # updater
     update_check = "Checking for application updates..."
@@ -300,8 +300,8 @@ class UxString:
     sell_message = "You sold {} to {}"
 
     unread_notifications = click.style("\nYou have {} unread notifications. Type ", fg="blue") +\
-                           click.style("21 inbox", bold=True, fg="blue") +\
-                           click.style(" to view your notifications.", fg="blue")
+        click.style("21 inbox", bold=True, fg="blue") +\
+        click.style(" to view your notifications.", fg="blue")
 
     # join
     successful_join = "Joined network {}. It may take a few seconds for joining " \
@@ -310,8 +310,8 @@ class UxString:
     join_cmd = click.style("21 join", bold=True, reset=False)
 
     no_network = click.style("You are not part of any network.", fg="blue")
-    install_zerotier = click.style("To join network you must have zerotier-one installed.\n" \
-                                   "See installation instructions at:\n" \
+    install_zerotier = click.style("To join network you must have zerotier-one installed.\n"
+                                   "See installation instructions at:\n"
                                    "\n\thttps://www.zerotier.com/product-one.shtml\n")
 
     # publish
@@ -337,19 +337,19 @@ class UxString:
     invalid_port_format = "Port should be an integer between 0 and 65536."
 
     wrong_ip = click.style("It seems that the IP address that you put in your manifest file (") +\
-               click.style("{}", bold=True) +\
-               click.style(") is different than your current 21market IP (") +\
-               click.style("{}", bold=True) +\
-               click.style(")\nAre you sure you want to continue publishing with ") +\
-               click.style("{}", bold=True) +\
-               click.style("?")
+        click.style("{}", bold=True) +\
+        click.style(") is different than your current 21market IP (") +\
+        click.style("{}", bold=True) +\
+        click.style(")\nAre you sure you want to continue publishing with ") +\
+        click.style("{}", bold=True) +\
+        click.style("?")
 
     switch_host = click.style("Please edit ") +\
-                  click.style("{}", bold=True) +\
-                  click.style(" and replace ") +\
-                  click.style("{}", bold=True) +\
-                  click.style(" with ") +\
-                  click.style("{}.", bold=True)
+        click.style("{}", bold=True) +\
+        click.style(" and replace ") +\
+        click.style("{}", bold=True) +\
+        click.style(" with ") +\
+        click.style("{}.", bold=True)
 
     publish_start = click.style("Publishing {} at ") + click.style(
         "{}", bold=True) + click.style(" to {}.")
@@ -376,10 +376,10 @@ class UxString:
                                                  fg="red")
 
     price_fields = ["min", "max"]
-    price_fields_missing = click.style("Field '{}' is missing from the manifest file under the " \
+    price_fields_missing = click.style("Field '{}' is missing from the manifest file under the "
                                        "'x-21-total-price' section.",
                                        fg="red")
-    scheme_missing = click.style("You have to specify either HTTP or HTTPS for your endpoint under the " \
+    scheme_missing = click.style("You have to specify either HTTP or HTTPS for your endpoint under the "
                                  "`schemes` section.",
                                  fg="red")
     invalid_category = click.style("'{}' is not a valid category for the 21 marketplace. Valid categories are {}.",
@@ -388,8 +388,8 @@ class UxString:
     # publish-list
     my_apps = "Listing all the published apps by {}: "
     no_published_apps = click.style("You haven't published any apps to the marketplace yet. Use ", fg="blue") +\
-                        click.style("21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") +\
-                        click.style(" to publish your apps to the marketplace.", fg="blue")
+        click.style("21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") +\
+        click.style(" to publish your apps to the marketplace.", fg="blue")
 
     app_does_not_exist = "The specified id for the app ({}) does not match any apps in the " \
                          "marketplace."
@@ -403,7 +403,7 @@ class UxString:
 
     # sell
     unsupported_package_manager = click.style("Sorry your package manager is not supported. ", fg="red") +\
-                                  click.style("Currently two1 only suports: {}", fg="red")
+        click.style("Currently two1 only suports: {}", fg="red")
     install_brew = "Please install brew to continue, visit http://brew.sh/"
     unsupported_platform = "Unsupported platform"
     enabling_endpoints = click.style("Enabling endpoints...")
@@ -435,25 +435,25 @@ class UxString:
     # search
     list_all = "Listing all apps in the 21 Marketplace: "
     pagination = click.style("\nEnter the id of the app for more info, ", fg="blue") +\
-                 click.style("n", bold=True, fg="blue") +\
-                 click.style(" for next page, ", fg="blue") +\
-                 click.style("p", bold=True, fg="blue") +\
-                 click.style(" for the previous page, ", fg="blue") +\
-                 click.style("q", bold=True, fg="blue") +\
-                 click.style(" to stop search.", fg="blue")
+        click.style("n", bold=True, fg="blue") +\
+        click.style(" for next page, ", fg="blue") +\
+        click.style("p", bold=True, fg="blue") +\
+        click.style(" for the previous page, ", fg="blue") +\
+        click.style("q", bold=True, fg="blue") +\
+        click.style(" to stop search.", fg="blue")
 
     empty_listing = click.style("\nCouldn't find any listings that match: '{}'.\n", fg='blue')
     no_app_in_marketplace = click.style("\nThere are currently no apps in the marketplace.", fg="blue")
     # rate
     bad_rating = "App ratings must be between 1 to 5."
     rating_success = click.style("Giving a ") +\
-                     click.style("{}/5", bold=True) +\
-                     click.style(" rating to the app with id ") +\
-                     click.style("{}.", bold=True)
+        click.style("{}/5", bold=True) +\
+        click.style(" rating to the app with id ") +\
+        click.style("{}.", bold=True)
 
     rating_app_not_found = click.style("App with id {} does not exist in 21 marketplace. Use ", fg="red") +\
-                           click.style("21 search", bold=True, fg="red") +\
-                           click.style(" to verify the id of the app.", fg="red")
+        click.style("21 search", bold=True, fg="red") +\
+        click.style(" to verify the id of the app.", fg="red")
 
     rating_list = click.style("Listing all the apps that you have rated. \nNote that you can "
                               "update your ratings at anytime with ") + click.style("21 rate\n",
@@ -476,7 +476,7 @@ class UxString:
     less_env = '-RPpress h for help, q for quit'
     lib_import_warning = click.style(
         "{}\n{: ^80}\n{}".format("#" * 80,
-                                 "Warning: two1.lib* pakages have been moved under two1. Update your imports asap!",
+                                 "Warning: two1.lib* packages have been moved under two1. Update your imports asap!",
                                  "#" * 80), fg="yellow")
 
     class Error:
@@ -495,8 +495,8 @@ class UxString:
 
         # 403 errors
         server_403 = click.style("Received forbidden error (403). Login in with ", fg="red") +\
-                     click.style("21 login ", bold=True, fg="red") +\
-                     click.style("and try again.", fg="red")
+            click.style("21 login ", bold=True, fg="red") +\
+            click.style("and try again.", fg="red")
 
         # wallet errors
         create_wallet_failed = "Error: Could not create wallet."
@@ -520,13 +520,13 @@ class UxString:
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
 
         # version errors
-        version_not_detected = click.style("Could not properly detect your version of 21. "\
+        version_not_detected = click.style("Could not properly detect your version of 21. "
                                            "Try reinstalling or contact support@21.co.",
                                            fg="red")
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
-        insufficient_funds_mine_more = str("Insufficient satoshis for off-chain (zero-fee) transaction. " +\
-                                           "Type {} to get more.*\n\n" +\
-                                           "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee." +\
+        insufficient_funds_mine_more = str("Insufficient satoshis for off-chain (zero-fee) transaction. " +
+                                           "Type {} to get more.*\n\n" +
+                                           "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee." +
                                            "To use on-chain balance add {} to your buy command*").format(click.style("21 mine", bold=True),
                                                                                                          {},
                                                                                                          click.style("-p onchain", bold=True))

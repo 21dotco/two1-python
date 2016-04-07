@@ -317,7 +317,7 @@ class CacheManager(object):
                 # Only keep the P2SH address
                 sig_info = inp.script.extract_multisig_sig_info()
                 redeem_version = Script.P2SH_TESTNET_VERSION if self.testnet \
-                                 else Script.P2SH_MAINNET_VERSION
+                    else Script.P2SH_MAINNET_VERSION
                 a = key_hash_to_address(
                     sig_info['redeem_script'].hash160(), redeem_version)
 
@@ -623,8 +623,7 @@ class CacheManager(object):
                         # the status is
                         out = self._outputs_cache[out_txid][out_index]
                         if (out['status'] & self.SPENT) and \
-                           (out['status'] & self.UNCONFIRMED or
-                            out['status'] & self.PROVISIONAL):
+                           (out['status'] & self.UNCONFIRMED or out['status'] & self.PROVISIONAL):
                             if addr not in balances:
                                 balances[addr] = 0
                             balances[addr] += out['output'].value

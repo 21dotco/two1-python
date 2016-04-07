@@ -96,7 +96,7 @@ class HDAccount(object):
             while not found_last:
                 # Try a 2 * GAP_LIMIT at a go
                 end = addr_range + self.DISCOVERY_INCREMENT
-                addresses = {i:self.get_address(change, i)
+                addresses = {i: self.get_address(change, i)
                              for i in range(addr_range, end)}
 
                 if self.data_provider.can_limit_by_height:
@@ -319,7 +319,6 @@ class HDAccount(object):
             up to and including the last known indices for both change
             and payout chains.
         """
-        #return self.data_provider.get_utxos(self.all_used_addresses)
         return self._cache_manager.get_utxos(addresses=self.all_used_addresses,
                                              include_unconfirmed=include_unconfirmed)
 

@@ -116,6 +116,7 @@ def test_get_checks_with_result_filter(doctor, checks, expected_length, result_f
         assert isinstance(returned_checks, list)
         assert len(returned_checks) == expected_length
 
+
 @pytest.mark.parametrize("test_checks", [
     ({
         "type1": [

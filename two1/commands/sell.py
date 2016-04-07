@@ -172,7 +172,7 @@ def list():
 \b
 (as seen in /etc/nginx/site-includes/)
     """
-    #pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin
     if os.path.isdir("/etc/nginx/site-includes/") and \
        len(os.listdir("/etc/nginx/site-includes/")) > 0:
 

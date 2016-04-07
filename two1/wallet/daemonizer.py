@@ -520,7 +520,7 @@ class Launchd(Daemonizer):
     @classmethod
     def _create_plist_file(cls, env_vars={}):
         """ Creates a PLIST file for launchd.
-        
+
             PLIST files are XML docs with certain parameters
             required to start the daemon.
         """

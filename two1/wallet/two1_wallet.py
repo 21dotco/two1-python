@@ -1576,7 +1576,7 @@ class Two1Wallet(BaseWallet):
             # Compute an approximate fee
             fee_amounts = txn_fees.get_fees()
             fees = num_utxos * fee_amounts['per_input'] + \
-                   num_addresses * fee_amounts['per_output']
+                num_addresses * fee_amounts['per_output']
 
             spread_amount = total_value - fees
             per_addr_amount = int(spread_amount / num_addresses)
@@ -1744,8 +1744,8 @@ class Two1Wallet(BaseWallet):
         if len(record['spends']):
             record["fees"] = values['inputs'] - values['outputs']
             record["external_value"] = values['internal_inputs'] - \
-                                          values['internal_outputs'] - \
-                                          record['fees']
+                values['internal_outputs'] - \
+                record['fees']
             if record["external_value"] == 0:
                 record["classification"] = "internal_transfer"
             else:

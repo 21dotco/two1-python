@@ -60,7 +60,7 @@ def test_all(num_used_payout_addresses, num_used_change_addresses, expected_bala
         assert not acct.has_txns()
 
     exp_used = mk0['payout_addresses'][:num_used_payout_addresses] + \
-               mk0['change_addresses'][:num_used_change_addresses]
+        mk0['change_addresses'][:num_used_change_addresses]
     assert acct.all_used_addresses == exp_used
 
     change_index = 0 if num_used_change_addresses == 0 else num_used_change_addresses - 1

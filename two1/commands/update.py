@@ -9,7 +9,7 @@ from datetime import datetime
 from datetime import date
 from urllib.parse import urljoin
 # distutils.version is changed when running in a venv
-#pylint: disable=no-name-in-module,import-error
+# pylint: disable=no-name-in-module,import-error
 from distutils.version import LooseVersion
 
 # 3rd party requests

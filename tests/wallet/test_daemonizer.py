@@ -139,16 +139,16 @@ def test_launchd():
     # the installed/uninstall functions anyway
 
     started_status = """{
-	"LimitLoadToSessionType" = "Aqua";
-	"Label" = "com.two1.walletd";
-	"TimeOut" = 30;
-	"OnDemand" = false;
-	"LastExitStatus" = 0;
-	"PID" = 46659;
-	"Program" = "/usr/local/bin/walletd";
-	"ProgramArguments" = (
-		"/usr/local/bin/walletd";
-	);
+\t"LimitLoadToSessionType" = "Aqua";
+\t"Label" = "com.two1.walletd";
+\t"TimeOut" = 30;
+\t"OnDemand" = false;
+\t"LastExitStatus" = 0;
+\t"PID" = 46659;
+\t"Program" = "/usr/local/bin/walletd";
+\t"ProgramArguments" = (
+\t\t"/usr/local/bin/walletd";
+\t);
 };""".encode()
 
     not_found_status = """Could not find service "com.two1.walletd" in domain for """.encode()

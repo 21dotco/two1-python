@@ -9,6 +9,7 @@ from two1.bitcoin.txn import TransactionInput
 from two1.bitcoin.txn import TransactionOutput
 from two1.bitcoin import utils
 
+
 def test_op_0():
     s = Script("OP_0")
 
@@ -390,7 +391,7 @@ def test_op_equal():
     si.run_script(s)
 
     assert len(si.stack) == 1
-    assert si.stack[0] == True
+    assert si.stack[0] is True
 
     s = Script("0x01 0x02 OP_EQUAL")
 
@@ -398,7 +399,7 @@ def test_op_equal():
     si.run_script(s)
 
     assert len(si.stack) == 1
-    assert si.stack[0] == False
+    assert si.stack[0] is False
 
 
 def test_op_1add():
@@ -811,7 +812,7 @@ def test_op_checksig():
     si.run_script(s)
 
     assert len(si.stack) == 1
-    assert si.stack[0] == True
+    assert si.stack[0] is True
 
     s = Script("%s %s OP_CHECKSIGVERIFY" % (sig_hex, pub_key_hex))
 
@@ -834,7 +835,7 @@ def test_op_checksig():
     si.run_script(s)
 
     assert len(si.stack) == 1
-    assert si.stack[0] == False
+    assert si.stack[0] is False
 
     s = Script("%s %s OP_CHECKSIGVERIFY" % (sig_hex, pub_key_hex))
 
@@ -861,14 +862,14 @@ def test_op_checkmultisig():
     assert len(si.stack) == 4
     si.run_script(script_pub_key)
     assert len(si.stack) == 4
-    assert si.stack[-1] == True
+    assert si.stack[-1] is True
     assert si.valid
     si._op_verify()
 
     # This will do the OP_CHECKMULTISIG
     si.run_script(redeem_script)
     assert len(si.stack) == 1
-    assert si.stack[0] == True
+    assert si.stack[0] is True
 
     assert si.valid
     assert len(si.stack) == 1

@@ -18,5 +18,5 @@ logger = logging.getLogger(__name__)
 @decorators.catch_all
 def help(ctx):
     """Show help and exit."""
-    #pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin
     logger.info(ctx.parent.get_help())

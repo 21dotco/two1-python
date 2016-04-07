@@ -84,18 +84,18 @@ class Sqlite3Database(DatabaseBase):
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         with self._conn:
             self._conn.execute("CREATE TABLE IF NOT EXISTS "
-                         "channels ("
-                         "url VARCHAR NOT NULL PRIMARY KEY, "
-                         "state VARCHAR(18), "
-                         "creation_time FLOAT, "
-                         "deposit_tx VARCHAR, "
-                         "refund_tx VARCHAR, "
-                         "payment_tx VARCHAR, "
-                         "spend_tx VARCHAR, "
-                         "spend_txid VARCHAR, "
-                         "min_output_amount INTEGER, "
-                         "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
-                         ");")
+                               "channels ("
+                               "url VARCHAR NOT NULL PRIMARY KEY, "
+                               "state VARCHAR(18), "
+                               "creation_time FLOAT, "
+                               "deposit_tx VARCHAR, "
+                               "refund_tx VARCHAR, "
+                               "payment_tx VARCHAR, "
+                               "spend_tx VARCHAR, "
+                               "spend_txid VARCHAR, "
+                               "min_output_amount INTEGER, "
+                               "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
+                               ");")
 
         if db_path == ":memory:":
             self._lock = threading.Lock()

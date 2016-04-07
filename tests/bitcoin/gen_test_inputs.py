@@ -10,6 +10,7 @@ from two1.bitcoin.utils import *
 CHAIN_API_KEY = os.environ.get('CHAIN_API_KEY', None)
 CHAIN_API_SECRET = os.environ.get('CHAIN_API_SECRET', None)
 
+
 def get_from_chain(url_adder):
     url = 'https://api.chain.com/v2/bitcoin/%s' % (url_adder)
 
@@ -29,9 +30,11 @@ def get_from_chain(url_adder):
 
     return b
 
+
 def get_block(block):
     ''' block can be: a hash, index or "latest" '''
     return get_from_chain("blocks/%s" % (block))
+
 
 def get_txn(tx):
     tx_json = _get_txn(tx)
@@ -39,6 +42,7 @@ def get_txn(tx):
     tx_json['hex'] = raw_txn['hex']
 
     return tx_json
+
 
 def _get_txn(tx, raw=False):
     url_adder = "transactions/%s" % (tx)

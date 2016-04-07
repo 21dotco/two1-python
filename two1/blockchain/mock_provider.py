@@ -101,9 +101,9 @@ class MockProvider(BaseProvider):
             change_key = HDPrivateKey.from_parent(acct_key, 1)
 
             payout_addresses = [HDPublicKey.from_parent(payout_key.public_key, i).address()
-                                     for i in range(self.max_address)]
+                                for i in range(self.max_address)]
             change_addresses = [HDPublicKey.from_parent(change_key.public_key, i).address()
-                                     for i in range(self.max_address)]
+                                for i in range(self.max_address)]
 
             self._acct_keys[i] = {'acct_key': acct_key,
                                   'payout_key': payout_key,
