@@ -1540,7 +1540,7 @@ class Two1Wallet(BaseWallet):
         of new change addresses.
 
         Args:
-            threshold (int): UTXO value must be >= to this value.
+            threshold (int): UTXO value must be >= to this value (in satoshis).
             num_addresses (int): Number of addresses to spread out the
                 matching UTXOs over. This must be > 1 and <= 100.
             accounts (list(str or int)): List of accounts to use. If

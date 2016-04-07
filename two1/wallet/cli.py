@@ -606,7 +606,8 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
         try:
             amount_satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
         except decimal.InvalidOperation as e:
-            ctx.fail("'%s' is not a valid amount. Amounts must be in BTC. Use --satoshis to specify the amount in satoshis." % (amount))
+            ctx.fail("'%s' is not a valid amount. " % (amount) +
+                "Amounts must be in BTC. Use --satoshis to specify the amount in satoshis.")
 
     logger.info("Sending %d satoshis to %s from accounts = %r" %
                 (amount_satoshis, address, list(account)))
@@ -626,8 +627,8 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
 @click.argument('num_addresses',
                 type=click.IntRange(min=2, max=100))
 @click.argument('threshold',
-                type=click.INT,
-                metavar="satoshis")
+                type=click.STRING,
+                metavar="THRESHOLD")
 @click.option('--account',
               type=click.STRING,
               multiple=True,
@@ -653,11 +654,20 @@ def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
     Example spreading all UTXOs with 500000 satoshis or larger into
     20 addresses:
 
-    wallet spreadutxos 20 500000
+    wallet spreadutxos --satoshis 20 500000
     """
     w = ctx.obj['wallet']
 
-    txids = w.spread_utxos(threshold=threshold,
+    if satoshis:
+        threshold_satoshis = threshold
+    else:
+        try:
+            threshold_satoshis = int(decimal.Decimal(threshold) * satoshi_to_btc)
+        except decimal.InvalidOperation as e:
+            ctx.fail("'%s' is not a valid threshold. " % (threshold) +
+                "Thresholds must be in BTC. Use --satoshis to specify the threshold in satoshis.")
+
+    txids = w.spread_utxos(threshold=threshold_satoshis,
                            num_addresses=num_addresses,
                            accounts=list(account))
     if txids:
