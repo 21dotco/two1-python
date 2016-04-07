@@ -2,6 +2,7 @@ import datetime
 import getpass
 import json
 import logging
+import decimal
 import logging.handlers
 import os
 import traceback
@@ -15,6 +16,7 @@ from path import Path
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
+from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet.base_wallet import convert_to_btc
 from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
@@ -565,8 +567,13 @@ def list_balances(ctx, byaddress):
 @click.argument('address',
                 type=click.STRING)
 @click.argument('amount',
-                type=click.INT,
-                metavar="satoshis")
+                type=click.STRING,
+                metavar="BTC")
+@click.option('--satoshis', '-s',
+              is_flag=True,
+              default=False,
+              show_default=True,
+              help="Provide amount to send in satoshis instead of BTC")
 @click.option('--use-unconfirmed', '-uu',
               is_flag=True,
               default=False,
@@ -584,26 +591,33 @@ def list_balances(ctx, byaddress):
 @click.pass_context
 @handle_exceptions
 @log_usage
-def send_to(ctx, address, amount, use_unconfirmed, fees, account):
+def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
 
     \b
-    The amount you specify should be in satoshis, and should be above the dust
-    limit.
+    The amount you specify should be in Bitcoin unless you use the --satoshis
+    flag, and should be above the dust limit.
     """
     w = ctx.obj['wallet']
 
-    logger.info("Sending %d satoshis to %s from accounts = %r" %
-                (amount, address, list(account)))
+    if satoshis:
+        amount_satoshis = amount
+    else:
+        try:
+            amount_satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
+        except decimal.InvalidOperation as e:
+            ctx.fail("'%s' is not a valid amount. Amounts must be in BTC. Use --satoshis to specify the amount in satoshis." % (amount))
 
+    logger.info("Sending %d satoshis to %s from accounts = %r" %
+                (amount_satoshis, address, list(account)))
     txids = w.send_to(address=address,
-                      amount=amount,
+                      amount=amount_satoshis,
                       use_unconfirmed=use_unconfirmed,
                       fees=fees,
                       accounts=list(account))
     if txids:
         click.echo("Successfully sent %s satoshis to %s. txids:" %
-                   (amount, address))
+                   (amount_satoshis, address))
         for t in txids:
             click.echo(t['txid'])
 
@@ -618,11 +632,16 @@ def send_to(ctx, address, amount, use_unconfirmed, fees, account):
               type=click.STRING,
               multiple=True,
               help="List of accounts to use")
+@click.option('--satoshis', '-s',
+              is_flag=True,
+              default=False,
+              show_default=True,
+              help="Provide threshold in satoshis instead of BTC")
 @click.pass_context
 @handle_exceptions
 @log_usage
-def spread_utxos(ctx, num_addresses, threshold, account):
-    """ Spreads out all UTXOs with value > threshold (in satoshis)
+def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
+    """ Spreads out all UTXOs with value > threshold (in BTC)
 
     \b
     This command is useful when you have a few large UTXOs which
