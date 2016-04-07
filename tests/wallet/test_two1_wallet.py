@@ -245,6 +245,22 @@ def test_rest():
                               use_unconfirmed=True,
                               amount=12581)
 
+    # test number of addresses in spread_utxos
+    with pytest.raises(ValueError):
+        txid = wallet.spread_utxos(threshold=500000,
+                                   num_addresses=0,
+                                   accounts=[])
+    with pytest.raises(ValueError):
+        txid = wallet.spread_utxos(threshold=500000,
+                                   num_addresses=101,
+                                   accounts=[])
+
+    # test units for spread_utxos
+    with pytest.raises(exceptions.SatoshiUnitsError):
+        txid = wallet.spread_utxos(threshold=0.0001,
+                                   num_addresses=1,
+                                   accounts=[])
+
     # Finally check storing to a file
     params = {}
     with tempfile.NamedTemporaryFile(delete=True) as tf:

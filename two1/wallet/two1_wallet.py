@@ -1534,6 +1534,7 @@ class Two1Wallet(BaseWallet):
 
         return [t['txid'] for t in tx_list]
 
+    # TODO: test this function, since it is currently completely untested
     @daemonizable.method
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
@@ -1550,6 +1551,11 @@ class Two1Wallet(BaseWallet):
         # create unnecessarily large transactions
         if num_addresses < 1 or num_addresses > 100:
             raise ValueError("num_addresses must be > 0 and <= 100.")
+
+        if not isinstance(threshold, int):
+            raise exceptions.SatoshiUnitsError(
+                "Can't send a non-integer amount of satoshis %s. Did you forget to convert from BTC?" %
+                (threshold,))
 
         if not accounts:
             accts = self._accounts
