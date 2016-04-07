@@ -1,8 +1,8 @@
 import datetime
+import decimal
 import getpass
 import json
 import logging
-import decimal
 import logging.handlers
 import os
 import traceback
@@ -16,8 +16,8 @@ from path import Path
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
-from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet.base_wallet import convert_to_btc
+from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.two1_wallet import Wallet
@@ -48,13 +48,15 @@ def handle_exceptions(f, custom_msg=""):
         try:
             rv = f(*args, **kwargs)
         except Exception as e:
+            tb = e.__traceback__
             if hasattr(e, 'message'):
                 if e.message == "Timed out waiting for lock":
                     msg = e.message + ". Please try again."
+                else:
+                    msg = e.message
             else:
-                tb = e.__traceback__
                 if custom_msg:
-                    msg = "%s: %s" % (custom_msg, e)
+                    msg = "{}: {}".format(custom_msg, e)
                 else:
                     msg = str(e)
             logger.error(msg)
@@ -80,7 +82,7 @@ def log_usage(f):
     """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        logger.info("%s(args=%r, kwargs=%r)" % (f.__name__, args[1:], kwargs))
+        logger.info("{}(args={}, kwargs={})".format(f.__name__, args[1:], kwargs))
         return f(*args, **kwargs)
 
     return wrapper
@@ -109,7 +111,7 @@ def validate_data_provider(ctx, param, value):
         ctx.obj = {}
 
     if value not in REQUIRED_DATA_PROVIDER_PARAMS:
-        ctx.fail("Unknown data provider %s" % value)
+        ctx.fail("Unknown data provider {}".format(value))
 
     required = REQUIRED_DATA_PROVIDER_PARAMS[value]
 
@@ -117,7 +119,7 @@ def validate_data_provider(ctx, param, value):
     for r in required:
         if r not in ctx.params:
             s = r.replace('_', '-')
-            click.echo("--%s is required to use %s." % (s, value))
+            click.echo("--{} is required to use {}.".format(s, value))
             fail = True
         else:
             data_provider_params[r] = ctx.params[r]
@@ -217,7 +219,7 @@ def main(ctx, wallet_path, passphrase,
         p = get_passphrase() if passphrase else ''
 
         try:
-            logger.info("Loading wallet %s ..." % (wp))
+            logger.info("Loading wallet {} ...".format(wp))
             ctx.obj['wallet'] = Wallet(wallet_path=wallet_path,
                                        data_provider=ctx.obj['data_provider'],
                                        passphrase=p)
@@ -246,7 +248,8 @@ def startdaemon(ctx):
     """
     # Check to sere if we're in a venv and don't do anything if we are
     if os.environ.get("VIRTUAL_ENV"):
-        click.echo("Not starting daemon while inside a virtualenv. It can be manually started by doing 'walletd' and backgrounding the process.")
+        click.echo("Not starting daemon while inside a virtualenv. It can be manually " +
+                   "started by doing 'walletd' and backgrounding the process.")
         return
 
     # Check if the wallet path exists
@@ -258,7 +261,7 @@ def startdaemon(ctx):
         d = get_daemonizer()
     except OSError as e:
         logger.debug(str(e))
-        click.echo("Error: %s" % e)
+        click.echo("Error: {}".format(e))
         return
 
     if d.started():
@@ -273,7 +276,7 @@ def startdaemon(ctx):
             d.install(dpo)
         except exceptions.DaemonizerError as e:
             logger.debug(str(e))
-            click.echo("Error: %s" % e)
+            click.echo("Error: {}".format(e))
             return
 
     msg = ""
@@ -283,7 +286,7 @@ def startdaemon(ctx):
         else:
             msg = "walletd not started."
     except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
+        msg = "Error: {}".format(e)
 
     logger.debug(msg)
     click.echo(msg)
@@ -303,7 +306,7 @@ def stopdaemon(ctx):
         d = get_daemonizer()
     except OSError as e:
         logger.debug(str(e))
-        click.echo("Error: %s" % e)
+        click.echo("Error: {}".format(e))
         return
 
     msg = ""
@@ -313,7 +316,7 @@ def stopdaemon(ctx):
         else:
             msg = "walletd not stopped."
     except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
+        msg = "Error: {}".format(e)
 
     logger.debug(msg)
     click.echo(msg)
@@ -328,7 +331,7 @@ def uninstalldaemon(ctx):
         d = get_daemonizer()
     except OSError as e:
         logger.debug(str(e))
-        click.echo("Error: %s" % e)
+        click.echo("Error: {}".format(e))
         return
 
     try:
@@ -340,7 +343,7 @@ def uninstalldaemon(ctx):
         else:
             msg = "Unable to uninstall walletd!"
     except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
+        msg = "Error: {}".format(e)
 
     logger.debug(msg)
     click.echo(msg)
@@ -381,7 +384,7 @@ def create(ctx, account_type, testnet):
                "testnet": testnet,
                "wallet_path": ctx.obj['wallet_path']}
 
-    logger.info("Creating wallet with options: %r" % options)
+    logger.info("Creating wallet with options: {}".format(options))
     created = Two1Wallet.configure(options)
 
     if created:
@@ -396,10 +399,10 @@ def create(ctx, account_type, testnet):
 
             adder = " (and your passphrase) " if passphrase else " "
             click.echo("Your wallet can be recovered using the following set of words (in that order).")
-            click.echo("Please store them%ssafely." % adder)
-            click.echo("\n%s\n" % wallet._orig_params['master_seed'])
+            click.echo("Please store them{}safely.".format(adder))
+            click.echo("\n{}\n".format(wallet._orig_params['master_seed']))
         except Exception as e:
-            logger.debug("Error opening created wallet: %s" % e)
+            logger.debug("Error opening created wallet: {}".format(e))
             click.echo("Wallet was not created properly.")
             ctx.exit(code=3)
     else:
@@ -428,7 +431,7 @@ def restore(ctx):
         try:
             d.stop()
         except exceptions.DaemonizerError as e:
-            click.echo("ERROR: Couldn't stop daemon: %s" % e)
+            click.echo("ERROR: Couldn't stop daemon: {}".format(e))
             ctx.exit(code=4)
 
     # Check to see if the current wallet path exists
@@ -499,8 +502,7 @@ def confirmed_balance(ctx, account):
     """
     w = ctx.obj['wallet']
     cb = w.confirmed_balance(account)
-    click.echo("Confirmed balance: %0.8f BTC" %
-               convert_to_btc(cb))
+    click.echo("Confirmed balance: {0.8f} BTC".format(convert_to_btc(cb)))
 
 
 @click.command(name="balance")
@@ -521,8 +523,8 @@ def balance(ctx, account):
     """
     w = ctx.obj['wallet']
     ucb = w.unconfirmed_balance(account)
-    click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
-               convert_to_btc(ucb))
+    click.echo("Total balance (including unconfirmed txns): {0.8f} BTC".format(
+               convert_to_btc(ucb)))
 
 
 @click.command(name='listbalances')
@@ -540,10 +542,10 @@ def list_balances(ctx, byaddress):
     for a in w.account_names:
         ucb = w.unconfirmed_balance(a)
         cb = w.confirmed_balance(a)
-        click.echo("Account: %s\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
-                   (a,
-                    convert_to_btc(cb),
-                    convert_to_btc(ucb)))
+        click.echo("Account: {}\nConfirmed: {0.8f} BTC, Total: {0.8f} BTC".format(
+                   a,
+                   convert_to_btc(cb),
+                   convert_to_btc(ucb)))
 
         if byaddress:
             by_addr = w.balances_by_address(a)
@@ -552,15 +554,15 @@ def list_balances(ctx, byaddress):
             for addr, balances in by_addr.items():
                 if balances['confirmed'] > 0 or \
                    balances['total'] > 0:
-                    click.echo("%35s: %0.8f (confirmed), %0.8f (total)" %
-                               (addr,
-                                convert_to_btc(balances['confirmed']),
-                                convert_to_btc(balances['total'])))
+                    click.echo("{35s}: {0.8f} (confirmed), {0.8f} (total)".format(
+                               addr,
+                               convert_to_btc(balances['confirmed']),
+                               convert_to_btc(balances['total'])))
         click.echo("")
 
-    click.echo("Account Totals\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
-               (convert_to_btc(w.confirmed_balance()),
-                convert_to_btc(w.unconfirmed_balance())))
+    click.echo("Account Totals\nConfirmed: {0.8f} BTC, Total: {0.8f} BTC".format(
+               convert_to_btc(w.confirmed_balance()),
+               convert_to_btc(w.unconfirmed_balance())))
 
 
 @click.command(name="sendto")
@@ -596,29 +598,35 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
 
     \b
     The amount you specify should be in Bitcoin unless you use the --satoshis
-    flag, and should be above the dust limit.
+    flag, and the amount should be above the dust limit.
     """
     w = ctx.obj['wallet']
 
     if satoshis:
-        amount_satoshis = amount
+        try:
+            amount_satoshis = int(amount)
+        except ValueError:
+            ctx.fail("'{}' is not a valid amount. ".format(amount) +
+                     "When using the --satoshis flag, you must specify the amount as an integer.")
     else:
+        logger.warn("Specifying the send amount in BTC is deprecated. Use the --satoshis flag "
+                    "to specify the amount in satoshis.")
         try:
             amount_satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
-        except decimal.InvalidOperation as e:
-            ctx.fail("'%s' is not a valid amount. " % (amount) +
-                "Amounts must be in BTC. Use --satoshis to specify the amount in satoshis.")
+        except decimal.InvalidOperation:
+            ctx.fail("'{}' is not a valid amount. ".format(amount) +
+                     "Amounts must be in BTC. Use --satoshis to specify the amount in satoshis.")
 
-    logger.info("Sending %d satoshis to %s from accounts = %r" %
-                (amount_satoshis, address, list(account)))
+    logger.info("Sending {} satoshis to {} from accounts = {}".format(
+                amount_satoshis, address, list(account)))
     txids = w.send_to(address=address,
                       amount=amount_satoshis,
                       use_unconfirmed=use_unconfirmed,
                       fees=fees,
                       accounts=list(account))
     if txids:
-        click.echo("Successfully sent %s satoshis to %s. txids:" %
-                   (amount_satoshis, address))
+        click.echo("Successfully sent {} satoshis to {}. txids:".format(
+                   amount_satoshis, address))
         for t in txids:
             click.echo(t['txid'])
 
@@ -659,13 +667,19 @@ def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
     w = ctx.obj['wallet']
 
     if satoshis:
-        threshold_satoshis = threshold
+        try:
+            threshold_satoshis = int(threshold)
+        except ValueError:
+            ctx.fail("'{}' is not a valid threshold. ".format(threshold) +
+                     "When using the --satoshis flag, you must specify the amount as an integer.")
     else:
+        logger.warn("Specifying the spreadutxos threshold in BTC is deprecated. Use the --satoshis flag "
+                    "to specify the amount in satoshis.")
         try:
             threshold_satoshis = int(decimal.Decimal(threshold) * satoshi_to_btc)
-        except decimal.InvalidOperation as e:
-            ctx.fail("'%s' is not a valid threshold. " % (threshold) +
-                "Thresholds must be in BTC. Use --satoshis to specify the threshold in satoshis.")
+        except decimal.InvalidOperation:
+            ctx.fail("'{}' is not a valid threshold. ".format(threshold) +
+                     "Thresholds must be in BTC. Use --satoshis to specify the threshold in satoshis.")
 
     txids = w.spread_utxos(threshold=threshold_satoshis,
                            num_addresses=num_addresses,
@@ -689,7 +703,7 @@ def create_account(ctx, name):
     rv = w.create_account(name)
 
     if rv:
-        click.echo("Successfully created account '%s'." % name)
+        click.echo("Successfully created account '{}'.".format(name))
     else:
         click.echo("Account creation failed.")
 
@@ -703,7 +717,7 @@ def list_accounts(ctx):
     """
     w = ctx.obj['wallet']
     for name, n in sorted(w.account_map.items(), key=lambda x: x[1]):
-        click.echo("Account %d: %s" % (n, name))
+        click.echo("Account {}: {}".format(n, name))
 
 
 @click.command(name='listaddresses')
@@ -722,8 +736,8 @@ def list_addresses(ctx, account):
     addresses = w.addresses(accounts=list(account))
     for acct, addr_list in addresses.items():
         len_acct_name = len(acct)
-        click.echo("Account: %s" % (acct))
-        click.echo("---------%s" % ("-" * len_acct_name))
+        click.echo("Account: {}".format(acct))
+        click.echo("---------{}".format("-" * len_acct_name))
 
         for addr in addr_list:
             click.echo(addr)
@@ -771,30 +785,30 @@ def history(ctx, n, reverse, json_output, account):
     for i, th in enumerate(h):
         dt = datetime.datetime.fromtimestamp(int(th['time']))
 
-        click.echo("%s (%s)" % (th['txid'], dt.strftime('%Y-%m-%d %H:%M:%S')))
-        click.echo("%s" % ('-' * 86))
-        click.echo("Type: %s" % (th['classification']))
+        click.echo("{} ({})".format(th['txid'], dt.strftime('%Y-%m-%d %H:%M:%S')))
+        click.echo("{}".format('-' * 86))
+        click.echo("Type: {}".format(th['classification']))
         if th['classification'] == "deposit":
             for d in th['deposits']:
-                click.echo("Received %d satoshis into %s (Account: %s)" % (
+                click.echo("Received {d} satoshis into {} (Account: {})".format(
                     d['value'], d['address'], d['acct']))
         elif th['classification'] in ["spend", "internal_transfer"]:
             for i in range(max(len(th['spends']), len(th['deposits'])) + 1):
                 msg = ""
                 if i < len(th['spends']):
                     s = th['spends'][i]
-                    msg = "%12d satoshis from %35s" % (s['value'], s['address'])
+                    msg = "{12d} satoshis from {35s}".format(s['value'], s['address'])
                 else:
-                    msg = "%s" % (" " * 62)
+                    msg = "{}".format(" " * 62)
                 if i < len(th['deposits']):
                     d = th['deposits'][i]
-                    msg += "%s%12d satoshis to %35s (%s)" % (
+                    msg += "{}{12d} satoshis to {35s} ({})".format(
                         " " * 5,
                         d['value'],
                         d['address'],
                         d['addr_type'])
                 if i == len(th['deposits']):
-                    msg += "%s%12d satoshis to %35s (fees)" % (
+                    msg += "{}{12d} satoshis to {35s} (fees)".format(
                         " " * 5,
                         th['fees'],
                         "miner")
@@ -852,7 +866,7 @@ def sign_bitcoin_message(ctx, message, address):
     """
     w = ctx.obj['wallet']
     sig = w.sign_bitcoin_message(message=message, address=address)
-    click.echo("Signature: %s" % sig)
+    click.echo("Signature: {}".format(sig))
 
 
 @click.command(name='verifymessage')
