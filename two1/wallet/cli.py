@@ -452,17 +452,12 @@ def restore(ctx):
         click.echo("ERROR: Invalid mnemonic.")
         ctx.exit(code=5)
 
-    if click.confirm("Did the wallet have a passphrase?"):
-        passphrase = get_passphrase()
-    else:
-        passphrase = ''
-
     # Try creating the wallet
     click.echo("\nRestoring...")
     wallet = Two1Wallet.import_from_mnemonic(
         data_provider=ctx.obj['data_provider'],
         mnemonic=mnemonic,
-        passphrase=passphrase)
+    )
 
     wallet.to_file(ctx.obj['wallet_path'])
     if Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
