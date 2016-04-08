@@ -11,6 +11,7 @@ from functools import wraps
 
 import click
 from mnemonic import Mnemonic
+from mnemonic.mnemonic import ConfigurationError
 from path import Path
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
@@ -442,8 +443,12 @@ def restore(ctx):
     mnemonic = click.prompt("Please enter the wallet's 12 word mnemonic")
 
     # Sanity check the mnemonic
-    m = Mnemonic(language='english')
-    if not m.check(mnemonic):
+    def check_mnemonic(mnemonic):
+        try:
+            return Mnemonic(language='english').check(mnemonic)
+        except ConfigurationError:
+            return False
+    if not check_mnemonic(mnemonic):
         click.echo("ERROR: Invalid mnemonic.")
         ctx.exit(code=5)
 
