@@ -26,7 +26,7 @@ def utxo_selector_smallest_first(utxos_by_addr, amount,
     utxo_sum = 0
 
     for addr, utxo in ordered_utxos:
-        tf = fees if fees is not None else calc_fees + input_fee
+        tf = fees if fees is not None else calc_fees
         if utxo_sum < amount + tf:
             utxo_sum += utxo.value
             if addr in utxos_to_use:
