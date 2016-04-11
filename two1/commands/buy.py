@@ -5,6 +5,7 @@ import sys
 import json
 import urllib.parse
 import logging
+from collections import OrderedDict
 
 # 3rd party imports
 import click
@@ -157,7 +158,16 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
 
     # Write response text to stdout or a filename if provided
     if not output_file:
-        logger.info(response.content, nl=False)
+        try:
+            json_resp = response.json()
+        except ValueError:
+            logger.info(response.content, nl=False)
+        else:
+            if isinstance(json_resp, dict):
+                ordered = OrderedDict(sorted(json_resp.items()))
+                logger.info(json.dumps(ordered, indent=4), nl=False)
+            else:
+                logger.info(json.dumps(json_resp, indent=4), nl=False)
     else:
         with open(output_file, 'wb') as f:
             logger.info(response.content, file=f, nl=False)

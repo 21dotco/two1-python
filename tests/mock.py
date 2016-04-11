@@ -73,6 +73,9 @@ class MockBitResponse:
             self.status_code = 405
             self.content = self.text = self.FAILURE_RESPONSE
 
+    def json(self):
+        return json.loads(self.content)
+
 
 class MockBitRequests:
 
