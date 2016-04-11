@@ -1206,19 +1206,14 @@ class Two1Wallet(BaseWallet):
 
         # Verify we have enough money
         total_with_fees = total_amount + fees
-        if total_with_fees > balance:
+        enough_money = bool(selected_utxos)
+        if total_with_fees > balance or not enough_money:
             raise exceptions.WalletBalanceError(
-                "Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis)." %
-                (balance, total_amount, fees))
-
-        if not selected_utxos:
-            raise exceptions.WalletBalanceError(
-                "There are not enough UTXOs to complete this transaction.\n"
-                "Use 'wallet spreadutxos' to split your balance into more UTXOs.")
+                "Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis). %s" %
+                (balance, total_amount, fees, str(selected_utxos) if enough_money else ''))
 
         if use_unconfirmed and total_with_fees > c_balance:
-            self.logger.warning(
-                "Using unconfirmed inputs to complete transaction.")
+            self.logger.warning("Using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
         private_keys = self.get_private_keys(list(selected_utxos.keys()))
