@@ -15,7 +15,8 @@ class UxString:
                                           "this service. If you believe you have received this "
                                           "message in error, please contact support@21.co.",
                                           fg="red")
-    max_accounts_reached = click.style("You have reached the maximum number of 21.co accounts that you can create. ", fg="red") +\
+    max_accounts_reached = click.style(
+        "You have reached the maximum number of 21.co accounts that you can create. ", fg="red") +\
         click.style("Use ", fg="red") +\
         click.style("21 login ", fg="red", bold=True) +\
         click.style("to switch between your available accounts.", fg="red")
@@ -34,7 +35,8 @@ class UxString:
     create_wallet = "You do not have a Bitcoin wallet configured. "\
         "Let's create one. Press any key ...\n"
     create_wallet_done = "Wallet successfully created.\n\n"\
-                         "You can recover the private key to your wallet using the following 12 words (in this order) :\n"\
+                         "You can recover the private key to your wallet using the "\
+                         "following 12 words (in this order) :\n"\
                          "\n%s\n\n"\
                          "Write down and store these words in a safe place.\n\n"\
                          "Press any key ..."
@@ -44,7 +46,8 @@ class UxString:
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
         "This may help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
-    unconfirmed_email = "Before logging in, you must activate your 21 account using the email sent to you at ali@21.co. If you can't find the email, please visit 21.co/activation."
+    unconfirmed_email = "Before logging in, you must activate your 21 account using the " \
+                        "email sent to you at {}. If you can't find the email, please visit 21.co/activation."
 
     flush_success = "{}\n"\
         "Your mined Satoshis will be sent to you on the "\
@@ -249,7 +252,8 @@ class UxString:
     mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
                            "Please try again in a few hours"
 
-    mining_bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
+    mining_bitcoin_computer_needed = click.style(
+        "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
         click.style("21 buybitcoin", bold=True, fg="red") +\
         click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
         click.style("message in error, please contact support@21.co.", fg="red")
@@ -291,13 +295,11 @@ class UxString:
 
     debit_message = "{} : {:+d} Satoshis to your 21.co balance"
     blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
-                                "{:+d} Satoshis to " \
-                                "your " \
-                                "Blockchain balance"
+                                "{:+d} Satoshis to your Blockchain balance"
     credit_message = "{} : {:+d} Satoshis from your 21.co balance"
 
-    buy_message = "You bought {} from {}"
-    sell_message = "You sold {} to {}"
+    buy_message = "You bought '{}' from {}"
+    sell_message = "You sold '{}' to {}"
 
     unread_notifications = click.style("\nYou have {} unread notifications. Type ", fg="blue") +\
         click.style("21 inbox", bold=True, fg="blue") +\
@@ -372,8 +374,8 @@ class UxString:
                                               fg="red")
 
     manifest_contact_fields = {"name", "email"}
-    manifest_contact_field_missing = click.style("Field '{}' is missing from the manifest file under the 'contact' section.",
-                                                 fg="red")
+    manifest_contact_field_missing = click.style(
+        "Field '{}' is missing from the manifest file under the 'contact' section.", fg="red")
 
     price_fields = ["min", "max"]
     price_fields_missing = click.style("Field '{}' is missing from the manifest file under the "
@@ -520,16 +522,15 @@ class UxString:
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
 
         # version errors
-        version_not_detected = click.style("Could not properly detect your version of 21. "
-                                           "Try reinstalling or contact support@21.co.",
-                                           fg="red")
+        version_not_detected = click.style(
+            "Could not properly detect your version of 21. Try reinstalling or contact support@21.co.", fg="red")
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
-        insufficient_funds_mine_more = str("Insufficient satoshis for off-chain (zero-fee) transaction. " +
-                                           "Type {} to get more.*\n\n" +
-                                           "You may also use your on-chain balance for this transaction. It will include a {} satoshi tx fee." +
-                                           "To use on-chain balance add {} to your buy command*").format(click.style("21 mine", bold=True),
-                                                                                                         {},
-                                                                                                         click.style("-p onchain", bold=True))
+        insufficient_funds_mine_more = str(
+            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to get more.*\n\nYou may also"
+            " use your on-chain balance for this transaction. It will include a {} satoshi tx fee. To use "
+            "on-chain balance add {} to your buy command*"
+        ).format(click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True))
+
         # account errors
         login_error_username = "Can not log into account, username not set"
         login_error_mining_auth_pubkey = "Can not log into account, username not set"
