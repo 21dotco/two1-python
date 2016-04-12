@@ -70,7 +70,7 @@ def format_expiration_time(expires):
         return "{} sec".format(seconds)
 
 
-@click.group()
+@click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
 @click.pass_context
 def main(ctx, json):
