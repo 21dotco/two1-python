@@ -3,18 +3,13 @@ import os
 import os.path
 
 
-try:
-    from two1.version import VERSION as version
-except ImportError:
-    try:
-        from two1.commands.util.mkrelease import get_version_from_git
-        version = get_version_from_git()
-    except:
-        raise Exception('Version not found. Is there a tag available?')
+VERSION = (2, 3, 5)
+
+__version__ = '.'.join(map(str, VERSION))
 
 
 # Defines hard coded global variables
-TWO1_VERSION = version
+TWO1_VERSION = __version__
 TWO1_PACKAGE_NAME = 'two1'
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = TWO1_USER_FOLDER + 'two1.json'
