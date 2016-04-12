@@ -74,7 +74,21 @@ def format_expiration_time(expires):
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
 @click.pass_context
 def main(ctx, json):
-    """Top-level command line call that configures the command context."""
+    """Command-line utility for managing payment channels.
+
+    The `channels` tool is used for creating, opening, closing, and conducting
+    diagnostics for the payment channel micropayments protocol. After opening
+    a channel with a merchant, making a payment returns a token, which the
+    merchant will accept as proof of payment within the 402 payments protocol.
+    Example of opening a channel, making payments, and closing the channel:
+
+    $ channels open https://mkt.21.co/bitcoin_auth/payment 100000 120\n
+    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ channels info https://mkt.21.co/bitcoin_auth/payment\n
+    $ channels close https://mkt.21.co/bitcoin_auth/payment\n
+    """
     client = PaymentChannelClient(Wallet(WALLET_PATH), CHANNELS_DB_PATH)
     ctx.obj = {'client': client, 'json': json}
 
