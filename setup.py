@@ -34,7 +34,7 @@ install_requires = [
                     'pyaes',
                     'tabulate',
                     'jsonrpcclient',
-                    'jsonrpcserver>=3.0.0',
+                    'jsonrpcserver==3.1.1',
                     'pyyaml'
                     ]
 
