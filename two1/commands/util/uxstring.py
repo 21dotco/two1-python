@@ -466,8 +466,8 @@ class UxString:
 
     send_success = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\ntxn: {3}\n"
                     "To see on the blockchain: https://blockexplorer.com/tx/{2}")
-    send_insufficient_confirmed = (
-        "Insufficient confirmed balance. However, you can use unconfirmed transactions with --use-unconfirmed.")
+    send_insufficient_confirmed = ("Insufficient confirmed balance. However, you can use unconfirmed"
+                                   " transactions with --use-unconfirmed. ")
     send_insufficient_blockchain = (
         "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
         "Run %s, then %s to increase your Blockchain balance." %

@@ -58,12 +58,13 @@ def _send(wallet, address, satoshis, use_unconfirmed=False):
     except ValueError as e:
         # This will trigger if there's a below dust-limit output.
         raise exceptions.Two1Error(str(e))
-    except WalletBalanceError:
+    except WalletBalanceError as e:
         if wallet.unconfirmed_balance() > satoshis:
-            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_confirmed)
+            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_confirmed + str(e))
         else:
             balance = min(wallet.confirmed_balance(), wallet.unconfirmed_balance())
-            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain.format(balance, satoshis, address))
+            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain.format(
+                balance, satoshis, address))
     except DataProviderError as e:
         if "rejected" in str(e):
             raise exceptions.Two1Error(uxstring.UxString.send_rejected)
