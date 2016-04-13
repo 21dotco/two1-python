@@ -443,7 +443,7 @@ def restore(ctx):
             ctx.exit(code=4)
 
     # Ask for mnemonic
-    mnemonic = click.prompt("Please enter the wallet's 12 word mnemonic")
+    mnemonic = click.prompt("Please enter the wallet's 12 word mnemonic").strip()
 
     # Sanity check the mnemonic
     def check_mnemonic(mnemonic):
