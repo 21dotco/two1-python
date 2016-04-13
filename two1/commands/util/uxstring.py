@@ -477,9 +477,17 @@ class UxString:
     # logger
     less_env = '-RPpress h for help, q for quit'
     lib_import_warning = click.style(
-        "{}\n{: ^80}\n{}".format("#" * 80,
-                                 "Warning: two1.lib* packages have been moved under two1. Update your imports asap!",
-                                 "#" * 80), fg="yellow")
+        "\n".join((
+            "#" * 80,
+            "Warning: two1.lib.* packages have been moved to two1.*",
+            "Update your imports immediately!",
+            "",
+            "For example:",
+            "-from two1.lib.wallet import Wallet",
+            "+from two1.wallet import Wallet",
+            "#" * 80
+        )),
+        fg="yellow")
 
     class Error:
         """ Put all Error type uxstrings here """
