@@ -147,7 +147,7 @@ class UxString:
     buy_bad_uri_host = "Please provide a valid hostname for the request, such as `mkt.21.co`."
     buy_channel_aborted = "Payment aborted."
     buy_bad_data_format = "Unknown data format."
-    buy_balances = "\nYou spent: {} Satoshis. Remaining {} balance: {} Satoshis."
+    buy_balances = "You spent: {} Satoshis. Remaining {} balance: {} Satoshis."
 
     # doctor
     doctor_start = click.style("21.co Doctor", fg='green') + "\n\n" + \
