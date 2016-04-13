@@ -54,74 +54,53 @@ $ py.test
 
 # The Codebase
 ## The `two1` directory
- - [__init__.py](two1/__init__.py): Two1 project variables.
+ - [\_\_init\_\_.py](two1/__init__.py): Two1 project variables.
  - [cli.py](two1/cli.py): The 21 command line interface.
 
-## The `two1/commands` directory
- - [buy.py](two1/commands/buy.py): Buy from a machine-payable endpoint.
- - [doctor.py](two1/commands/doctor.py): When you are not feeling well come see the Doctor
- - [mine.py](two1/commands/mine.py): Mine Bitcoin locally via a CPU or built-in mining chip
- - [sell.py](two1/commands/sell.py): Launch a machine-payable endpoint on the current machine
- - [status.py](two1/commands/status.py): View the status of mining and machine-payable purchases
-
-## The `two1/commands/helpers` directory
- - [sell_helpers.py](two1/commands/helpers/sell_helpers.py): Helper methods for the 21 sell command.
-
-## The `two1/commands/util` directory
- - [account.py](two1/commands/util/account.py): Utility functions for user accounts.
- - [bitcoin_computer.py](two1/commands/util/bitcoin_computer.py): Contains methods to interact with the bitcoin computer hardware
- - [config.py](two1/commands/util/config.py): Manages configuration variables for the two1 CLI.
- - [uxstring.py](two1/commands/util/uxstring.py): Strings for the two1 CLI user interface
- - [wallet.py](two1/commands/util/wallet.py): Utility functions for user wallets.
- - [zerotier.py](two1/commands/util/zerotier.py): Simple wrapper for zerotier-cli
-
 ## The `two1/bitcoin` directory
- - [__init__.py](two1/bitcoin/__init__.py): The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
+ - [\_\_init\_\_.py](two1/bitcoin/__init__.py): The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
  - [block.py](two1/bitcoin/block.py): This submodule provides the MerkleNode, Block, BlockHeader, and CompactBlock
+ - [coinbase.py](two1/bitcoin/coinbase.py): Builds the coinbase transaction
  - [crypto.py](two1/bitcoin/crypto.py): This submodule provides the PublicKey, PrivateKey, and Signature classes.
  - [exceptions.py](two1/bitcoin/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
  - [hash.py](two1/bitcoin/hash.py): this submodule provides a Hash class for interacting with SHA-256 hashes
  - [script.py](two1/bitcoin/script.py): This submodule provides a single Script class that has knowledge of all
- - [script_interpreter.py](two1/bitcoin/script_interpreter.py): This submodule provides a single ScriptInterpreter class to be used in
+ - [script\_interpreter.py](two1/bitcoin/script_interpreter.py): This submodule provides a single ScriptInterpreter class to be used in
  - [txn.py](two1/bitcoin/txn.py): This submodule provides Transaction, Coinbase, TransactionInput,
  - [utils.py](two1/bitcoin/utils.py): This submodule provides functions for accomplishing common tasks encountered
 
 ## The `two1/bitrequests` directory
- - [__init__.py](two1/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users
+ - [\_\_init\_\_.py](two1/bitrequests/__init__.py): BitRequests wraps the python Requests library, adding a simple API for users
  - [bitrequests.py](two1/bitrequests/bitrequests.py): This module provides various BitRequests methods, including:
 
 ## The `two1/bitserv` directory
- - [__init__.py](two1/bitserv/__init__.py): The BitServ library adds a simple API for servers to create payable
+ - [\_\_init\_\_.py](two1/bitserv/__init__.py): The BitServ library adds a simple API for servers to create payable
  - [models.py](two1/bitserv/models.py): This module provides data management for payment servers.
- - [payment_methods.py](two1/bitserv/payment_methods.py): This module contains methods for making paid HTTP requests to 402-enabled servers.
- - [payment_server.py](two1/bitserv/payment_server.py): This module implements the server side of payment channels.
+ - [payment\_methods.py](two1/bitserv/payment_methods.py): This module contains methods for making paid HTTP requests to 402-enabled servers.
+ - [payment\_server.py](two1/bitserv/payment_server.py): This module implements the server side of payment channels.
  - [wallet.py](two1/bitserv/wallet.py): Wrapper around the two1 wallet for payment channels.
 
 ## The `two1/bitserv/django` directory
- - [__init__.py](two1/bitserv/django/__init__.py): Bitserv implementation for Django.
+ - [\_\_init\_\_.py](two1/bitserv/django/__init__.py): Bitserv implementation for Django.
  - [decorator.py](two1/bitserv/django/decorator.py): Django bitserv payment library for selling 402 API endpoints.
  - [models.py](two1/bitserv/django/models.py): Payment models for a bitserv server.
  - [urls.py](two1/bitserv/django/urls.py): Added URLs for a bitserv server.
  - [views.py](two1/bitserv/django/views.py): Added views for a bitserv server.
 
 ## The `two1/bitserv/flask` directory
- - [__init__.py](two1/bitserv/flask/__init__.py): Bitserv implementation for Flask.
+ - [\_\_init\_\_.py](two1/bitserv/flask/__init__.py): Bitserv implementation for Flask.
  - [decorator.py](two1/bitserv/flask/decorator.py): Flask bitserv payment library for selling 402 API endpoints.
 
-## The `two1/bitserv/tests` directory
- - [test_channels.py](two1/bitserv/tests/test_channels.py): Tests for payment channel functionality.
-
 ## The `two1/blockchain` directory
- - [__init__.py](two1/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive
- - [base_provider.py](two1/blockchain/base_provider.py): This submodule provides an abstract base class for a Provider, which
- - [block_cypher_provider.py](two1/blockchain/block_cypher_provider.py): This submodule provides a concrete `BlockCypherProvider` class that provides
+ - [\_\_init\_\_.py](two1/blockchain/__init__.py): The blockchain module within the 21 Blockchain Library allows you to receive
+ - [base\_provider.py](two1/blockchain/base_provider.py): This submodule provides an abstract base class for a Provider, which
  - [exceptions.py](two1/blockchain/exceptions.py): This is a simple submodule that enumerates the different kinds of exceptions
- - [insight_provider.py](two1/blockchain/insight_provider.py): This submodule provides a concrete `InsightProvider` class that provides
- - [mock_provider.py](two1/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
- - [twentyone_provider.py](two1/blockchain/twentyone_provider.py): This submodule provides a concrete `TwentyOneProvider` class that provides
+ - [insight\_provider.py](two1/blockchain/insight_provider.py): This submodule provides a concrete `InsightProvider` class that provides
+ - [mock\_provider.py](two1/blockchain/mock_provider.py): This submodule provides a concrete `MockProvider` class that provides
+ - [twentyone\_provider.py](two1/blockchain/twentyone_provider.py): This submodule provides a concrete `TwentyOneProvider` class that provides
 
 ## The `two1/channels` directory
- - [__init__.py](two1/channels/__init__.py): The payment channel protocol allows for fast, high-volume payments to occur
+ - [\_\_init\_\_.py](two1/channels/__init__.py): The payment channel protocol allows for fast, high-volume payments to occur
  - [blockchain.py](two1/channels/blockchain.py): Wraps various blockchain data sources to provide convenience methods for
  - [cli.py](two1/channels/cli.py): Command-line interface for managing client-side payment channel management.
  - [database.py](two1/channels/database.py): Provides persistent storage and retrieval of payment channel state.
@@ -131,22 +110,63 @@ $ py.test
  - [statemachine.py](two1/channels/statemachine.py): Manages state transitions for PaymentChannel objects.
  - [walletwrapper.py](two1/channels/walletwrapper.py): Wraps the Two1 `Wallet` to provide methods for payment channel management.
 
+## The `two1/commands` directory
+ - [buy.py](two1/commands/buy.py): Buy from a machine-payable endpoint.
+ - [doctor.py](two1/commands/doctor.py): When you are not feeling well come see the Doctor
+ - [flush.py](two1/commands/flush.py): Flushes current off-chain balance to the blockchain
+ - [help.py](two1/commands/help.py): Two1 command help
+ - [inbox.py](two1/commands/inbox.py): Two1 command module for getting and displaying messages in your inbox
+ - [join.py](two1/commands/join.py): Two1 command to join various zerotier networks
+ - [log.py](two1/commands/log.py): Log command that show a list of notifications
+ - [login.py](two1/commands/login.py): Logs a user into their 21.co account
+ - [mine.py](two1/commands/mine.py): Mine Bitcoin locally via a CPU or built-in mining chip
+ - [publish.py](two1/commands/publish.py): Two1 command to publish an app to the 21 Marketplace
+ - [rate.py](two1/commands/rate.py): Two1 command to rate a marketplace app
+ - [search.py](two1/commands/search.py): Two1 command to search the 21 Marketplace
+ - [sell.py](two1/commands/sell.py): Launch a machine-payable endpoint on the current machine
+ - [send.py](two1/commands/send.py): Two1 command to send bitcoin to another address
+ - [status.py](two1/commands/status.py): View the status of mining and machine-payable purchases
+ - [update.py](two1/commands/update.py): Two1 command to update to the latest version of two1 and it's dependencies
+
+## The `two1/commands/util` directory
+ - [account.py](two1/commands/util/account.py): Utility functions for user accounts.
+ - [bitcoin\_computer.py](two1/commands/util/bitcoin_computer.py): Contains methods to interact with the bitcoin computer hardware
+ - [config.py](two1/commands/util/config.py): Manages configuration variables for the two1 CLI.
+ - [decorators.py](two1/commands/util/decorators.py): All two1 command line related decorators
+ - [exceptions.py](two1/commands/util/exceptions.py): All command line related exceptions
+ - [logger.py](two1/commands/util/logger.py): Logger module which when imported changes the default logger class to ClickLogger
+ - [nginx.py](two1/commands/util/nginx.py): Utility to bring up and tear down an nginx server
+ - [uxstring.py](two1/commands/util/uxstring.py): Strings for the two1 CLI user interface
+ - [wallet.py](two1/commands/util/wallet.py): Utility functions for user wallets.
+ - [zerotier.py](two1/commands/util/zerotier.py): Simple wrapper for zerotier-cli
+
+## The `two1/lib` directory
+ - [\_\_init\_\_.py](two1/lib/__init__.py): This is a backwards compatibility shim to show a warning when a user imports two1.lib
+
+## The `two1/mkt` directory
+ - [\_\_init\_\_.py](two1/mkt/__init__.py): Make purchases in the 21 marketplace.
+
 ## The `two1/server` directory
- - [login.py](two1/server/login.py): Handles client-side user account setup and authentication.
- - [machine_auth.py](two1/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
- - [machine_auth_wallet.py](two1/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
- - [message_factory.py](two1/server/message_factory.py): Generates new swirl messages.
+ - [machine\_auth.py](two1/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
+ - [machine\_auth\_wallet.py](two1/server/machine_auth_wallet.py): Wraps a Wallet object and adds signing capabilities for authentication.
+ - [message\_factory.py](two1/server/message_factory.py): Generates new swirl messages.
 
 ## The `tests` directory
  - [mock.py](tests/mock.py): Mock objects for testing.
+ - [test\_code\_checkers.py](tests/test_code_checkers.py): Static analysis of source code.
+
+## The `tests/bitserv` directory
+ - [test\_channels.py](tests/bitserv/test_channels.py): Tests for payment channel functionality.
 
 ## The `tests/commands` directory
- - [test_buy.py](tests/commands/test_buy.py): Unit tests for `21 buy`.
- - [test_doctor.py](tests/commands/test_doctor.py): Doctor command unit tests
- - [test_flush.py](tests/commands/test_flush.py): Flush command unit tests.
- - [test_send.py](tests/commands/test_send.py): Unit tests for `21 send`.
+ - [test\_buy.py](tests/commands/test_buy.py): Unit tests for `21 buy`.
+ - [test\_doctor.py](tests/commands/test_doctor.py): Doctor command unit tests
+ - [test\_flush.py](tests/commands/test_flush.py): Flush command unit tests.
+ - [test\_send.py](tests/commands/test_send.py): Unit tests for `21 send`.
+ - [test\_update.py](tests/commands/test_update.py): Unit test to verify update command
 
 ## The `tests/commands/util` directory
- - [test_config.py](tests/commands/util/test_config.py): Unit tests for `21 config`.
- - [test_zerotier.py](tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
+ - [test\_config.py](tests/commands/util/test_config.py): Unit tests for `21 config`.
+ - [test\_logger.py](tests/commands/util/test_logger.py): Unit test to verify logger functionality
+ - [test\_zerotier.py](tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
 
