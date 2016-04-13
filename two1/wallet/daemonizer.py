@@ -309,6 +309,11 @@ WantedBy=default.target
                     text = "CHAIN_API_KEY_ID='%s'\n" % data_provider_options['api_key_id']
                     text += "CHAIN_API_KEY_SECRET='%s'\n" % data_provider_options['api_key_secret']
 
+                # Add default locale info based on current user's settings
+                locale_info = ".".join(locale.getlocale())
+                for env_var in ["LC_ALL", "LANG"]:
+                    text += "{}={}\n".format(env_var, locale_info)
+
                 # Create ENV file (even if empty)
                 cls._write_env_file(text)
 
