@@ -4,7 +4,6 @@ import re
 import json
 import urllib.parse
 import logging
-import sys
 
 # 3rd party imports
 import click
@@ -146,7 +145,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         with open(output_file, 'wb') as f:
             logger.info(response.content, file=f, nl=False)
 
-    print('', file=sys.stderr)  # newline for pretty-printing errors to stdout
+    logger.info('', err=True)  # newline for pretty-printing errors to stdout
 
     # Exit successfully if no amount was paid for the resource (standard HTTP request)
     if not hasattr(response, 'amount_paid'):
