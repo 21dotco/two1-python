@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Script to dynamically generate the README.
 
@@ -5,7 +6,7 @@ Script to dynamically generate the README.
 python3 generate_readme.py
 ```
 """
-from itertools import groupby
+import itertools
 import ast
 import glob
 import os
@@ -14,7 +15,7 @@ import os
 def get_docstring(filename):
     module = ast.parse(open(filename).read())
     docstring = ast.get_docstring(module)
-    return docstring.split('\n')[0] if docstring else docstring
+    return docstring.strip().split('\n')[0] if docstring else docstring
 
 
 def get_template():
@@ -95,12 +96,15 @@ def generate_codebase():
     """
     yield('# The Codebase')
     filenames = filter(
-        get_docstring, glob.iglob('two1/**/*py', recursive=True))
-    for directory, filenames in groupby(filenames, os.path.dirname):
+        get_docstring, itertools.chain(
+            glob.iglob('two1/**/*.py', recursive=True),
+            glob.iglob('tests/**/*.py', recursive=True),
+        ))
+    for directory, filenames in itertools.groupby(filenames, os.path.dirname):
         yield('## The `%s` directory' % directory)
         for filename in filenames:
             yield(' - [%s](%s): %s' % (
-                os.path.basename(filename), filename, get_docstring(filename)))
+                os.path.basename(filename).replace('_', '\_'), filename, get_docstring(filename)))
         yield('')
 
 if __name__ == '__main__':
