@@ -213,6 +213,9 @@ def perform_pip_based_update(version):
                        "-I",
                        "{}=={}".format(two1.TWO1_PACKAGE_NAME, version)]
 
+    if "https" not in two1.TWO1_PYPI_HOST:
+        install_command += ["--trusted-host", two1.TWO1_PYPI_HOST.replace("http://", "")]
+
     stop_walletd()
 
     try:
@@ -248,8 +251,34 @@ def perform_apt_based_update(version):
                        "install",
                        "zerotier-one",
                        "bitcoind"]
+
     try:
+        remove_apt_two1()
         subprocess.check_call(update_command)
         subprocess.check_call(upgrade_command)
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         raise exceptions.Two1Error(uxstring.UxString.Error.update_failed)
+
+
+def remove_apt_two1():
+    """ Checks if two1 is installed via apt-get and removes it if installed """
+    try:
+        subprocess.check_call(["sudo", "apt-cache", "show", "two1"], stdout=subprocess.PIPE)
+    except (subprocess.CalledProcessError, OSError, FileNotFoundError):
+        return
+
+    try:
+        subprocess.check_call(["sudo",
+                               "apt-get",
+                               "autoremove",
+                               "--purge",
+                               "-y",
+                               "--force-yes",
+                               "two1"])
+    except (subprocess.CalledProcessError, OSError, FileNotFoundError):
+        raise exceptions.Two1Error(uxstring.UxString.Error.removal_failed)
+
+    logger.info(uxstring.UxString.post_apt_remove_reboot)
+
+    if click.confirm(uxstring.UxString.reboot_prompt):
+        subprocess.check_call(["sudo", "reboot"])

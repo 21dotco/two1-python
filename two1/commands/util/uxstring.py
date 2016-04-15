@@ -263,6 +263,8 @@ class UxString:
     update_package = "Updating to version {}..."
     update_superuser = "You might need to enter superuser password."
     update_not_needed = "Already up to date!"
+    post_apt_remove_reboot = "You need to reboot in order for this update to take effect."
+    reboot_prompt = "Do you want to reboot now?"
 
     # flush
     flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
@@ -535,6 +537,8 @@ class UxString:
         update_server_connection = click.style("Could not connect to the update server. Please try again later.",
                                                fg="red")
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
+        removal_failed = click.style("Could not remove the two1 package from apt. Please run the following command manually:\n", fg="red") +\
+            click.style("\t\nsudo apt-get autoremove --purge two1", bold=True)
 
         # version errors
         version_not_detected = click.style(
