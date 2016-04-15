@@ -250,7 +250,8 @@ def perform_apt_based_update(version):
                        "--force-yes",
                        "install",
                        "zerotier-one",
-                       "bitcoind"]
+                       "bitcoind",
+                       "minerd"]
 
     try:
         remove_apt_two1()
