@@ -19,7 +19,8 @@ class TwentyOneRestClient(object):
         self.auth = machine_auth
         self.server_url = server_url
         self.version = version
-        self.username = username.lower()
+        if username:
+            self.username = username.lower()
         self._session = None
         self._device_id = two1.TWO1_DEVICE_ID or "FREE_CLIENT"
         cb = self.auth.public_key.compressed_bytes
@@ -93,7 +94,7 @@ class TwentyOneRestClient(object):
         return ret
 
     # POST /pool/account
-    def account_post(self, payout_address, email, password):
+    def account_post(self, payout_address, email, password, fullname):
         path = "/pool/account/{}/".format(self.username)
         encoded_password = base64.encodebytes(bytes(password, 'utf-8')).decode()
         if self._device_id == "FREE_CLIENT":
@@ -102,6 +103,7 @@ class TwentyOneRestClient(object):
             scope = "BC"
 
         body = {
+            "full_name": fullname,
             "email": email,
             "password": encoded_password,
             "payout_address": payout_address,

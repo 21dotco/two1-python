@@ -123,7 +123,11 @@ def create_account_on_bc(config, machine_auth):
     logger.info(uxstring.UxString.missing_account)
     email = None
     username = None
+    fullname = None
     while True:
+        if not fullname:
+            fullname = click.prompt(uxstring.UxString.enter_name)
+
         if not email:
             email = click.prompt(uxstring.UxString.enter_email, type=EmailAddress())
 
@@ -142,7 +146,7 @@ def create_account_on_bc(config, machine_auth):
         try:
             # change the username of the given username
             rest_client = _rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, username)
-            rest_client.account_post(payout_address, email, password)
+            rest_client.account_post(payout_address, email, password, fullname)
 
         # Do not continue creating an account because the UUID is invalid
         except exceptions.BitcoinComputerNeededError:
