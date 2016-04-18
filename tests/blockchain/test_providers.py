@@ -11,14 +11,12 @@ acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAx
 
 twentyone_provider = TwentyOneProvider()
 insight_provider = InsightProvider("http://blockchain.21-stage.co:3001", insight_api_path="insight-api")
-testnet_insight_provider = InsightProvider("http://testnet.blockexplorer.com")
 
 
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
                              (insight_provider, False),
-                             (testnet_insight_provider, True)
                          ])
 def test_get_transactions(provider, testnet):
     cp = provider
@@ -40,7 +38,6 @@ def test_get_transactions(provider, testnet):
                          [
                              (twentyone_provider, False),
                              (insight_provider, False),
-                             (testnet_insight_provider, True)
                          ])
 def test_get_transactions_by_id(provider, testnet):
     cp = provider
@@ -65,7 +62,6 @@ def test_get_transactions_by_id(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (insight_provider, False),
-                             (testnet_insight_provider, True)
                          ])
 def test_provider_json_error(provider, testnet):
     cp = provider
@@ -92,7 +88,6 @@ def test_provider_json_error(provider, testnet):
                              (twentyone_provider, False),
                              (twentyone_provider, True),
                              (insight_provider, False),
-                             (testnet_insight_provider, True)
                          ])
 def test_transaction_send(provider, testnet):
     cp = provider
