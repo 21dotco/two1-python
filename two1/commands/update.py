@@ -254,20 +254,41 @@ def perform_apt_based_update(version):
                        "minerd"]
 
     try:
-        remove_apt_two1()
+        # remove two1 if its installed via apt-get
+        has_apt_two1 = has_apt_two1_installed()
+        if has_apt_two1:
+            remove_apt_two1()
+
+        # install BC dependencies for two1
         subprocess.check_call(update_command)
         subprocess.check_call(upgrade_command)
+
+        # reboot system after removing apt-get two1 packages
+        if has_apt_two1:
+            logger.info(uxstring.UxString.post_apt_remove_reboot)
+
+            if click.confirm(uxstring.UxString.reboot_prompt):
+                subprocess.check_call(["sudo", "reboot"])
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         raise exceptions.Two1Error(uxstring.UxString.Error.update_failed)
 
 
-def remove_apt_two1():
-    """ Checks if two1 is installed via apt-get and removes it if installed """
+def has_apt_two1_installed():
+    """ Uses apt-cache to check if two1 is installed on the system
+
+    Returns:
+        bool: True if two1 is installed in apt, False otherwise
+    """
     try:
         subprocess.check_call(["sudo", "apt-cache", "show", "two1"], stdout=subprocess.PIPE)
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
-        return
+        return False
 
+    return True
+
+
+def remove_apt_two1():
+    """ Removes two1 and all of its dependencies from apt-get """
     try:
         subprocess.check_call(["sudo",
                                "apt-get",
@@ -278,8 +299,3 @@ def remove_apt_two1():
                                "two1"])
     except (subprocess.CalledProcessError, OSError, FileNotFoundError):
         raise exceptions.Two1Error(uxstring.UxString.Error.removal_failed)
-
-    logger.info(uxstring.UxString.post_apt_remove_reboot)
-
-    if click.confirm(uxstring.UxString.reboot_prompt):
-        subprocess.check_call(["sudo", "reboot"])
