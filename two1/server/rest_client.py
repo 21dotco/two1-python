@@ -19,7 +19,7 @@ class TwentyOneRestClient(object):
         self.auth = machine_auth
         self.server_url = server_url
         self.version = version
-        self.username = username
+        self.username = username.lower()
         self._session = None
         self._device_id = two1.TWO1_DEVICE_ID or "FREE_CLIENT"
         cb = self.auth.public_key.compressed_bytes
