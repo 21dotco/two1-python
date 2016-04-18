@@ -28,6 +28,7 @@ class UxString:
     account_failed = "Failed to create 21.co account."
     username_exists = "User {} already exists."
     email_exists = "Email {} already exists."
+    enter_name = "Enter your full name"
     enter_username = "Enter a username for your 21.co account"
     enter_email = "Enter your email address"
     enter_username_retry = "Create a new username and retry."
