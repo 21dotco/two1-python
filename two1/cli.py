@@ -25,7 +25,7 @@ from two1.commands.util import exceptions
 from two1.commands.util import wallet as wallet_utils
 from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
-from two1.commands.buybitcoin import buybitcoin
+# from two1.commands.buybitcoin import buybitcoin
 from two1.commands.doctor import doctor
 from two1.commands.mine import mine
 from two1.commands.log import log
@@ -97,7 +97,7 @@ goods both at the command line and programmatically, visit 21.co/learn
 
 
 main.add_command(buy)
-main.add_command(buybitcoin)
+# main.add_command(buybitcoin)
 main.add_command(doctor)
 main.add_command(mine)
 main.add_command(status)
