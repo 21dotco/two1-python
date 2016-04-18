@@ -9,6 +9,7 @@ import click
 
 # two1 imports
 import two1
+from two1.commands.util import bitcoin_computer
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
@@ -67,8 +68,9 @@ def login_account(config, machine_auth, username=None, password=None):
         username (str): optional command line arg to skip username prompt
         password (str): optional command line are to skip password prompt
     """
-    # prints the sign up page link
-    logger.info(uxstring.UxString.signin_title)
+    # prints the sign up page link when a username is not set and not on a BC
+    if not config.username and not bitcoin_computer.has_mining_chip():
+        logger.info(uxstring.UxString.signin_title)
 
     # uses specifies username or asks for a different one
     username = username or get_username_interactive()
