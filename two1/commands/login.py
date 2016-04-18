@@ -250,12 +250,10 @@ class Password(click.ParamType):
         click.ParamType.__init__(self)
 
     def convert(self, value, param, ctx):
-        if len(value) < 5:
+        if len(value) < 8:
             self.fail(uxstring.UxString.short_password)
         if not any(x.isupper() for x in value) or not any(x.islower() for x in value):
             self.fail(uxstring.UxString.capitalize_password)
-        if not any(x.isdigit() for x in value):
-            self.fail(uxstring.UxString.numbers_in_password)
 
         return value
 

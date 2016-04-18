@@ -57,7 +57,7 @@ class UxString:
         "To get more bitcoin, use {}."
 
     # username
-    login_username = "\nUsername (Case sensitive)"
+    login_username = "\nUsername"
     login_password = "Password (Typing will be hidden)"
     login_in_progress = "logging in {}."
     login_required = "Account login is required.\n\n\tRun {} first.".format(click.style("21 login", bold=True))
@@ -88,9 +88,8 @@ class UxString:
                        click.style("21 login", bold=True) +\
                        " to create an account first."
 
-    short_password = "Password must be at least 5 characters long."
-    capitalize_password = "Password must contain mix of uppercase or lowercase letters."
-    numbers_in_password = "Password must contain at least a digit."
+    short_password = "Password must be at least 8 characters long."
+    capitalize_password = "Password must contain mix of uppercase or lowercase characters."
 
     # status
     status_exit_message = "\nUse {} to buy API calls for bitcoin from 21.co.\nFor help, do {}."
