@@ -187,7 +187,7 @@ class UxString:
         "To buy bitcoin, you need to pair your 21 and {} account.\n\n" + \
         "If you already haven't, create a password for your account by " \
         "doing " + click.style("21 login -setpassword",
-                               bold=True) + "\nThen go to http://21.co/{}/buybitcoin in your " \
+                               bold=True) + "\nThen go to http://21.co/{}/config/coinbase/ in your " \
                                             "browser to complete the pairing\n"
     buybitcoin_no_payment_method = \
         "To add a payment method to {}, go to {}."
