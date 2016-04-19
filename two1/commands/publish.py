@@ -293,7 +293,13 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
 
     logger.info(uxstring.UxString.publish_start.format(app_name, app_endpoint, marketplace))
     payload = {"manifest": manifest_json, "marketplace": marketplace}
-    response = client.publish(payload)
+    try:
+        response = client.publish(payload)
+    except ServerRequestError as e:
+        if e.status_code == 403 and "error" in e.data and e.data["error"] == "TO600":
+            logger.info(uxstring.UxString.app_url_claimed.format(app_endpoint), fg="red")
+            return
+
     if response.status_code == 201:
         logger.info(uxstring.UxString.publish_success.format(app_name, marketplace))
 
