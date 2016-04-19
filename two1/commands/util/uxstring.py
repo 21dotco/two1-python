@@ -270,6 +270,8 @@ class UxString:
 
     flush_insufficient_earnings = "You must have a minimum of 20000 Satoshis to " \
                                   "be able to flush your earnings to the Blockchain"
+
+    flush_not_enough_earnings = "You don't have enough balance to flush {} Satoshis."
     # ad
     buy_ad = "Get a 21 Bitcoin Computer at https://21.co/buy"
 
