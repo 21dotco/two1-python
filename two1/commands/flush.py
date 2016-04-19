@@ -50,7 +50,7 @@ def _flush(client, wallet, amount=None):
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
             logger.info(uxstring.UxString.flush_insufficient_earnings)
-        elif ex.status_code == 400 and "detail" in ex.data and ex.data["detail"] == "TO500":
+        elif ex.status_code == 400 and ex.data.get("detail") == "TO500":
             logger.info(uxstring.UxString.flush_not_enough_earnings.format(amount), fg="red")
         else:
             raise ex
