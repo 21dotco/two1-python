@@ -139,8 +139,6 @@ def lookup_pypi_version(version=None):
     except ValueError:
         raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
 
-    pypi_version = None
-
     try:
         packages = data["packages"]
 
@@ -167,8 +165,6 @@ def lookup_pypi_version(version=None):
 
     except (AttributeError, KeyError, TypeError):
         raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
-
-    return pypi_version
 
 
 def checked_for_an_update_today(config):
