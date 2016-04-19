@@ -296,7 +296,7 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     try:
         response = client.publish(payload)
     except ServerRequestError as e:
-        if e.status_code == 403 and "error" in e.data and e.data["error"] == "TO600":
+        if e.status_code == 403 and "error" in e.data.get("error") == "TO600":
             logger.info(uxstring.UxString.app_url_claimed.format(app_endpoint), fg="red")
             return
 
