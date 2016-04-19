@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @decorators.check_notifications
 @decorators.capture_usage
 @click.option('-a', '--amount', default=None, type=click.INT,
-              help="The amount to be flush out of your account.")
+              help="The amount to be flush out of your account in Satoshis.")
 def flush(ctx, amount):
     """ Flush your 21.co buffer to the blockchain."""
     _flush(ctx.obj['client'], ctx.obj['wallet'], amount)
@@ -50,5 +50,7 @@ def _flush(client, wallet, amount=None):
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
             logger.info(uxstring.UxString.flush_insufficient_earnings)
+        elif ex.status_code == 400 and "detail" in ex.data and ex.data["detail"] == "TO500":
+            logger.info(uxstring.UxString.flush_not_enough_earnings.format(amount), fg="red")
         else:
             raise ex
