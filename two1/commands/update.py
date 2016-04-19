@@ -146,13 +146,13 @@ def lookup_pypi_version(version=None):
 
         # gets all stable versions from list of packages
         versions = [package['version'] for package in packages
-                    if re.search(r'\d\.\d(\.\d)?$', package['version'])]
+                    if re.search(r'\d+\.\d+\.\d+', package['version'])]
 
         if not versions:
             raise exceptions.Two1Error(uxstring.UxString.Error.version_not_found)
 
         # gets the max version from all available versions
-        latest_version = max(versions, key=lambda version: int(version.replace(".", "")))
+        latest_version = max(versions, key=LooseVersion)
 
         # make sure version given is valid
         if version:
