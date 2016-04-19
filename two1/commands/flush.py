@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @decorators.check_notifications
 @decorators.capture_usage
 @click.option('-a', '--amount', default=None, type=click.INT,
-              help="The amount to be flush out of your account in Satoshis.")
+              help="The amount to be flushed out of your account in Satoshis.")
 def flush(ctx, amount):
     """ Flush your 21.co buffer to the blockchain."""
     _flush(ctx.obj['client'], ctx.obj['wallet'], amount)

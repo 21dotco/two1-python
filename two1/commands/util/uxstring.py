@@ -362,6 +362,11 @@ class UxString:
         "{} successfully published to {}. It may take a couple of minutes for your app "
         "to show up in the marketplace.\nYou can view your app at https://21.co/mkt.", fg="magenta")
 
+    app_url_claimed = "The endpoint {} specified in your manifest has already been registered in " \
+                      "the marketplace by another user.\nPlease check your manifest file and make " \
+                      "sure your 'host' field is correct.\nIf the problem persists please contact " \
+                      "support@21.co."
+
     valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
 
     valid_top_level_manifest_fields = ["schemes", "host", "basePath", "x-21-manifest-path", "info"]
