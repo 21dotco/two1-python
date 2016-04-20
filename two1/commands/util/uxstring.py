@@ -237,6 +237,7 @@ class UxString:
         " to see a mining dashboard.\n" + \
         "Do " + click.style("21 log", bold=True) + " to see more aggregated stats.\n" + \
         "Or just do " + click.style("21 status", bold=True) + " to see your mining progress."
+    mining_dashboard_no_bc = click.style("The mining dashboard is only available on the Bitcoin Computer.")
 
     mining_chip_start = "21 Bitcoin Chip detected, trying to (re)start miner..."
     mining_chip_running = "Your 21 Bitcoin Chip is already running!\n" + \
@@ -275,7 +276,7 @@ class UxString:
 
     flush_not_enough_earnings = "You don't have enough balance to flush {} Satoshis."
     # ad
-    buy_ad = "Get a 21 Bitcoin Computer at https://21.co/buy"
+    buy_ad = click.style("Get a 21 Bitcoin Computer at https://21.co/buy", fg="magenta")
 
     # inbox
     reasons = {

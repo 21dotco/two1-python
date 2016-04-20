@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option('--dashboard', default=False, is_flag=True,
-              help="Dashboard with mining details")
+              help="Dashboard with mining details (only for Bitcoin Computer users)")
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
@@ -57,7 +57,7 @@ View aggregated logs to see your mining progress.
 $ 21 log
 
 \b
-See a mining dashboard for low-level mining details.
+See a mining dashboard for low-level mining details (only for Bitcoin Computer users)
 $ 21 mine --dashboard
 """
     _mine(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'], dashboard=dashboard)
@@ -83,8 +83,11 @@ def _mine(config, client, wallet, dashboard=False):
         else:
             start_cpu_mining(config, client, wallet)
     else:
-        logger.info(uxstring.UxString.buy_ad, fg="magenta")
-        start_cpu_mining(config, client, wallet)
+        if dashboard:
+            logger.info(uxstring.UxString.mining_dashboard_no_bc)
+        logger.info(uxstring.UxString.buy_ad)
+        if not dashboard:
+            start_cpu_mining(config, client, wallet)
 
 
 def is_minerd_running():
