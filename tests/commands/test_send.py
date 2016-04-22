@@ -17,7 +17,7 @@ def test_send(patch_click, mock_wallet):
     mock_wallet.send_to = mock.Mock(return_value=send_success)
     send_data = send._send(mock_wallet, 'myaddress', 10000)
 
-    patch_click.call_count == 1
+    click.echo.call_count == 1
     assert send_data == send_success
 
 

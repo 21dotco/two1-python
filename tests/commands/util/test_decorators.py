@@ -3,6 +3,7 @@ import json
 import logging
 
 # 3rd party imports
+import click
 import pytest
 
 # two1 imports
@@ -47,6 +48,6 @@ def test_json_ouput(patch_click, json_flag, output, return_value, side_effect):
 
     # json is false then the output will be printed to screen
     if not json_flag:
-        patch_click.assert_called_once_with(output)
+        click.echo.assert_called_once_with(output)
     else:
-        patch_click.assert_called_once_with(json.dumps(return_value, indent=4, separators=(',', ': ')))
+        click.echo.assert_called_once_with(json.dumps(return_value, indent=4, separators=(',', ': ')))
