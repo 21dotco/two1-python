@@ -33,15 +33,15 @@ class Config:
         # Load configuration defaults
         self.state = {key: val for key, val in Config.DEFAULTS.items()}
 
+        if not isinstance(config_file, str):
+            raise TypeError('Parameter "config_file" must be a filename.')
+        self.config_abs_path = os.path.expanduser(config_file)
+
         # Override defaults with any custom configuration
         self.load_dict_config(config) if config else self.load_file_config(config_file)
 
     def load_file_config(self, config_file):
         """Set config properties based on a file."""
-        if not isinstance(config_file, str):
-            raise TypeError('Parameter "config_file" must be a filename.')
-        self.config_abs_path = os.path.expanduser(config_file)
-
         # Create the directory if it does not exist
         if not os.path.exists(os.path.dirname(self.config_abs_path)):
             os.makedirs(os.path.dirname(self.config_abs_path))
