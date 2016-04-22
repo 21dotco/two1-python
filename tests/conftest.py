@@ -145,7 +145,7 @@ def machine_auth_wallet(wallet):
 
 
 @pytest.fixture()
-def rest_client(machine_auth_wallet):
+def rest_client(machine_auth_wallet, username):
     """ Fixture that injects a TwentyOneRestClient
 
         This rest client is created without a username. If a test need to
@@ -154,7 +154,7 @@ def rest_client(machine_auth_wallet):
     Returns:
        TwentyOneRestClient: an initialized rest client object
     """
-    return TwentyOneRestClient(two1.TWO1_HOST, machine_auth_wallet)
+    return TwentyOneRestClient(two1.TWO1_HOST, machine_auth_wallet, username)
 
 
 @pytest.fixture()
