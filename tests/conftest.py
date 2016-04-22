@@ -5,6 +5,7 @@ import unittest.mock as mock
 # 3rd party imports
 import pytest
 import mnemonic
+import click
 
 # two1 imports
 import two1
@@ -237,23 +238,24 @@ def mock_rest_client(monkeypatch, mock_config, mock_wallet):
     return _mock_rest_client
 
 
-@pytest.yield_fixture()
-def patch_click():
-    """ Fixture that injects a patched click.echo function
+@pytest.fixture()
+def patch_click(monkeypatch):
+    """ Fixture that monkeypatches click printing functions
 
-        Patching click.echo to capture all output in a mock
-        to use functions like mock.assert_called_once_with().
+        Patches functions like click.echo to capture all output in
+        a mock to use functions like mock.assert_called_once_with().
 
-    Note:
-        Using a yield fixture here to ensure the patch decorator
-        doesn't clean up the mock like it would if this was a regular
-        fixture.
+        In the test you can directly import and use click functions
+        as a Mock. For example:
 
-    Returns:
-        MagicMock: a mock object of click.echo function
+            import click
+            click.assert_called_with()
     """
-    with mock.patch('click.echo') as _patch_click:
-        yield _patch_click
+    echo_mock = mock.Mock()
+    confirm_mock = mock.Mock()
+    monkeypatch.setattr(click, "echo", echo_mock)
+    monkeypatch.setattr(click, "confirm", confirm_mock)
+    return None
 
 
 @pytest.fixture()
