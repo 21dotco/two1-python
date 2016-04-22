@@ -63,9 +63,9 @@ def test_disable_levels(patch_click, level, log_cmd, should_call):
 
         # ensure click.echo is called or not
         if should_call:
-            patch_click.assert_called_with("test")
+            click.echo.assert_called_with("test")
         else:
-            patch_click.assert_not_called()
+            click.echo.assert_not_called()
     except:
         # sets the level back to original
         logging.disable(original_level)
@@ -120,7 +120,7 @@ def test_styles(patch_click, message, kwargs, supported):
     logger.info(message, **kwargs)
 
     # ensure the formatted string is the same as what click would have done
-    patch_click.assert_called_with(expected_output)
+    click.echo.assert_called_with(expected_output)
 
 
 @pytest.mark.parametrize("message, kwargs, expected_output", [
