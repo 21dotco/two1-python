@@ -74,6 +74,7 @@ class Doctor(object):
         "general": uxstring.UxString.doctor_general,
         "server": uxstring.UxString.doctor_servers,
         "dependency": uxstring.UxString.doctor_dependencies,
+        "mining": uxstring.UxString.doctor_mining,
         }
 
     # gets printed in begin_checkup
@@ -309,7 +310,7 @@ class Doctor(object):
 
         return Check.Result.FAIL, check_str, actual_py_version
 
-    def check_general_has_bitcoin_computer(self):
+    def check_mining_has_chip(self):
         """ Checks if the system has a 21 bitcoin shield
 
         Returns:
@@ -317,14 +318,11 @@ class Doctor(object):
                                     Human readable message describing the check
                                     "Yes" if the device has a bitcoin shield, "No" otherwise
         """
-        check_str = "Has Bitcoin Computer"
+        check_str = "Has Mining Chip"
         if bitcoin_computer.has_mining_chip():
             return Check.Result.PASS, check_str, "Yes"
-
-        if two1.TWO1_DEVICE_ID:
-            return Check.Result.FAIL, check_str, "No"
         else:
-            return Check.Result.WARN, check_str, "No"
+            return Check.Result.FAIL, check_str, "No"
 
     def check_general_ip_address(self):
         """ Checks if the system has an IP addressed assigned
@@ -402,7 +400,7 @@ class Doctor(object):
         else:
             return Check.Result.WARN, check_str, "zerotier-cli not installed"
 
-    def check_dependency_minerd_cli(self):
+    def check_mining_minerd_cli(self):
         """ Checks if minerd binary is installed on your system
 
         Returns:
@@ -415,11 +413,8 @@ class Doctor(object):
         minerd_cli = shutil.which("minerd")
         if minerd_cli:
             return Check.Result.PASS, check_str, minerd_cli
-
-        if two1.TWO1_DEVICE_ID:
-            return Check.Result.FAIL, check_str, "minerd not installed"
         else:
-            return Check.Result.WARN, check_str, "minerd not installed"
+            return Check.Result.FAIL, check_str, "minerd not installed"
 
     def check_dependency_wallet_cli(self):
         """ Checks if the two1 wallet is properly installed
@@ -591,6 +586,8 @@ def _doctor(two1_config):
     doc.checkup("general")
     doc.checkup("dependency")
     doc.checkup("server")
+    if bitcoin_computer.get_device_uuid():
+        doc.checkup("mining")
 
     logger.info("\n" + uxstring.UxString.doctor_total)
 
