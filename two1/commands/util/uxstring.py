@@ -62,12 +62,17 @@ class UxString:
     # wallet
     create_wallet = "You do not have a Bitcoin wallet configured. "\
         "Let's create one. Press any key ...\n"
-    create_wallet_done = "Wallet successfully created.\n\n"\
-                         "You can recover the private key to your wallet using the "\
-                         "following 12 words (in this order) :\n"\
-                         "\n%s\n\n"\
-                         "Write down and store these words in a safe place.\n\n"\
-                         "Press any key ..."
+    create_wallet_done = (
+        "Wallet successfully created. "
+        "You can recover the private key to your wallet using the "
+        "following 12 words (in this order) :\n"
+        "\n"
+        "%s\n"
+        "\n"
+        "Write down and store these words in a safe place.\n"
+        "\n"
+        "Press any key ..."
+    )
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting default payout address to: {}"

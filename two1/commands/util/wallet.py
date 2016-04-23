@@ -41,7 +41,7 @@ def get_or_create_wallet(wallet_path):
         wallet_config = json.load(f)
         mnemonic = wallet_config['master_seed']
 
-    click.pause(uxstring.UxString.create_wallet_done % (mnemonic))
+    click.pause(uxstring.UxString.create_wallet_done % click.style(mnemonic, fg='green'))
 
     # Start the daemon, if:
     # 1. It's not already started
