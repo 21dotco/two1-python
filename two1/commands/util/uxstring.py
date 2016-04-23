@@ -154,7 +154,6 @@ class UxString:
         click.style("Checking health..", fg='magenta') + "\n"
     doctor_general = click.style("Checking general settings..", fg='yellow')
     doctor_dependencies = click.style("Checking dependencies..", fg='yellow')
-    doctor_demo_endpoints = click.style("Checking demo endpoints..", fg='yellow')
     doctor_servers = click.style("Checking servers..", fg='yellow')
     doctor_error = click.style("    Error: ", fg='red')
     doctor_total = click.style("Summary", fg='yellow')
