@@ -29,7 +29,7 @@ def test_get_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests,
     assert patch_bitrequests.response.status_code == 200
     assert patch_bitrequests.response.text == mock.MockBitResponse.SUCCESS_RESPONSE
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.GET_COST
-    assert click.echo.call_count == 2
+    assert click.echo.call_count == 3
     click.echo.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, balance_str, balance_int), err=True)
     click.echo.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, nl=False)
 
@@ -59,7 +59,7 @@ def test_post_url_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequ
     assert patch_bitrequests.response.status_code == 201
     assert 'test' in patch_bitrequests.response.text
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
-    assert click.echo.call_count == 2
+    assert click.echo.call_count == 3
     click.echo.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
@@ -77,7 +77,7 @@ def test_post_json_buy(patch_click, mock_config, mock_machine_auth, patch_bitreq
     assert patch_bitrequests.response.status_code == 201
     assert data_dict['type'] in patch_bitrequests.response.text
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.POST_COST
-    assert click.echo.call_count == 2
+    assert click.echo.call_count == 3
     click.echo.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
 
@@ -94,7 +94,7 @@ def test_buy_headers(patch_click, mock_config, mock_machine_auth, patch_bitreque
     assert patch_bitrequests.response.status_code == 200
     assert patch_bitrequests.response.text == mock.MockBitResponse.SUCCESS_RESPONSE
     assert patch_bitrequests.response.amount_paid == mock.MockBitResponse.GET_COST
-    assert click.echo.call_count == 2
+    assert click.echo.call_count == 3
     click.echo.assert_any_call(mock.MockBitResponse.SUCCESS_RESPONSE, nl=False)
     click.echo.assert_any_call(uxstring.UxString.buy_balances.format(patch_bitrequests.response.amount_paid, '21.co', mock.MockTwentyOneRestClient.EARNINGS), err=True)
 
@@ -111,7 +111,8 @@ def test_non_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests,
     assert patch_bitrequests.response.status_code == 405
     assert patch_bitrequests.response.text == mock.MockBitResponse.FAILURE_RESPONSE
     assert not hasattr(patch_bitrequests.response, 'amount_paid')
-    click.echo.assert_called_once_with(mock.MockBitResponse.FAILURE_RESPONSE, nl=False)
+    assert click.echo.call_count == 2
+    click.echo.assert_any_call(mock.MockBitResponse.FAILURE_RESPONSE, nl=False)
 
 
 def test_error_buys(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client):
