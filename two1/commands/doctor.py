@@ -546,7 +546,7 @@ class Doctor(object):
 
         return result, check_str, response.status_code
 
-    def check_server_raspbian_apt(self):
+    def check_mining_raspbian_apt(self):
         """ Checks if the raspbian mirror is up
 
         Returns:
