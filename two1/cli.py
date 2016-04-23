@@ -76,7 +76,8 @@ $ 21 status
 For further details on how you can use your mined bitcoin to buy digital
 goods both at the command line and programmatically, visit 21.co/learn
 """
-    need_wallet_and_account = ctx.invoked_subcommand not in ('help', 'update', 'login')
+    need_wallet_and_account = ctx.invoked_subcommand not in (
+        'help', 'update', 'login', 'doctor')
 
     # sets UUID if avaliable
     uuid = bitcoin_computer.get_device_uuid()
