@@ -74,7 +74,7 @@ class Doctor(object):
         "general": uxstring.UxString.doctor_general,
         "server": uxstring.UxString.doctor_servers,
         "dependency": uxstring.UxString.doctor_dependencies,
-        "mining": uxstring.UxString.doctor_mining,
+        "BC": uxstring.UxString.doctor_BC,
         }
 
     # gets printed in begin_checkup
@@ -310,7 +310,7 @@ class Doctor(object):
 
         return Check.Result.FAIL, check_str, actual_py_version
 
-    def check_mining_has_chip(self):
+    def check_BC_has_chip(self):
         """ Checks if the system has a 21 bitcoin shield
 
         Returns:
@@ -400,7 +400,7 @@ class Doctor(object):
         else:
             return Check.Result.WARN, check_str, "zerotier-cli not installed"
 
-    def check_mining_minerd_cli(self):
+    def check_BC_minerd_cli(self):
         """ Checks if minerd binary is installed on your system
 
         Returns:
@@ -546,7 +546,7 @@ class Doctor(object):
 
         return result, check_str, response.status_code
 
-    def check_mining_raspbian_apt(self):
+    def check_BC_raspbian_apt(self):
         """ Checks if the raspbian mirror is up
 
         Returns:
@@ -587,7 +587,7 @@ def _doctor(two1_config):
     doc.checkup("dependency")
     doc.checkup("server")
     if bitcoin_computer.get_device_uuid():
-        doc.checkup("mining")
+        doc.checkup("BC")
 
     logger.info("\n" + uxstring.UxString.doctor_total)
 
