@@ -311,7 +311,9 @@ class UxString:
 
     # join
     successful_join = "Joined network {}. It may take a few seconds for joining " \
-                      "to take effect."
+                      "to take effect.\nRun " +\
+                      click.style("21 join --status", bold=True, fg="blue") +\
+                      " to verify you have successfully joined."
     invalid_network = "Invalid network specified, please verify the network name."
     join_cmd = click.style("21 join", bold=True, reset=False)
 
@@ -537,7 +539,8 @@ class UxString:
         update_server_connection = click.style("Could not connect to the update server. Please try again later.",
                                                fg="red")
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
-        removal_failed = click.style("Could not remove the two1 package from apt. Please run the following command manually:\n", fg="red") +\
+        removal_failed = click.style(
+            "Could not remove the two1 package from apt. Please run the following command manually:\n", fg="red") +\
             click.style("\t\nsudo apt-get autoremove --purge two1", bold=True)
 
         # version errors
