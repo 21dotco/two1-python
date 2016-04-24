@@ -3,6 +3,7 @@
 import datetime
 from textwrap import wrap
 import logging
+import json as jsonlib
 
 # 3rd party imports
 import click
@@ -20,11 +21,11 @@ logger = logging.getLogger(__name__)
 
 @click.command("search")
 @click.pass_context
-@click.argument('search_string', required=False)
+@click.argument('search_string', default=None, required=False)
 @decorators.catch_all
-@decorators.json_output
+@click.option('--json', default=False, is_flag=True, help='Uses JSON output.')
 @decorators.capture_usage
-def search(ctx, search_string=None):
+def search(ctx, search_string, json):
     """Search for apps listed on the 21 Marketplace.
 
 \b
@@ -46,7 +47,19 @@ Use 'n' to move to the next page and 'p' to move to the previous page.
 You can also enter an app id to view detailed information about the app.
 
     """
-    _search(ctx.obj['client'], search_string)
+    if json:
+        _search_json(ctx.obj['client'], search_string)
+    else:
+        _search(ctx.obj['client'], search_string)
+
+
+def _search_json(client, search_string):
+    resp = client.search(search_string)
+    total_pages = resp.json()['total_pages']
+    results = []
+    for i in range(total_pages):
+        results.extend(client.search(search_string, i).json()['results'])
+    logger.info(jsonlib.dumps(results, indent=4, separators=(',', ': ')))
 
 
 def _search(client, search_string):
