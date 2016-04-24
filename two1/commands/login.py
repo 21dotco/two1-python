@@ -85,7 +85,7 @@ def login_account(config, machine_auth, username=None, password=None):
 
     logger.info(uxstring.UxString.login_in_progress.format(username))
     try:
-        _ = rest_client.login(payout_address=payout_address, password=password)
+        rest_client.login(payout_address=payout_address, password=password)
     # handles 401 gracefully
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 403 and "error" in ex.data and ex.data["error"] == "TO408":
@@ -100,13 +100,14 @@ def login_account(config, machine_auth, username=None, password=None):
 
     logger.info(uxstring.UxString.payout_address.format(payout_address))
 
+    # If config file hasn't been created yet ask for opt-in to analytics
+    if not config.username:
+        analytics_optin(config)
+
     # Save the new username and auth key
     config.set("username", username)
     config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
     config.save()
-
-    # Ask for opt-in to analytics
-    analytics_optin(config)
 
 
 def create_account_on_bc(config, machine_auth):
