@@ -52,7 +52,7 @@ def _inbox(config, client):
     if has_unreads:
         client.mark_notifications_read(config.username)
 
-    return notifications
+    return tuple(map(click.unstyle, notifications))
 
 
 def get_notifications(config, client):

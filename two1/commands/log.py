@@ -31,7 +31,7 @@ def log(ctx, debug):
     output = "\n".join(prints)
     logger.info(output, pager=True)
 
-    return logs
+    return tuple(map(click.unstyle, logs))
 
 
 def get_bc_logs(client, debug):
