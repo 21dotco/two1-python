@@ -45,7 +45,7 @@ $ 21 rate --list
     if list:
         _list(ctx.obj["client"])
     else:
-        if not (app_id and rating):
+        if not (app_id and isinstance(rating, int)):
             # print help and exit
             logger.info(ctx.command.help)
             return
