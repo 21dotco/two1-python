@@ -56,6 +56,7 @@ $ py.test
 ## The `two1` directory
  - [\_\_init\_\_.py](two1/__init__.py): Two1 project variables.
  - [cli.py](two1/cli.py): The 21 command line interface.
+ - [util.py](two1/util.py): Generic utility functions used by both the 21 CLI and the wallet CLI.
 
 ## The `two1/bitcoin` directory
  - [\_\_init\_\_.py](two1/bitcoin/__init__.py): The bitcoin module within the 21 Bitcoin Library (``two1.bitcoin``) provides
