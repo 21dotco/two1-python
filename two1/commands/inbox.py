@@ -1,6 +1,5 @@
 """ Two1 command module for getting and displaying messages in your inbox """
 # standard python imports
-from datetime import datetime
 import logging
 
 # 3rd party imports
@@ -98,7 +97,7 @@ def create_notification_line(msg):
     Returns:
         str: a formatted notification message
     """
-    local_time = datetime.fromtimestamp(msg["time"]).strftime("%Y-%m-%d %H:%M")
+    local_time = uxstring.format_date(msg["time"])
     message_line = click.style("{} : {} from {}\n".format(local_time, msg["type"],
                                                           msg["from"]),
                                fg="cyan")
