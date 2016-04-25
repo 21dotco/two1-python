@@ -17,7 +17,6 @@ from two1 import util
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
-from two1.wallet.base_wallet import convert_to_btc
 from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet import exceptions
 from two1.wallet.two1_wallet import Two1Wallet
@@ -503,8 +502,7 @@ def confirmed_balance(ctx, account):
     """
     w = ctx.obj['wallet']
     cb = w.confirmed_balance(account)
-    click.echo("Confirmed balance: %0.8f BTC" %
-               convert_to_btc(cb))
+    click.echo("Confirmed balance: {} satoshis".format(cb))
 
 
 @click.command(name="balance")
@@ -525,8 +523,7 @@ def balance(ctx, account):
     """
     w = ctx.obj['wallet']
     ucb = w.unconfirmed_balance(account)
-    click.echo("Total balance (including unconfirmed txns): %0.8f BTC" %
-               convert_to_btc(ucb))
+    click.echo("Total balance (including unconfirmed txns): {} satoshis".format(ucb))
 
 
 @click.command(name='listbalances')
@@ -544,10 +541,9 @@ def list_balances(ctx, byaddress):
     for a in w.account_names:
         ucb = w.unconfirmed_balance(a)
         cb = w.confirmed_balance(a)
-        click.echo("Account: %s\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
-                   (a,
-                    convert_to_btc(cb),
-                    convert_to_btc(ucb)))
+        click.echo("Account: {}\nConfirmed: {} satoshis, Total: {} satoshis".format(
+            a, cb, ucb
+        ))
 
         if byaddress:
             by_addr = w.balances_by_address(a)
@@ -556,15 +552,16 @@ def list_balances(ctx, byaddress):
             for addr, balances in by_addr.items():
                 if balances['confirmed'] > 0 or \
                    balances['total'] > 0:
-                    click.echo("%35s: %0.8f (confirmed), %0.8f (total)" %
-                               (addr,
-                                convert_to_btc(balances['confirmed']),
-                                convert_to_btc(balances['total'])))
+                    click.echo("{:35s}: {} satoshis (confirmed), {} satoshis (total)".format(
+                        addr, balances['confirmed'], balances['total']
+                    ))
         click.echo("")
 
-    click.echo("Account Totals\nConfirmed: %0.8f BTC, Total: %0.8f BTC" %
-               (convert_to_btc(w.confirmed_balance()),
-                convert_to_btc(w.unconfirmed_balance())))
+    cb = w.confirmed_balance()
+    ucb = w.unconfirmed_balance()
+    click.echo("Account Totals\nConfirmed: {} satoshis, Total: {} satoshis".format(
+        cb, ucb
+    ))
 
 
 @click.command(name="sendto")
