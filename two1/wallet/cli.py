@@ -1,4 +1,3 @@
-import datetime
 import decimal
 import getpass
 import json
@@ -13,6 +12,8 @@ import click
 from mnemonic import Mnemonic
 from mnemonic.mnemonic import ConfigurationError
 from path import Path
+
+from two1 import util
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
@@ -784,9 +785,9 @@ def history(ctx, n, reverse, json_output, account):
         return
 
     for i, th in enumerate(h):
-        dt = datetime.datetime.fromtimestamp(int(th['time']))
+        dt = util.format_date(int(th['time']))
 
-        click.echo("%s (%s)" % (th['txid'], dt.strftime('%Y-%m-%d %H:%M:%S')))
+        click.echo("%s (%s)" % (th['txid'], dt))
         click.echo("%s" % ('-' * 86))
         click.echo("Type: %s" % (th['classification']))
         if th['classification'] == "deposit":

@@ -6,6 +6,8 @@ import logging
 import click
 
 # two1 imports
+from two1 import util
+
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -97,7 +99,7 @@ def create_notification_line(msg):
     Returns:
         str: a formatted notification message
     """
-    local_time = uxstring.format_date(msg["time"])
+    local_time = util.format_date(msg["time"])
     message_line = click.style("{} : {} from {}\n".format(local_time, msg["type"],
                                                           msg["from"]),
                                fg="cyan")

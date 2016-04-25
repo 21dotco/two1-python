@@ -1,5 +1,4 @@
 # standard python imports
-from datetime import datetime
 import logging
 
 # 3rd party imports
@@ -9,6 +8,7 @@ import click
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
+from two1 import util
 
 
 # Creates a ClickLogger
@@ -112,7 +112,7 @@ def buybitcoin_history(config, client):
     for entry in history:
         amount = entry["amount"]
         deposit_status = entry["deposit_status"]
-        payout_time = datetime.fromtimestamp(entry["payout_time"]).strftime("%Y-%m-%d %H:%M:%S")
+        payout_time = util.format_date(entry["payout_time"])
 
         description = "N/A"
         if deposit_status == "COMPLETED":
@@ -126,7 +126,7 @@ def buybitcoin_history(config, client):
             elif entry["payout_type"] == "TO_BALANCE":
                 description = uxstring.UxString.coinbase_21_pending.format(payout_time, amount)
 
-        created = datetime.fromtimestamp(entry["created"]).strftime("%Y-%m-%d %H:%M:%S")
+        created = util.format_date(entry["created"])
         payout_type = uxstring.UxString.coinbase_deposit_type_mapping[entry["payout_type"]]
         lines.append(uxstring.UxString.coinbase_history.format(created, amount, payout_type, description))
 
@@ -200,8 +200,7 @@ def buy_bitcoin(client, amount, deposit_type):
         if deposit_type == "TO_BALANCE":
             logger.info(uxstring.UxString.buybitcoin_21_balance_success)
             if "payout_at" in buy_result:
-                payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
-                                                                                       "%H:%M:%S")
+                payout_time = util.format_date(buy_result["payout_at"])
 
                 logger.info(uxstring.UxString.buybitcoin_21_balance_time.format(payout_time,
                                                                                 int(amount_bought),
@@ -210,8 +209,7 @@ def buy_bitcoin(client, amount, deposit_type):
         elif "instant" in buy_result and buy_result["instant"]:
             logger.info(uxstring.UxString.buybitcoin_success_instant)
         elif "payout_at" in buy_result:
-            payout_time = datetime.fromtimestamp(buy_result["payout_at"]).strftime("%Y-%m-%d "
-                                                                                   "%H:%M:%S")
+            payout_time = util.format_date(buy_result["payout_at"])
 
             logger.info(uxstring.UxString.buybitcoin_success_payout_time.format(payout_time))
     else:

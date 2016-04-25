@@ -1,6 +1,5 @@
 """ Two1 command to rate a marketplace app """
 # standard python imports
-import datetime
 import logging
 
 # 3rd party imports
@@ -8,6 +7,7 @@ import click
 from tabulate import tabulate
 
 # two1 imports
+from two1 import util
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
@@ -72,8 +72,7 @@ def _list(client):
         ratings = ratings.json()["ratings"]
         rows = []
         for rating in ratings:
-            rating_date = datetime.datetime.fromtimestamp(
-                rating["rating_date"]).strftime("%Y-%m-%d %H:%M")
+            rating_date = util.format_date(rating["rating_date"])
             rating_score = "{}/5".format(rating["rating"])
             rows.append([rating["app_id"], rating["app_title"], rating["app_creator"],
                          rating_score, rating_date])

@@ -3,7 +3,6 @@
 import json
 import re
 import os
-import datetime
 from urllib.parse import urlparse
 import logging
 
@@ -14,6 +13,7 @@ from yaml.error import YAMLError
 from tabulate import tabulate
 
 # two1 imports
+from two1 import util
 from two1.commands.util import decorators
 from two1.commands.util.exceptions import UnloggedException, ServerRequestError
 from two1.commands.util import uxstring
@@ -142,7 +142,8 @@ price       : The price for each call to your app.
 name        : The name of the app publisher.
 email       : The email of the app publisher.
 host        : The IP address or hostname of the machine hosting the app.
-              If you provide AUTO as a value for this field, your 21market IP will be automatically detected and added to the manifest.
+              If you provide AUTO as a value for this field, your 21market IP
+              will be automatically detected and added to the manifest.
 port        : The port on which the app is running.
     """
     if parameters is not None:
@@ -342,8 +343,7 @@ def get_search_results(config, client, page):
                      str(r["is_up"]),
                      str(r["is_healthy"]),
                      "{:.2f}%".format(r["average_uptime"] * 100),
-                     datetime.datetime.fromtimestamp(r["last_update"]).strftime(
-                         "%Y-%m-%d %H:%M")])
+                     util.format_date(r["last_update"])])
 
     logger.info(tabulate(rows, headers, tablefmt="grid"))
 
@@ -384,16 +384,14 @@ def display_app_info(config, client, app_id):
 
         last_crawl_str = "Not yet crawled"
         if "last_crawl" in app_info:
-            last_crawl_str = datetime.datetime.fromtimestamp(
-                app_info["last_crawl"]).strftime("%Y-%m-%d %H:%M")
+            last_crawl_str = util.format_date(app_info["last_crawl"])
 
         last_crawl = click.style("Last Crawl Time : ", fg="blue") + click.style(
             "{}".format(last_crawl_str))
         version = click.style("Version         : ", fg="blue") + click.style(
             "{}".format(app_info["version"]))
 
-        last_updated_str = datetime.datetime.fromtimestamp(
-            app_info["updated"]).strftime("%Y-%m-%d %H:%M")
+        last_updated_str = util.format_date(app_info["updated"])
         last_update = click.style("Last Update     : ", fg="blue") + click.style(
             "{}".format(last_updated_str))
 

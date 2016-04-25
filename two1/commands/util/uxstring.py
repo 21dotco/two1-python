@@ -2,17 +2,6 @@
 Strings for the two1 CLI user interface
 """
 import click
-from datetime import datetime, timezone
-
-
-def format_date(unix_timestamp):
-    local_datetime = datetime.fromtimestamp(unix_timestamp)
-    utz_offset = local_datetime - datetime.utcfromtimestamp(unix_timestamp)
-    local_date = local_datetime.replace(
-        tzinfo=timezone(utz_offset)
-    ).strftime("%Y-%m-%d %H:%M:%S %Z")
-
-    return local_date
 
 
 class UxString:
