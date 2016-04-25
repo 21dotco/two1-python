@@ -1,6 +1,5 @@
 """ Log command that show a list of notifications """
 # standart python imports
-from datetime import datetime
 import logging
 
 # 3rd party imports
@@ -74,7 +73,8 @@ def get_bc_logs(client, debug):
 
 def _get_headline(entry):
     # headline
-    local_date = datetime.fromtimestamp(entry["date"]).strftime("%Y-%m-%d %H:%M:%S")
+    local_date = uxstring.format_date(entry["date"])
+
     if entry["amount"] > 0:
         headline = uxstring.UxString.debit_message.format(local_date, entry["amount"])
     elif entry["reason"] == "flush_payout" or entry["reason"] == "earning_payout":
