@@ -1,6 +1,5 @@
 """ Two1 command to search the 21 Marketplace """
 # standard python imports
-import datetime
 from textwrap import wrap
 import logging
 import json as jsonlib
@@ -10,6 +9,7 @@ import click
 from tabulate import tabulate
 
 # two1 imports
+from two1 import util
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
@@ -238,8 +238,7 @@ def display_search_info(client, listing_id):
         "{}".format(result_json["category"]))
     version = click.style("Version      : ", fg="blue") + click.style(
         "{}".format(result_json["version"]))
-    last_updated_str = datetime.datetime.fromtimestamp(
-        result_json["updated"]).strftime("%Y-%m-%d %H:%M")
+    last_updated_str = util.format_date(result_json["updated"])
     last_update = click.style("Last Update  : ", fg="blue") + click.style(
         "{}".format(last_updated_str))
     quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(

@@ -6,6 +6,8 @@ import logging
 import click
 
 # two1 imports
+from two1 import util
+
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
@@ -73,7 +75,7 @@ def get_bc_logs(client, debug):
 
 def _get_headline(entry):
     # headline
-    local_date = uxstring.format_date(entry["date"])
+    local_date = util.format_date(entry["date"])
 
     if entry["amount"] > 0:
         headline = uxstring.UxString.debit_message.format(local_date, entry["amount"])
