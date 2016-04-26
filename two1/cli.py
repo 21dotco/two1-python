@@ -45,6 +45,7 @@ from two1.commands.market import market
 from two1.commands.sell import sell
 from two1.commands.earn import earn
 from two1.commands.faucet import faucet
+from two1.commands.wallet import wallet
 
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,7 @@ main.add_command(join)
 main.add_command(market)
 main.add_command(earn)
 main.add_command(faucet)
+main.add_command(wallet)
 
 if __name__ == "__main__":
     if platform.system() == 'Windows':
