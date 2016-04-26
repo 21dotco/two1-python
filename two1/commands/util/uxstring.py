@@ -294,6 +294,11 @@ class UxString:
         "Please enable the faucet by connecting a social network to your 21 account at {}/{}/config/profile."
     )
 
+    # wallet
+    wallet_top_title = click.style("Your 21 wallets:\n", fg="magenta")
+    wallet_title = click.style("Wallet {}", fg="yellow")
+    wallet_pub_key = "    Public Key       : {} "
+    wallet_payout_address = "    Current Address  : {} "
     # mining
     mining_show_dashboard_prompt = "About to show the 21 mining dashboard!\n\n" + \
         "Hit any key to launch the dashboard. "
@@ -573,6 +578,9 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
         "Run %s, then %s to increase your on-chain balance." %
         (click.style("21 earn", bold=True), click.style("21 flush", bold=True)))
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
+
+    # wallet
+    wallet_bad_pubkey = "{} is not a valid base58_check encoded public key."
 
     # logger
     lib_import_warning = click.style(
