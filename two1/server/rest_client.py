@@ -300,11 +300,9 @@ class TwentyOneRestClient(object):
     def set_primary_wallet(self, public_key=None):
         # input is a compressed public key bytestring
         if public_key is None:
-            public_key = base64.b64encode(self._wallet_pk)
-        else:
-            public_key = base64.b64encode(public_key)  # make sure this is correct
+            public_key = self._wallet_pk
 
-        path = "/pool/account/{}/wallets/set_primary/".format(self.username)
+        path = "/pool/account/{}/wallets/primary/".format(self.username)
         data = json.dumps({"public_key": public_key})
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
 
