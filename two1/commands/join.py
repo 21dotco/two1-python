@@ -73,7 +73,7 @@ def _join(client, network):
         ServerRequestError: if server returns an error code other than 401
     """
     try:
-        logger.info(uxstring.UxString.update_superuser)
+        logger.info(uxstring.UxString.superuser_password)
 
         if zerotier.is_installed():
             # ensures the zerotier daemon is running
