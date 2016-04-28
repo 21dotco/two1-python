@@ -632,7 +632,7 @@ def get_zerotier_address(marketplace):
     Raises:
         UnloggedException: if the zt network doesn't exist
     """
-    logger.info(uxstring.UxString.update_superuser)
+    logger.info(uxstring.UxString.superuser_password)
     address = zerotier.get_address(marketplace)
     if not address:
         raise UnloggedException(uxstring.UxString.no_zt_network.format(marketplace))

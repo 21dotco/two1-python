@@ -259,13 +259,7 @@ class UxString:
         click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
         click.style("message in error, please contact support@21.co.", fg="red")
 
-    # updater
-    update_check = "Checking for application updates..."
-    update_package = "Updating to version {}..."
-    update_superuser = "You might need to enter superuser password."
-    update_not_needed = "Already up to date!"
-    post_apt_remove_reboot = "You need to reboot in order for this update to take effect."
-    reboot_prompt = "Do you want to reboot now?"
+    superuser_password = "You might need to enter superuser password."
 
     # flush
     flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
@@ -530,23 +524,11 @@ class UxString:
         file_load = "file %s does not exist"
         file_decode = "There was an error loading {}. It may be a corrupt or poorly formatted file."
 
-        # Updater
-        update_failed = click.style("Error occurred during update process. Please run a manual update.", fg="red")
-        version_not_found = click.style("Could not determine latest two1 version.", fg="red")
-        version_does_not_exist = click.style("Version {} doesn't exist. Latest version is {}", fg="red")
-        retry_update_after_reboot = "Could not stop wallet daemon. Please reboot your system and retry 21 update."
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
-        update_server_connection = click.style("Could not connect to the update server. Please try again later.",
-                                               fg="red")
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
-        removal_failed = click.style(
-            "Could not remove the two1 package from apt. Please run the following command manually:\n", fg="red") +\
-            click.style("\t\nsudo apt-get autoremove --purge two1", bold=True)
 
         # version errors
-        version_not_detected = click.style(
-            "Could not properly detect your version of 21. Try reinstalling or contact support@21.co.", fg="red")
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
         insufficient_funds_mine_more = str(
             "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to get more.*\n\nYou may also"

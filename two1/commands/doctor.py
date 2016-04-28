@@ -4,8 +4,8 @@
     on your system to highligh any issues.
 """
 # standard python import
+from pkg_resources import parse_version
 import os
-import re
 import platform
 import shutil
 import socket
@@ -20,7 +20,6 @@ import requests
 
 # two1 imports
 import two1
-from two1.commands import update
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
@@ -245,10 +244,14 @@ class Doctor(object):
                                     The actaul two1 version installed on the system
         """
         check_str = "21 Tool Version"
-        expected_version = update.lookup_pypi_version()
+        url = parse.urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
+        response = requests.get(url)
+        versions = [package['version'] for package in response.json()['packages']]
+        stable_versions = [version for version in versions if not parse_version(version).is_prerelease]
+        latest_version = max(stable_versions, key=parse_version)
         actual_version = two1.TWO1_VERSION
 
-        if self.is_version_gte(actual_version, expected_version):
+        if self.is_version_gte(actual_version, latest_version):
             return Check.Result.PASS, check_str, actual_version
 
         return Check.Result.FAIL, check_str, actual_version
