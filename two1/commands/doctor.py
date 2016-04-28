@@ -178,14 +178,7 @@ class Doctor(object):
             ValueError: if expected ot actual version is not in Major.Minor.Patch
                 format.
         """
-        # extract the major minor and patch from the version string
-        e_match = re.search(r'(\d+).(\d+).(\d)', expected)
-        a_match = re.search(r'(\d+).(\d+).(\d)', actual)
-        if e_match and a_match:
-            return all([int(a) >= int(e) for a, e in zip(a_match.groups(), e_match.groups())])
-
-        raise ValueError("Versions ({} & {}) do not match format MAJOR.MINOR.PATCH".format(
-            actual, expected))
+        return parse_version(actual) >= parse_version(expected)
 
     def checkup(self, check_type):
         """ Runs through all checks of the check_type given
