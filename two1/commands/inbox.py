@@ -1,4 +1,4 @@
-""" Two1 command module for getting and displaying messages in your inbox """
+"""View notifications from 21.co"""
 # standard python imports
 import logging
 
@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 @decorators.json_output
 @decorators.capture_usage
 def inbox(ctx):
-    """ Shows a list of notifications for your account """
+    """View notifications from 21.co."""
     return _inbox(ctx.obj['config'], ctx.obj['client'])
 
 
 def _inbox(config, client):
-    """ Shows a list of notifications on a click pager
+    """Show a list of notifications on a click pager.
 
     Args:
         config (Config): config object used for getting .two1 information
@@ -57,7 +57,7 @@ def _inbox(config, client):
 
 
 def get_notifications(config, client):
-    """ Uses the rest client to get the inbox notifications and sorts by unread messages first
+    """Use the rest client to get the inbox notifications and sort by unread messages first.
 
     Args:
         config (Config): config object used for getting .two1 information
@@ -91,7 +91,7 @@ def get_notifications(config, client):
 
 
 def create_notification_line(msg):
-    """ creates a formatted notification line from a message dict
+    """Create a formatted notification line from a message dict.
 
     Args:
         msg (dict): a raw inbox notification in dict format

@@ -1,7 +1,7 @@
 """
 Builds the coinbase transaction
 """
-from two1.lib.bitcoin.txn import CoinbaseInput, Transaction
+from two1.bitcoin.txn import CoinbaseInput, Transaction
 
 
 class BitshareCoinbaseTransaction(Transaction):

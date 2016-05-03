@@ -13,7 +13,7 @@ import logging
 import click
 
 # two1 imports
-import two1.commands.util.uxstring as uxstring
+LESS_ENV = '-RPpress h for help, q for quit'
 
 
 class ClickLogFormatter(logging.Formatter):
@@ -78,7 +78,7 @@ class ClickLogHandler(logging.Handler):
 
                 # Force system to use pager and add default prompt at bottom left of the screen
                 os.environ['PAGER'] = "less"
-                os.environ['LESS'] = uxstring.UxString.less_env
+                os.environ['LESS'] = LESS_ENV
                 try:
                     click.echo_via_pager(formatted_record.msg,
                                          color=record.color if hasattr(record, "color") else None)

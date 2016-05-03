@@ -39,7 +39,8 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600, endpoint='/payment'):
+    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600,
+                 endpoint='/payment', db_dir=None, username=None):
         """Configure bitserv settings.
 
         Args:
@@ -55,9 +56,12 @@ class Payment:
         """
         if allowed_methods is None:
             self.allowed_methods = [
-                PaymentChannel(*flask_channel_adapter(app, PaymentServer(wallet, zeroconf=zeroconf, sync_period=sync_period), endpoint=endpoint)),
-                OnChain(wallet),
-                BitTransfer(wallet)]
+                PaymentChannel(*flask_channel_adapter(app, PaymentServer(
+                    wallet, zeroconf=zeroconf, sync_period=sync_period, db_dir=db_dir
+                ), endpoint=endpoint)),
+                OnChain(wallet, db_dir=db_dir),
+                BitTransfer(wallet, username=username)
+            ]
             # Sync payment channels server on startup
             self.allowed_methods[0].server.sync()
 
@@ -75,9 +79,11 @@ class Payment:
                 # Calculate resource cost
                 nonlocal price
                 _price = price(request) if callable(price) else price
+
                 # Need better way to pass server url to payment methods (FIXME)
-                url = urlparse(request.url_root)
-                kwargs.update({'server_url': url.scheme + '://' + url.netloc})
+                if 'server_url' not in kwargs:
+                    url = urlparse(request.url_root)
+                    kwargs.update({'server_url': url.scheme + '://' + url.netloc})
 
                 # Continue to the API view if payment is valid or price is 0
                 if _price == 0 or self.is_valid_payment(_price, request.headers, **kwargs):

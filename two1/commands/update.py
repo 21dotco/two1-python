@@ -9,6 +9,6 @@ import click
 @click.command()
 def update():
     """
-    Update the 21 Command Line Interface.
+    Update your 21 installation.
     """
     subprocess.call('curl https://21.co | sh', shell=True)

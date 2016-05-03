@@ -1,3 +1,4 @@
+"""Buy bitcoin through Coinbase."""
 # standard python imports
 import logging
 
@@ -8,6 +9,7 @@ import click
 from two1.commands.util import exceptions
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
+from two1.commands.util import currency
 from two1 import util
 
 
@@ -17,68 +19,85 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option('--info', is_flag=True, default=False,
-              help="Shows instructions on how to connect you Bitcoin Computer to an exchange "
-                   "account")
-@click.option('--status', is_flag=True, default=False,
-              help="Shows the current status of your exchange integrations")
+              help="Shows the current status of your exchange integrations.")
 @click.option('--history', is_flag=True, default=False,
-              help="Shows your history of Bitcoin purchases")
-@click.argument('amount', default=0, type=click.FLOAT)
+              help="Shows your history of Bitcoin purchases.")
+@click.option('--price', is_flag=True, default=False,
+              help="Quotes the price of Bitcoin.")
+@click.argument('amount', default=0.0, type=click.FLOAT)
+@click.argument('denomination', default='', type=click.STRING)
 @click.pass_context
 @decorators.catch_all
-@decorators.json_output
 @decorators.capture_usage
-def buybitcoin(ctx, info, status, amount, history):
-    """Buy Bitcoins from Coinbase
+def buybitcoin(ctx, info, amount, denomination, history, price):
+    """Buy bitcoin through Coinbase.
 
+\b
 To use this command, you need to connect your 21 account with your Coinbase account.
-Use 21 buybitcoin --info to see instructions on how to do so.
+You can find the instructions here: https://21.co/learn/21-buybitcoin/
 
 \b
-Buy 100000 Satoshis from Coinbase
-$ 21 buybitcoin 100000
+Quote the price of 100000 satoshis.
+$ 21 buybitcoin 1000000 --price
 
 \b
-See history of your purchases
+Buy 100000 satoshis from Coinbase.
+$ 21 buybitcoin 100000 satoshis
+You can use the following denominations: satoshis, bitcoins, and USD.
+
+\b
+Buy 5 dollars of bitcoin from Coinbase.
+$ 21 buybitcoin 5 usd
+
+\b
+See history of your purchases.
 $ 21 buybitcoin --history
 
 \b
-See the status of your 21 and Coinbase account integration
-$ 21 buybitcoin --status
-
-\b
-See instructions on how to integrate your 21 and Coinbase account
+See the status of your 21 and Coinbase account integration.
 $ 21 buybitcoin --info
 
 
-When you buy Bitcoins through this command, you can decide where the Bitcoins will be deposited to.
+The Bitcoins you purchase through this command will be deposited to
+your local wallet.
 
-    1- 21.co balance: The Bitcoins will be immediately deposited to your 21.co balance which is available for off chain purchases.\n
-    2- Blockchain balance: The Bitcoins will be deposited to the wallet on your 21 Bitcoin Computer once your purchase completes on Coinbase. If you have Instant Buy enabled on your Coinbase account the purchase will be immediate. If you don't have Instant Buy, it may take up to 5 days for the purchase to be completed.
-\b
+If you have Instant Buy enabled on your Coinbase account, the purchase
+will be immediate. If you don't have Instant Buy, it may take up to 5
+days for the purchase to be completed.
+
     """
     exchange = "coinbase"
-    return _buybitcoin(ctx.obj['config'], ctx.obj['client'], info, status, exchange, amount, history)
+    if amount != 0.0:
+        if denomination == '':
+            confirmed = click.confirm(uxstring.UxString.default_price_denomination, default=True)
+            if not confirmed:
+                raise exceptions.Two1Error(uxstring.UxString.cancel_command)
+            denomination = currency.Price.SAT
+        amount = currency.Price(amount, denomination).satoshis
+    return _buybitcoin(ctx, ctx.obj['config'], ctx.obj['client'], info, exchange, amount,
+                       history, price, denomination)
 
 
-def _buybitcoin(config, client, info, status, exchange, amount, history):
-    if info:
-        return buybitcoin_config(config, client, exchange)
-    elif history:
-        return buybitcoin_history(config, client)
+def _buybitcoin(ctx, config, client, info, exchange, amount, history, price, denomination):
+    if history:
+        return buybitcoin_history(config, client, exchange)
+    elif price:
+        return quote_bitcoin_price(config, client, exchange, amount, denomination)
     else:
-        if amount <= 0 or status:
-            return buybitcoin_show_status(config, client, exchange)
+        if info:
+            return buybitcoin_show_info(config, client, exchange)
+        elif amount <= 0:
+            logger.info(buybitcoin.get_help(ctx))
         else:
             return buybitcoin_buy(config, client, exchange, amount)
 
 
-def buybitcoin_show_status(config, client, exchange):
+def buybitcoin_show_info(config, client, exchange):
     resp = client.get_coinbase_status()
     if not resp.ok:
         raise exceptions.Two1Error("Failed to get exchange status")
 
-    coinbase = resp.json()["coinbase"]
+    coinbase = resp.json().get("coinbase")
 
     if not coinbase:
         # Not linked, prompt user to info
@@ -103,38 +122,66 @@ def buybitcoin_show_status(config, client, exchange):
         return coinbase
 
 
-def buybitcoin_history(config, client):
-    resp = client.get_coinbase_history()
-    history = resp.json()["history"]
+def buybitcoin_history(config, client, exchange):
+    resp = client.get_coinbase_status()
+    if not resp.ok:
+        raise exceptions.Two1Error("Failed to get exchange status")
 
-    lines = [uxstring.UxString.coinbase_history_title]
+    coinbase = resp.json()["coinbase"]
 
-    for entry in history:
-        amount = entry["amount"]
-        deposit_status = entry["deposit_status"]
-        payout_time = util.format_date(entry["payout_time"])
+    if not coinbase:
+        # Not linked, prompt user to info
+        return buybitcoin_config(config, client, exchange)
+    else:
+        resp = client.get_coinbase_history()
+        history = resp.json()["history"]
 
-        description = "N/A"
-        if deposit_status == "COMPLETED":
-            if entry["payout_type"] == "WALLET":
+        lines = [uxstring.UxString.coinbase_history_title]
+
+        for entry in history:
+            amount = entry["amount"]
+            deposit_status = entry["deposit_status"]
+            payout_time = util.format_date(entry["payout_time"])
+            payout_address = entry["payout_address"]
+
+            description = "N/A"
+            if deposit_status == "COMPLETED":
                 description = uxstring.UxString.coinbase_wallet_completed.format(payout_time)
-            elif entry["payout_type"] == "TO_BALANCE":
-                description = uxstring.UxString.coinbase_21_completed.format(payout_time, amount)
-        else:
-            if entry["payout_type"] == "WALLET":
+            else:
                 description = uxstring.UxString.coinbase_wallet_pending.format(payout_time)
-            elif entry["payout_type"] == "TO_BALANCE":
-                description = uxstring.UxString.coinbase_21_pending.format(payout_time, amount)
 
-        created = util.format_date(entry["created"])
-        payout_type = uxstring.UxString.coinbase_deposit_type_mapping[entry["payout_type"]]
-        lines.append(uxstring.UxString.coinbase_history.format(created, amount, payout_type, description))
+            created = util.format_date(entry["created"])
+            lines.append(uxstring.UxString.coinbase_history.format(
+                created, amount, payout_address, description))
 
-    if len(history) == 0:
-        lines.append(uxstring.UxString.coinbase_no_bitcoins_purchased)
+        if len(history) == 0:
+            lines.append(uxstring.UxString.coinbase_no_bitcoins_purchased)
 
-    prints = "\n\n".join(lines)
-    logger.info(prints, pager=True)
+        prints = "\n\n".join(lines)
+        logger.info(prints, pager=True)
+
+
+def quote_bitcoin_price(config, client, exchange, amount, denomination):
+    amount = amount or 1e8
+    result = client.quote_bitcoin_price(amount)
+    data = result.json()
+    price = data["price"]
+
+    if price >= 0.1:
+        price = '{:.2f}'.format(price)
+    else:
+        price = '{:.7f}'.format(price).rstrip('0')
+
+    btc_unit = data["bitcoin_unit"].lower()
+    currency_unit = data["currency_unit"]
+    if denomination in 'usd':
+        logger.info(
+            uxstring.UxString.coinbase_quote_price_dollars.format(
+                int(amount), btc_unit, price, currency_unit))
+    else:
+        logger.info(
+            uxstring.UxString.coinbase_quote_price_satoshis.format(
+                int(amount), btc_unit, price, currency_unit))
 
 
 def buybitcoin_config(config, client, exchange):
@@ -142,71 +189,100 @@ def buybitcoin_config(config, client, exchange):
 
 
 def buybitcoin_buy(config, client, exchange, amount):
-    deposit_type = get_deposit_info()
-    get_price_quote(client, amount, deposit_type)
+
+    resp = client.get_coinbase_status()
+    if not resp.ok:
+        raise exceptions.Two1Error("Failed to get exchange status")
+
+    coinbase = resp.json().get("coinbase")
+
+    if not coinbase:
+        return buybitcoin_config(config, client, exchange)
 
     try:
-        buy_bitcoin(client, amount, deposit_type)
+        get_price_quote(client, amount)
+    except ValueError:
+        return
+
+    try:
+        buy_bitcoin(client, amount)
     except click.exceptions.Abort:
         logger.info("\nPurchase canceled", fg="magenta")
 
 
-def get_price_quote(client, amount, deposit_type):
+def get_price_quote(client, amount):
     # first get a quote
-    resp = client.buy_bitcoin_from_exchange(amount, "Satoshis", commit=False)
-
-    if not resp.ok:
-        raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
+    try:
+        resp = client.buy_bitcoin_from_exchange(amount, "satoshis", commit=False)
+    except exceptions.ServerRequestError as e:
+        if e.status_code == 400:
+            if e.data.get("error") == "TO700":
+                logger.info(uxstring.UxString.minimum_bitcoin_purchase)
+            elif e.data.get("error") == "TO704":
+                logger.info(uxstring.UxString.coinbase_amount_too_high)
+            raise ValueError()
+        elif e.status_code == 403:
+            if e.data.get("error") == "TO703":
+                logger.info(uxstring.UxString.coinbase_max_buy_reached)
+            raise ValueError()
 
     buy_result = resp.json()
     if "err" in buy_result:
-        # TODO: remove the secho and use the exception to print message
-        logger.info(uxstring.UxString.buybitcoin_error.format(click.style(buy_result["err"], bold=True, fg="red")))
-        raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "Satoshis"))
+        logger.info(uxstring.UxString.buybitcoin_error.format(
+            click.style(buy_result["err"], bold=True, fg="red")))
+        raise exceptions.Two1Error("Failed to execute buybitcoin {} {}".format(amount, "satoshis"))
 
     fees = buy_result["fees"]
-    total_fees = ["{} {}".format(float(f["amount"]["amount"]), f["amount"]["currency"]) for f in
-                  fees]
-    total_fees = click.style(" + ".join(total_fees), bold=True)
+    total_fees = ["{:.2f} {} {} {}".format(
+                  float(fee["amount"]["amount"]), fee["amount"]["currency"],
+                  "fee from your" if fee["type"] == "bank" else "fee from",
+                  "Coinbase" if fee["type"] == "coinbase" else fee["type"])
+                  for fee in fees]
+    total_fees = click.style(" and ".join(total_fees), bold=True)
     total_amount = buy_result["total"]
     total = click.style("{} {}".format(total_amount["amount"], total_amount["currency"]), bold=True)
-    bitcoin_amount = click.style("{} {}".format(int(amount), "Satoshis"), bold=True)
+    bitcoin_amount = click.style("{} {}".format(int(amount), "satoshis"), bold=True)
 
-    deposit_type = {"TO_BALANCE": "21.co balance", "WALLET": "Blockchain balance"}[deposit_type]
-    logger.info(uxstring.UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees,
-                                                                 deposit_type))
+    logger.info(uxstring.UxString.buybitcoin_confirmation.format(total, bitcoin_amount, total, total_fees))
 
 
-def buy_bitcoin(client, amount, deposit_type):
+def buy_bitcoin(client, amount):
     if click.confirm(uxstring.UxString.buybitcoin_confirmation_prompt):
         logger.info(uxstring.UxString.coinbase_purchase_in_progress)
-        resp = client.buy_bitcoin_from_exchange(amount, "satoshi", commit=True,
-                                                deposit_type=deposit_type)
+        try:
+            resp = client.buy_bitcoin_from_exchange(amount, "satoshis", commit=True)
+        except exceptions.ServerRequestError as e:
+            PHOTO_ID_ERROR = "Before you will be able to complete this buy, "\
+                "you must provide additional information at "\
+                "https://www.coinbase.com/photo-id"
+            USERNAME_ERROR = "To process payments we require a valid user name. "\
+                "Please go to settings to update your information."
+            if e.status_code == 403 and e.data.get("error") == "TO703":
+                logger.error(uxstring.UxString.coinbase_max_buy_reached)
+                return
+            elif e.status_code == 500 and e.data.get("error") == PHOTO_ID_ERROR:
+                logger.error(uxstring.UxString.coinbase_needs_photo_id)
+                return
+            elif e.status_code == 500 and e.data.get("error") == USERNAME_ERROR:
+                logger.error(uxstring.UxString.coinbase_needs_username)
+                return
+
         buy_result = resp.json()
         if buy_result["status"] == "canceled":
-            logger.info(uxstring.UxString.buybitcoin_error.format(click.style("Buy was canceled.", bold=True, fg="red")))
+            logger.info(uxstring.UxString.buybitcoin_error.format(
+                click.style("Buy was canceled.", bold=True, fg="red")))
 
             return buy_result
 
         amount_bought = int(float(buy_result["amount"]["amount"]) * 1e8)
-        btc_bought = "{} {}".format(amount_bought,
-                                    buy_result["amount"]["currency"])
+        btc_bought = "{} {}".format(amount_bought, 'satoshis')
 
         dollars_paid = "{} {}".format(buy_result["total"]["amount"],
                                       buy_result["total"]["currency"])
 
         logger.info(uxstring.UxString.buybitcoin_success.format(btc_bought, dollars_paid))
 
-        if deposit_type == "TO_BALANCE":
-            logger.info(uxstring.UxString.buybitcoin_21_balance_success)
-            if "payout_at" in buy_result:
-                payout_time = util.format_date(buy_result["payout_at"])
-
-                logger.info(uxstring.UxString.buybitcoin_21_balance_time.format(payout_time,
-                                                                                int(amount_bought),
-                                                                                "Satoshis"))
-
-        elif "instant" in buy_result and buy_result["instant"]:
+        if "instant" in buy_result and buy_result["instant"]:
             logger.info(uxstring.UxString.buybitcoin_success_instant)
         elif "payout_at" in buy_result:
             payout_time = util.format_date(buy_result["payout_at"])
@@ -214,27 +290,3 @@ def buy_bitcoin(client, amount, deposit_type):
             logger.info(uxstring.UxString.buybitcoin_success_payout_time.format(payout_time))
     else:
         logger.info("\nPurchase canceled", fg="magenta")
-
-
-def get_deposit_info():
-    logger.info(uxstring.UxString.deposit_type_question)
-    deposit_types = [{"msg": uxstring.UxString.deposit_type_off_chain, "value": "TO_BALANCE"},
-                     {"msg": uxstring.UxString.deposit_type_on_chain, "value": "WALLET"}]
-    index_to_deposit = {}
-    for i, deposit_type in enumerate(deposit_types):
-        logger.info("{}. {}".format(i + 1, deposit_type["msg"]))
-        index_to_deposit[i] = deposit_types[i]["value"]
-
-    logger.info(uxstring.UxString.deposit_type_explanation)
-    try:
-        deposit_index = -1
-        while deposit_index <= 0 or deposit_index > len(deposit_types):
-            deposit_index = click.prompt(uxstring.UxString.deposit_type_prompt, type=int)
-            if deposit_index <= 0 or deposit_index > len(deposit_types):
-                logger.info(uxstring.UxString.deposit_type_invalid_index.format(1, len(deposit_types)))
-
-        deposit_type = index_to_deposit[deposit_index - 1]
-        return deposit_type
-
-    except click.exceptions.Abort:
-        raise exceptions.UnloggedException(click.style("\nPurchase canceled", fg="magenta"))

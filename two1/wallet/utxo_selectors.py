@@ -45,3 +45,7 @@ def utxo_selector_smallest_first(utxos_by_addr, amount,
         rv = {}, fee
 
     return rv
+
+
+def _fee_calc(num_utxos, total_value, fee_amounts):
+    return num_utxos * fee_amounts['per_input'] + fee_amounts['per_output']

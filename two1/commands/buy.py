@@ -13,7 +13,9 @@ import two1.channels as channels
 import two1.commands.util.uxstring as uxstring
 import two1.bitrequests as bitrequests
 import two1.commands.util.decorators as decorators
+import two1.wallet.exceptions as wallet_exceptions
 import two1.channels.statemachine as statemachine
+import two1.commands.util.bitcoin_computer as bitcoin_computer
 
 
 # Creates a ClickLogger
@@ -36,7 +38,7 @@ logger = logging.getLogger(__name__)
 @decorators.catch_all
 @decorators.capture_usage
 def buy(ctx, resource, **options):
-    """Buy API calls with mined bitcoin.
+    """Buy API calls with bitcoin.
 
 \b
 Usage
@@ -135,6 +137,13 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         )
     except bitrequests.ResourcePriceGreaterThanMaxPriceError as e:
         raise click.ClickException(uxstring.UxString.Error.resource_price_greater_than_max_price.format(e))
+    except wallet_exceptions.DustLimitError as e:
+        raise click.ClickException(e)
+    except ValueError as e:
+        if bitcoin_computer.has_mining_chip():
+            raise click.ClickException(uxstring.UxString.Error.insufficient_funds_mine_more)
+        else:
+            raise click.ClickException(uxstring.UxString.Error.insufficient_funds_earn_more)
     except Exception as e:
         raise click.ClickException(e)
 

@@ -136,7 +136,7 @@ def _create_client_payment(client, num):
 
 def test_discovery():
     """Test ability to discover a new payment channel."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     merchant_public_key = channel_server.discovery()
     test_public_key = codecs.encode(
         merch_wallet._private_key.public_key.compressed_bytes,
@@ -146,7 +146,7 @@ def test_discovery():
 
 def test_channel_server_open():
     """Test ability to open a payment channel."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     test_client = _create_client_txs()
 
     # Initialize the handshake and ensure that it returns sucessfully
@@ -159,7 +159,7 @@ def test_channel_server_open():
 
 def test_receive_payment():
     """Test ability to receive a payment within a channel."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     test_client = _create_client_txs()
 
     # Test that payment receipt fails when no channel exists
@@ -179,7 +179,7 @@ def test_receive_payment():
 
 def test_redeem_payment():
     """Test ability to redeem a payment made within a channel."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     test_client = _create_client_txs()
 
     # Test that payment redeem fails when no channel exists
@@ -200,7 +200,7 @@ def test_redeem_payment():
 
 def test_status_close_channel():
     """Test ability to get a channel's status and close it."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     test_client = _create_client_txs()
 
     # Test that channel close fails when no channel exists
@@ -224,7 +224,7 @@ def test_status_close_channel():
 
 def test_channel_sync(monkeypatch):
     """Test ability to sync the status of all channels."""
-    channel_server._db = DatabaseSQLite3(':memory:')
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
 
     # Seed the database with activity in Channel A
     test_client_a = _create_client_txs()

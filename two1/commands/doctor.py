@@ -1,10 +1,7 @@
-""" When you are not feeling well come see the Doctor
-
-    '21 doctor' is a command that will run through several
-    on your system to highligh any issues.
-"""
-# standard python import
+"""Diagnose 21 installation."""
+from distutils.version import LooseVersion
 from pkg_resources import parse_version
+from pkg_resources import SetuptoolsVersion
 import os
 import platform
 import shutil
@@ -14,17 +11,14 @@ import enum
 import urllib.parse as parse
 import logging
 
-# 3rd party imports
 import click
 import requests
 
-# two1 imports
 import two1
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
 from two1.commands.util import bitcoin_computer
-
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
@@ -68,7 +62,7 @@ class Doctor(object):
         sytem is functioning correctly.
     """
 
-    # Types of checkups avialable
+    # Types of checkups available
     SPECIALTIES = {
         "general": uxstring.UxString.doctor_general,
         "server": uxstring.UxString.doctor_servers,
@@ -178,7 +172,12 @@ class Doctor(object):
             ValueError: if expected ot actual version is not in Major.Minor.Patch
                 format.
         """
-        return parse_version(actual) >= parse_version(expected)
+        if isinstance(parse_version(actual), SetuptoolsVersion):
+            # This handles versions that end in things like `rc0`
+            return parse_version(actual) >= parse_version(expected)
+        else:
+            # This handles versions that end in things like `-v7+` and `-generic`
+            return LooseVersion(actual) >= LooseVersion(expected)
 
     def checkup(self, check_type):
         """ Runs through all checks of the check_type given
@@ -565,8 +564,7 @@ class Doctor(object):
 @decorators.json_output
 @decorators.capture_usage
 def doctor(ctx):
-    """Checks on the health of the tool.
-    """
+    """ Diagnose this 21 installation."""
     return _doctor(ctx.obj['config'])
 
 

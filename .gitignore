@@ -114,6 +114,7 @@ TAGS
 wheelhouse
 
 #Other envs
+.env
 dev.env
 prod.env
 stage.env

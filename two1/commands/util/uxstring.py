@@ -1,14 +1,39 @@
-"""
-Strings for the two1 CLI user interface
-"""
+"""Strings for the two1 CLI and library."""
+import logging
+
 import click
+
+# Creates a ClickLogger. This will not
+# not work without the import!
+from two1.commands.util.logger import ClickLogger
+logging.setLoggerClass(ClickLogger)
+logger = logging.getLogger(__name__)
+
+
+def ux(name, *args, **kwargs):
+    """Format the given ux string and print to the log.
+
+    Instead of doing this:
+    >>> logger.info(uxstring.UxString.foo.format(username, reward))
+
+    You can do this:
+    >>> ux('foo', username, reward)
+
+    This simplifies much of the CLI UX.
+    """
+    mystr = getattr(UxString, name)
+    if len(args) > 0:
+        out = mystr.format(*args)
+    else:
+        out = mystr
+    return logger.info(out, **kwargs)
 
 
 class UxString:
     """ Class to namespace all user experience strings """
 
     # general
-    update_required = click.style("You are using an old version of 21 CLI. Please update using the '21 "
+    update_required = click.style("You are using an old version of 21. Please update using the '21 "
                                   "update' command.",
                                   fg="red")
     bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access "
@@ -20,6 +45,8 @@ class UxString:
         click.style("Use ", fg="red") +\
         click.style("21 login ", fg="red", bold=True) +\
         click.style("to switch between your available accounts.", fg="red")
+    default_price_denomination = "No amount unit provided, defaulting to satoshis. OK?"
+    cancel_command = "Not running command."
 
     # account creation
     creating_account = "Creating 21.co account. Username: {}"
@@ -43,31 +70,34 @@ class UxString:
                          "Press any key ..."
 
     wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
-    payout_address = "Setting mining payout address: {}"
+    payout_address = "Setting default payout address to: {}"
+    get_started = "Check out our introductory guide to learn the basics of 21: https://21.co/learn/intro-to-21/"
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
-        "This may help us debug any issues and improve software quality."
+        "This will help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
     unconfirmed_email = "Before logging in, you must activate your 21 account using the " \
                         "email sent to you at {}. If you can't find the email, please visit 21.co/activation."
 
-    flush_success = "{}\n"\
-        "Your mined Satoshis will be sent to you on the "\
-        "Blockchain in the next payout cycle.\n"\
-        "Estimated time of payout: ~20 minutes.\n"\
-        "To check progress:  https://blockexplorer.com/address/{}\n"\
-        "To get more bitcoin, use {}."
+    flush_success = (
+        click.style("Flush to Blockchain\n", fg='magenta') +
+        "Your satoshis will be sent to you on the Blockchain in the next payout cycle.\n"
+        "Estimated time of payout: ~20 minutes.\n"
+        "To check progress:  https://blockexplorer.com/address/{}\n"
+    )
 
     # username
     login_username = "\nUsername"
-    login_password = "Password (Typing will be hidden)"
-    login_in_progress = "logging in {}."
+    login_password = "Password (typing will be hidden)"
+    login_in_progress = "logging in {}"
     login_required = "Account login is required.\n\n\tRun {} first.".format(click.style("21 login", bold=True))
-    incorrect_password = click.style("The username and password that you entered do not match.",
+    incorrect_password = click.style("The username and password that you entered "
+                                     "do not match. If you need to reset your "
+                                     "password, go to 21.co/reset-password/",
                                      fg="red")
 
     # sign up
     signin_title = click.style(
-        "\nIf you don't have a 21 account, visit https://21.co/signup to create one. ", fg="blue")
+        "\nIf you don't have a 21 account, visit 21.co/signup to create one. ", fg="blue")
 
     # account recovery
     registered_usernames_title = "\nRegistered usernames: \n"
@@ -101,16 +131,16 @@ class UxString:
     status_mining = mining = click.style("Mining", fg='magenta') + "\n" +\
         "    Status           : {}\n" +\
         "    Hashrate         : {}\n" +\
-        "    Mined (all time) : {} Satoshis\n\n" +\
+        "    Mined (all time) : {} satoshis\n\n" +\
         "Type " +\
         click.style("21 mine --dashboard", bold=True) +\
         " to see a detailed view. Hit q to exit.\n"
 
     status_wallet = click.style("Total Balance", fg='magenta') + """
-    Your spendable balance at 21.co [1]                       : {twentyone_balance} Satoshis
-    Your spendable balance on the Blockchain [2]              : {onchain} Satoshis
-    Your spendable balance in Payment Channels                : {channels_balance} Satoshis
-    Amount flushing from 21.co balance to Blockchain balance  : {flushing} Satoshis
+    Your spendable buffer at 21.co [1]                        : {twentyone_balance} satoshis
+    Your spendable balance on the Blockchain [2]              : {onchain} satoshis
+    Your spendable balance in Payment Channels                : {channels_balance} satoshis
+    Amount flushing from 21.co buffer to Blockchain balance   : {flushing} satoshis
 
     [1]: Available for off-chain transactions
     [2]: Available for on-chain and payment channel transactions
@@ -118,27 +148,27 @@ class UxString:
     """
 
     status_mining_file_not_found = "Run {} to start mining".format(click.style("21 mine", bold=True))
-    status_mining_timeout = "TimeoutError occured while getting hashrate"
-    status_mining_success = "21 mining chip running (/run/minerd.pid)"
+    status_mining_timeout = "A TimeoutError occurred while getting the hashrate"
+    status_mining_success = "A 21 mining chip is running (/run/minerd.pid)"
     status_mining_hashrate = "{:.1f} GH/s"
     status_mining_hashrate_unknown = "~50 GH/s (warming up)"
 
-    status_balance_by_username_header = "Off-chain Balances by Username \n"
-    status_balance_by_username_table_headers = ["Username", "Balance"]
+    status_balance_by_username_header = "Off-chain Buffers by Username \n"
+    status_balance_by_username_table_headers = ["Username", "Buffer"]
     status_wallet_detail_off = """\
-    To see all wallet addresses and open payment channels, use '21 status --detail'\n"""
+    To see all wallet addresses and open payment channels, use '21 status --detail'"""
 
     status_wallet_detail_on = """\
     Addresses:\n{addresses}
     Channels:\n{channels}"""
 
     status_wallet_address = "\t{}: {} (confirmed), {} (total)\n"
-    status_wallet_channel = "\t{}://{}/ {}, {} Satoshis, {}\n"
+    status_wallet_channel = "\t{}://{}/ {}, {} satoshis, {}\n"
     status_wallet_channels_none = "\tNo payment channels have been created yet.\n"
 
     # buy
     buy_channel_warning = "Note: The default payment channel size is " + \
-        "{} Satoshis. \nIn order to open this channel you’ll need to " + \
+        "{} satoshis. \nIn order to open this channel you’ll need to " + \
         "spend a small amount extra to cover transaction fees.\n" + \
         "Read more at (https://21.co/micropayments/)\n" + \
         "Proceed?"
@@ -147,10 +177,10 @@ class UxString:
     buy_bad_uri_host = "Please provide a valid hostname for the request, such as `mkt.21.co`."
     buy_channel_aborted = "Payment aborted."
     buy_bad_data_format = "Unknown data format."
-    buy_balances = "You spent: {} Satoshis. Remaining {} balance: {} Satoshis."
+    buy_balances = "\nYou spent: {} satoshis. Remaining {} balance: {} satoshis."
 
     # doctor
-    doctor_start = click.style("21.co Doctor", fg='green') + "\n\n" + \
+    doctor_start = click.style("21 doctor", fg='green') + "\n\n" + \
         click.style("Checking health..", fg='magenta') + "\n"
     doctor_general = click.style("Checking general settings..", fg='yellow')
     doctor_dependencies = click.style("Checking dependencies..", fg='yellow')
@@ -160,20 +190,7 @@ class UxString:
     doctor_total = click.style("Summary", fg='yellow')
 
     # buybitcoin
-    deposit_type_question = "\nWhere do you want your Bitcoins to be deposited to ?"
-    deposit_type_on_chain = "Your balance on the Blockchain [2]"
-    deposit_type_off_chain = "Your balance at 21.co [1]"
-    deposit_type_explanation = "\n[1] Available for off-chain transactions. " \
-                               "\n[2] Available for on-chain and payment channel transactions." \
-                               "\nYou can always move your balance at 21.co to the Blockchain by " \
-                               "issuing the" + click.style(" 21 flush ", bold=True) + "command"
-
-    deposit_type_invalid_index = "Please select a number between {} and {} to select the " \
-                                 "corresponding deposit type"
-
-    deposit_type_prompt = "\nPlease select the number associated with the deposit option you " \
-                          "would like to use"
-
+    minimum_bitcoin_purchase = click.style("The minimum bitcoin purchase is $2.", fg="red")
     exchange_info_header = click.style("\nExchange Info", fg="magenta")
     exchange_info = "    Exchange Name          : {}\n" \
                     "    Exchange Username      : {}\n" \
@@ -181,57 +198,84 @@ class UxString:
                     "    Linked Payment Method  : {}\n"
     buybitcoin_instruction_header = click.style("Buying Bitcoin:", fg="magenta")
     buybitcoin_instructions = "    Use " + click.style("21 buybitcoin", bold=True) +\
-                              " to buy k Satoshis from {}.\n" +\
-                              "    The bought Bitcoins will automatically appear into your 21 wallet\n\n"
+                              " to buy k satoshis from {}.\n" +\
+                              "    Purchased bitcoin will automatically appear in your 21 wallet.\n\n"
     buybitcoin_pairing = \
         "To buy bitcoin, you need to pair your 21 and {} account.\n\n" + \
-        "If you already haven't, create a password for your account by " \
-        "doing " + click.style("21 login -setpassword",
-                               bold=True) + "\nThen go to http://21.co/{}/config/coinbase/ in your " \
-                                            "browser to complete the pairing\n"
+        "If you haven't done this yet, create a password for your account by " \
+        "executing " + click.style("21 login --setpassword", bold=True) + \
+        "\nThen go to http://21.co/{}/config/coinbase/ in your " + \
+        "browser to complete the pairing.\n"
     buybitcoin_no_payment_method = \
         "To add a payment method to {}, go to {}."
     buybitcoin_confirmation = "\nYou are about to withdraw {} from the bank connected to your " \
                               "Coinbase account to buy {}.\n" \
-                              "From {}, {} will be spent on fees. \n" \
-                              "Your Bitcoins will be deposited to your {}.\n"
-    buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase ?"
+                              "{} includes {}\n" \
+                              "Your bitcoin will be deposited to your local wallet.\n"
+    buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase?"
     buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
     buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") +\
         click.style("{} ", fg="magenta", bold=True) +\
         click.style("for", fg="magenta") +\
         click.style(" {}.\n", bold=True, fg="magenta")
 
-    buybitcoin_success_payout_time = "The Bitcoins will be deposited to your 21 wallet on {}."
-    buybitcoin_success_instant = "The Bitcoins will be deposited to your 21 wallet in the next " \
-                                 "couple of minutes."
+    buybitcoin_success_payout_time = "Your bitcoin will be deposited to your 21 wallet on {}."
+    buybitcoin_success_instant = "Your bitcoin will be deposited to your 21 wallet in the next " \
+                                 "few minutes."
 
-    buybitcoin_21_balance_success = "The Bitcoins will be deposited to your 21.co balance in the " \
-                                    "next couple of minutes."
-    buybitcoin_21_balance_time = "\nOn {}, {} {} will be withdrawn from your Coinbase wallet " \
-                                 "for this purchase."
-
-    coinbase_purchase_in_progress = "\nPurchasing Bitcoins From Coinbase...\n"
+    coinbase_purchase_in_progress = "\nPurchasing bitcoin from Coinbase...\n"
 
     coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance",
-                                     "TO_BALANCE": "your 21.co balance"}
-    coinbase_wallet_completed = "The Bitcoins were deposited to your wallet on {}"
-    coinbase_21_completed = "The Bitcoins were added to your balance immediately. " \
+                                     "TO_BALANCE": "your 21.co buffer"}
+    coinbase_wallet_completed = "The bitcoin you bought at Coinbase was deposited to your wallet on {}"
+    coinbase_21_completed = "The bitcoin you bought at Coinbase was added to your on-chain balance. " \
                             "Around {}, {} BTC amount were withdrawn from your " \
                             "Coinbase wallet for this purchase."
 
-    coinbase_wallet_pending = "The Bitcoins will be deposited to your wallet around {}"
-    coinbase_21_pending = "The Bitcoins were added to your balance immediately. " \
+    coinbase_wallet_pending = "The bitcoin you bought at Coinbase will be deposited to your wallet around {}"
+    coinbase_21_pending = "The bitcoin you bought at Coinbase was added to your on-chain balance immediately. " \
                           "Around {}, {} BTC will be withdrawn from your Coinbase wallet for this " \
                           "purchase."
 
-    coinbase_history_title = "Your Bitcoin Purchase History. \n"
+    coinbase_history_title = click.style("[21 Bitcoin Purchase History]\n", bold=True, fg="magenta")
     coinbase_no_bitcoins_purchased = "[No purchases yet]"
     coinbase_history = click.style(
-        "{} : {} Satoshis from your Coinbase wallet to {}\n", fg="cyan") + "Description: {}"
+        "{} : {} bitcoin from your Coinbase to {}.\n",
+        fg="cyan") + "Description: {}"
+    coinbase_quote_price_satoshis = "The current price for {} {} is {} {}."
+    coinbase_quote_price_dollars = "You can get {} {} for {} {}."
+    coinbase_max_buy_reached = click.style(
+        "You have reached the daily maximum for Bitcoin purchases. Please try again in a few "
+        "hours.", fg="red")
+    coinbase_needs_photo_id = click.style(
+        "You need to supply a photo ID to Coinbase. "
+        "Please do this at: https://www.coinbase.com/photo-id", fg="red")
+    coinbase_needs_username = click.style(
+        "You need to set a username for your Coinbase profile. "
+        "Please do this at: https://www.coinbase.com/settings", fg="red")
+    coinbase_amount_too_high = click.style(
+        "The amount you entered is too high. The maximum daily bitcoin purchase limit "
+        "is 100 USD.", fg="red")
+
+    # earning
+    use_21_earn_instead = "Try 21 earn instead. 21 mine only works on a 21 Bitcoin Computer."
+    earn_start = "Earn bitcoin by doing microtasks."
+    earn_task_notyet = "Only the 'faucet' task is currently available. Check back for the '{}' microtask soon."
+    earn_task_use_faucet = "This option will be available soon. Use 21 faucet to request bitcoin."
+
+    # earning - faucet
+    earn_faucet_banner = "Request bitcoin from the 21.co faucet"
+    earn_faucet_ineligible = "Sorry, you can't hit the 21.co faucet now. Try again later."
+    earn_faucet_start = "{}, you are requesting {} satoshis from 21.co\n" \
+        "This requires you to do some CPU proof-of-work, which will take a little while...\n"
+    earn_faucet_success = "\n{}, you got {} satoshis in {:.1f} seconds!"
+    earn_faucet_status = "\nHere's the new status of your balance after hitting the faucet:\n"
+    earn_faucet_finish = "\nView your balance with {}, or spend with {}."
+    earn_limit_reached = "\nFurther earning advances are not possible at this time. " \
+                         "Please try again in a few hours."
 
     # mining
-    mining_show_dashboard_prompt = "About to show mining dashboard.\n\n" + \
+    mining_show_dashboard_prompt = "About to show the 21 mining dashboard!\n\n" + \
         "Hit any key to launch the dashboard. "
     mining_show_dashboard_context = "\nDo " + click.style("21 mine --dashboard", bold=True) + \
         " to see a mining dashboard.\n" + \
@@ -241,17 +285,17 @@ class UxString:
 
     mining_chip_start = "21 Bitcoin Chip detected, trying to (re)start miner..."
     mining_chip_running = "Your 21 Bitcoin Chip is already running!\n" + \
-        "You should now receive a steady stream of Satoshis."
-    mining_start = "\n{}, you are mining {} Satoshis from 21.co\n" \
+        "You should now receive a steady stream of satoshis."
+    mining_start = "\n{}, you are mining {} satoshis from 21.co\n" \
                    "This may take a little while...\n"
     mining_dashboard_no_chip = "Without a 21 mining chip, we can't show you a mining dashboard.\n"\
         "If you want to see this dashboard, run this command on a 21 Bitcoin Computer."
-    mining_success = "\n{}, you mined {} Satoshis in {:.1f} seconds!"
+    mining_success = "\n{}, you mined {} satoshis in {:.1f} seconds!"
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
 
     mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
-                           "Please try again in a few hours"
+                           "Please try again in a few hours."
 
     mining_bitcoin_computer_needed = click.style(
         "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
@@ -259,16 +303,22 @@ class UxString:
         click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
         click.style("message in error, please contact support@21.co.", fg="red")
 
-    superuser_password = "You might need to enter superuser password."
+    # uninstall
+    uninstall_init = "Uninstalling 21's software libraries and tools."
+    uninstall_success = "21 has been successfully uninstalled."
+
+    superuser_password = "You might need to enter your superuser password."
 
     # flush
-    flush_status = "\n* Your flushed amount of %s Satoshis will appear " \
+    flush_status = "\n* Your flushed amount of %s satoshis will appear " \
                    "in your wallet balance as soon as they appear on the Blockchain."
 
-    flush_insufficient_earnings = "You must have a minimum of 20000 Satoshis to " \
-                                  "be able to flush your earnings to the Blockchain"
+    flush_insufficient_earnings = "You need to flush a minimum of 20000 satoshis."
 
-    flush_not_enough_earnings = "You don't have enough balance to flush {} Satoshis."
+    flush_not_enough_earnings = "You don't have enough balance to flush {} satoshis."
+
+    flush_invalid_address = click.style(
+        "The Bitcoin address you specified is not a valid Bitcoin address.", fg="red")
     # ad
     buy_ad = click.style("Get a 21 Bitcoin Computer at https://21.co/buy", fg="magenta")
 
@@ -281,7 +331,7 @@ class UxString:
         "earning_payout": "This is a periodic payout of your mining earnings to "
                           "the Blockchain.",
         "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer.",
-        "coinbase_purchase": "You bought and transferred Bitcoins to your account through "
+        "coinbase_purchase": "You bought and transferred bitcoin to your account through "
                              "Coinbase."
     }
 
@@ -292,10 +342,10 @@ class UxString:
 
     log_intro = click.style("[21 Activity Log]\n\n", bold=True, fg="magenta")
 
-    debit_message = "{} : {:+d} Satoshis to your 21.co balance"
-    blockchain_credit_message = "{} : {:+d} Satoshis from your 21.co balance, " \
-                                "{:+d} Satoshis to your Blockchain balance"
-    credit_message = "{} : {:+d} Satoshis from your 21.co balance"
+    debit_message = "{} : {:+d} satoshis to your 21.co balance"
+    blockchain_credit_message = "{} : {:+d} satoshis from your 21.co balance, " \
+                                "{:+d} satoshis to your Blockchain balance"
+    credit_message = "{} : {:+d} satoshis from your 21.co balance"
 
     buy_message = "You bought '{}' from {}"
     sell_message = "You sold '{}' to {}"
@@ -312,10 +362,26 @@ class UxString:
     invalid_network = "Invalid network specified, please verify the network name."
     join_cmd = click.style("21 join", bold=True, reset=False)
 
-    no_network = click.style("You are not part of any network.", fg="blue")
-    install_zerotier = click.style("To join network you must have zerotier-one installed.\n"
+    no_network = click.style("You are not part of any network. Run: 21 join", fg="blue")
+    install_zerotier = click.style("To join a network you must have zerotier-one installed.\n"
                                    "See installation instructions at:\n"
                                    "\n\thttps://www.zerotier.com/product-one.shtml\n")
+
+    join_network_beta_warning = """
+21 is in Beta: warning
+----------------------
+Note that by executing this command you make it possible for others
+to directly connect to you in order to buy your digital goods for
+bitcoin. You can stand up a bitcoin-payable server instantly on any
+machine that others can buy from.  As such, please remember that the
+21 software is in beta and not ready for commercial release.  WE ARE
+PROVIDING THE 21 SOFTWARE AS-IS, AND YOU ASSUME ALL RISK OF USING
+21 WHILE IN BETA.  To help protect the security of your systems when
+using 21 while in beta, we recommend you running the software on an
+EC2 instance, an old laptop, or a small standalone machine like a 21
+Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
+"""
+    join_network_beta_exit = "OK, understood. Check out 21.co/buy or 21.co/diy to set up a standalone machine."
 
     # publish
     publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
@@ -327,7 +393,7 @@ class UxString:
                                  publish_instructions)
 
     malformed_yaml = click.style("Your manifest file at {} is not valid YAML.", fg="red")
-    large_manifest = click.style("Size of the manifest file at {} exceeds the maximum limit of 2MB.", fg="red")
+    large_manifest = click.style("The size of the manifest file at {} exceeds the maximum limit of 2MB.", fg="red")
 
     manifest_is_directory = click.style("{} is a directory. Please enter the direct path to the manifest file.",
                                         fg="red")
@@ -419,9 +485,9 @@ class UxString:
     estimated_daily_revenue = click.style("Estimated revenue: {} cents/day")
     unsuccessfull_python_requirements = click.style("Unsuccessfully installed python requirements: {}", fg="red")
     unsuccessfull_server_requirements = click.style("Unsuccessfully installed server requirements: {}", fg="red")
-    app_directory_valid = click.style("App Directory Valid...", fg="magenta")
-    app_directory_invalid = click.style("App Directory Invalid. Please ensure" +
-                                        "your directory and it's contents are correct, " +
+    app_directory_valid = click.style("App directory valid...", fg="magenta")
+    app_directory_invalid = click.style("App directory is invalid. Please ensure" +
+                                        "your directory and its contents are correct, " +
                                         "refer to 21.co/app for futher instructions.", fg="red")
     installing_requirements = click.style("Installing requirements...", fg="magenta")
     installed_requirements = click.style("Successfully installed requirements...", fg="magenta")
@@ -469,9 +535,10 @@ class UxString:
     no_ratings = click.style("You haven't rated any apps yet.", fg="blue")
 
     # send
-
-    send_success = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\ntxn: {3}\n"
+    send_success = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\n"
                     "To see on the blockchain: https://blockexplorer.com/tx/{2}")
+    send_success_verbose = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\ntxn: {3}\n"
+                            "To see on the blockchain: https://blockexplorer.com/tx/{2}")
     send_insufficient_confirmed = ("Insufficient confirmed balance. However, you can use unconfirmed"
                                    " transactions with --use-unconfirmed. ")
     send_insufficient_blockchain = (
@@ -481,7 +548,6 @@ class UxString:
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
 
     # logger
-    less_env = '-RPpress h for help, q for quit'
     lib_import_warning = click.style(
         "\n".join((
             "#" * 80,
@@ -531,15 +597,24 @@ class UxString:
         # version errors
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
         insufficient_funds_mine_more = str(
-            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to get more.*\n\nYou may also"
-            " use your on-chain balance for this transaction. It will include a {} satoshi tx fee. To use "
-            "on-chain balance add {} to your buy command*"
-        ).format(click.style("21 mine", bold=True), {}, click.style("-p onchain", bold=True))
+            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to view your balance. "
+            "Type {} to get more satoshis.\n\nYou may also"
+            " use your on-chain balance for this transaction. It will include a small tx fee. To use "
+            "on-chain balance add {} to your buy command."
+        ).format(click.style("21 status", bold=True), click.style("21 mine", bold=True),
+                 click.style("-p onchain", bold=True))
+        insufficient_funds_earn_more = str(
+            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to view your balance. "
+            "Type {} to get more satoshis.\n\nYou may also"
+            " use your on-chain balance for this transaction. It will include a small tx fee. To use "
+            "on-chain balance add {} to your buy command."
+        ).format(click.style("21 status", bold=True), click.style("21 earn", bold=True),
+                 click.style("-p onchain", bold=True))
 
         # account errors
         login_error_username = "Can not log into account, username not set"
         login_error_mining_auth_pubkey = "Can not log into account, username not set"
 
         # sell creation errors
-        url_not_supported = "Url type is not supported"
+        url_not_supported = "URL type is not supported"
         repo_clone_fail = "Failed to clone repo {}"
