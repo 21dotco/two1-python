@@ -22,6 +22,7 @@ else:
 install_requires = [
                     'arrow',
                     'base58',
+                    'docker-py==1.8.0',
                     'pytest',
                     'requests',
                     'responses',
@@ -43,16 +44,16 @@ version = __import__('two1').TWO1_VERSION
 setup(
     name='two1',
     version=version,
-    description='Buy and sell anything on the internet with Bitcoin.',
+    description='Buy and sell anything on the internet with bitcoin.',
     long_description=long_description,
     url='https://github.com/21dotco/two1',
     author='21',
-    author_email='21@21.co',
+    author_email='support@21.co',
     license='MIT',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Internet',
         'License :: OSI Approved :: MIT License',
@@ -64,6 +65,9 @@ setup(
     # simple. Or you can use find_packages().
     packages=['two1',
               'two1.mkt',
+              'two1.sell',
+              'two1.sell.util',
+              'two1.sell.exceptions',
               'two1.lib',
               'two1.commands',
               'two1.bitcoin',
@@ -100,7 +104,21 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        'two1': ['two1-config.json'],
+        'two1': ['two1-config.json',
+                 'sell/blueprints/base/Dockerfile',
+                 'sell/blueprints/router/Dockerfile',
+                 'sell/blueprints/router/files/nginx.conf',
+                 'sell/blueprints/payments/Dockerfile',
+                 'sell/blueprints/payments/requirements.txt',
+                 'sell/blueprints/payments/login.py',
+                 'sell/blueprints/payments/server.py',
+                 'sell/blueprints/services/ping/Dockerfile',
+                 'sell/blueprints/services/ping/ping21.py',
+                 'sell/blueprints/services/ping/requirements.txt',
+                 'sell/blueprints/services/ping/server.py',
+                 'sell/blueprints/services/ping/manifest.yaml',
+                 'sell/blueprints/services/ping/login.py',
+                 'sell/util/schema.sql']
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

@@ -1,4 +1,4 @@
-""" Log command that show a list of notifications """
+"""View a log of 21 CLI events."""
 # standart python imports
 import logging
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 @decorators.json_output
 @decorators.capture_usage
 def log(ctx, debug):
-    """Shows a list of events for your Bitcoin Computer"""
+    """View a log of events of earning/spending BTC."""
     prints = []
 
     logs = get_bc_logs(ctx.obj['client'], debug)
@@ -36,7 +36,7 @@ def log(ctx, debug):
 
 
 def get_bc_logs(client, debug):
-    """ Gets a list of formatted logs messages
+    """Get a list of formatted log messages.
 
     Args:
         client (TwentyOneRestClient): rest client used for communication with the backend api.

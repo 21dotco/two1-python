@@ -34,7 +34,7 @@ class TwentyOneRestClient(object):
     def _create_session(self):
         self._session = requests.Session()
 
-    def _request(self, sign_username=None, method="GET", path="", **kwargs):
+    def _request(self, sign_username=None, method="GET", path="", two1_auth=None, **kwargs):
         if self._session is None:
             self._create_session()
 
@@ -52,6 +52,12 @@ class TwentyOneRestClient(object):
             headers["Authorization"] = "21 {} {} {}".format(timestamp,
                                                             sign_username,
                                                             sig)
+
+        if two1_auth is not None:
+            auth_string = 'Basic ' + base64.b64encode(
+                bytes('{}:{}'.format(two1_auth[0], two1_auth[1]), 'utf-8')
+                ).decode().strip()
+            headers["Authorization"] = auth_string
         # Change the user agent to contain the 21 CLI and version
         headers["User-Agent"] = "21/{}".format(two1.TWO1_VERSION)
         headers["From"] = "{}@{}".format(self._wallet_pk, self._device_id)
@@ -122,6 +128,16 @@ class TwentyOneRestClient(object):
                 raise e
         return ret
 
+    def login(self, payout_address, password):
+        path = "/users/{}/".format(self.username)
+        data = json.dumps({
+            "payout_address": payout_address,
+            "public_key": self._wallet_pk
+        })
+        two1_auth = (self.username, password)
+        r = self._request(sign_username=None, method="POST", path=path, data=data, two1_auth=two1_auth)
+        return r
+
     # GET /pool/work/{username}
     def get_work(self):
         path = "/pool/work/{}/".format(self.username)
@@ -162,11 +178,14 @@ class TwentyOneRestClient(object):
         return sum(amts)
 
     # POST /pool/{username}/earnings/?action=True
-    def flush_earnings(self, amount=None):
+    def flush_earnings(self, amount=None, payout_address=None):
         path = "/pool/account/{}/earnings/?action=flush".format(self.username)
         data = {}
         if amount:
             data["amount"] = amount
+
+        if payout_address:
+            data["payout_address"] = payout_address
 
         data = json.dumps(data)
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
@@ -188,27 +207,21 @@ class TwentyOneRestClient(object):
         path = "/integrations/coinbase/{}/status/".format(self.username)
         return self._request(sign_username=self.username, method="GET", path=path)
 
-    # GET /integrations/coinbase/{username}/status
+    # GET /integrations/coinbase/{username}/history
     def get_coinbase_history(self):
         path = "/integrations/coinbase/{}/history/".format(self.username)
         return self._request(sign_username=self.username, method="GET", path=path)
 
+    # GET /integrations/coinbase/price/?amount={amount_in_satoshis}
+    def quote_bitcoin_price(self, amount=1e8):
+        path = "/integrations/coinbase/price/?amount={}".format(amount)
+        return self._request(sign_username=self.username, method="GET", path=path)
+
     # POST /integrations/coinbase/buys/
-    def buy_bitcoin_from_exchange(self, amount, unit, commit=False, deposit_type="WALLET"):
-        data = json.dumps({"amount": amount, "unit": unit, "deposit_type": deposit_type,
-                           "commit": commit})
+    def buy_bitcoin_from_exchange(self, amount, unit, commit=False):
+        data = json.dumps({"amount": amount, "unit": unit, "commit": commit})
         path = "/integrations/coinbase/buys/"
         return self._request(sign_username=self.username, method="POST", path=path, data=data)
-
-    # GET /mmm/v1/search
-    def mmm_search(self, query, page_num=1, minprice=None, maxprice=None, sort='match', ascending=False):
-        method = "GET"
-        path = "/mmm/v1/search/"
-        params = {
-            "q": query,
-            "page": page_num,
-            'sort': sort,
-        }
 
     def mark_notifications_read(self, username):
         path = "/pool/account/{}/notifications/?action=mark_read".format(self.username)

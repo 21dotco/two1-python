@@ -166,7 +166,7 @@ def market_search_formatter(search_results):
             rows.append(["", l, "", "", "", ""])
         rows.append(["", "", "", "", "", ""])
 
-    return tabulate(rows, headers=headers, tablefmt="psql")
+    return tabulate(rows, headers=headers, tablefmt="simple")
 
 
 def get_next_page(prompt_response, current_page):

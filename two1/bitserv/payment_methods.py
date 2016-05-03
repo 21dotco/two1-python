@@ -111,9 +111,9 @@ class OnChain(PaymentBase):
     http_402_address = 'Bitcoin-Address'
     DUST_LIMIT = 3000  # dust limit in satoshi
 
-    def __init__(self, wallet, db=None):
+    def __init__(self, wallet, db=None, db_dir=None):
         """Initialize payment handling for on-chain payments."""
-        self.db = db or OnChainSQLite3()
+        self.db = db or OnChainSQLite3(db_dir=db_dir)
         self.address = wallet.get_payout_address()
         self.provider = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
 

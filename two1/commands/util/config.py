@@ -10,16 +10,13 @@ import two1.commands.util.exceptions as exceptions
 
 
 class Config:
-
-    """Stores information required to run two1 commands."""
+    """Store information required to run two1 commands."""
 
     DEFAULTS = dict(username=None,
                     sellprice=10000,
                     contact='two1@21.co',
                     stdout='.two1/two1.stdout',
                     stderr='.two1/two1.stderr',
-                    bitin='.bitcoin/wallet.dat',
-                    bitout='.bitcoin/wallet.dat',
                     sortby='price',
                     maxspend=20000,
                     verbose=False,
@@ -29,7 +26,11 @@ class Config:
                     collect_analytics=False)
 
     def __init__(self, config_file=two1.TWO1_CONFIG_FILE, config=None):
-        """Return a new Config object with defaults plus custom properties."""
+        """Return a new Config object with defaults plus custom properties.
+           the `config_file` is used to load any config variables found on the
+           system, and then the `config` input dictionary is used as the final
+           override.
+        """
         # Load configuration defaults
         self.state = {key: val for key, val in Config.DEFAULTS.items()}
 
@@ -37,8 +38,11 @@ class Config:
             raise TypeError('Parameter "config_file" must be a filename.')
         self.config_abs_path = os.path.expanduser(config_file)
 
+        self.load_file_config(config_file)
+
         # Override defaults with any custom configuration
-        self.load_dict_config(config) if config else self.load_file_config(config_file)
+        if config:
+            self.load_dict_config(config)
 
     def load_file_config(self, config_file):
         """Set config properties based on a file."""
@@ -88,12 +92,6 @@ class Config:
 
     def __repr__(self):
         """Return a printable version of the config state."""
-        return '<Config {}>'.format(', '.join('{}: {}'.format(key, self.state[key]) for key in sorted(self.state.keys())))
-
-    def get_purchases(self):
-        """
-        Todo:
-            remove this function, it does nothing
-        """
-        # read all right now. TODO: read the most recent ones only
-        return []
+        sorted_keys = sorted(self.state.keys())
+        fmt_keys = ['{}: {}'.format(key, self.state[key]) for key in sorted_keys]
+        return '<Config {}>'.format(', '.join(fmt_keys))

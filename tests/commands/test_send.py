@@ -15,7 +15,7 @@ def test_send(patch_click, mock_wallet):
     """Test basic send functionality."""
     send_success = [dict(txid='short_txid', txn='long_txn_hex')]
     mock_wallet.send_to = mock.Mock(return_value=send_success)
-    send_data = send._send(mock_wallet, 'myaddress', 10000)
+    send_data = send._send(mock_wallet, 'myaddress', 10000, verbose=True)
 
     click.echo.call_count == 1
     assert send_data == send_success
@@ -31,5 +31,5 @@ def test_send_errors(patch_click, mock_wallet, side_effect, user_message):
     """Test send error paths."""
     mock_wallet.send_to = mock.Mock(side_effect=side_effect)
     with pytest.raises(click.ClickException) as exc:
-        send_data = send._send(mock_wallet, 'myaddress', 10000)
+        send_data = send._send(mock_wallet, 'myaddress', 10000, verbose=True)
         assert str(exc) == user_message

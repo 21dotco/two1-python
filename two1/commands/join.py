@@ -18,10 +18,19 @@ from two1.commands.util import exceptions
 logger = logging.getLogger(__name__)
 
 
+def getinput(msg, choices):
+    while True:
+        out = input(msg)
+        if out in choices:
+            return out
+        else:
+            print("Invalid choice. Please try again.")
+
+
 @click.command()
 @click.argument("network", default="21market")
 @click.option('--status', is_flag=True, default=False,
-              help='Show the status of all the networks that you have joined.')
+              help='Show status of all networks that you have joined.')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
@@ -32,55 +41,53 @@ def join(ctx, network, status):
 \b
 Usage
 -----
-$ 21 join 21market
-
-Join 21market network
-
-$ 21 join --status
-
-Shows the status of all the networks that you have joined
+21 join            # Join 21's peer-to-peer network
+21 join --status   # Confirm that you have joined
 """
     if status:
         show_network_status()
     else:
-        _join(ctx.obj['client'], network)
+        logger.info(uxstring.UxString.join_network_beta_warning)
+        response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
+        if response == "y":
+            logger.info(uxstring.UxString.superuser_password)
+            _join(ctx.obj['client'], network)
+        else:
+            logger.info(uxstring.UxString.join_network_beta_exit)
 
 
 def show_network_status():
-    """ Prints the network status of the zerotier networks """
+    """Print network status."""
     networks_info = zerotier.get_all_addresses()
     if len(networks_info) == 0:
         logger.info(uxstring.UxString.no_network)
-        return
-
-    headers = ["Network Name", "Your IP"]
-    rows = []
-    for name, ip in networks_info.items():
-        rows.append([name, ip])
-
-    logger.info(tabulate(rows, headers, tablefmt="grid"))
+    else:
+        headers = ["Network Name", "Your IP"]
+        rows = []
+        for name, ip in networks_info.items():
+            rows.append([name, ip])
+        logger.info(tabulate(rows, headers, tablefmt="simple"))
 
 
 def _join(client, network):
-    """ Joins the given zerotier network
+    """Join the given network.
 
     Args:
-        client (two1.server.rest_client.TwentyOneRestClient) an object for
-            sending authenticated requests to the TwentyOne backend.
-        network (str): the name of the network being joined. Defaults to 21market
+        client (two1.server.rest_client.TwentyOneRestClient) an object
+            for sending authenticated requests to the TwentyOne
+            backend
+        network (str): the name of the network being joined. Defaults
+        to 21market
 
     Raises:
         ServerRequestError: if server returns an error code other than 401
     """
     try:
-        logger.info(uxstring.UxString.superuser_password)
-
         if zerotier.is_installed():
             # ensures the zerotier daemon is running
             zerotier.start_daemon()
         else:
             logger.info(uxstring.UxString.install_zerotier)
-
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:

@@ -226,12 +226,16 @@ class DatabaseSQLite3(ChannelDataManager):
     """Default payment channel data bindings when no data service is provided."""
 
     DEFAULT_PAYMENT_DB_DIR = os.path.expanduser('~/.two1/payment/')
-    DEFAULT_PAYMENT_DB_PATH = DEFAULT_PAYMENT_DB_DIR + 'payment.sqlite3'
+    DEFAULT_PAYMENT_DB_PATH = 'payment.sqlite3'
 
-    def __init__(self, db=DEFAULT_PAYMENT_DB_PATH):
-        if not os.path.exists(DatabaseSQLite3.DEFAULT_PAYMENT_DB_DIR):
-            os.makedirs(DatabaseSQLite3.DEFAULT_PAYMENT_DB_DIR)
-        self.connection = sqlite3.connect(db, check_same_thread=False)
+    def __init__(self, db=None, db_dir=None):
+        if db_dir is None:
+            db_dir = DatabaseSQLite3.DEFAULT_PAYMENT_DB_DIR
+        if db is None:
+            db = DatabaseSQLite3.DEFAULT_PAYMENT_DB_PATH
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        self.connection = sqlite3.connect(os.path.join(db_dir, db), check_same_thread=False)
         self.c = self.connection.cursor()
         self.pc = ChannelSQLite3(self)
         self.pmt = PaymentSQLite3(self)
@@ -411,14 +415,17 @@ class OnChainSQLite3(OnChainDatabase):
     """SQLite3 binding for the on-chain transaction model."""
 
     DEFAULT_PAYMENT_DB_DIR = os.path.expanduser('~/.two1/payment/')
-    DEFAULT_PAYMENT_DB_PATH = DEFAULT_PAYMENT_DB_DIR + 'payment.sqlite3'
+    DEFAULT_PAYMENT_DB_PATH = 'payment.sqlite3'
 
-    def __init__(self, db=DEFAULT_PAYMENT_DB_PATH):
+    def __init__(self, db=None, db_dir=None):
         """Instantiate SQLite3 for storing on chain transaction data."""
-        if not os.path.exists(OnChainSQLite3.DEFAULT_PAYMENT_DB_DIR):
-            os.makedirs(OnChainSQLite3.DEFAULT_PAYMENT_DB_DIR)
-        OnChainSQLite3.DEFAULT_PAYMENT_DB_PATH
-        self.connection = sqlite3.connect(db, check_same_thread=False)
+        if db_dir is None:
+            db_dir = OnChainSQLite3.DEFAULT_PAYMENT_DB_DIR
+        if db is None:
+            db = OnChainSQLite3.DEFAULT_PAYMENT_DB_PATH
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        self.connection = sqlite3.connect(os.path.join(db_dir, db), check_same_thread=False)
         self.c = self.connection.cursor()
         self.c.execute("CREATE TABLE IF NOT EXISTS 'payment_onchain' (txid text, amount integer)")
 

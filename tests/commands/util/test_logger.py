@@ -10,8 +10,8 @@ import click
 import pytest
 
 # two1 imports
-import two1.commands.util.uxstring as uxstring
 import two1.commands.util.logger as _logger
+from two1.commands.util.logger import LESS_ENV
 
 
 # Creates a ClickLogger
@@ -184,4 +184,4 @@ def test_pager(patch_stdout, patch_stdin, monkeypatch):
     assert "env" in subprocess.Popen.call_args[1]
     assert "PAGER" in subprocess.Popen.call_args[1]['env']
     assert "less" in subprocess.Popen.call_args[1]['env']['PAGER']
-    assert uxstring.UxString.less_env in subprocess.Popen.call_args[1]['env']['LESS']
+    assert LESS_ENV in subprocess.Popen.call_args[1]['env']['LESS']

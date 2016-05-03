@@ -30,6 +30,7 @@ from two1.wallet.wallet_txn import WalletTransaction
 from two1.wallet import fees as txn_fees
 from two1.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
+from two1.wallet.utxo_selectors import _fee_calc
 
 from two1.wallet import daemonizable
 
@@ -1479,13 +1480,20 @@ class Two1Wallet(BaseWallet):
         return total_value, num_utxos
 
     @daemonizable.method
-    def sweep(self, address, accounts=[]):
+    def sweep(self, address, accounts=[], fee_calculator=_fee_calc):
         """ Sweeps the entire balance to a single address.
 
         Args:
             address (str): Bitcoin address to send entire balance to.
             accounts (list(str or int)): List of accounts to use. If
                 not provided, all discovered accounts will be done.
+            fee_calculator (callable): A callable that calculates the
+                fee needed in satoshis from positional arguments
+                corresponding to: the number of input utxos, the
+                total value of the wallet, and a dictionary containing
+                keys 'per_kb', 'per_input' and 'per_output'
+                corresponding to the estimated fee per kb, per input,
+                and per output in satoshis respectively.
 
         Returns:
             list(str): List of txids used to complete the sweep.
@@ -1512,8 +1520,7 @@ class Two1Wallet(BaseWallet):
 
         # Compute an approximate fee
         fee_amounts = txn_fees.get_fees()
-        fees = num_utxos * (fee_amounts['per_input'] +
-                            fee_amounts['per_output'])
+        fees = fee_calculator(num_utxos, total_value, fee_amounts)
 
         curr_utxo_selector = self.utxo_selector
         s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)

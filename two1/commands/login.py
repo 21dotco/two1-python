@@ -23,31 +23,23 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
+@click.pass_context
 @click.option('-sp', '--setpassword', is_flag=True, default=False,
               help='Set/update your 21 password')
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
 @decorators.catch_all
-@decorators.json_output
 @decorators.capture_usage
 def login(ctx, setpassword, username, password):
-    """Log in to your 21 account.
+    """Login to your 21.co account.
 
 \b
 Usage
 _____
-Use an interactive login prompt to log in to your 21 account.
-$ 21 login
-
-\b
-Log in without the login prompt.
-$ 21 login -u your_username -p your_password
-
-\b
-Change the password for the currently logged in user.
-$ 21 login -sp
-
-    """
+21 login                  # Interactive login
+21 login -u user -p pass  # Headless login
+21 login -sp              # Set password for currently logged-in user
+"""
     config = ctx.obj['config']
 
     # A user needs to have a machine auth wallet in order to login to anything
@@ -93,12 +85,13 @@ def login_account(config, machine_auth, username=None, password=None):
             raise exceptions.UnloggedException(
                 click.style(uxstring.UxString.unconfirmed_email.format(email),
                             fg="blue"))
-        elif ex.status_code == 403:
+        elif ex.status_code == 403 or ex.status_code == 404:
             raise exceptions.UnloggedException(uxstring.UxString.incorrect_password)
         else:
             raise ex
 
     logger.info(uxstring.UxString.payout_address.format(payout_address))
+    logger.info(uxstring.UxString.get_started)
 
     # If config file hasn't been created yet ask for opt-in to analytics
     if not config.username:

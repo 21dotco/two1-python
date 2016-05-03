@@ -1,5 +1,5 @@
 """
-Mine Bitcoin locally via a CPU or built-in mining chip
+Mine bitcoin on a 21 Bitcoin Computer.
 """
 # standard python imports
 import json
@@ -25,6 +25,7 @@ from two1.commands.util.bitcoin_computer import has_mining_chip
 from two1.bitcoin.hash import Hash
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
+from two1.commands.util.uxstring import ux
 import two1.bitcoin.utils as utils
 
 
@@ -64,7 +65,14 @@ $ 21 mine --dashboard
 
 
 def _mine(config, client, wallet, dashboard=False):
-    """ Starts the mining ASIC if not mining and cpu mines if already mining
+    """ Start a mining chip if not already running. Otherwise mine at CLI.
+
+    On a 21 Bitcoin Computer, we attempt to start the mining chip if
+    is not already running. If it is already running, repeated
+    invocation of 21 mine will result in buffered mining (advances
+    against the next day's mining proceeds). Finally, if we are
+    running the 21 software on an arbitrary device (i.e. not on a
+    Bitcoin Computer), we prompt the user to use 21 earn instead.
 
     Args:
         config (Config): config object used for getting .two1 information
@@ -78,22 +86,18 @@ def _mine(config, client, wallet, dashboard=False):
             start_minerd(config, dashboard)
         elif dashboard:
             show_minertop(dashboard)
-        # if minerd is running and we have not specified a dashboard flag
-        # do a cpu mine
+        # if minerd is running and we have not specified a dashboard
+        # flag do a cpu mine
         else:
-            start_cpu_mining(config, client, wallet)
+            start_cpu_mining(config.username, client, wallet)
     else:
-        if dashboard:
-            logger.info(uxstring.UxString.mining_dashboard_no_bc)
-        logger.info(uxstring.UxString.buy_ad)
-        if not dashboard:
-            start_cpu_mining(config, client, wallet)
+        logger.info(uxstring.UxString.use_21_earn_instead)
 
 
 def is_minerd_running():
-    """ Checks if minerd id already running and mining
+    """ Check if minerd is already running and mining.
 
-        minerd is the miner client daemon.
+    Here, minerd is the miner client daemon.
 
     Returns:
         bool: True if minerd is already mining, False otherwise
@@ -110,7 +114,7 @@ def is_minerd_running():
 
 
 def show_minertop(show_dashboard):
-    """ Fires up minertop, the mining dashboard
+    """ Start minertop, the mining dashboard.
 
     Args:
         show_dashboard (bool): shows the dashboard if True
@@ -123,7 +127,7 @@ def show_minertop(show_dashboard):
 
 
 def start_minerd(config, show_dashboard=False):
-    """ Starts minerd, a bitcoin mining client
+    """ Start minerd, a bitcoin mining client.
 
     Args:
         config (Config): config object used for getting .two1 information
@@ -160,19 +164,20 @@ def start_minerd(config, show_dashboard=False):
     show_minertop(show_dashboard)
 
 
-def start_cpu_mining(config, client, wallet):
-    """ Mines bitcoin on the command line by using the CPU of the system
+def start_cpu_mining(username, client, wallet, prefix='mining'):
+    """ Mine bitcoin on the command line by using the CPU of the system.
 
-    CPU mining, or foreground mining, is when the pool sets the difficulty
-    very low and the CPU finds a valid solution.
+    Note that this is primarily used to rate limit mining
+    advances. CPU mining, or foreground mining, is when the pool sets
+    the difficulty very low and the CPU finds a valid solution.
 
     Args:
-        config (Config): config object used for getting .two1 information
+        username (str): username from .two1/two1.json
     """
     enonce1, enonce2_size, reward = set_payout_address(client, wallet)
 
     start_time = time.time()
-    logger.info(uxstring.UxString.mining_start.format(config.username, reward))
+    ux(prefix + '_start', username, reward)
 
     # gets work from the server
     work = get_work(client)
@@ -185,23 +190,27 @@ def start_cpu_mining(config, client, wallet):
     end_time = time.time()
     duration = end_time - start_time
 
-    logger.info(
-        uxstring.UxString.mining_success.format(config.username, paid_satoshis, duration),
-        fg="magenta")
+    ux(prefix + '_success', username, paid_satoshis, duration, fg='magenta')
 
-    logger.info(uxstring.UxString.mining_status)
+    ux(prefix + '_status')
     status.status_wallet(client, wallet)
 
-    logger.info(uxstring.UxString.mining_finish.format(
-        click.style("21 status", bold=True), click.style("21 buy", bold=True)))
+    status21 = click.style("21 status", bold=True)
+    buy21 = click.style("21 buy", bold=True)
+    ux(prefix + '_finish', status21, buy21)
 
 
 def set_payout_address(client, wallet):
-    """ Set a new address from the HD wallet for payouts
+    """ Set a new address from the HD wallet for payouts.
+
+    Note that is set server-side on a per-account basis. Thus, in the
+    case where a single user has different wallets on different
+    machines, all mining proceeds on all machines are sent to this
+    address.
 
     Args:
-        config (Config): config object used for getting .two1 information
         client (TwentyOneRestClient): rest client used for communication with the backend api
+        wallet (two1.wallet.Wallet): a user's wallet instance
 
     Returns:
         bytes: extra nonce 1 which is required for computing the coinbase transaction
@@ -221,7 +230,7 @@ def set_payout_address(client, wallet):
 
 
 def check_pid(pid):
-    """ Makes a few checks to see if the given pid is valid
+    """ Make a few checks to see if the given pid is valid.
 
     Args:
         pid (int): a pid number
@@ -251,7 +260,7 @@ def check_pid(pid):
 
 
 def get_work(client):
-    """ Gets work from the pool using the rest client
+    """ Get work from the pool using the rest client.
 
     Args:
         client (TwentyOneRestClient): rest client used for communication with the backend api
@@ -266,7 +275,10 @@ def get_work(client):
             raise exceptions.BitcoinComputerNeededError(msg=uxstring.UxString.mining_bitcoin_computer_needed,
                                                         response=response)
         elif e.status_code == 404 or e.status_code == 403:
-            raise exceptions.MiningDisabledError(uxstring.UxString.mining_limit_reached)
+            if has_mining_chip():
+                raise exceptions.MiningDisabledError(uxstring.UxString.mining_limit_reached)
+            else:
+                raise exceptions.MiningDisabledError(uxstring.UxString.earn_limit_reached)
         else:
             raise e
 
@@ -281,18 +293,17 @@ Work = namedtuple('Work', ['work_id', 'enonce2', 'cb'])
 
 
 def mine_work(work_msg, enonce1, enonce2_size):
-    """ Mines the work using a CPU to find a valid solution
+    """ Mine the work using a CPU to find a valid solution.
 
-        Loops until the CPU finds a valid solution of the given work.
+    Loop until the CPU finds a valid solution of the given work.
 
     Todo:
-        slow down the click echo when on a 21BC
+        Slow down the click echo when on a 21BC.
 
     Args:
         work_msg (WorkNotification): the work given by the pool API
         enonce1 (bytes): extra nonce required to make the coinbase transaction
         enonce2_size (int): size of the extra nonce 2 in bytes
-
     """
     pool_target = utils.bits_to_target(work_msg.bits_pool)
     for enonce2_num in range(0, 2 ** (enonce2_size * 8)):
@@ -334,7 +345,7 @@ def mine_work(work_msg, enonce1, enonce2_size):
 
 
 def save_work(client, share):
-    """ Submits the share to the pool using the rest client
+    """ Submit the share to the pool using the rest client.
 
     Args:
         client (TwentyOneRestClient): rest client used for communication with the backend api

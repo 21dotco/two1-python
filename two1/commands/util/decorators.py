@@ -22,16 +22,20 @@ logger = logging.getLogger(__name__)
 
 
 def json_output(f):
-    """ Allows the return value to be optionally returned as json output with the '--json' flag.
+    """ Allows the return value to be optionally returned as json
+    output with the '--json' flag.
 
-        When a command fails but still has data to be printed as json, a Two1Error should be
-        raised because it takes an optional json param. This means we can pass any json data
-        using the Two1Error as a vehicle to "return" the json data to this decorator to allow
-        printing. This design was motivated by the `21 doctor` command because when a doctor
-        check fails it raises an exception and passes the results using the exception.
+    When a command fails but still has data to be printed as json, a
+    Two1Error should be raised because it takes an optional json
+    param. This means we can pass any json data using the Two1Error as
+    a vehicle to "return" the json data to this decorator to allow
+    printing. This design was motivated by the `21 doctor` command
+    because when a doctor check fails it raises an exception and
+    passes the results using the exception.
 
-        This could be changed to to have the return value expect a key of "error" in the case
-        of an error but since two1 uses exceptions to halt execution this design makes sense.
+    This could be changed to to have the return value expect a key of
+    "error" in the case of an error but since two1 uses exceptions to
+    halt execution this design makes sense.
     """
 
     @click.option('--json', default=False, is_flag=True, help='Uses JSON output.')
@@ -192,7 +196,9 @@ def catch_all(func):
         """
         try:
             return func(ctx, *args, **kwargs)
-
+        except click.Abort:
+            # on SIGINT click.prompt raise click.Abort
+            logger.error('')  # just to get a newline
         # raise all click exceptions because they are used to bail and print a message
         except click.ClickException:
             # dont raise exception if --json was given so no error messages are printed

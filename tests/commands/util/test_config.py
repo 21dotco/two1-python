@@ -10,8 +10,8 @@ import two1.commands.util.exceptions as exceptions
 CONFIG_DATA = json.dumps(dict(
     contact='two1@21.co', maxspend=25000, sellprice=11000, stderr='.two1/two1.stderr',
     username='satoshi', mining_auth_pubkey='i_haz_key', stdout='.two1/two1.stdout',
-    auto_update=False, verbose=False, bitin='.bitcoin/wallet.dat', sortby='price',
-    bitout='.bitcoin/wallet.dat', collect_analytics=True))
+    auto_update=False, verbose=False, sortby='price',
+    collect_analytics=True))
 PARTIAL_CONFIG_DATA = json.dumps(dict(contact='21@21.co'))
 
 
@@ -26,8 +26,6 @@ def test_basic_config():
     assert c.contact == 'two1@21.co'
     assert c.stdout == '.two1/two1.stdout'
     assert c.stderr == '.two1/two1.stderr'
-    assert c.bitin == '.bitcoin/wallet.dat'
-    assert c.bitout == '.bitcoin/wallet.dat'
     assert c.sortby == 'price'
     assert c.maxspend == 25000
     assert c.verbose is False
@@ -48,8 +46,6 @@ def test_default_config():
     assert c.contact == "21@21.co"
     assert c.stdout == ".two1/two1.stdout"
     assert c.stderr == ".two1/two1.stderr"
-    assert c.bitin == ".bitcoin/wallet.dat"
-    assert c.bitout == ".bitcoin/wallet.dat"
     assert c.sortby == "price"
     assert c.maxspend == 20000
     assert c.verbose is False
@@ -101,8 +97,6 @@ def test_no_config_file_exists():
     assert dc['contact'] == "two1@21.co"
     assert dc['stdout'] == ".two1/two1.stdout"
     assert dc['stderr'] == ".two1/two1.stderr"
-    assert dc['bitin'] == ".bitcoin/wallet.dat"
-    assert dc['bitout'] == ".bitcoin/wallet.dat"
     assert dc['sortby'] == "price"
     assert dc['maxspend'] == 20000
     assert dc['verbose'] is False
@@ -134,8 +128,6 @@ def test_config_repr():
     assert 'two1@21.co' in printed
     assert '.two1/two1.stdout' in printed
     assert '.two1/two1.stderr' in printed
-    assert '.bitcoin/wallet.dat' in printed
-    assert '.bitcoin/wallet.dat' in printed
     assert 'price' in printed
     assert '25000' in printed
     assert 'False' in printed

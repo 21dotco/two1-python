@@ -45,7 +45,7 @@ def test_on_chain_payment_method_headers():
     """Test general header methods in the on-chain payment decorator."""
     test_price = 8888
     test_address = '100MY0000FAKE0000ADDRESS0000'
-    test_db = OnChainSQLite3(':memory:')
+    test_db = OnChainSQLite3(':memory:', db_dir='')
     requests = OnChain(test_wallet, test_db)
 
     # Test that it returns a list of payment headers
@@ -71,7 +71,7 @@ def test_on_chain_payment_method_redeem_errors():
     test_dust = 100
     test_price = 8888
     test_bad_price = 8887
-    test_db = OnChainSQLite3(':memory:')
+    test_db = OnChainSQLite3(':memory:', db_dir='')
     requests = OnChain(test_wallet, test_db)
 
     # Test that a payment less than the dust limit cannot be made
@@ -102,7 +102,7 @@ def test_on_chain_payment_method_redeem_errors():
 def test_on_chain_payment_method_redeem_broadcast(monkeypatch):
     """Test broadcast functionality in redeem_payment."""
     test_price = 8888
-    test_db = OnChainSQLite3(':memory:')
+    test_db = OnChainSQLite3(':memory:', db_dir='')
     requests = OnChain(test_wallet, test_db)
     monkeypatch.setattr(requests.provider, 'broadcast_transaction', _mock_broadcast_failure)
 
@@ -126,7 +126,7 @@ def test_on_chain_payment_method_redeem_broadcast(monkeypatch):
 def test_on_chain_payment_method_redeem_success(monkeypatch):
     """Test success in redeem_payment."""
     test_price = 8888
-    test_db = OnChainSQLite3(':memory:')
+    test_db = OnChainSQLite3(':memory:', db_dir='')
     requests = OnChain(test_wallet, test_db)
     monkeypatch.setattr(requests.provider, 'broadcast_transaction', _mock_broadcast_success)
 

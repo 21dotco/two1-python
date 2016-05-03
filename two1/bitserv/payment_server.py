@@ -77,7 +77,7 @@ class PaymentServer:
     """Thread lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None, zeroconf=True, sync_period=600):
+                 blockchain=None, zeroconf=True, sync_period=600, db_dir=None):
         """Initalize the payment server.
 
         Args:
@@ -101,7 +101,7 @@ class PaymentServer:
         self._blockchain = blockchain
         self._db = db
         if db is None:
-            self._db = DatabaseSQLite3()
+            self._db = DatabaseSQLite3(db_dir=db_dir)
         if blockchain is None:
             self._blockchain = TwentyOneBlockchain(PaymentServer.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not self._wallet._wallet.testnet else PaymentServer.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
         self._sync_stop = threading.Event()

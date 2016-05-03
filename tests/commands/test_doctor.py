@@ -22,7 +22,10 @@ from two1.commands.doctor import Doctor
     ("1.0.0", "0.0.0", True),
     ("9.8.1", "9.8.1", True),
     ("3.0.0", "2.3.8", True),
-    ])
+    ("3.0.0", "3.0.0rc5", True),
+    ('3.13.0-74-generic', '3.13.0', True),
+    ('4.1.10-v7+', '4.0.0', True),
+])
 def test_is_version_gte(doctor, actual_version, expected_version, return_value):
     """ Ensures the logic of is_version_gte is correct and handle bad input """
     if isinstance(return_value, bool):
@@ -183,8 +186,9 @@ def test_doctor_integration(doctor):
 
 @pytest.mark.parametrize('system, release_os, check_status', [
     ('Linux', '3.12.0', Check.Result.FAIL),
-    ('Linux', '3.13.0', Check.Result.WARN),
+    ('Linux', '3.13.0-74-generic', Check.Result.WARN),
     ('Linux', '4.0.0', Check.Result.PASS),
+    ('Linux', '4.1.10-v7+', Check.Result.PASS),
     ('Darwin', '13.0.0', Check.Result.FAIL),
     ('Darwin', '14.5.0', Check.Result.PASS),
 ])

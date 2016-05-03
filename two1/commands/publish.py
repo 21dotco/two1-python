@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def publish():
-    """Publish/Manage your marketplace apps.
+    """Publish apps to the 21 Marketplace.
 
 \b
 Usage
@@ -297,9 +297,11 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     try:
         response = client.publish(payload)
     except ServerRequestError as e:
-        if e.status_code == 403 and "error" in e.data.get("error") == "TO600":
+        if e.status_code == 403 and e.data.get("error") == "TO600":
             logger.info(uxstring.UxString.app_url_claimed.format(app_endpoint), fg="red")
             return
+        else:
+            raise e
 
     if response.status_code == 201:
         logger.info(uxstring.UxString.publish_success.format(app_name, marketplace))
@@ -345,7 +347,7 @@ def get_search_results(config, client, page):
                      "{:.2f}%".format(r["average_uptime"] * 100),
                      util.format_date(r["last_update"])])
 
-    logger.info(tabulate(rows, headers, tablefmt="grid"))
+    logger.info(tabulate(rows, headers, tablefmt="simple"))
 
     return total_pages
 

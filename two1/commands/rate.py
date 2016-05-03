@@ -77,7 +77,7 @@ def _list(client):
             rows.append([rating["app_id"], rating["app_title"], rating["app_creator"],
                          rating_score, rating_date])
 
-        logger.info(tabulate(rows, headers, tablefmt="grid"))
+        logger.info(tabulate(rows, headers, tablefmt="simple"))
 
     except exceptions.ServerRequestError as e:
         if e.status_code == 404:
@@ -108,6 +108,9 @@ def _rate(client, app_id, rating):
     except exceptions.ServerRequestError as e:
         if e.status_code == 404:
             logger.info(uxstring.UxString.rating_app_not_found.format(app_id))
+            return
+        elif e.status_code == 400:
+            logger.info(e.data['error'])
             return
         raise e
 
