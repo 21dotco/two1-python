@@ -610,9 +610,13 @@ def publish_started(not_published, zt_ip, port, manager):
                 publish_stats.append((service.title(), True, ["Published"]))
             else:
                 publish_stats.append((service.title(), False, ["Failed to publish"]))
-
         except ServerRequestError as e:
-            publish_stats.append((service.title(), False, [e]))
+            if e.status_code == 403 and e.data.get("error") == "TO600":
+                publish_stats.append((service.title(), False, ["Endpoint already published"]))
+            else:
+                publish_stats.append((service.title(), False, ["Failed to publish"]))
+        else:
+            publish_stats.append((service.title(), False, ["Failed to publish"]))
 
     return publish_stats
 
