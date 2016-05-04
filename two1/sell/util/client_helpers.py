@@ -54,7 +54,7 @@ def get_platform():
                                        detected_distro=detected_distro,
                                        is_supported=False,
                                        help_message="The `21 sell` service manager is not "
-                                       "yet avaible on this system.",
+                                       "yet available on this system.",
                                        label="")
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
