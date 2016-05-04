@@ -596,7 +596,7 @@ def publish_started(not_published, zt_ip, port, manager):
 
         manifest_json["basePath"] = "/%s" % service
         manifest_json["host"] = "%s:%s" % (zt_ip, port)
-        manifest_json["info"]["x-21-quick-buy"] = manifest_json["info"]["x-21-quick-buy"] % (zt_ip, port)
+        manifest_json["info"]["x-21-quick-buy"] = manifest_json["info"]["x-21-quick-buy"] % (zt_ip, port, service)
 
         manifest_write_path = os.path.join(os.path.dirname(Two1Composer.COMPOSE_FILE), "%s_manifest.yaml" % service)
 
