@@ -1,20 +1,18 @@
-# !/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+import ipaddress
 import logging
 import os
 import subprocess
 
 import click
-import psutil
+import re
 import yaml
 from flask import Flask
 from flask import request, jsonify
 from two1.bitserv.flask import Payment
 from two1.wallet.two1_wallet import Wallet
 from werkzeug.exceptions import *
+import requests
 
-from ping21 import get_server_info, ping
 
 from two1.sell.util.decorators import track_requests
 from two1.sell.util.decorators import DEFAULT_PRICE
@@ -30,17 +28,54 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 
+def get_server_info():
+    """Gets network metadata for the machine calling the function.
+
+    see http://ipinfo.io for more info.
+    Returns:
+        dict: A dictionary with keys ip, hostname, city, region, country, loc, org, postal if sucessful,
+              or a dictionary with key "error" with the error code as the corresponding value
+
+    """
+    r = requests.get('http://ipinfo.io')
+    try:
+        r.raise_for_status()
+    except requests.HTTPError:
+        return {"error": r.status_code}
+    else:
+        try:
+            return r.json()
+        except Exception as e:
+            return {"error": e}
+
+
+def is_valid_hostname(hostname):
+    # http://stackoverflow.com/a/2532344
+    if len(hostname) > 255:
+        return False
+    if hostname[-1] == ".":
+        hostname = hostname[:-1]  # strip exactly one dot from the right, if present
+    allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+    return all(allowed.match(x) for x in hostname.split("."))
+
+
 @app.route('/manifest')
 def manifest():
     """Provide the app manifest to the 21 crawler.
     """
-    with open(os.path.join("/usr/src/db", "ping_manifest.yaml"), 'r') as f:
-        manifest = yaml.load(f)
-    return jsonify(**manifest)
+    manifest_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'manifest.yaml')
+    with open(manifest_path, 'r') as f:
+        manifest_dict = yaml.load(f)
+    return jsonify(**manifest_dict)
 
 
 @app.route('/info')
 def info():
+    """
+
+    Returns: A JSON response composed of the contents of get_server_info
+
+    """
     return jsonify(**get_server_info())
 
 
@@ -54,59 +89,44 @@ def standard_ping():
     Returns: HTTPResponse 200 with a json containing the ping info.
     BadRequest 400 if no uri is specified or the uri is malformed/cannot be pingd.
     """
+
+    # strip protocol part of URL
     try:
-        uri = request.args['uri'].replace('https://', '').replace('http://', '')
+        hostname = request.args['uri'].replace('https://', '').replace('http://', '')
     except KeyError:
         raise BadRequest("Host query parameter is missing from your request.")
 
-    return ping([uri],
-                app.config['PING21_ALLOW_PRIVATE'],
-                app.config['PING21_DEFAULT_ECHO'],
-                app.config['PING21_MAX_ECHO'])
+    if not hostname:
+        raise BadRequest("Host query parameter is missing from your request.")
 
+    # disallow private addresses
+    try:
+        if ipaddress.ip_address(hostname).is_private:
+            raise Forbidden("Private IP scanning is forbidden")
+    except ValueError:  # raised when hostname isn't an ip address
+        if not is_valid_hostname(hostname):
+            raise Forbidden("Invalid hostname.")
 
-@app.route('/cli', methods=['POST'])
-@payment.required(os.environ.get("PRICE_PING_CLI", DEFAULT_PRICE),
-                  server_url=os.environ.get("PAYMENT_SERVER_IP", None))
-@track_requests
-def cli_ping():
-    return ping(request.get_json()['args'],
-                app.config['PING21_ALLOW_PRIVATE'],
-                app.config['PING21_DEFAULT_ECHO'],
-                app.config['PING21_MAX_ECHO'])
+    # call ping
+    args = ['ping', '-c', str(app.config['PING21_DEFAULT_ECHO']), hostname]
+    try:
+        out = subprocess.check_output(args, universal_newlines=True)
+    except subprocess.CalledProcessError:
+        raise InternalServerError("An error occured while performing ping on host={}".format(hostname))
+
+    # format, jsonify, and return
+    return jsonify(**{
+        'ping': [line for line in out.split('\n') if line != ''],
+        'server': get_server_info()
+    })
 
 
 @click.command()
-@click.option("-d", "--daemon", default=False, is_flag=True,
-              help="Run in daemon mode.")
-@click.option("-p", "--private", default=False, is_flag=True,
-              help="Allow ping21 to ping private ips.")
 @click.argument('defaultecho', type=click.IntRange(min=1), default=3)
-@click.argument('maxecho', type=click.IntRange(min=1), default=5)
-def run(daemon, private, maxecho, defaultecho):
-    if defaultecho > maxecho:
-        raise ValueError("default echo count cannot be more than the maximum echo count")
-    app.config['PING21_MAX_ECHO'] = maxecho
+def run(defaultecho):
     app.config['PING21_DEFAULT_ECHO'] = defaultecho
-    app.config['PING21_ALLOW_PRIVATE'] = private
-    if daemon:
-        pid_file = './ping21.pid'
-        if os.path.isfile(pid_file):
-            pid = int(open(pid_file).read())
-            os.remove(pid_file)
-            try:
-                p = psutil.Process(pid)
-                p.terminate()
-            except:
-                pass
-        try:
-            p = subprocess.Popen(['python3', 'ping21.py', maxecho, defaultecho])
-            open(pid_file, 'w').write(str(p.pid))
-        except subprocess.CalledProcessError:
-            raise ValueError("error starting ping21.py daemon")
-    else:
-        print("Server running...")
-        app.run(host='0.0.0.0', port=5000)
+    print("Server running...")
+    app.run(host='0.0.0.0', port=5000)
 
 
 if __name__ == '__main__':

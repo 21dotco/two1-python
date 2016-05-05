@@ -6,9 +6,9 @@ import sqlite3
 from contextlib import closing
 
 
-class Two1SellDB():
+class Two1SellDB:
 
-    DEFAULT_DB_DIR = "~/.two1/services"
+    DEFAULT_DB_DIR = "~/.two1/services/db"
 
     def __init__(self, db_dir=None):
         """ Init 21 sell database.
@@ -35,6 +35,11 @@ class Two1SellDB():
 
     def update(self, service, request_type, price):
         """ Update db with request, buffer, wallet and channel stats.
+
+        Args:
+            service: Name of the service
+            request_type: The type of payment request made, valid values: 'buffer', 'wallet', or 'channel'
+            price: Price of the endpoint
         """
         if request_type not in ["buffer", "wallet", "channel"]:
             raise ValueError("request_type must be \"buffer\", \"wallet\" or \"channel\"")
@@ -63,6 +68,9 @@ class Two1SellDB():
 
     def get_earnings(self, service):
         """ Compute service earnings.
+
+        Args:
+            service: The service name to get earnings for
         """
         with closing(self.connect_db()) as db:
             c = db.cursor()

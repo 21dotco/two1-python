@@ -1,27 +1,31 @@
-""" Installer for 21 sell.
+""" Installer for 21 sell service manager.
 """
 # standard python imports
 import os
-import subprocess
 import sys
+import subprocess
 from abc import ABCMeta
 from abc import abstractmethod
 
 
-class Two1SellInstaller():
+class Two1SellInstaller:
     """ OS-specific installer handler.
     """
+
+    SERVICE_DIR = os.path.expanduser("~/.two1/services")
+    DB_DIR = os.path.join(SERVICE_DIR, 'db')
     DOCKER_TOOLS = ["Virtualbox", "Docker Machine", "Docker Compose", "Docker"]
 
     def __init__(self, system, distro):
         """ Init installer handler.
         """
+
         if system == "Darwin":
-            # Mac OS X
+            # mac os x
             self.installer = InstallerMac()
         elif system == "Linux" and (
                 'debian-8.' in distro.lower() or 'ubuntu-14.04' in distro.lower()):
-            # Ubuntu/Debian AWS
+            # ubuntu/debian aws
             self.DOCKER_TOOLS.remove('Virtualbox')
             self.DOCKER_TOOLS.remove('Docker Machine')
             self.installer = InstallerAWSUbuntuDebian()
@@ -52,7 +56,7 @@ class Two1SellInstaller():
         return self.installer.check_dependencies()
 
 
-class InstallerBase():
+class InstallerBase:
     """ Abstract base Installer.
 
     Each OS installer must implement this base class.
@@ -110,15 +114,13 @@ class InstallerMac(InstallerBase):
     def _copy_services(self):
         try:
             if "services" not in os.listdir(os.path.expanduser("~/.two1")):
-                subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/")])
-            subprocess.check_output(["cp", "-r", os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "blueprints"),
-                                     os.path.expanduser("~/.two1/services")])
+                os.makedirs(Two1SellInstaller.DB_DIR, exist_ok=True)
+
             subprocess.check_output(["cp", os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                         "util", "schema.sql"),
-                                     os.path.expanduser("~/.two1/services")])
-        except Exception as e:
-            print(e)
+                                     Two1SellInstaller.DB_DIR])
+        except Exception:
+            raise
 
     def _make_tmp(self):
         try:
@@ -131,42 +133,45 @@ class InstallerMac(InstallerBase):
         """ Check for 21 sell dependencies.
         """
         installed = []
-        packages = []
-
-        packages.append("Virtualbox")
+        packages = ["Virtualbox"]
         try:
-            r = subprocess.check_output(["vboxmanage", "--version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["vboxmanage", "--version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Docker Machine")
         try:
-            r = subprocess.check_output(["docker-machine", "version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["docker-machine", "version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Docker Compose")
         try:
-            r = subprocess.check_output(["docker-compose", "version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["docker-compose", "version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Docker")
         try:
-            r = subprocess.check_output(["docker", "--version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["docker", "--version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Zerotier")
         try:
-            r = subprocess.check_output(["zerotier-cli", "-v"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["zerotier-cli", "-v"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
         return list(zip(packages, installed))
 
     def _cleanup(self):
@@ -180,12 +185,16 @@ class InstallerMac(InstallerBase):
 
     def program_installed(self, pname):
         """ Check if program exists.
+
+        Args:
+            pname: Program name to check
         """
         try:
             subprocess.check_output(["hash", pname], stderr=subprocess.DEVNULL)
-        except Exception as e:
+        except:
             return False
-        return True
+        else:
+            return True
 
     def install_zerotier(self):
         """ Install Zerotier virual network service.
@@ -196,7 +205,6 @@ class InstallerMac(InstallerBase):
         if not self.program_installed("zerotier-cli"):
             self._make_tmp()
             try:
-                # print("Installing Zerotier One...")
                 subprocess.check_output(["curl", InstallerMac.ZEROTIER_PKG_URL +
                                         InstallerMac.ZEROTIER_PKG.replace(" ", "%20"),
                                         "-o",
@@ -208,7 +216,6 @@ class InstallerMac(InstallerBase):
                                         InstallerMac.ZEROTIER_PKG.replace(" ", "-"),
                                         "-target", "/"],
                                         stderr=subprocess.DEVNULL)
-                # print("ZeroTier One successfully installed.")
                 exit_code = 0
             except Exception as e:
                 print(e)
@@ -242,7 +249,6 @@ class InstallerMac(InstallerBase):
                                          "-target", "/"])
                 subprocess.check_output(["hdiutil", "unmount", "/Volumes/VirtualBox/"])
                 subprocess.check_output(["rm", InstallerMac.VBOX_BINARY])
-                # todo install vbox extension pack
             except Exception as e:
                 print(e)
 
@@ -259,7 +265,6 @@ class InstallerMac(InstallerBase):
         if not all_installed:
             try:
                 self._make_tmp()
-                # print("Installing Docker Toolbox...")
                 subprocess.check_output(["curl", "-L", InstallerMac.DOCKER_TOOLBOX_URL, "-o",
                                         os.path.expanduser("~/.two1/tmp/") +
                                         InstallerMac.DOCKER_TOOLBOX_PKG],
@@ -269,10 +274,8 @@ class InstallerMac(InstallerBase):
                                         InstallerMac.DOCKER_TOOLBOX_PKG,
                                         "-target", "/"],
                                         stderr=subprocess.DEVNULL)
-                # print("Docker Toolbox succesfully installed.")
                 exit_code = 0
-            except Exception as e:
-                # print(e)
+            except:
                 exit_code = 1
             self._cleanup()
         else:
@@ -294,12 +297,16 @@ class InstallerAWSUbuntuDebian(InstallerBase):
 
     def program_installed(self, pname):
         """ Check if program exists.
+
+        Args:
+            pname: Program name to check
         """
         try:
             subprocess.check_output(["hash", pname], stderr=subprocess.DEVNULL)
-        except Exception as e:
+        except:
             return False
-        return True
+        else:
+            return True
 
     def _copy_services(self):
         """ Copy services to .two1 directory.
@@ -307,6 +314,7 @@ class InstallerAWSUbuntuDebian(InstallerBase):
         try:
             if "services" not in os.listdir(os.path.expanduser("~/.two1")):
                 subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/")])
+                subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/db")])
             subprocess.check_output(["cp", "-r",
                                      os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                   "blueprints"),
@@ -314,7 +322,7 @@ class InstallerAWSUbuntuDebian(InstallerBase):
             subprocess.check_output(
                 ["cp", os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                     "util", "schema.sql"),
-                 os.path.expanduser("~/.two1/services")])
+                 os.path.expanduser("~/.two1/services/db")])
         except Exception:
             raise
 
@@ -322,28 +330,30 @@ class InstallerAWSUbuntuDebian(InstallerBase):
         """ Check for 21 sell dependencies.
         """
         installed = []
-        packages = []
-
-        packages.append("Docker Compose")
+        packages = ["Docker Compose"]
         try:
-            r = subprocess.check_output(["docker-compose", "version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["docker-compose", "version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Docker")
         try:
-            r = subprocess.check_output(["docker", "--version"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["docker", "--version"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
 
         packages.append("Zerotier")
         try:
-            r = subprocess.check_output(["zerotier-cli", "-v"]).decode()
-            installed.append(True)
-        except Exception as e:
+            subprocess.check_output(["zerotier-cli", "-v"])
+        except:
             installed.append(False)
+        else:
+            installed.append(True)
+
         return list(zip(packages, installed))
 
     def already_in_group(self):

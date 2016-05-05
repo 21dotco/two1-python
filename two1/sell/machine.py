@@ -3,6 +3,7 @@ import os
 import re
 import json
 import subprocess
+import logging
 from enum import Enum
 from abc import ABCMeta
 from abc import abstractmethod
@@ -12,6 +13,8 @@ from two1.commands.util import zerotier
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.sell.exceptions.exceptions_machine import *
+
+logger = logging.getLogger(__name__)
 
 
 class MachineState(Enum):
@@ -30,7 +33,7 @@ class VmState(Enum):
     UNKNOWN = 4
 
 
-class Two1Machine():
+class Two1Machine:
     """ Abstract base machine layer.
     """
     __metaclass__ = ABCMeta
@@ -42,7 +45,7 @@ class Two1Machine():
     ZEROTIER_IP_PATTERN = re.compile(r"zt\d+(.+\n)+?\s+inet (addr:)?(?P<ip>%s\.\d{1,3}\.\d{1,3})" %
                                      re.escape(DEFAULT_MARKET_NETWORK))
     MACHINE_ENV_PATTERN = re.compile(r'''^export(\s*)(?P<env_key>\w*)(\s*)=(\s*)"(?P<env_value>.*)"''')
-    MACHINE_CONFIG_FILE = os.path.expanduser("~/.two1/services/machine_config.json")
+    MACHINE_CONFIG_FILE = os.path.expanduser("~/.two1/services/config/machine_config.json")
 
     @property
     def host(self):
@@ -58,13 +61,12 @@ class Two1Machine():
             with open(self.MACHINE_CONFIG_FILE) as f:
                 return json.load(f)['server_port']
         except Exception:
-            return ""
+            raise
 
-    @property
+    @abstractmethod
     def env(self):
         """ Machine layer environment.
         """
-        return self._get_machine_env()
 
     @property
     def state(self):
@@ -94,6 +96,10 @@ class Two1Machine():
 
     def connect_market(self, client, network):
         """ Connect to the 21market network.
+
+        Args:
+            client: Client to join network
+            network: Network to join
         """
         try:
             zt_device_address = zerotier.device_address()
@@ -122,6 +128,10 @@ class Two1Machine():
             return ""
         return zt_ip
 
+    def write_machine_config(self, server_port):
+        with open(self.MACHINE_CONFIG_FILE, "w") as f:
+            json.dump(server_port, f)
+
 
 class Two1MachineNative(Two1Machine):
     """ Manages the machine layer on Ubuntu/Debian AWS.
@@ -145,7 +155,7 @@ class Two1MachineNative(Two1Machine):
         """
         return VmState.NOEXIST
 
-    def _get_machine_env(self):
+    def env(self):
         """ Get machine env.
         """
         return dict(os.environ)
@@ -155,8 +165,7 @@ class Two1MachineNative(Two1Machine):
         """
         if not self.status_zerotier():
             try:
-                subprocess.check_output(['sudo', 'service', 'zerotier-one', 'start'],
-                                        stderr=subprocess.DEVNULL)
+                subprocess.check_output(['sudo', 'service', 'zerotier-one', 'start'], stderr=subprocess.DEVNULL)
             except subprocess.CalledProcessError:
                 rv = 1
             else:
@@ -168,11 +177,7 @@ class Two1MachineNative(Two1Machine):
     def stop_networking(self):
         """ Stop ZeroTier daemon.
         """
-        try:
-            subprocess.check_output(['sudo', 'service', 'zerotier-one', 'stop'],
-                                    stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError as e:
-            raise
+        subprocess.check_output(['sudo', 'service', 'zerotier-one', 'stop'], stderr=subprocess.DEVNULL)
 
     def status_networking(self):
         """ Checks if Zerotier is running.
@@ -223,7 +228,7 @@ class Two1MachineVirtual(Two1Machine):
                                         "/Library/LaunchDaemons/com.zerotier.one.plist"],
                                         stderr=subprocess.DEVNULL)
                 exit_code = 0
-            except Exception as e:
+            except:
                 exit_code = 1
         else:
             exit_code = 0
@@ -233,8 +238,7 @@ class Two1MachineVirtual(Two1Machine):
         """ Stop ZeroTier One service.
         """
         try:
-            r = subprocess.check_output(["sudo", "launchctl", "unload",
-                                         "/Library/LaunchDaemons/com.zerotier.one.plist"])
+            subprocess.check_output(["sudo", "launchctl", "unload", "/Library/LaunchDaemons/com.zerotier.one.plist"])
         except Exception as e:
             print(e)
 
@@ -242,14 +246,21 @@ class Two1MachineVirtual(Two1Machine):
         """ Get status of ZeroTier One service.
         """
         try:
-            r = subprocess.check_output(['launchctl', 'print', 'system/com.zerotier.one'],
-                                        stderr=subprocess.DEVNULL)
+            subprocess.check_output(['launchctl', 'print', 'system/com.zerotier.one'], stderr=subprocess.DEVNULL)
         except Exception:
             return False
-        return True
+        else:
+            return True
 
     def create_machine(self, vm_name, vdisk_size, vm_memory, service_port, zt_interface):
         """ Driver to create custom VM.
+
+        Args:
+            vm_name: Name of the VM to create.
+            vdisk_size: Size of disk for the VM in MB.
+            vm_memory: Size of memory for the VM in MB
+            service_port: Port on which the router container will listen.
+            zt_interface: ZeroTier interface to be bridged in the VM.
         """
         try:
             subprocess.check_output(["docker-machine", "create",
@@ -273,7 +284,7 @@ class Two1MachineVirtual(Two1Machine):
                     "network_interface": zt_interface
                 }, f)
             return 0
-        except Exception as e:
+        except:
             raise Two1MachineCreateException()
 
     def delete_machine(self):
@@ -282,10 +293,9 @@ class Two1MachineVirtual(Two1Machine):
         if self.status_machine() == VmState.NOEXIST:
             raise Two1MachineDoesNotExist()
         try:
-            r = subprocess.check_output(["docker-machine", "rm", "--force", self.name],
-                                        stderr=subprocess.DEVNULL)
+            subprocess.check_output(["docker-machine", "rm", "--force", self.name], stderr=subprocess.DEVNULL)
             return 0
-        except Exception as e:
+        except:
             raise Two1MachineDeleteException()
 
     def start_machine(self):
@@ -295,10 +305,9 @@ class Two1MachineVirtual(Two1Machine):
             raise Two1MachineExistException(self.name)
         try:
             if self.status_machine() != VmState.RUNNING:
-                r = subprocess.check_output(["docker-machine", "start", self.name],
-                                            stderr=subprocess.DEVNULL)
+                subprocess.check_output(["docker-machine", "start", self.name], stderr=subprocess.DEVNULL)
             return 0
-        except Exception as e:
+        except:
             self.stop_machine()
             raise Two1MachineStartException()
 
@@ -307,10 +316,9 @@ class Two1MachineVirtual(Two1Machine):
         """
         try:
             if self.status_machine() == VmState.RUNNING:
-                r = subprocess.check_output(["docker-machine", "stop", self.name],
-                                            stderr=subprocess.DEVNULL)
+                subprocess.check_output(["docker-machine", "stop", self.name], stderr=subprocess.DEVNULL)
             return 0
-        except Exception as e:
+        except:
             raise Two1MachineStopException()
 
     def status_machine(self):
@@ -326,23 +334,24 @@ class Two1MachineVirtual(Two1Machine):
                 return VmState.STOPPED
             else:
                 return VmState.UNKNOWN
-        except Exception as e:
+        except:
             return VmState.NOEXIST
 
     # private methods
-
-    def _get_machine_env(self):
+    def env(self):
         """ Machine layer environment variables.
 
         These are used for communication with docker engine.
         """
         machine_env = {}
         try:
-            r = subprocess.check_output(["docker-machine", "env", self.name])
+            r = subprocess.check_output(["docker-machine", "env", "--shell", "bash", self.name])
             for line in r.decode().split("\n"):
                 env_match = Two1MachineVirtual.MACHINE_ENV_PATTERN.search(line)
                 if env_match is not None:
                     machine_env[env_match.group("env_key")] = env_match.group("env_value")
-            return dict(os.environ, **machine_env)
-        except Exception as e:
+            environ = os.environ.copy()
+            environ.update(machine_env)
+            return environ
+        except:
             raise Two1MachineException()

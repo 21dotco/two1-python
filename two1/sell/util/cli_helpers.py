@@ -6,17 +6,16 @@ Helper methods for interactive CLI commands.
 # python standard imports
 import os
 import re
+import sys
 import time
 import json
-
-import sys
-import yaml
 import logging
 import threading
 import subprocess
 from collections import namedtuple
 
 # 3rd party imports
+import yaml
 import click
 
 # two1 imports
@@ -31,7 +30,6 @@ from two1.sell.machine import Two1Machine, Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.util.stats_db import Two1SellDB
 from two1.server import rest_client as _rest_client
-from two1.commands.util.exceptions import ServerRequestError
 
 logger = logging.getLogger(__name__)
 
@@ -154,20 +152,20 @@ def get_user_credentials(two1_dir="~/.two1/two1.json"):
 
     while not correct_password:
         try:
-            resp = rest_client.login(payout_address=address, password=pw)
+            rest_client.login(payout_address=address, password=pw)
             correct_password = True
-        except Exception:
+        except:
             pw = click.prompt(click.style("Incorrect 21 password. Please try again", fg="magenta"),
                               hide_input=True)
 
-    return (username, pw)
+    return username, pw
 
 
 def get_vm_options():
     """ Get user-selected config options for the 21 VM.
     """
 
-    logger.info(click.style("Configure 21 virtual machine:", fg=TITLE_COLOR))
+    logger.info(click.style("Configure 21 virtual machine.", fg=TITLE_COLOR))
     logger.info("Press return to accept defaults.")
 
     default_disk = Two1MachineVirtual.DEFAULT_VDISK_SIZE
@@ -188,11 +186,6 @@ def get_vm_options():
                            vm_memory=vm_memory,
                            server_port=server_port,
                            network_interface=network_interface)
-
-
-def write_machine_config(vm_dict):
-    with open(Two1Machine.MACHINE_CONFIG_FILE, "w") as f:
-        json.dump(vm_dict, f)
 
 
 def get_server_port():
@@ -307,13 +300,14 @@ def vm_running_check(vm_up_status, log_not_running=False):
 def zerotier_service_check(zt_status, log_not_running=False):
     """ Check if ZeroTier One network service running.
     """
+
     if zt_status:
-        print_str("ZeroTier",
+        print_str("ZeroTier One",
                   ["Running"],
                   "TRUE",
                   True)
     elif log_not_running:
-        print_str("ZeroTier",
+        print_str("ZeroTier One",
                   ["Not running"],
                   "FALSE",
                   False)
@@ -323,6 +317,7 @@ def zerotier_service_check(zt_status, log_not_running=False):
 def market_connected_check(mkt_network_status, log_not_running=False):
     """ Check if 21market network connected.
     """
+
     if mkt_network_status.lower() != "":
         print_str("21 Marketplace",
                   ["Connected", "Your IP: %s" % mkt_network_status.lower()],
@@ -400,6 +395,28 @@ def service_status_check(start_stats, print_earnings=True):
                   service[1])
 
 
+def service_status(service, dollars_per_sat, print_earnings=True):
+    db = Two1SellDB()
+    earning = get_earning(service, db)
+    if print_earnings:
+        request_count = earning["request_count"]
+
+        total_earnings = (earning["buffer"] +
+                          earning["wallet"] +
+                          earning["channels"])
+        usd_earnings = total_earnings * dollars_per_sat
+
+        message = ["[Totals]",
+                   "Requests:   %d" % request_count,
+                   "Earnings: $%.4f" % usd_earnings]
+    else:
+        message = []
+    print_str(service,
+              message,
+              "TRUE" if service[1] else "FALSE",
+              service[1])
+
+
 def get_example_usage(services, host, port):
     """ Gets example usage of given services.
     """
@@ -454,11 +471,9 @@ def service_status_check_detailed(start_stats, host, port):
 
 
 def build_detail_line(btc_type, satoshi, exchange_rate):
-    line_form = "- %s %s %s"
     btc_formatted = ("%s " % btc_type.title()).ljust(9)
     satoshi_formatted = str(satoshi).rjust(9)
     usd_formatted = ("($%0.4f)" % (satoshi*exchange_rate)).rjust(10)
-    detail_line = line_form % (btc_formatted, satoshi_formatted, usd_formatted)
     return "- " + btc_formatted + satoshi_formatted + usd_formatted
 
 
@@ -466,25 +481,28 @@ def get_balances(services, client):
     """ Gets wallet balances of given services.
     """
     buffer_balance = get_buffer_balance(client)
-    with open(Two1Composer.SERVICES_WALLET_FILE, "r") as f:
-        services_info = json.load(f)
+    with open(Two1Composer.COMPOSE_FILE, "r") as f:
+        services_info = yaml.load(f)
 
     balances = {}
     for service in services:
-        template = {"buffer": None,
-                    "wallet": None,
-                    "channels": None}
-        template["buffer"] = buffer_balance
+        template = {
+            "buffer": buffer_balance,
+            "wallet": None,
+            "channels": None,
+        }
         try:
-            service_mnemonic = services_info.get(service).get("mnemonic")
+            service_mnemonic = services_info.get('services').get(service).get(
+                'environment').get('TWO1_WALLET_MNEMONIC')
 
-            wallet = Two1Wallet.import_from_mnemonic(mnemonic=service_mnemonic)
-            template["wallet"] = wallet.balances["total"]
+            service_wallet = Two1Wallet.import_from_mnemonic(mnemonic=service_mnemonic)
+            template["wallet"] = service_wallet.balances["total"]
 
-            channel_client = channels.PaymentChannelClient(wallet)
+            channel_client = channels.PaymentChannelClient(service_wallet)
             channel_client.sync()
             channel_urls = channel_client.list()
-            channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_urls) if s.state == channels.PaymentChannelState.READY)
+            channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_urls)
+                                   if s.state == channels.PaymentChannelState.READY)
             template["channels"] = channels_balance
         except AttributeError:
             template["wallet"] = 0
@@ -500,19 +518,23 @@ def get_buffer_balance(client):
     return client.get_earnings()["total_earnings"]
 
 
+def get_earning(service, db):
+    service_earnings = db.get_earnings(service.lower())
+    return {
+        "wallet": service_earnings["wallet_earnings"],
+        "buffer": service_earnings["buffer_earnings"],
+        "channels": service_earnings["channel_earnings"],
+        "request_count": service_earnings["request_count"]
+    }
+
+
 def get_earnings(services):
     """ Gets earnings of given services.
     """
     db = Two1SellDB()
-
-    earnings = {}
-    for service in services:
-        service_earnings = db.get_earnings(service.lower())
-        earnings[service] = {"wallet": service_earnings["wallet_earnings"],
-                             "buffer": service_earnings["buffer_earnings"],
-                             "channels": service_earnings["channel_earnings"],
-                             "request_count": service_earnings["request_count"]}
-    return earnings
+    return {
+        service: get_earning(service, db) for service in services
+    }
 
 
 def get_rest_client():
@@ -541,35 +563,43 @@ def get_published_apps():
     if first_page["total_pages"] == 0:
         return []
 
-    url_service_pattern = re.compile(r"""^http(s|)://(?P<zt_ip>((\d){1,3}.){3}(\d){1,3}):(?P<port>\d*)/(?P<service>(\w*))""")
+    url_service_pattern = \
+        re.compile(r"""^http(s|)://(?P<zt_ip>((\d){1,3}.){3}(\d){1,3}):(?P<port>\d*)/(?P<service>(\w*))""")
 
     published_app_urls = []
     for app in first_page["results"]:
         match = url_service_pattern.search(app["app_url"])
         if match is not None:
-            published_app_urls.append("%s:%s/%s" % (match.group("zt_ip"), match.group("port"), match.group("service").lower()))
+            published_app_urls.append("%s:%s/%s" % (match.group("zt_ip"),
+                                                    match.group("port"),
+                                                    match.group("service").lower()))
 
     for i in range(1, first_page["total_pages"]):
         page = rest_client.get_published_apps(username, i).json()
         for app in page["results"]:
             match = url_service_pattern.search(app["app_url"])
             if match is not None:
-                published_app_urls.append("%s:%s/%s" % (match.group("zt_ip"), match.group("port"), match.group("service").lower()))
+                published_app_urls.append("%s:%s/%s" % (match.group("zt_ip"),
+                                                        match.group("port"),
+                                                        match.group("service").lower()))
     return published_app_urls
 
 
-def prompt_to_publish(start_stats, manager):
+def prompt_to_publish(started_services, manager):
+    """ Prompt user to publish services if not published.
+    """
+
     zt_ip = manager.get_market_address()
     port = manager.get_server_port()
 
     published_apps = get_published_apps()
-    started_apps = ["%s:%s/%s" % (zt_ip, port, i[0].lower()) for i in start_stats if i[1]]
+    started_apps = ["%s:%s/%s" % (zt_ip, port, service) for service in started_services]
     not_published = [i for i in started_apps if i not in published_apps]
     not_published_names = [i.split("/")[1] for i in not_published]
 
     if len(not_published) == 0:
         return []
-    if click.confirm(click.style("Would you like to publish the sucessfully started services?", fg=PROMPT_COLOR)):
+    if click.confirm(click.style("\nWould you like to publish the sucessfully started services?", fg=PROMPT_COLOR)):
         time.sleep(2)
         published = start_long_running("Publishing services",
                                        publish_started,
@@ -579,43 +609,35 @@ def prompt_to_publish(start_stats, manager):
                                        manager)
         return published
     else:
+        logger.info("New services not published to 21 Marketplace.", fg="magenta")
         return []
 
 
 def publish_started(not_published, zt_ip, port, manager):
-    rest_client = get_rest_client()
+    """ Publish started services.
+    """
 
     publish_stats = []
-    for service in not_published:
-        manifest_path = os.path.join(Two1Composer.SERVICES_DIR,
-                                     service,
-                                     "manifest.yaml")
-        with open(manifest_path, "r") as f:
-            manifest_json = yaml.load(f)
+    for service_name in not_published:
 
-        manifest_json["basePath"] = "/%s" % service
-        manifest_json["host"] = "%s:%s" % (zt_ip, port)
-        manifest_json["info"]["x-21-quick-buy"] = manifest_json["info"]["x-21-quick-buy"] % (zt_ip, port, service)
+        def published_hook(sname):
+            publish_stats.append((sname, True, ["Published"]))
 
-        manifest_write_path = os.path.join(os.path.dirname(Two1Composer.COMPOSE_FILE), "%s_manifest.yaml" % service)
+        def already_published_hook(sname):
+            publish_stats.append((sname, False, ["Endpoint already published"]))
 
-        with open(manifest_write_path, "w") as f:
-            yaml.dump(manifest_json, f)
+        def failed_to_publish_hook(sname):
+            publish_stats.append((sname, False, ["Failed to publish"]))
 
-        try:
-            resp = rest_client.publish({"manifest": manifest_json,
-                                        "marketplace": "21market"})
-            if resp.status_code == 201:
-                publish_stats.append((service.title(), True, ["Published"]))
-            else:
-                publish_stats.append((service.title(), False, ["Failed to publish"]))
-        except ServerRequestError as e:
-            if e.status_code == 403 and e.data.get("error") == "TO600":
-                publish_stats.append((service.title(), False, ["Endpoint already published"]))
-            else:
-                publish_stats.append((service.title(), False, ["Failed to publish"]))
-        except Exception:
-            publish_stats.append((service.title(), False, ["An unknown error occurred"]))
+        def unknown_publish_error_hook(sname):
+            publish_stats.append((sname, False, ["An unknown error occurred"]))
+
+        def publish_timedout_hook(sname):
+            publish_stats.append((sname, False, ["Publishing timed out"]))
+
+        manager.publish_service(service_name, zt_ip, port,
+                                published_hook, already_published_hook, failed_to_publish_hook,
+                                unknown_publish_error_hook, publish_timedout_hook)
 
     return publish_stats
 
@@ -657,40 +679,41 @@ def service_earning_check(services, detailed_view):
         print_str_no_label(service, message)
 
 
-def service_balance_check(services):
+def service_balance_check():
+    """ Check machine balances.
+    """
     rest_client = get_rest_client()
     dollars_per_sat = rest_client.quote_bitcoin_price(1).json()["price"]
 
     provider = TwentyOneProvider()
     payments_server_balance = get_payments_server_balance(provider)
-    balances = get_balances(services, rest_client)
+    # balances = get_balances(services, rest_client)
 
-    for service in services:
-        bal = balances[service]["wallet"]
-        print_str_no_label(service, [build_detail_line("onchain", bal, dollars_per_sat)])
-
+    payments_buffer = get_buffer_balance(rest_client)
     payments_onchain = payments_server_balance["onchain"]
     payments_channels = payments_server_balance["channels"]
-    print_str_no_label("payments", [build_detail_line("onchain", payments_onchain, dollars_per_sat),
-                                    build_detail_line("channels", payments_channels, dollars_per_sat)])
+    print_str_no_label("Server", [build_detail_line("buffer", payments_buffer, dollars_per_sat),
+                                  build_detail_line("onchain", payments_onchain, dollars_per_sat),
+                                  build_detail_line("channels", payments_channels, dollars_per_sat)])
 
 
 def get_payments_server_balance(provider):
-    with open(Two1Composer.PAYMENTS_WALLET_FILE, "r") as f:
-        info = json.load(f)
+    with open(Two1Composer.COMPOSE_FILE, "r") as f:
+        info = yaml.load(f)
 
-    mnemonic = info["mnemonic"]
-    wallet = Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=mnemonic)
+    mnemonic = info['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+    payments_wallet = Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=mnemonic)
 
-    balances = {"onchain": None,
-                "channels": None}
+    balances = {
+        "onchain": payments_wallet.balances["total"],
+        "channels": None
+    }
 
-    balances["onchain"] = wallet.balances["total"]
-
-    channel_client = channels.PaymentChannelClient(wallet)
+    channel_client = channels.PaymentChannelClient(payments_wallet)
     channel_client.sync()
     channel_urls = channel_client.list()
-    channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_urls) if s.state == channels.PaymentChannelState.READY)
+    channels_balance = sum(s.balance for s in (channel_client.status(url) for url in channel_urls)
+                           if s.state == channels.PaymentChannelState.READY)
 
     balances["channels"] = channels_balance
 

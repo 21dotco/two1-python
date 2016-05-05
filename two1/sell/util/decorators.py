@@ -13,6 +13,9 @@ DEFAULT_PRICE = 3000
 
 def track_requests(fn):
     """ Decorator to log 21 sell request data.
+
+    Args:
+        fn: function to wrap
     """
 
     @wraps(fn)
@@ -31,12 +34,13 @@ def track_requests(fn):
 
         if "Bitcoin-Transfer" in request.headers:
             method = "buffer"
-
         elif "Bitcoin-Transaction" in request.headers:
             method = "wallet"
-
         elif "Bitcoin-Payment-Channel-Token" in request.headers:
             method = "channel"
+        else:
+            raise ValueError("request header must contain Bitcoin-Transfer, Bitcoin-Transaction, "
+                             "or Bitcoin-Payment-Channel-Token")
 
         db = Two1SellDB(db_dir="/usr/src/db/")
         db.update(service_name, method, price)

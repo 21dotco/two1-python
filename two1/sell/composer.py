@@ -3,15 +3,14 @@ import re
 import os
 import time
 import json
-import yaml
-import random
-import requests
+import shutil
 import subprocess
 from enum import Enum
 from abc import ABCMeta
 from abc import abstractmethod
 
 # 3rd party imports
+import requests
 from docker import Client
 from docker.utils import kwargs_from_env as docker_env
 
@@ -19,6 +18,7 @@ from docker.utils import kwargs_from_env as docker_env
 from two1.wallet import Two1Wallet
 from two1.blockchain import TwentyOneProvider
 from two1.sell.exceptions.exceptions_composer import *
+from two1.sell.util.context import YamlDataContext
 
 
 class ComposerState(Enum):
@@ -28,72 +28,134 @@ class ComposerState(Enum):
     DISCONNECTED = 2
 
 
-class Two1Composer():
+class Two1Composer(metaclass=ABCMeta):
     """ Abstract base composer layer.
     """
-    __metaclass__ = ABCMeta
 
-    PRIMARY_WALLET_DIR = os.path.expanduser("~/.two1/wallet")
-    PRIMARY_WALLET_FILE = os.path.join(PRIMARY_WALLET_DIR, "default_wallet.json")
+    DOCKERHUB_API_URL = "https://registry.hub.docker.com/v2/repositories"
+    DOCKERHUB_REPO = "21dotco/two1"
 
-    BASE_DIR = os.path.expanduser("~/.two1/services")
-    SERVICES_WALLET_FILE = os.path.join(BASE_DIR, "services.json")
-    PAYMENTS_WALLET_FILE = os.path.join(BASE_DIR, "payments_wallet.json")
+    PRIMARY_ACCOUNT_DIR = os.path.expanduser("~/.two1")
+    PRIMARY_ACCOUNT_FILE = os.path.join(PRIMARY_ACCOUNT_DIR, "two1.json")
+
+    BASE_DIR = os.path.join(PRIMARY_ACCOUNT_DIR, "services")
+    DB_DIR = os.path.join(BASE_DIR, "db")
+    SITES_ENABLED_PATH = os.path.join(BASE_DIR, "config", "sites-enabled")
+    SITES_AVAILABLE_PATH = os.path.join(BASE_DIR, "config", "sites-available")
+
     COMPOSE_FILE = os.path.join(BASE_DIR, "production.yaml")
 
-    BLUEPRINTS_DIR = os.path.join(BASE_DIR, "blueprints")
-    SERVICES_DIR = os.path.join(BLUEPRINTS_DIR, "services")
-    PAYMENTS_DIR = os.path.join(BLUEPRINTS_DIR, "payments")
-    SITES_ENABLED_PATH = os.path.join(BLUEPRINTS_DIR, "router", "sites-enabled")
-    SITES_AVAILABLE_PATH = os.path.join(BLUEPRINTS_DIR, "router", "sites-available")
-
-    DEFAULT_INTERNAL_PORT_MIN = 6000
-    DEFAULT_INTERNAL_PORT_MAX = 6999
-
-    DEFAULT_WAIT_TIME_STATUS = 60
-
     BASE_SERVICES = ["router", "payments", "base"]
-    GRID_SERVICES = ["ping"]
+
+    SERVICE_START_TIMEOUT = 10
+    SERVICE_PUBLISH_TIMEOUT = 15
+
+    class ComposerYAMLContext(YamlDataContext):
+        """ Context manager for composer YAML service file.
+        """
+
+        def __init__(self, username=None, password=None, server_port=None, mnemonic=None):
+            self.username = username
+            self.password = password
+            self.server_port = server_port
+            self.mnemonic = mnemonic
+            super().__init__(Two1Composer.COMPOSE_FILE)
+
+        def _filler(self):
+            """ Create the base production.yaml.
+            """
+            return {
+                'version': '2',
+                'services': {
+                    'base': {
+                        'image': '%s:base' % Two1Composer.DOCKERHUB_REPO,
+                    },
+                    'router': {
+                        'image': '%s:router' % Two1Composer.DOCKERHUB_REPO,
+                        'container_name': 'sell_router',
+                        'restart': 'always',
+                        'volumes': [
+                            Two1Composer.SITES_ENABLED_PATH + ":/etc/nginx/sites-enabled",
+                            Two1Composer.SITES_AVAILABLE_PATH + ":/etc/nginx/sites-available",
+                        ],
+                        'ports': ['%s:%s' % (self.server_port, self.server_port)],
+                        'links': [
+                            'payments:payments',
+                        ],
+                    },
+                    'payments': {
+                        'image': '%s:payments' % Two1Composer.DOCKERHUB_REPO,
+                        'depends_on': ['base'],
+                        'container_name': 'sell_payments',
+                        'restart': 'always',
+                        'environment': {
+                            "TWO1_USERNAME": str(self.username),
+                            "TWO1_PASSWORD": str(self.password),
+                            "TWO1_WALLET_MNEMONIC": str(self.mnemonic)
+                        },
+                        'volumes': [
+                            Two1Composer.DB_DIR + ":/usr/src/db/"
+                        ],
+                        'logging': {
+                            'driver': 'json-file'
+                        },
+                        'cap_drop': [
+                            'ALL'
+                        ],
+                        'cap_add': [
+                            'DAC_OVERRIDE',
+                            'NET_RAW',
+                        ],
+                    }
+                }
+            }
 
     @property
-    def connected(self):
-        return self._connected
-
-    @abstractmethod
-    def build_base_services(self):
-        """ Build router and payments server images.
+    def wallet_file(self):
+        """ Get the default wallet path.
         """
+        try:
+            with open(Two1Composer.PRIMARY_ACCOUNT_FILE, 'r') as f:
+                account_info = json.load(f)
+        except Exception:
+            raise
+        return account_info.get("wallet_path")
 
     @abstractmethod
-    def build_market_services(self):
-        """ Build machine-payable service images.
-        """
-
-    @abstractmethod
-    def start_services(self):
+    def start_services(self, *args):
         """ Start router, payments server, and machine-payable
         services.
         """
 
     @abstractmethod
-    def stop_services(self):
+    def list_services(self):
+        """ List all available services.
+        """
+
+    @abstractmethod
+    def stop_services(self, *args):
         """ Stop router, payments server, and machine-payable
         services.
         """
 
     @abstractmethod
-    def status_services(self):
+    def status_services(self, *args):
         """ Get the status of services.
         """
 
     @abstractmethod
-    def status_router(self):
+    def status_router(self, *args):
         """ Get the status of the router.
         """
 
     @abstractmethod
-    def status_payments_server(self):
+    def status_payments_server(self, *args):
         """ Get the status of the payments server.
+        """
+
+    @abstractmethod
+    def connect(self, *args, **kwargs):
+        """ Connect to the docker client
         """
 
 
@@ -104,10 +166,10 @@ class Two1ComposerNative(Two1Composer):
     def __init__(self):
         self._connected = ComposerState.DISCONNECTED
         self.provider = TwentyOneProvider()
-        self.default_wallet = Two1Wallet(os.path.expanduser("~/.two1/wallet/default_wallet.json"),
+        self.default_wallet = Two1Wallet(self.wallet_file,
                                          self.provider)
 
-    def connect(self, **kwargs):
+    def connect(self, *args, **kwargs):
         """ Create docker client.
         """
         self.docker_client = Client()
@@ -121,94 +183,88 @@ class Two1ComposerContainers(Two1Composer):
     def __init__(self):
         self._connected = ComposerState.DISCONNECTED
         self.provider = TwentyOneProvider()
-        self.default_wallet = Two1Wallet(Two1Composer.PRIMARY_WALLET_FILE,
-                                         self.provider)
+        self.default_wallet = Two1Wallet(self.wallet_file, self.provider)
 
     # public api
-
     def connect(self, machine_env, host, machine_config_file):
         """ Connect service composer to machine layer.
+
+        Args:
+            machine_env (dict): Environment dictionary for the docker client of the machine layer
+            host: Hostname of the machine layer docker daemon
+            machine_config_file (str): Path to the config file for the machine layer
         """
         self.machine_env = machine_env
         self.machine_host = host
         with open(machine_config_file, 'r') as f:
             self.machine_config = json.load(f)
-        try:
-            self.docker_client = Client(**docker_env(assert_hostname=False,
-                                                     environment=self.machine_env))
-            self._connected = ComposerState.CONNECTED
-        except Exception:
-            raise Two1ComposerConnectedException()
+        self.docker_client = Client(**docker_env(assert_hostname=False,
+                                                 environment=self.machine_env))
+        self._connected = ComposerState.CONNECTED
 
-    def build_base_services(self):
-        """ Build router and payment server images.
+    def initialize_server(self, username, password, server_port, wallet=None):
+        """ Initialize micropayments server.
+
+        Define boilerplate services, networks, and volumes composer file
+        and nginx server config.
+
+        Generates a wallet mnemonic if non-existent.
+
+        Args:
+            username (str): Username to log in with
+            password (str): Password to log in with
+            server_port (int): The server port that the router is running on
+            wallet: The wallet to use for the payments server and subsequent services
         """
-        # create base service definitions file
-        self._create_service_definitions()
+        self._create_base_server(server_port)  # create base router server config
+        self._create_payments_route()  # create route to payments server
 
-        # initialize payments server wallet
-        try:
-            payments_wallet = self._check_or_create_payments_wallet()
-            self._update_payments_wallet_env()
-        except Exception:
-            raise Two1ComposerWalletException()
+        # generate production.yaml service description
+        machine_wallet = wallet or self.default_wallet.create(self.provider)[1]
+        with self.ComposerYAMLContext(username, password, server_port, machine_wallet) as composer_yaml:
+            if composer_yaml['services']['payments']['environment'][
+                    'TWO1_WALLET_MNEMONIC'] == machine_wallet:
+                new_wallet = machine_wallet
+            else:
+                new_wallet = None
 
-        # create route to payments server
-        self._create_payments_route()
+        return 0, new_wallet
 
-        # build base services
-        services = Two1Composer.BASE_SERVICES
-        try:
-            cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "build"] + services
-            r = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, env=self.machine_env)
-        except Exception as e:
-            raise Two1ComposerBuildException()
-
-        return payments_wallet
-
-    def build_market_services(self, services):
-        """ Build service images and configure routing.
+    def list_services(self):
+        """ List available services to sell.
         """
-        services = list(set(services).intersection(Two1Composer.GRID_SERVICES))
+        service_image_data = requests.get(os.path.join(
+            Two1Composer.DOCKERHUB_API_URL, Two1Composer.DOCKERHUB_REPO, 'tags')).json().get('results')
+        valid_service_names = set([image_data['name'].split('service-')[1] for image_data in
+                                   service_image_data if re.match(r'^service-', image_data['name'])])
+        return list(valid_service_names)
 
-        # wallet generation/retrieval and restoration
-        try:
-            wallets = self._check_or_create_wallets(services)
-            self._update_wallet_env(services)
-        except Exception:
-            raise Two1ComposerWalletException()
+    def pull_latest_images(self, images):
+        """ Pull latest images from 21 DockerHub.
 
-        # create routes to grid services
-        for service in services:
-            self._create_service_route(service)
-
-        try:
-            cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "build"] + services
-            r = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, env=self.machine_env)
-        except Exception as e:
-            raise Two1ComposerBuildException()
-
-        return wallets
-
-    def write_global_services_env(self, username, password):
-        """ Write global service credentials to .env.
-
-        The .env files are passed to the container services.
-
+        Args:
+            images (list): List of images to pull from the 21 DockerHub.
         """
-        os.makedirs(Two1Composer.SERVICES_DIR, exist_ok=True)
-        with open(os.path.join(Two1Composer.SERVICES_DIR, ".env"), "w") as f:
-            to_write = ("TWO1_USERNAME=%s\n"
-                        "TWO1_PASSWORD=%s\n") % (username, password)
-            f.write(to_write)
+        for image_tag in images:
+            self.docker_client.pull(Two1Composer.DOCKERHUB_REPO, image_tag, stream=False)
+        return 0
 
-    def start_services(self, services, wait_time_status=25):
-        """ Start selected services and generates wallet if nonexistant.
+    def start_services(self, services, failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
+                       failed_to_up_hook, up_hook):
+        """ Start selected services.
 
         Args:
             services (list): List of services to start.
-            wait_time_status (int): Number of seconds to wait for
-                containrs to respond to requests.
+            failed_to_start_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                             fails to start.
+            started_hook (Callable): A callable hook that takes in a service name and is run when said service starts.
+            failed_to_restart_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                               fails to restart.
+            restarted_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                       restarts.
+            failed_to_up_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                          fails to go up.
+            up_hook (Callable): A callable hook that takes in a service name and is run when said service goes up.
 
         Returns:
             dict: Dictionary with service as key and value as dictionary.
@@ -217,622 +273,249 @@ class Two1ComposerContainers(Two1Composer):
         Raises:
 
         """
-        service_status_dict = {}
+        self._start_sell_service('base', failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
+        self._start_sell_service('router', failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
+        self._start_sell_service('payments', failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
 
-        # Attempt to start all services
-        for service_count, service in enumerate(sorted(services)):
-            service_template = {"started": None,
-                                "message": None,
-                                "order": None}
-            try:
-                cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "up", "-d", service]
-                r = subprocess.check_output(cmd, stderr=subprocess.DEVNULL,
-                                            env=self.machine_env)
-                service_template["order"] = service_count
-                service_status_dict[service] = service_template
-            except Exception as e:
-                service_template["started"] = False
-                service_template["message"] = "Error starting service."
-                service_template["order"] = service_count
-                service_status_dict[service] = service_template
+        self._restart_sell_service('router', failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
+                                   failed_to_up_hook, up_hook)
 
-        # wait for services to come up
-        time.sleep(3)
+        # Attempt to start all market services
+        for service_name in services:
+            # create nginx routes for service_name
+            self._create_service_route(service_name)
+            # add service_name to docker compose file
+            with self.ComposerYAMLContext() as docker_compose_yaml:
+                username = docker_compose_yaml['services']['payments']['environment']['TWO1_USERNAME']
+                password = docker_compose_yaml['services']['payments']['environment']['TWO1_PASSWORD']
+                mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+                docker_compose_yaml['services'][service_name] = {
+                    'image': '%s:%s' % (Two1Composer.DOCKERHUB_REPO, 'service-' + service_name),
+                    'container_name': 'sell_%s' % service_name,
+                    'depends_on': ['base'],
+                    'restart': 'always',
+                    'environment': {
+                        "TWO1_USERNAME": str(username),
+                        "TWO1_PASSWORD": str(password),
+                        "TWO1_WALLET_MNEMONIC": str(mnemonic),
+                        "SERVICE": str(service_name),
+                        "PAYMENT_SERVER_IP": "http://%s:%s" % (self.machine_host, self.machine_config["server_port"])
+                    },
+                    'volumes': [
+                        Two1Composer.DB_DIR + ":/usr/src/db/"
+                    ],
+                    'logging': {
+                        'driver': 'json-file'
+                    },
+                    'cap_drop': [
+                        'ALL'
+                    ],
+                    'cap_add': [
+                        'DAC_OVERRIDE',
+                        'NET_RAW',
+                    ],
+                }
+                link_str = '%s:%s' % (service_name, service_name)
+                if link_str not in docker_compose_yaml['services']['router']['links']:
+                    docker_compose_yaml['services']['router']['links'].append(link_str)
 
-        # Check if services which did not raise exception started running
-        potentially_started_services = [service for service in services
-                                        if service_status_dict[service]["started"] is None]
+            # attempt to build service_name
+            self._start_sell_service(service_name, failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
 
-        check_potentially_started = self.status_services(potentially_started_services,
-                                                         wait_time_status)
+        self._restart_sell_service('router', failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
+                                   failed_to_up_hook, up_hook)
 
-        for service in check_potentially_started:
-            service_status_dict[service]["started"] = True if check_potentially_started[service]["status"] == "Running" else False
-            service_status_dict[service]["message"] = check_potentially_started[service]["message"]
+    def _start_sell_service(self, service_name, failed_to_start_hook, started_hook, failed_to_up_hook, up_hook,
+                            timeout=Two1Composer.SERVICE_START_TIMEOUT):
+        try:
+            subprocess.check_output(["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "up", "-d", service_name],
+                                    stderr=subprocess.DEVNULL, env=self.machine_env)
+        except subprocess.CalledProcessError:
+            failed_to_start_hook(service_name)
+        else:
+            started_hook(service_name)
+            if service_name == 'router':
+                time.sleep(5)
+            elif service_name != 'router' and service_name != 'base':
+                start = time.clock()
 
-        # rebuild router image and restart router, start payments server
-        self._restart_router()
-        self._start_payments_server()
+                exec_id = self.docker_client.exec_create('sell_router', "curl %s:5000" % service_name)['Id']
+                self.docker_client.exec_start(exec_id)
+                running = True
 
-        return service_status_dict
+                while time.clock() - start < timeout and running is True:
+                    running = self.docker_client.exec_inspect(exec_id)['Running']
 
-    def stop_services(self, services):
+                if running is True:
+                    failed_to_up_hook(service_name)
+                else:
+                    up_hook(service_name)
+
+    def _restart_sell_service(self, service_name, failed_to_start_hook, started_hook, failed_to_restart_hook,
+                              restarted_hook, failed_to_up_hook, up_hook):
+        try:
+            self.docker_client.stop("sell_%s" % service_name)
+        except:
+            is_restart = False
+        else:
+            is_restart = True
+
+        self._start_sell_service(service_name, failed_to_restart_hook if is_restart else failed_to_start_hook,
+                                 restarted_hook if is_restart else started_hook, failed_to_up_hook, up_hook)
+
+    def stop_services(self, services,
+                      service_found_stopped_and_removed_hook,
+                      service_failed_to_stop_hook,
+                      service_failed_to_be_removed_hook,
+                      service_not_found_hook):
         """ Stop selected services and remove containers.
 
         Args:
-            services (list): List of services to start.
+            services (list): List of services to stop.
+            service_found_stopped_and_removed_hook (Callable): A callable hook that takes in a service name and is run
+                                                               when said service is found, stopped, and removed.
+            service_failed_to_stop_hook (Callable): A callable hook that takes in a service name and is run when said
+                                                    service fails to be stopped.
+            service_failed_to_be_removed_hook (Callable): A callable hook that takes in a service name and is run when
+                                                          said service fails to be removed.
+            service_not_found_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                               isn't found.
 
-        Returns:
-            dict: Dictionary with service as key and value as dictionary.
-            Inner dictionary has format {"stopped": bool, "message": str, "order": int}.
         """
-        service_status_dict = {}
-
-        containers = self.docker_client.containers(all=True)
-        container_names = self._get_services_container_names()
-
-        for service_count, service in enumerate(sorted(services)):
-            service_template = {"stopped": None,
-                                "message": None,
-                                "order": None}
-
-            if service in container_names:
-                container_name = container_names[service]
-                stopped = False
+        running_container_names = self.docker_client.containers(filters={"status": "running"})
+        for container_name in running_container_names:
+            running_service_name = list(self.names_from_containers([container_name]))[0]
+            if running_service_name in services:
                 try:
                     self.docker_client.stop(container_name)
-                    stopped = True
-                    if os.path.isfile(os.path.join(Two1Composer.SERVICES_DIR, service, ".env")):
-                        os.remove(os.path.join(Two1Composer.SERVICES_DIR, service, ".env"))
-                except Exception:
-                    service_template["stopped"] = False
-                    service_template["message"] = "Unable to stop service."
-                    service_template["order"] = service_count
-                if stopped:
+                except:
+                    service_failed_to_stop_hook(running_service_name)
+                else:  # container stopped
                     try:
                         self.docker_client.remove_container(container_name)
-                        service_template["stopped"] = True
-                        service_template["message"] = "Stopped service and removed container."
-                        service_template["order"] = service_count
-                    except Exception:
-                        service_template["stopped"] = False
-                        service_template["message"] = "Unable to remove container."
-                        service_template["order"] = service_count
-            else:
-                service_template["stopped"] = True
-                service_template["message"] = "Container not found."
-                service_template["order"] = service_count
+                    except:
+                        service_failed_to_be_removed_hook(running_service_name)
+                    else:  # container
+                        service_found_stopped_and_removed_hook(running_service_name)
 
-            running_containers = self.docker_client.containers()
-            found_running = False
-            for container in running_containers:
-                if container["Names"][0].strip("/sell_").lower() in [i.lower() for i in
-                                                                     self._get_all_services_list()]:
-                    found_running = True
-                    break
-            if not found_running:
-                if os.path.isfile(os.path.join(Two1Composer.SERVICES_DIR, ".env")):
-                    os.remove(os.path.join(Two1Composer.SERVICES_DIR, ".env"))
-            else:
-                service_template["stopped"] = True
-                service_template["message"] = "21 VM not running."
-                service_template["order"] = service_count
+    @staticmethod
+    def names_from_containers(containers):
+        """ Return names from containers.
 
-            service_status_dict[service] = service_template
+        Args:
+            containers (list): List of containers as returned by self.docker_client.containers
+        """
+        return frozenset([service['Names'][0][6:] for service in containers])
 
-        # stop router if all services stopped
-        stopped_services = [service for service, description in
-                            service_status_dict.items() if description['stopped'] is True]
-        if len(stopped_services) == len(service_status_dict.keys()):
-            self._stop_router()
-        return service_status_dict
-
-    def status_services(self, services, wait_time_status=Two1Composer.DEFAULT_WAIT_TIME_STATUS):
+    def status_services(self, services,
+                        service_nonexistent_hook,
+                        service_running_hook,
+                        service_exited_hook,
+                        service_unknown_state_hook):
         """ Gets running status of specified services.
 
         Args:
             services (list): List of services to get status for.
-            wait_time_status (int): Number of seconds before container request timeout.
-
+            service_nonexistent_hook (Callable): A callable hook that takes in a service name and is run when said
+                                                 service is non-existent.
+            service_running_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                             is running.
+            service_exited_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                            has exited.
+            service_unknown_state_hook (Callable): A callable hook that takes in a service name and is run when said
+                                                   service is in an unknown state.
         Returns:
             dict: Dictionary with service as key and value as dictionary.
             Inner dictionary has format: {"status": str, "message": str}.
             "Status" choices are: Not found, Running, Exited, Unable to contact.
         """
-        statuses_dict = {}
-        containers = self.docker_client.containers(all=True)
-        containers_names = [service['Names'][0].strip('/sell_') for service in containers]
-        for service in services:
-            statuses_dict[service] = {}
-            if service not in containers_names:
-                statuses_dict[service]["status"] = "Not found"
-                statuses_dict[service]["message"] = "Container not found."
 
-        # Check status of services
-        end_time = time.time() + wait_time_status
-        while time.time() < end_time:
+        existent_services = self.names_from_containers(self.docker_client.containers(all=True))
+        running_services = self.names_from_containers(self.docker_client.containers(filters={"status": "running"}))
+        exited_services = self.names_from_containers(self.docker_client.containers(filters={"status": "exited"}))
 
-            # Services which have exited
-            exited = self.docker_client.containers(filters={"status": "exited"})
-            for service in exited:
-                service_name = service["Names"][0].strip("/sell_")
-                if service_name in services:
-                    statuses_dict[service_name]["status"] = "Exited"
-                    statuses_dict[service_name]["message"] = service["Status"]
+        for service_name in services:
+            if service_name in running_services:
+                service_running_hook(service_name)
+            elif service_name in exited_services:
+                service_exited_hook(service_name)
+            elif service_name in existent_services:
+                service_unknown_state_hook(service_name)
+            else:
+                service_nonexistent_hook(service_name)
 
-            # Services starting or started
-            running = self.docker_client.containers(filters={"status": "running"})
-            for service in running:
-                service_name = service['Names'][0].strip('/sell_')
-                if service_name in services:
+    def get_running_services(self):
+        """ Get list of running services.
 
-                    # Check that service started (responds to HTTP request)
-                    running = self._check_running_service(service_name)
-                    if running:
-                        statuses_dict[service_name]["status"] = "Running"
-                        statuses_dict[service_name]["message"] = service["Status"]
+        Returns:
+            (list) started services
+        """
+        return list(set(self.names_from_containers(self.docker_client.containers(
+            filters={"status": "running"}))).difference(set(Two1Composer.BASE_SERVICES)))
 
-            # All services have confirmed value
-            all_confirmed = True
-            for service in statuses_dict:
-                if "status" not in statuses_dict[service].keys():
-                    all_confirmed = False
-                    break
-            if all_confirmed:
-                break
-
-        for service in statuses_dict:
-            if "status" not in statuses_dict[service].keys():
-                statuses_dict[service]["status"] = "Unable to contact"
-                statuses_dict[service]["message"] = "Service container still spinning up..."
-
-        return statuses_dict
-
-    def status_router(self):
+    def status_router(self, service_running_hook, service_unknown_state_hook):
         """ Get status of Nginx router container.
-        """
-        router = self.docker_client.containers(all=True, filters={"name": "sell_router"})
-        if len(router) == 0:
-            status = "Container not found"
-        else:
-            status = router[0]['State'].title()
-        return status
 
-    def status_payments_server(self):
+        Args:
+            service_running_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                             is running.
+            service_unknown_state_hook (Callable): A callable hook that takes in a service name and is run when said
+                                                   service is in an unknown state.
+        """
+        if len(self.docker_client.containers(all=True, filters={"name": "sell_router", "status": "running"})) == 1:
+            service_running_hook("router")
+        else:
+            service_unknown_state_hook("router")
+
+    def status_payments_server(self, service_running_hook, service_unknown_state_hook):
         """ Get status of payment channels server.
-        """
-        pc_server = self.docker_client.containers(all=True, filters={"name": "sell_payments"})
-        if len(pc_server) == 0:
-            status = "Container not found"
-        else:
-            status = pc_server[0]['State'].title()
-        return status
-
-    def running_services_exist(self, services):
-        """ Check if any services are running.
-
-        Returns: True:  if any micropayments services are running.
-                 False: otherwise
-        """
-        try:
-            all_services = self._get_all_services_list()
-            if all:
-                to_check = all_services
-            else:
-                to_check = [i for i in services if i in all_services]
-
-            status = self.status_services(to_check)
-            running = False
-            for service in status:
-                if status[service]["status"] == "Running" or \
-                   status[service]["status"] == "Unable to contact":
-                    running = True
-                    break
-            return running
-        except Two1MachineException as e:
-            return False
-
-    # private methods
-
-    def _start_router(self):
-        """ Start Nginx router container service.
-        """
-        try:
-            if "router" not in [i["Names"][0].strip("/sell_") for
-                                i in self.docker_client.containers()]:
-                cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "up", "-d", "router"]
-                r = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    env=self.machine_env)
-        except Exception:
-            raise Two1ComposerRouterException()
-
-    def _restart_router(self):
-        """ Restart Nginx router container service.
-        """
-        try:
-            cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "build", "router"]
-            r = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, env=self.machine_env)
-            if "router" in [i["Names"][0].strip("/sell_") for
-                            i in self.docker_client.containers()]:
-                self.docker_client.stop("sell_router")
-            cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "up", "-d", "router"]
-            subprocess.check_output(cmd, stderr=subprocess.DEVNULL, env=self.machine_env)
-        except Exception:
-            raise Two1ComposerRouterException()
-
-    def _stop_router(self):
-        """ Stop Nginx router container service.
-        """
-        try:
-            with open(Two1Composer.COMPOSE_FILE, 'r') as f:
-                container_name = yaml.load(f)['services']['router']['container_name']
-            if "router" in [i["Names"][0].strip("/sell_") for
-                            i in self.docker_client.containers()]:
-                self.docker_client.stop(container_name)
-                self.docker_client.remove_container(container_name)
-        except Exception as e:
-            raise Two1ComposerRouterException()
-
-    def _start_payments_server(self):
-        """ Start payment channels server.
-        """
-        try:
-            if "payments" not in [i["Names"][0].strip("/sell_") for
-                                  i in self.docker_client.containers()]:
-                cmd = ["docker-compose", "-f", Two1Composer.COMPOSE_FILE, "up", "-d", "payments"]
-                r = subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    env=self.machine_env)
-        except Exception as e:
-            raise Two1ComposerStartException()
-
-    def _stop_payments_server(self):
-        """ Stop payment channels server.
-        """
-        try:
-            with open(Two1Composer.COMPOSE_FILE, 'r') as f:
-                container_name = yaml.load(f)['services']['payments']['container_name']
-            if "payments" in [i["Names"][0].strip("/sell_") for
-                              i in self.docker_client.containers()]:
-                self.docker_client.stop(container_name)
-                self.docker_client.remove_container(container_name)
-        except Exception as e:
-            raise Two1ComposerStopException()
-
-    def _check_running_service(self, service_name):
-        """ Checks if given service has started by making HTTP request.
 
         Args:
-            service (str): Name of service to test.
-
-        Returns:
-            bool: True if service is up.
-
-        NOTE: server.py must be main function of each service.
+            service_running_hook (Callable): A callable hook that takes in a service name and is run when said service
+                                             is running.
+            service_unknown_state_hook (Callable): A callable hook that takes in a service name and is run when said
+                                                   service is in an unknown state.
         """
-        # Gets accessible port from docker-compose.yaml
-        with open(Two1Composer.COMPOSE_FILE, 'r') as f:
-            service_description = yaml.load(f)['services'][service_name]
-        if 'expose' in service_description:
-            service_ports = str(service_description['expose'][0])
-        elif 'ports' in service_description:
-            service_ports = str(service_description['ports'][0])
-        if service_ports.find(':') != -1:
-            service_port = service_ports.split(':')[1]
+        if len(self.docker_client.containers(all=True, filters={"name": "sell_payments", "status": "running"})) == 1:
+            service_running_hook("payments")
         else:
-            service_port = service_ports
+            service_unknown_state_hook("payments")
 
-        # construct service url
-        port = self.machine_config['server_port']
-        url = 'http://%s:%s/%s' % (self.machine_host, port, service_name)
-
-        # make request
-        try:
-            resp = requests.get(url, timeout=1)
-            service_up = True
-        except requests.exceptions.ConnectionError as e:
-            service_up = False
-        except requests.exceptions.Timeout as e:
-            service_up = False
-
-        return service_up
-
-    def _check_or_create_wallets(self, services):
-        """ Check if wallet exists for each serviecs and generates one if not.
+    @staticmethod
+    def _create_base_server(server_port):
+        """ Create nginx base server config.
 
         Args:
-            services (list): List of services for which to check/generate wallet.
-
-        Returns:
-            dict: Dictionary with service as keys and values as dictionary.
-            Inner dictionary has the format: {"existed": bool or None,
-            "created": bool or None, "mnemonic": str}
-
-        Raises:
-            JSONDecodeError: services.json may be corrupted.
-        """
-
-        wallets_dict = {}
-        existing_mnemonics_dict = {}
-
-        if os.path.isfile(Two1Composer.SERVICES_WALLET_FILE):
-            try:
-                with open(Two1Composer.SERVICES_WALLET_FILE, "r") as f:
-                    existing_mnemonics_dict = json.load(f)
-            except ValueError:
-                # services wallet file exists but empty
-                if os.path.getsize(Two1Composer.SERVICES_WALLET_FILE) == 0:
-                    os.remove(Two1Composer.SERVICES_WALLET_FILE)
-                    return self._check_or_create_wallets(services)
-                else:
-                    raise ValueError("Error: %s may be corrupted." %
-                                     Two1Composer.SERVICES_WALLET_FILE)
-        else:
-            os.makedirs(os.path.dirname(Two1Composer.SERVICES_WALLET_FILE), exist_ok=True)
-            with open(Two1Composer.SERVICES_WALLET_FILE, 'w') as f:
-                f.write("{}")
-
-        for service in services:
-            wallet_template = {"existed": None,
-                               "created": None,
-                               "mnemonic": None}
-            # wallet exists
-            if service in existing_mnemonics_dict:
-                wallet_template["existed"] = True
-                wallet_template["mnemonic"] = existing_mnemonics_dict[service]["mnemonic"]
-                wallet_template["port"] = existing_mnemonics_dict[service]["port"]
-
-            # generate new wallet
-            else:
-                generated_mnemonic = self.default_wallet.create(self.provider)[1]
-                selected_port = self._get_unused_port()
-                wallet_template["created"] = True
-                wallet_template["mnemonic"] = generated_mnemonic
-                wallet_template["port"] = selected_port
-
-            wallets_dict[service] = wallet_template
-
-        with open(Two1Composer.SERVICES_WALLET_FILE, "w") as f:
-            json.dump({
-                service: {
-                    "mnemonic": wallets_dict[service]["mnemonic"],
-                    "port": wallets_dict[service]["port"]
-                } for service in wallets_dict}, f)
-
-        return wallets_dict
-
-    def _check_or_create_payments_wallet(self):
-        """ Check if wallet exists for payment server container.
-
-        Returns:
-            dict: Dictionary with service as keys and values as dictionary.
-            Inner dictionary has the format: {"existed": bool or None,
-            "created": bool or None, "mnemonic": str}
-
-        Raises:
-            JSONDecodeError: services.json may be corrupted.
-        """
-        payment_wallet = {"existed": None,
-                          "created": None,
-                          "mnemonic": None}
-        if os.path.isfile(Two1Composer.PAYMENTS_WALLET_FILE):
-            try:
-                with open(Two1Composer.PAYMENTS_WALLET_FILE, "r") as f:
-                    payment_mnemonic = json.load(f)["mnemonic"]
-                    payment_wallet["existed"] = True
-                    payment_wallet["mnemonic"] = payment_mnemonic
-                    return payment_wallet
-            except ValueError:
-                if os.path.getsize(Two1Composer.PAYMENTS_WALLET_FILE) == 0:
-                    os.remove(Two1Composer.PAYMENTS_WALLET_FILE)
-                    return self._check_or_create_payments_wallet()
-                else:
-                    raise ValueError("Error: %s may be corrupted." %
-                                     Two1Composer.PAYMENTS_WALLET_FILE)
-        else:
-            os.makedirs(os.path.dirname(Two1Composer.PAYMENTS_WALLET_FILE), exist_ok=True)
-            with open(Two1Composer.PAYMENTS_WALLET_FILE, "w") as f:
-                generated_mnemonic = self.default_wallet.create(self.provider)[1]
-                json.dump({"mnemonic": generated_mnemonic, "port": 7000}, f)
-            payment_wallet["created"] = True
-            payment_wallet["mnemonic"] = generated_mnemonic
-        return payment_wallet
-
-    def _update_wallet_env(self, services):
-        """ Updates the .env file in each service folder with wallet mnemonic.
-
-        Args:
-            services (list): List of services for which to update .env.
-
-        Returns:
-            int: 0 if .env files all restored successfully
-        """
-        with open(Two1Composer.SERVICES_WALLET_FILE, "r") as f:
-            services_info = json.load(f)
-
-        two1_mnemonic_pattern = re.compile(r"""^(\s*)TWO1_WALLET_MNEMONIC(\s*)=""")
-        port_pattern = re.compile(r"""^(\s*)PORT(\s*)=""")
-        service_pattern = re.compile(r"""^(\s*)SERVICE(\s*)=""")
-        payment_pattern = re.compile(r"""^(\s*)PAYMENT_SERVER_IP(\s*)=""")
-        for service in services:
-            service_env_file = os.path.join(Two1Composer.SERVICES_DIR,
-                                            service,
-                                            '.env')
-
-            service_file_lines = []
-            if os.path.isfile(service_env_file):
-                with open(service_env_file, "r") as f:
-                    service_file_lines = [line for line in f.read().split("\n")
-                                          if two1_mnemonic_pattern.search(line)
-                                          is None or port_pattern.search(line)
-                                          is None or service_pattern.search(line)
-                                          is None or payment_pattern.search(line)
-                                          is None]
-            service_file_lines.append("TWO1_WALLET_MNEMONIC=%s" %
-                                      services_info[service]["mnemonic"])
-            service_file_lines.append("PORT=%s" % services_info[service]["port"])
-            service_file_lines.append("SERVICE=%s" % service)
-            service_file_lines.append("PAYMENT_SERVER_IP=http://%s:%s" %
-                                      (self.machine_host,
-                                       self.machine_config["server_port"]))
-            os.makedirs(os.path.dirname(service_env_file), exist_ok=True)
-            with open(service_env_file, "w") as f:
-                f.write("\n".join(service_file_lines))
-
-    def _update_payments_wallet_env(self):
-        """ Updates the .env file for payments container.
-
-        Returns:
-            int: 0 if .env files all restored successfully
-        """
-        with open(Two1Composer.PAYMENTS_WALLET_FILE, "r") as f:
-            payment_info = json.load(f)
-
-        two1_mnemonic_pattern = re.compile(r"""^(\s*)TWO1_WALLET_MNEMONIC(\s*)=""")
-        port_pattern = re.compile(r"""^(\s*)PORT(\s*)=""")
-        payment_env_file = os.path.join(Two1Composer.PAYMENTS_DIR, ".env")
-
-        file_lines = []
-        if os.path.isfile(payment_env_file):
-            with open(payment_env_file, "r") as f:
-                file_lines = [line for line in f.read().split("\n")
-                              if two1_mnemonic_pattern.search(line)
-                              is False or port_pattern.search(line)
-                              is False]
-        file_lines.append("TWO1_WALLET_MNEMONIC=%s" %
-                          payment_info["mnemonic"])
-        file_lines.append("PORT=%s" % payment_info["port"])
-
-        os.makedirs(Two1Composer.PAYMENTS_DIR, exist_ok=True)
-        with open(payment_env_file, "w") as f:
-            f.write("\n".join(file_lines))
-
-    def _get_all_services_list(self):
-        """ Get list of available services as defined in docker-composer.yaml
-
-        Returns:
-            list: Available services.
-        """
-        return list(self._get_services_container_names().keys())
-
-    def _get_services_container_names(self):
-        """ Maps service folder names to names of container.
-
-        Returns:
-            dict: Service folder name as key and container name as value.
-        """
-        services = {}
-        sellables = set(os.listdir(Two1Composer.SERVICES_DIR)).intersection(
-            set(Two1Composer.GRID_SERVICES))
-        for service in sellables:
-            services[service] = "sell_" + service
-        return services
-
-    def _get_unused_port(self):
-        """ Return a unique port for a service.
-        """
-        try:
-            with open(Two1Composer.SERVICES_WALLET_FILE, "r") as f:
-                service_info = json.load(f)
-            used_ports = set([service_info[s]['port'] for s in service_info.keys()])
-            if set(range(Two1Composer.DEFAULT_INTERNAL_PORT_MIN,
-                         Two1Composer.DEFAULT_INTERNAL_PORT_MAX + 1)).issubset(used_ports):
-                # all ports in allotted range are used
-                raise
-            else:
-                while(True):
-                    service_port = random.randint(Two1Composer.DEFAULT_INTERNAL_PORT_MIN,
-                                                  Two1Composer.DEFAULT_INTERNAL_PORT_MAX)
-                    if service_port not in used_ports:
-                        # todo: try to make socket connection to port inside vm
-                        break
-            return service_port
-        except Exception:
-            raise
-
-    def _create_service_definitions(self):
-        """ Define boilerplate services, networks, and volumes.
-
-        Args:
-            port (int): port for 21 sell server.
+            server_port (int): port for 21 sell server.
         """
         try:
             # create nginx router dirs
-            subprocess.check_output(["rm", "-rf",
-                                     os.path.join(Two1Composer.SITES_ENABLED_PATH)])
-            subprocess.check_output(["rm", "-rf",
-                                     os.path.join(Two1Composer.SITES_AVAILABLE_PATH)])
+            shutil.rmtree(Two1Composer.SITES_ENABLED_PATH, ignore_errors=True)
+            shutil.rmtree(Two1Composer.SITES_AVAILABLE_PATH, ignore_errors=True)
             os.makedirs(Two1Composer.SITES_ENABLED_PATH, exist_ok=True)
             os.makedirs(Two1Composer.SITES_AVAILABLE_PATH, exist_ok=True)
 
             # create base nginx server
-            port = self.machine_config['server_port']
             with open(os.path.join(Two1Composer.SITES_ENABLED_PATH,
                                    "two1baseserver"), 'w') as f:
                 f.write("server {\n"
-                        "    listen " + str(port) + ";\n"
+                        "    listen " + str(server_port) + ";\n"
                         "    include /etc/nginx/sites-available/*;\n"
                         "}\n"
-                        )
-
-            # initalize docker compose file
-            with open(Two1Composer.COMPOSE_FILE, 'w') as f:
-                f.write("version: '2'\n"
-                        "services:\n"
-                        "  router:\n"
-                        "    restart: always\n"
-                        "    container_name: sell_router\n"
-                        "    build: blueprints/router\n"
-                        "    ports:\n"
-                        '      - "' + str(port) + ':' + str(port) + '"\n'
-                        "    links:\n"
-                        "      - payments:payments\n"
-                        "    image: two1:router\n"
-                        '    command: ["nginx", "-g", "daemon off;"]\n'
-                        "  base:\n"
-                        "    build: blueprints/base\n"
-                        "    image: two1:base\n"
                         )
         except Exception:
             raise Two1ComposerServiceDefinitionException()
 
-    def _create_service_route(self, service):
+    @staticmethod
+    def _create_service_route(service):
         """ Create route for container service.
         """
+        os.makedirs(Two1Composer.SITES_AVAILABLE_PATH, exist_ok=True)
         try:
-            # update docker compose file
-            with open(Two1Composer.COMPOSE_FILE, 'r') as f:
-                two1_services = yaml.load(f)
-            service_map = service + ":" + service
-            if service_map not in two1_services['services']['router']['links']:
-                two1_services['services']['router']['links'].append(service_map)
-            two1_services['services'][service] = {}
-            two1_services['services'][service]['container_name'] = "sell_" + service
-            two1_services['services'][service]['restart'] = "always"
-            two1_services['services'][service]['build'] = os.path.join(Two1Composer.SERVICES_DIR,
-                                                                       service)
-            two1_services['services'][service]['volumes'] = [
-                os.path.dirname(Two1Composer.SERVICES_WALLET_FILE) + ":/usr/src/db/"]
-            env_dirs = [os.path.join(Two1Composer.SERVICES_DIR, '.env'),
-                        os.path.join(Two1Composer.SERVICES_DIR, service, '.env')]
-            two1_services['services'][service]['env_file'] = env_dirs
-            with open(Two1Composer.SERVICES_WALLET_FILE, 'r') as f:
-                service_json = json.load(f)
-            two1_services['services'][service]['expose'] = [service_json[service]['port']]
-            two1_services['services'][service]['depends_on'] = ['base']
-            two1_services['services'][service]['image'] = 'two1:ping'
-            two1_services['services'][service]['logging'] = {}
-            two1_services['services'][service]['logging']['driver'] = "json-file"
-            run_command = 'sh -c "python3 /usr/src/app/login.py && sleep 2 && ' + \
-                          'python3 /usr/src/app/server.py"'
-            two1_services['services'][service]['command'] = run_command
-            with open(Two1Composer.COMPOSE_FILE, 'w') as f:
-                f.write(yaml.dump(two1_services, default_flow_style=False))
-            # update nginx sites-available
             with open(os.path.join(Two1Composer.SITES_AVAILABLE_PATH, service), 'w') as f:
                 f.write("location /" + service + " {\n"
                         "    rewrite ^/" + service + "(.*) $1 break;\n"
-                        "    proxy_pass http://" + service + ":" +
-                        str(service_json[service]['port']) + ";\n"
+                        "    proxy_pass http://" + service + ":" + str(5000) + ";\n"
                         "    proxy_set_header Host $host;\n"
                         "    proxy_set_header X-Real-IP $remote_addr;\n"
                         "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
@@ -840,49 +523,61 @@ class Two1ComposerContainers(Two1Composer):
         except Exception:
             raise Two1ComposerRouteException()
 
-    def _create_payments_route(self):
+    @staticmethod
+    def _create_payments_route():
         """ Add route to payments server.
         """
+        os.makedirs(Two1Composer.SITES_AVAILABLE_PATH, exist_ok=True)
         try:
-
-            # link payments server container to router container
-            with open(Two1Composer.COMPOSE_FILE, 'r') as f:
-                existing = yaml.load(f)
-            if "payments:payments" not in existing["services"]["router"]["links"]:
-                existing["services"]["router"]["links"].append("payments:payments")
-
-            # write payments server description
-            existing["services"]["payments"] = {}
-            existing["services"]["payments"]["container_name"] = "sell_payments"
-            existing["services"]["payments"]["restart"] = "always"
-            existing["services"]["payments"]["build"] = os.path.join(Two1Composer.PAYMENTS_DIR)
-            existing["services"]["payments"]["volumes"] = [
-                os.path.dirname(Two1Composer.SERVICES_WALLET_FILE) + ":/usr/src/db/"]
-            env_dirs = [os.path.join(Two1Composer.SERVICES_DIR, ".env"),
-                        os.path.join(Two1Composer.PAYMENTS_DIR, ".env")]
-            existing["services"]["payments"]["env_file"] = env_dirs
-            with open(Two1Composer.PAYMENTS_WALLET_FILE, "r") as f:
-                payments_info = json.load(f)
-            existing["services"]["payments"]["expose"] = [payments_info["port"]]
-            existing["services"]["payments"]["depends_on"] = ["base"]
-            existing["services"]["payments"]["image"] = "two1:payments"
-            existing["services"]["payments"]["logging"] = {"driver": "json-file"}
-            run_command = 'sh -c "python3 /usr/src/app/login.py && sleep 2 && ' + \
-                          'python3 /usr/src/app/server.py"'
-            existing["services"]["payments"]["command"] = run_command
-
-            # write docker-compose file
-            with open(Two1Composer.COMPOSE_FILE, "w") as f:
-                    f.write(yaml.dump(existing, default_flow_style=False))
-
             # write nginx route for payments server
             with open(os.path.join(Two1Composer.SITES_AVAILABLE_PATH, "payments"), 'w') as f:
                 f.write("location /payment {\n"
-                        "    proxy_pass http://payments:" + str(payments_info["port"]) + ";\n"
+                        "    proxy_pass http://payments:" + str(5000) + ";\n"
                         "    proxy_set_header Host $host;\n"
                         "    proxy_set_header X-Real-IP $remote_addr;\n"
                         "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
                         "}\n")
-
         except Exception:
             raise Two1ComposerRouteException()
+
+    def publish_service(self, service_name, zt_ip, port,
+                        published_hook, already_published_hook, failed_to_publish_hook,
+                        unknown_publish_error_hook, publish_timedout_hook,
+                        timeout=Two1Composer.SERVICE_PUBLISH_TIMEOUT):
+        start = time.clock()
+        running = True
+
+        exec_resp = self.docker_client.exec_create('sell_%s' % service_name,
+                                                   'python3 /usr/src/app/utils/publish.py ' + \
+                                                   service_name + " " + str(zt_ip) + " " + str(port))
+        exec_id = exec_resp['Id']
+        self.docker_client.exec_start(exec_id)
+
+        while time.clock() - start < timeout and running is True:
+            running = self.docker_client.exec_inspect(exec_id)['Running']
+
+        if running is True:
+            publish_timedout_hook(service_name)
+        else:
+            code = self.docker_client.exec_inspect(exec_id)['ExitCode']
+            if code == 100:
+                published_hook(service_name)
+            elif code == 101:
+                already_published_hook(service_name)
+            elif code == 102:
+                failed_to_publish_hook(service_name)
+            else:  # includes code == 99
+                unknown_publish_error_hook(service_name)
+
+    def get_services_mnemonic(self):
+        if os.path.isfile(Two1Composer.COMPOSE_FILE):
+            with self.ComposerYAMLContext() as composer_yaml:
+                try:
+                    maybe_mnemonic = composer_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+                except KeyError:
+                    rv = None
+                else:
+                    rv = maybe_mnemonic
+        else:
+            rv = None
+        return rv

@@ -5,6 +5,7 @@ import two1
 from two1.commands.util.config import Config
 from two1.server import machine_auth_wallet
 from two1.wallet.two1_wallet import Two1Wallet
+from two1.blockchain import TwentyOneProvider
 from two1.wallet.daemonizer import get_daemonizer
 from two1.server import rest_client as _rest_client
 
@@ -24,7 +25,8 @@ def login_21():
 
     mnemonic = os.environ["TWO1_WALLET_MNEMONIC"]
 
-    wallet = Two1Wallet.import_from_mnemonic(mnemonic=mnemonic)
+    provider = TwentyOneProvider()
+    wallet = Two1Wallet.import_from_mnemonic(provider, mnemonic)
 
     if not os.path.exists(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH)):
         os.makedirs(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH))

@@ -10,6 +10,10 @@ def get_manager(sysdata):
 
     Constucts a manager consisting of a platform-dependent
     machine layer and a service composer layer.
+
+    Args:
+        sysdata (two1.sell.util.client_helpers.PlatformDescription): A PlatformDescription as returned by
+                                                                     two1.sell.util.client_helpers.get_platform
     """
     if sysdata.detected_os == "Darwin":
         return Two1Manager(Two1MachineVirtual(), Two1ComposerContainers())
@@ -19,7 +23,7 @@ def get_manager(sysdata):
         raise Two1SellNotSupportedException
 
 
-class Two1Manager():
+class Two1Manager:
     """ Two1Manager manages the machine and composer layers that make up
     the 21 agent.
 
@@ -64,6 +68,10 @@ class Two1Manager():
 
     def connect_market(self, client, network="21market"):
         """ Connect to 21market network.
+
+        Args:
+            client: Client to join network
+            network: Network to join
         """
         return self.machine.connect_market(client, network)
 
@@ -73,9 +81,21 @@ class Two1Manager():
                        service_port=Two1Machine.DEFAULT_SERVICE_PORT,
                        zt_interface=Two1Machine.DEFAULT_ZEROTIER_INTERFACE):
         """ Create the virtual machine.
+
+        Args:
+            vm_name: Name of the VM to create.
+            vdisk_size: Size of disk for the VM in MB.
+            vm_memory: Size of memory for the VM in MB
+            service_port: Port on which the router container will listen.
+            zt_interface: ZeroTier interface to be bridged in the VM.
         """
         return self.machine.create_machine(vm_name, vdisk_size, vm_memory,
                                            service_port, zt_interface)
+
+    def write_machine_config(self, *args):
+        """ Write machine config to file.
+        """
+        return self.machine.write_machine_config(*args)
 
     def delete_machine(self):
         """ Delete the virtual machine.
@@ -99,32 +119,28 @@ class Two1Manager():
 
     # composer layer
 
-    def build_base_services(self):
-        """ Build router and payments server services images.
+    def initialize_server(self, *args):
+        """ Initialize micropayments server config files.
         """
-        self.composer.connect(self.machine.env,
+        return self.composer.initialize_server(*args)
+
+    def list_available_services(self):
+        """ List available services to sell.
+        """
+        return self.composer.list_services()
+
+    def pull_latest_images(self, *args):
+        """ Pull latest service images.
+        """
+        self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.build_base_services()
-
-    def build_market_services(self, *args):
-        """ Build market services images.
-        """
-        self.composer.connect(self.machine.env,
-                              self.machine.host,
-                              self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.build_market_services(*args)
-
-    def write_global_services_env(self, *args):
-        """ Write global service credentials to .env.
-        The .env files are passed to the container services.
-        """
-        return self.composer.write_global_services_env(*args)
+        return self.composer.pull_latest_images(*args)
 
     def start_services(self, *args):
         """ Start services.
         """
-        self.composer.connect(self.machine.env,
+        self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.start_services(*args)
@@ -132,37 +148,48 @@ class Two1Manager():
     def stop_services(self, *args):
         """ Stop services.
         """
-        self.composer.connect(self.machine.env,
+        self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.stop_services(*args)
 
-    def status_router(self):
-        """ Get router status.
-        """
-        self.composer.connect(self.machine.env,
-                              self.machine.host,
-                              self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.status_router()
-
     def status_services(self, *args):
         """ Get status of all services.
         """
-        self.composer.connect(self.machine.env,
+        self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.status_services(*args)
 
-    def running_services_exist(self, *args):
-        """ Check if running services exist.
+    def status_router(self, *args):
+        """ Get router status.
         """
-        self.composer.connect(self.machine.env,
+        self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.running_services_exist(*args)
+        return self.composer.status_router(*args)
 
-    def get_all_services_list(self):
-        """ Returns a list of all availible services.
-        Does not require connection to docker engine.
+    def status_payments_server(self, *args):
+        """ Get payments status.
         """
-        return self.composer._get_all_services_list()
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.status_payments_server(*args)
+
+    def get_running_services(self):
+        """ Get list of running services.
+        """
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.get_running_services()
+
+    def publish_service(self, *args, **kwargs):
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.publish_service(*args, **kwargs)
+
+    def get_services_mnemonic(self, *args, **kwargs):
+        return self.composer.get_services_mnemonic(*args, **kwargs)
