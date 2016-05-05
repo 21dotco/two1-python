@@ -60,6 +60,10 @@ $ 21 log
 \b
 See a mining dashboard for low-level mining details (only for Bitcoin Computer users)
 $ 21 mine --dashboard
+
+\b
+Stop the ASIC miner from mining in the background.
+$ sudo minerd --stop
 """
     _mine(ctx.obj['config'], ctx.obj['client'], ctx.obj['wallet'], dashboard=dashboard)
 
