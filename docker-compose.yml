@@ -1,0 +1,8 @@
+version: "2"
+services:
+  cli:
+    image: python:3-onbuild 
+    env_file: .env-local
+    volumes:
+      - .:/two1
+    command: bash -c "pip install --editable /two1 && sleep infinity"
