@@ -9,7 +9,7 @@ from two1.sell.machine import Two1MachineVirtual
 from two1.sell.machine import VmState, MachineState
 from two1.sell.composer import Two1ComposerContainers
 from two1.sell.composer import ComposerState
-from two1.sell.client import Two1SellClient
+from two1.sell.manager import Two1Manager
 
 SKIP_TEST = os.environ.get("SKIP_SELL_TESTS", True)
 
@@ -17,34 +17,34 @@ SKIP_TEST = os.environ.get("SKIP_SELL_TESTS", True)
 def set_up_machine(sys_platform):
     """ Create the machine layer and init to READY state.
 
-    Returns: sell_client
+    Returns: manager
     """
-    sell_client = Two1SellClient(sys_platform)
-    sell_client.manager.machine.start_networking()
-    sell_client.manager.machine.create_machine()
-    sell_client.manager.machine.start_machine()
-    return sell_client
+    manager = Two1Manager(sys_platform)
+    manager.machine.start_networking()
+    manager.machine.create_machine()
+    manager.machine.start_machine()
+    return manager
 
 
-def tear_down_machine(sell_client):
+def tear_down_machine(manager):
     """ Tear down the machine layer.
     """
-    sell_client.manager.machine.stop_machine()
-    sell_client.manager.machine.stop_networking()
-    sell_client.manager.machine.delete_machine()
+    manager.machine.stop_machine()
+    manager.machine.stop_networking()
+    manager.machine.delete_machine()
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_create_client_mac(sys_platform):
     """ Test creation of Two1SellClient on Mac OS X (supported).
     """
-    sell_client = None
+    manager = None
     try:
-        sell_client = Two1SellClient(sys_platform)
+        manager = Two1Manager(sys_platform)
     except Exception:
-        if sell_client is not None:
-            assert isinstance(sell_client.machine, Two1MachineVirtual)
-            assert isinstance(sell_client.composer, Two1ComposerContainers)
+        if manager is not None:
+            assert isinstance(manager.machine, Two1MachineVirtual)
+            assert isinstance(manager.composer, Two1ComposerContainers)
         else:
             assert False
 
@@ -53,92 +53,92 @@ def test_create_client_mac(sys_platform):
 def test_start_stop_networking(sys_platform):
     """ Test starting and stopping networking.
     """
-    sell_client = Two1SellClient(sys_platform)
+    manager = Two1Manager(sys_platform)
 
-    if sell_client.manager.machine.status_networking() is True:
-        sell_client.manager.machine.stop_networking()
-        assert sell_client.manager.machine.status_networking() is False
+    if manager.machine.status_networking() is True:
+        manager.machine.stop_networking()
+        assert manager.machine.status_networking() is False
 
-    sell_client.manager.start_networking()
-    assert sell_client.manager.machine.status_networking() is True
+    manager.start_networking()
+    assert manager.machine.status_networking() is True
 
-    sell_client.manager.stop_networking()
-    assert not sell_client.manager.machine.status_networking()
+    manager.stop_networking()
+    assert not manager.machine.status_networking()
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_create_delete_machine_layer(sys_platform):
     """ Test starting and stopping networking.
     """
-    sell_client = Two1SellClient(sys_platform)
+    manager = Two1Manager(sys_platform)
 
-    if sell_client.manager.machine.status_machine() != VmState.NOEXIST:
-        sell_client.manager.machine.delete_machine()
-        assert sell_client.manager.machine.status_machine() == VmState.NOEXIST
-    sell_client.manager.start_networking()
-    sell_client.manager.create_machine()
-    assert sell_client.manager.machine.status_machine() != VmState.NOEXIST
-    sell_client.manager.delete_machine()
-    sell_client.manager.stop_networking()
-    assert sell_client.manager.machine.status_machine() == VmState.NOEXIST
+    if manager.machine.status_machine() != VmState.NOEXIST:
+        manager.machine.delete_machine()
+        assert manager.machine.status_machine() == VmState.NOEXIST
+    manager.start_networking()
+    manager.create_machine()
+    assert manager.machine.status_machine() != VmState.NOEXIST
+    manager.delete_machine()
+    manager.stop_networking()
+    assert manager.machine.status_machine() == VmState.NOEXIST
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_start_stop_machine_layer(sys_platform):
     """ Test starting and stopping machine layer.
     """
-    sell_client = Two1SellClient(sys_platform)
+    manager = Two1Manager(sys_platform)
 
-    if sell_client.manager.machine.status_machine() == VmState.RUNNING:
-        sell_client.manager.machine.stop_machine()
-        sell_client.manager.machine.delete_machine()
-        sell_client.manager.machine.stop_networking()
-        assert sell_client.manager.machine.status_machine() == VmState.NOEXIST
+    if manager.manager.machine.status_machine() == VmState.RUNNING:
+        manager.manager.machine.stop_machine()
+        manager.manager.machine.delete_machine()
+        manager.manager.machine.stop_networking()
+        assert manager.manager.machine.status_machine() == VmState.NOEXIST
 
-    sell_client.manager.machine.start_networking()
-    sell_client.manager.machine.create_machine()
-    sell_client.manager.machine.start_machine()
-    assert sell_client.manager.machine.status_machine() == VmState.RUNNING
-    assert sell_client.manager.machine.state == MachineState.READY
+    manager.manager.machine.start_networking()
+    manager.manager.machine.create_machine()
+    manager.manager.machine.start_machine()
+    assert manager.manager.machine.status_machine() == VmState.RUNNING
+    assert manager.manager.machine.state == MachineState.READY
 
-    sell_client.manager.machine.stop_machine()
-    assert sell_client.manager.machine.status_machine() == VmState.STOPPED
+    manager.manager.machine.stop_machine()
+    assert manager.manager.machine.status_machine() == VmState.STOPPED
 
-    sell_client.manager.machine.stop_networking()
-    sell_client.manager.machine.delete_machine()
-    assert sell_client.manager.machine.status_machine() == VmState.NOEXIST
+    manager.manager.machine.stop_networking()
+    manager.manager.machine.delete_machine()
+    assert manager.manager.machine.status_machine() == VmState.NOEXIST
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_composer_connect(sys_platform):
     """ Test composer connection with machine layer.
     """
-    sell_client = set_up_machine(sys_platform)
-    sell_client.manager.composer.connect(sell_client.manager.machine.env,
-                                         sell_client.manager.machine_host)
-    assert sell_client.manager.composer.connected == ComposerState.CONNECTED
-    tear_down_machine(sell_client)
+    manager = set_up_machine(sys_platform)
+    manager.composer.connect(manager.machine.env,
+                             manager.machine_host)
+    assert manager.manager.composer.connected == ComposerState.CONNECTED
+    tear_down_machine(manager)
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_composer_build_base_services(sys_platform):
     """ Test building base services with Two1Composer.
     """
-    sell_client = set_up_machine(sys_platform)
-    sell_client.manager.build_base_services()
+    manager = set_up_machine(sys_platform)
+    manager.manager.build_base_services()
     assert 1 == 1
-    tear_down_machine(sell_client)
+    tear_down_machine(manager)
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
 def test_composer_build_market_services(sys_platform):
     """ Test building market services with Two1Composer.
     """
-    sell_client = set_up_machine(sys_platform)
-    sell_client.manager.build_base_services()
-    sell_client.manager.build_market_services(["ping"])
+    manager = set_up_machine(sys_platform)
+    manager.manager.build_base_services()
+    manager.manager.build_market_services(["ping"])
     assert 1 == 1
-    tear_down_machine(sell_client)
+    tear_down_machine(manager)
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")
@@ -146,16 +146,16 @@ def test_composer_start_stop_services(sys_platform):
     """ Test starting and stopping market services with Two1Composer.
     """
     services = ["ping"]
-    sell_client = set_up_machine(sys_platform)
+    manager = set_up_machine(sys_platform)
 
-    sell_client.manager.build_base_services()
-    sell_client.manager.build_market_services(services)
-    status_env = sell_client.manager.write_global_services_env('jgfreshprod23', 'Tester123')
+    manager.manager.build_base_services()
+    manager.manager.build_market_services(services)
+    status_env = manager.manager.write_global_services_env('jgfreshprod23', 'Tester123')
 
-    sell_client.manager.start_services(services)
+    manager.manager.start_services(services)
     assert 1 == 1
-    sell_client.manager.stop_services(services)
-    tear_down_machine(sell_client)
+    manager.manager.stop_services(services)
+    tear_down_machine(manager)
 
 
 @pytest.mark.skipif(SKIP_TEST, reason="need infra")

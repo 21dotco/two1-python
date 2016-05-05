@@ -46,7 +46,7 @@ class PaymentChannelClient:
             db_path (str): Payment channel database path.
 
         Returns:
-            PaymentChannelClient: instance of PaymentChannelClient.
+            PaymentChannelClient: Instance of PaymentChannelClient.
 
         """
 
