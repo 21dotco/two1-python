@@ -616,7 +616,7 @@ def publish_started(not_published, zt_ip, port, manager):
             else:
                 publish_stats.append((service.title(), False, ["Failed to publish"]))
         else:
-            publish_stats.append((service.title(), False, ["Failed to publish"]))
+            pass
 
     return publish_stats
 

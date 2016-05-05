@@ -163,8 +163,6 @@ class Two1Manager():
 
     def get_all_services_list(self):
         """ Returns a list of all availible services.
+        Does not require connection to docker engine.
         """
-        self.composer.connect(self.machine.env,
-                              self.machine.host,
-                              self.machine.MACHINE_CONFIG_FILE)
         return self.composer._get_all_services_list()
