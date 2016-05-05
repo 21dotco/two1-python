@@ -48,6 +48,10 @@ Start local server to sell APIs for bitcoin.
 \b
 Usage
 _____
+List services available to sell.
+$ 21 sell list
+
+\b
 Start selling a single service.
 $ 21 sell start <service_name>
 
@@ -295,6 +299,10 @@ $ 21 sell start --all
                               stat[2],
                               "TRUE" if stat[1] else "FALSE",
                               stat[1])
+    # help tip message
+    logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) + \
+                click.style("`21 sell status --detail`", bold=True, fg=cli_helpers.PROMPT_COLOR) + \
+                click.style(" to see your microservice balances.", fg=cli_helpers.PROMPT_COLOR))
 
 
 @sell.command()
@@ -474,6 +482,35 @@ $ 21 sell status
     cli_helpers.print_example_usage(list(service_status.keys()),
                                     manager.get_market_address(),
                                     manager.get_server_port())
+
+
+@sell.command()
+@click.pass_context
+def list(ctx):
+    """
+List services available to sell.
+
+\b
+Get the list of microservices you can sell for bitcoin.
+$ 21 sell list
+"""
+
+    # pass Two1SellClient down in context
+    manager = ctx.obj['manager']
+
+    logger.info(click.style("Available 21 microservices", fg=cli_helpers.MENU_COLOR))
+    logger.info(click.style(85*"-", fg=cli_helpers.MENU_COLOR))
+    available_services = manager.get_all_services_list()
+    if len(available_services) != 0:
+        for service in available_services:
+            cli_helpers.print_str(service, ["Available"], "TRUE", True)
+        # help tip message
+        logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) + \
+                    click.style("`21 sell start <services>`", bold=True, fg=cli_helpers.PROMPT_COLOR) + \
+                    click.style(" to start selling a microservice.", fg=cli_helpers.PROMPT_COLOR))
+    else:
+        logger.info(click.style("There are no services available at this time.",
+                                fg="magenta"))
 
 
 @sell.command()

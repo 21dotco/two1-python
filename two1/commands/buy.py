@@ -1,6 +1,7 @@
 """Buy from a machine-payable endpoint."""
 # standart python imports
 import re
+import sys
 import json
 import urllib.parse
 import logging
@@ -43,12 +44,19 @@ def buy(ctx, resource, **options):
 \b
 Usage
 -----
+Buy a bitcoin-payable resource.
+$ 21 buy <resource>
+
+\b
 Get state, city, latitude, longitude, and estimated population for a given zip code.
 $ 21 buy "https://mkt.21.co/zipdata/collect?zip_code=94109" --maxprice 2750
 
 """
     # Get requested URL resource for `21 buy <URL>` syntax
     buy_url = resource[0]
+    if buy_url is None or buy_url is "":
+        logger.info(ctx.command.get_help(ctx))
+        sys.exit()
 
     # Backwards compatibility for `21 buy url <URL>` syntax
     if resource[0] == 'url':
