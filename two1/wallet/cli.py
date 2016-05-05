@@ -476,7 +476,7 @@ def restore(ctx):
 
     wallet.to_file(ctx.obj['wallet_path'])
     if Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
-        click.echo("Wallet successfully restored.")
+        click.echo("Wallet successfully restored. Run '21 login' to connect this wallet to your 21 account.")
     else:
         click.echo("Wallet not restored.")
         ctx.exit(code=6)
