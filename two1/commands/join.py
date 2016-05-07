@@ -31,11 +31,13 @@ def getinput(msg, choices):
 @click.argument("network", default="21market")
 @click.option('--status', is_flag=True, default=False,
               help='Show status of all networks that you have joined.')
+@click.option('--leave', is_flag=True, default=False,
+              help='Leave a network.')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
-def join(ctx, network, status):
+def join(ctx, network, status, leave):
     """Join a p2p network to buy/sell for BTC.
 
 \b
@@ -46,6 +48,8 @@ Usage
 """
     if status:
         show_network_status()
+    elif leave:
+        _leave(ctx.obj['client'], network)
     else:
         logger.info(uxstring.UxString.join_network_beta_warning)
         response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
@@ -88,6 +92,7 @@ def _join(client, network):
             zerotier.start_daemon()
         else:
             logger.info(uxstring.UxString.install_zerotier)
+            return
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
@@ -99,5 +104,37 @@ def _join(client, network):
             logger.info(uxstring.UxString.invalid_network)
         else:
             raise e
+    except subprocess.CalledProcessError as e:
+        logger.info(str(e))
+
+
+def _leave(client, network):
+    """Join the given network.
+
+    Args:
+        client (two1.server.rest_client.TwentyOneRestClient) an object
+            for sending authenticated requests to the TwentyOne
+            backend
+        network (str): the name of the network being joined. Defaults
+        to 21market
+    """
+    if zerotier.is_installed():
+        # ensures the zerotier daemon is running
+        zerotier.start_daemon()
+    else:
+        logger.info(uxstring.UxString.install_zerotier)
+        return
+    is_in_network = False
+    for ntwk in zerotier.list_networks():
+        if ntwk['name'] == network:
+            is_in_network = True
+            nwid = ntwk['nwid']
+            break
+    if not is_in_network:
+        logger.info('not in network')
+        return
+    try:
+        zerotier.leave_network(nwid)
+        logger.info(uxstring.UxString.successful_leave.format(click.style(network, fg="magenta")))
     except subprocess.CalledProcessError as e:
         logger.info(str(e))
