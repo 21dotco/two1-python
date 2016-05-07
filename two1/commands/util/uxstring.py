@@ -593,6 +593,8 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
         invalid_username = "Invalid username. Username must be alphanumeric and between 5-32 characters."
         invalid_email = "Invalid email address."
         account_failed = "Could not create a 21 account. Please contact support at support@21.co"
+        suspended_account = "Your account has been suspended for suspicious behavior. Please " \
+                            "contact support@21.co for details."
 
         # version errors
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
