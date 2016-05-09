@@ -1,4 +1,4 @@
-""" Two1 command to uninstall two1 and it's dependencies """
+""" Uninstall 21 and its dependencies. """
 # standard python imports
 import logging
 import subprocess
