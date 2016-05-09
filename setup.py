@@ -7,20 +7,9 @@ https://packaging.python.org/en/latest/distributing.html
 http://click.pocoo.org/4/setuptools/
 """
 from setuptools import setup
-from setuptools import find_packages
-from codecs import open
-from os import path
 
 
-here = path.abspath(path.dirname(__file__))
-if path.exists(path.join(here, 'README.md')):
-    with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-        long_description = f.read()
-else:
-    long_description = ""
-
-install_requires = [
-                    'arrow',
+install_requires = ['arrow',
                     'base58',
                     'docker-py==1.8.0',
                     'pytest',
@@ -45,8 +34,7 @@ setup(
     name='two1',
     version=version,
     description='Buy and sell anything on the internet with bitcoin.',
-    long_description=long_description,
-    url='https://github.com/21dotco/two1',
+    url='https://21.co',
     author='21',
     author_email='support@21.co',
     license='MIT',
