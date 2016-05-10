@@ -37,12 +37,8 @@ def send(ctx, address, amount, denomination, use_unconfirmed, verbose):
 \b
 Usage
 -----
-Mine bitcoin at 21.co, flush it to the Blockchain, and then send 5000
-to the Apache Foundation.
-$ 21 mine
-$ 21 flush
-# Wait ~10-20 minutes for flush to complete and block to mine
-$ 21 send 1BtjAzWGLyAavUkbw3QsyzzNDKdtPXk95D 3000 satoshis
+Send 5000 satoshi from your on-chain balance to the Apache Foundation.
+$ 21 send 1BtjAzWGLyAavUkbw3QsyzzNDKdtPXk95D 5000 satoshis
 
 You can use the following denominations: satoshis, bitcoins, and USD.
 

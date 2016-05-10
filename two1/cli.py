@@ -129,7 +129,8 @@ For full documentation, visit 21.co/learn.
 main.add_command(buy)
 main.add_command(buybitcoin)
 main.add_command(doctor)
-main.add_command(mine)
+if two1.TWO1_DEVICE_ID:
+    main.add_command(mine)
 main.add_command(status)
 main.add_command(update)
 main.add_command(uninstall)

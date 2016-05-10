@@ -1,8 +1,8 @@
 The 21 Machine Wallet (``two1.wallet``)
 ===========================================
 The wallet module within the 21 Bitcoin Library (``two1.wallet``)
-provides a fully-functional HD wallet that integrates with the bitcoin
-mined by a 21 Mining Chip and is optimized for machine-to-machine
+provides a fully-functional HD wallet that integrates with 21
+and is optimized for machine-to-machine
 transactions. The wallet conforms to both `BIP-32
 <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>`_ and
 `BIP-44
