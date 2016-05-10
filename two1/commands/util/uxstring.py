@@ -549,10 +549,14 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
                             "To see on the blockchain: https://blockexplorer.com/tx/{2}")
     send_insufficient_confirmed = ("Insufficient confirmed balance. However, you can use unconfirmed"
                                    " transactions with --use-unconfirmed. ")
-    send_insufficient_blockchain = (
+    send_insufficient_blockchain_21bc = (
         "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
         "Run %s, then %s to increase your Blockchain balance." %
         (click.style("21 mine", bold=True), click.style("21 flush", bold=True)))
+    send_insufficient_blockchain_free = (
+        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
+        "Run %s, then %s to increase your Blockchain balance." %
+        (click.style("21 earn", bold=True), click.style("21 flush", bold=True)))
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
 
     # logger

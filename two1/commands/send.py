@@ -12,7 +12,7 @@ from two1.commands.util import decorators
 from two1.commands.util import uxstring
 from two1.commands.util import exceptions
 from two1.commands.util import currency
-
+from two1.commands.util.bitcoin_computer import has_mining_chip
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
@@ -78,8 +78,12 @@ def _send(wallet, address, satoshis, verbose, use_unconfirmed=False):
             raise exceptions.Two1Error(uxstring.UxString.send_insufficient_confirmed + str(e))
         else:
             balance = min(wallet.confirmed_balance(), wallet.unconfirmed_balance())
-            raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain.format(
-                balance, satoshis, address))
+            if has_mining_chip():
+                raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain_21bc.format(
+                    balance, satoshis, address))
+            else:
+                raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain_free.format(
+                    balance, satoshis, address))
     except DataProviderError as e:
         if "rejected" in str(e):
             raise exceptions.Two1Error(uxstring.UxString.send_rejected)
