@@ -868,6 +868,9 @@ class Signature(object):
 
         Returns:
             Signature: A Signature object.
+
+        Raises:
+            ValueError: If signature is incorrect length
         """
         if len(b) != 64:
             raise ValueError("from_bytes: Signature length != 64.")
