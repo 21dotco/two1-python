@@ -555,11 +555,11 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
                                    " transactions with --use-unconfirmed. ")
     send_insufficient_blockchain_21bc = (
         "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
-        "Run %s, then %s to increase your Blockchain balance." %
+        "Run %s, then %s to increase your on-chain balance." %
         (click.style("21 mine", bold=True), click.style("21 flush", bold=True)))
     send_insufficient_blockchain_free = (
         "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
-        "Run %s, then %s to increase your Blockchain balance." %
+        "Run %s, then %s to increase your on-chain balance." %
         (click.style("21 earn", bold=True), click.style("21 flush", bold=True)))
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
 
@@ -619,7 +619,7 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
             "Type {} to get more satoshis.\n\nYou may also"
             " use your on-chain balance for this transaction. It will include a small tx fee. To use "
             "on-chain balance add {} to your buy command."
-        ).format(click.style("21 status", bold=True), click.style("21 mine", bold=True),
+        ).format(click.style("21 status", bold=True), click.style("21 earn", bold=True),
                  click.style("-p onchain", bold=True))
         insufficient_funds_earn_more = str(
             "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to view your balance. "

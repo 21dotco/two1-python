@@ -26,8 +26,8 @@ def get_template():
 {WATERMARK}
 # `two1`: buy/sell anything on the internet with Bitcoin.
 
-`two1` is a command line tool and library that allows users to mine
-Bitcoin, use it to buy and sell API calls, set up world-readable
+`two1` is a command line tool and library that allows users to receive
+bitcoin, use it to buy and sell API calls, set up world-readable
 machine-payable endpoints, and publish them to the Many Machine Market
 from any Unix command line.
 
