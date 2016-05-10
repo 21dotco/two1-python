@@ -300,8 +300,8 @@ $ 21 sell start --all
                               "TRUE" if stat[1] else "FALSE",
                               stat[1])
     # help tip message
-    logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) + \
-                click.style("`21 sell status --detail`", bold=True, fg=cli_helpers.PROMPT_COLOR) + \
+    logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) +
+                click.style("`21 sell status --detail`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
                 click.style(" to see your microservice balances.", fg=cli_helpers.PROMPT_COLOR))
 
 
@@ -505,8 +505,8 @@ $ 21 sell list
         for service in available_services:
             cli_helpers.print_str(service, ["Available"], "TRUE", True)
         # help tip message
-        logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) + \
-                    click.style("`21 sell start <services>`", bold=True, fg=cli_helpers.PROMPT_COLOR) + \
+        logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) +
+                    click.style("`21 sell start <services>`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
                     click.style(" to start selling a microservice.", fg=cli_helpers.PROMPT_COLOR))
     else:
         logger.info(click.style("There are no services available at this time.",
