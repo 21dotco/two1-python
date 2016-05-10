@@ -869,6 +869,8 @@ class Signature(object):
         Returns:
             Signature: A Signature object.
         """
+        if len(b) != 64:
+            raise ValueError("from_bytes: Signature length != 64.")
         r = int.from_bytes(b[0:32], 'big')
         s = int.from_bytes(b[32:64], 'big')
         return Signature(r, s)
