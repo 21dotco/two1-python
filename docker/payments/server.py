@@ -1,7 +1,9 @@
 """ Payment channels processing server.
 """
+# 3rd party imports
 from flask import Flask
 
+# two1 imports
 from two1.bitserv.flask import Payment
 from two1.wallet.two1_wallet import Wallet
 
@@ -10,4 +12,4 @@ wallet = Wallet()
 payment = Payment(app, wallet, endpoint='/payment', db_dir="/usr/src/db")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=7000)
+    app.run(host='0.0.0.0', port=5000)
