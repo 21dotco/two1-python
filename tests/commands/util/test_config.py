@@ -85,8 +85,9 @@ def test_no_config_file_exists():
     """Test that a new `two1.json` file is created if it doesn't exist."""
     mock_config = mock.mock_open()
     mock_config.side_effect = [FileNotFoundError(), mock.DEFAULT]
-    with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-        c = config.Config('config_file')
+    with mock.patch('two1.commands.util.config.Config.save', return_value=None):
+        with mock.patch('two1.commands.util.config.open', mock_config, create=True):
+            c = config.Config('config_file')
 
     assert mock_config.call_count == 2
     dc = json.loads(mock_config.return_value.write.call_args[0][0])
