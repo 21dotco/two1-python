@@ -273,6 +273,9 @@ class UxString:
     earn_faucet_finish = "\nView your balance with {}, or spend with {}."
     earn_limit_reached = "\nFurther earning advances are not possible at this time. " \
                          "Please try again in a few hours."
+    lifetime_earn_limit_reached = "You have reached the faucet earning limit for your account. " \
+                                  "Please visit 21.co/learn to discover new ways you can earn " \
+                                  "bitcoin."
 
     # mining
     mining_show_dashboard_prompt = "About to show the 21 mining dashboard!\n\n" + \
@@ -294,8 +297,8 @@ class UxString:
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
 
-    mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
-                           "Please try again in a few hours."
+    daily_mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
+                                 "Please try again in a few hours."
 
     mining_bitcoin_computer_needed = click.style(
         "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
