@@ -615,8 +615,8 @@ def publish_started(not_published, zt_ip, port, manager):
                 publish_stats.append((service.title(), False, ["Endpoint already published"]))
             else:
                 publish_stats.append((service.title(), False, ["Failed to publish"]))
-        else:
-            pass
+        except Exception:
+            publish_stats.append((service.title(), False, ["An unknown error occurred"]))
 
     return publish_stats
 
