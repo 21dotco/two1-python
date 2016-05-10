@@ -1,7 +1,4 @@
 """Diagnose 21 installation."""
-from distutils.version import LooseVersion
-from pkg_resources import parse_version
-from pkg_resources import SetuptoolsVersion
 import os
 import platform
 import shutil
@@ -15,6 +12,7 @@ import click
 import requests
 
 import two1
+import two1.commands.util.version as version
 from two1.commands.util import uxstring
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
@@ -98,6 +96,7 @@ class Doctor(object):
     # lookup for ports based upon scheme if the hard-coded config value doesn't have a port
     PORT_MAPPING = {'https': 443, 'http': 80}
 
+
     def __init__(self, two1_config):
         """ constructor of the Doctor class
 
@@ -154,30 +153,6 @@ class Doctor(object):
             return False
 
         return True
-
-    def is_version_gte(self, actual, expected):
-        """ Checks two versions for actual >= epected condition
-
-            Versions need to be in Major.Minor.Patch format.
-
-        Args:
-            actual (str): the actual version being checked
-            expected (str): the expected version being checked
-
-        Returns:
-            bool: True if the actual version is greater than or equal to
-                the expected version.
-
-        Raises:
-            ValueError: if expected ot actual version is not in Major.Minor.Patch
-                format.
-        """
-        if isinstance(parse_version(actual), SetuptoolsVersion):
-            # This handles versions that end in things like `rc0`
-            return parse_version(actual) >= parse_version(expected)
-        else:
-            # This handles versions that end in things like `-v7+` and `-generic`
-            return LooseVersion(actual) >= LooseVersion(expected)
 
     def checkup(self, check_type):
         """ Runs through all checks of the check_type given
@@ -236,14 +211,10 @@ class Doctor(object):
                                     The actaul two1 version installed on the system
         """
         check_str = "21 Tool Version"
-        url = parse.urljoin(two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
-        response = requests.get(url)
-        versions = [package['version'] for package in response.json()['packages']]
-        stable_versions = [version for version in versions if not parse_version(version).is_prerelease]
-        latest_version = max(stable_versions, key=parse_version)
+        stable_versions, latest_version = version.get_two1_versions_pypi()
         actual_version = two1.TWO1_VERSION
 
-        if self.is_version_gte(actual_version, latest_version):
+        if version.is_version_gte(actual_version, latest_version):
             return Check.Result.PASS, check_str, actual_version
 
         return Check.Result.FAIL, check_str, actual_version
@@ -281,10 +252,10 @@ class Doctor(object):
             # use the os as a lookup for the version
             expected_os_version = self.SUPPORTED_OS[actual_os]
             unmaintained_os_version = self.UNMAINTAINED_OS[actual_os]
-            if self.is_version_gte(actual_os_version, expected_os_version):
+            if version.is_version_gte(actual_os_version, expected_os_version):
                 return Check.Result.PASS, check_str, actual_os_version
 
-            elif self.is_version_gte(actual_os_version, unmaintained_os_version):
+            elif version.is_version_gte(actual_os_version, unmaintained_os_version):
                 return Check.Result.WARN, check_str, actual_os_version
 
         return Check.Result.FAIL, check_str, actual_os_version
@@ -300,7 +271,7 @@ class Doctor(object):
         check_str = "Python Version"
         actual_py_version = platform.python_version()
 
-        if self.is_version_gte(actual_py_version, self.SUPPORTED_PYTHON_VERSION):
+        if version.is_version_gte(actual_py_version, self.SUPPORTED_PYTHON_VERSION):
             return Check.Result.PASS, check_str, actual_py_version
 
         return Check.Result.FAIL, check_str, actual_py_version

@@ -2,11 +2,19 @@
 # standard python imports
 import os
 import json
+import time
+import logging
 
 # two1 imports
 import two1
 import two1.wallet as wallet
 import two1.commands.util.exceptions as exceptions
+import two1.commands.util.version as version
+import two1.commands.util.uxstring as uxstring
+
+
+# Creates a ClickLogger
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -23,7 +31,8 @@ class Config:
                     mining_auth_pubkey=None,
                     auto_update=False,
                     wallet_path=wallet.Two1Wallet.DEFAULT_WALLET_PATH,
-                    collect_analytics=False)
+                    collect_analytics=False,
+                    update_check_interval=3600)
 
     def __init__(self, config_file=two1.TWO1_CONFIG_FILE, config=None):
         """Return a new Config object with defaults plus custom properties.
@@ -43,6 +52,23 @@ class Config:
         # Override defaults with any custom configuration
         if config:
             self.load_dict_config(config)
+
+        # check for any updates to 21
+        self.check_update()
+
+    def check_update(self):
+        """Check for any new updates to 21"""
+        do_update_check = False
+        if 'last_update_check' not in self.state:
+            do_update_check = True
+        elif self.last_update_check < time.time() - self.update_check_interval:
+            do_update_check = True
+        if do_update_check:
+            actual_version = two1.TWO1_VERSION
+            stable_versions, latest_version = version.get_two1_versions_pypi()
+            self.set('last_update_check', time.time(), should_save=True)
+            if not version.is_version_gte(actual_version, latest_version):
+                logger.warning(uxstring.update_required)
 
     def load_file_config(self, config_file):
         """Set config properties based on a file."""
