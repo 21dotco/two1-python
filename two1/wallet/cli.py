@@ -13,12 +13,16 @@ from mnemonic import Mnemonic
 from mnemonic.mnemonic import ConfigurationError
 from path import Path
 
+import two1
 from two1 import util
+from two1.commands.util import config as two1_config
+from two1.commands.util import uxstring
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.insight_provider import InsightProvider
 from two1.wallet.account_types import account_types
 from two1.wallet.base_wallet import satoshi_to_btc
 from two1.wallet import exceptions
+from two1.commands.util import exceptions as two1exceptions
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.two1_wallet import Wallet
 from two1.wallet.daemonizer import get_daemonizer
@@ -28,6 +32,7 @@ WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'insight': [],
                                  'twentyone': []}
+config_file = two1.TWO1_CONFIG_FILE
 
 logger = logging.getLogger('wallet')
 
@@ -142,7 +147,7 @@ def validate_data_provider(ctx, param, value):
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option('--wallet-path', '-wp',
-              default=Two1Wallet.DEFAULT_WALLET_PATH,
+              default=None,
               metavar='PATH',
               show_default=True,
               help='Path to wallet file')
@@ -176,6 +181,13 @@ def main(ctx, wallet_path, passphrase,
          debug):
     """ Command-line Interface for the Two1 Wallet
     """
+    if wallet_path is None:
+        try:
+            config = two1_config.Config(config_file)
+            wallet_path = config.wallet_path
+        except two1exceptions.FileDecodeError as e:
+            raise click.ClickException(uxstring.UxString.Error.file_decode.format((str(e))))
+
     wp = Path(wallet_path)
 
     # Initialize some logging handlers
