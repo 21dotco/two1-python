@@ -52,7 +52,7 @@ def test_default_config():
     assert c.mining_auth_pubkey is None
     assert c.auto_update is False
     assert c.wallet_path == wallet.Two1Wallet.DEFAULT_WALLET_PATH
-    assert c.collect_analytics is False
+    assert c.collect_analytics is True
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
@@ -104,7 +104,7 @@ def test_no_config_file_exists():
     assert dc['mining_auth_pubkey'] is None
     assert dc['auto_update'] is False
     assert dc['wallet_path'] == wallet.Two1Wallet.DEFAULT_WALLET_PATH
-    assert dc['collect_analytics'] is False
+    assert dc['collect_analytics'] is True
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
@@ -112,7 +112,7 @@ def test_invalid_config_file():
     """Test that an invalid `two1.json` file cannot be imported."""
     mock_config = mock.mock_open(mock=mock.Mock(side_effect=ValueError))
     with mock.patch('two1.commands.util.config.open', mock_config, create=True), pytest.raises(exceptions.FileDecodeError):
-        c = config.Config('config_file')
+        config.Config('config_file')
 
     mock_config.assert_called_with('config_file', mode='r')
 

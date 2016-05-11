@@ -31,7 +31,7 @@ class Config:
                     mining_auth_pubkey=None,
                     auto_update=False,
                     wallet_path=wallet.Two1Wallet.DEFAULT_WALLET_PATH,
-                    collect_analytics=False,
+                    collect_analytics=True,
                     update_check_interval=3600)
 
     def __init__(self, config_file=two1.TWO1_CONFIG_FILE, config=None):
