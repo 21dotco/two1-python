@@ -113,31 +113,37 @@ $ py.test
 
 ## The `two1/commands` directory
  - [buy.py](two1/commands/buy.py): Buy from a machine-payable endpoint.
- - [doctor.py](two1/commands/doctor.py): When you are not feeling well come see the Doctor
+ - [buybitcoin.py](two1/commands/buybitcoin.py): Buy bitcoin through Coinbase.
+ - [doctor.py](two1/commands/doctor.py): Diagnose 21 installation.
+ - [earn.py](two1/commands/earn.py): Earn bitcoin via microtasks.
+ - [faucet.py](two1/commands/faucet.py): Request bitcoin from the 21 faucet.
  - [flush.py](two1/commands/flush.py): Flushes current off-chain balance to the blockchain
  - [help.py](two1/commands/help.py): Two1 command help
- - [inbox.py](two1/commands/inbox.py): Two1 command module for getting and displaying messages in your inbox
+ - [inbox.py](two1/commands/inbox.py): View notifications from 21.co
  - [join.py](two1/commands/join.py): Two1 command to join various zerotier networks
- - [log.py](two1/commands/log.py): Log command that show a list of notifications
+ - [log.py](two1/commands/log.py): View a log of 21 CLI events.
  - [login.py](two1/commands/login.py): Logs a user into their 21.co account
- - [mine.py](two1/commands/mine.py): Mine Bitcoin locally via a CPU or built-in mining chip
+ - [mine.py](two1/commands/mine.py): Mine bitcoin on a 21 Bitcoin Computer.
+ - [profile.py](two1/commands/profile.py): Open your 21.co profile in a web browser.
  - [publish.py](two1/commands/publish.py): Two1 command to publish an app to the 21 Marketplace
  - [rate.py](two1/commands/rate.py): Two1 command to rate a marketplace app
  - [search.py](two1/commands/search.py): Two1 command to search the 21 Marketplace
- - [sell.py](two1/commands/sell.py): Launch a machine-payable endpoint on the current machine
+ - [sell.py](two1/commands/sell.py): Sell web services for micropayments.
  - [send.py](two1/commands/send.py): Two1 command to send bitcoin to another address
  - [status.py](two1/commands/status.py): View the status of mining and machine-payable purchases
- - [update.py](two1/commands/update.py): Two1 command to update to the latest version of two1 and it's dependencies
+ - [uninstall.py](two1/commands/uninstall.py): Two1 command to uninstall two1 and it's dependencies
+ - [update.py](two1/commands/update.py): Two1 command to update to the latest version of two1 and its dependencies.
 
 ## The `two1/commands/util` directory
  - [account.py](two1/commands/util/account.py): Utility functions for user accounts.
  - [bitcoin\_computer.py](two1/commands/util/bitcoin_computer.py): Contains methods to interact with the bitcoin computer hardware
  - [config.py](two1/commands/util/config.py): Manages configuration variables for the two1 CLI.
+ - [currency.py](two1/commands/util/currency.py): Utility for making conversions among various currencies.
  - [decorators.py](two1/commands/util/decorators.py): All two1 command line related decorators
  - [exceptions.py](two1/commands/util/exceptions.py): All command line related exceptions
  - [logger.py](two1/commands/util/logger.py): Logger module which when imported changes the default logger class to ClickLogger
  - [nginx.py](two1/commands/util/nginx.py): Utility to bring up and tear down an nginx server
- - [uxstring.py](two1/commands/util/uxstring.py): Strings for the two1 CLI user interface
+ - [uxstring.py](two1/commands/util/uxstring.py): Strings for the two1 CLI and library.
  - [wallet.py](two1/commands/util/wallet.py): Utility functions for user wallets.
  - [zerotier.py](two1/commands/util/zerotier.py): Simple wrapper for zerotier-cli
 
@@ -146,6 +152,21 @@ $ py.test
 
 ## The `two1/mkt` directory
  - [\_\_init\_\_.py](two1/mkt/__init__.py): Make purchases in the 21 marketplace.
+ - [market.py](two1/mkt/market.py): This module contains a Market object for interacting with the 21.co marketplace.
+
+## The `two1/sell` directory
+ - [installer.py](two1/sell/installer.py): Installer for 21 sell.
+ - [manager.py](two1/sell/manager.py): Create and manage machine-payable web services.
+
+## The `two1/sell/blueprints/payments` directory
+ - [server.py](two1/sell/blueprints/payments/server.py): Payment channels processing server.
+
+## The `two1/sell/exceptions` directory
+ - [exceptions\_machine.py](two1/sell/exceptions/exceptions_machine.py): `21 sell` machine exceptions.
+
+## The `two1/sell/util` directory
+ - [cli\_helpers.py](two1/sell/util/cli_helpers.py): 21 sell CLI helper methods.
+ - [stats\_db.py](two1/sell/util/stats_db.py): Database for 21 sell purchase stats.
 
 ## The `two1/server` directory
  - [machine\_auth.py](two1/server/machine_auth.py): Uses a PrivateKey to provide signing capabilities for authentication.
@@ -162,12 +183,14 @@ $ py.test
 ## The `tests/commands` directory
  - [test\_buy.py](tests/commands/test_buy.py): Unit tests for `21 buy`.
  - [test\_doctor.py](tests/commands/test_doctor.py): Doctor command unit tests
+ - [test\_earn.py](tests/commands/test_earn.py): Test the 21 earn command.
  - [test\_flush.py](tests/commands/test_flush.py): Flush command unit tests.
+ - [test\_help.py](tests/commands/test_help.py): Help command unit tests
  - [test\_send.py](tests/commands/test_send.py): Unit tests for `21 send`.
- - [test\_update.py](tests/commands/test_update.py): Unit test to verify update command
 
 ## The `tests/commands/util` directory
  - [test\_config.py](tests/commands/util/test_config.py): Unit tests for `21 config`.
+ - [test\_currency.py](tests/commands/util/test_currency.py): Unit tests for currency utilities.
  - [test\_logger.py](tests/commands/util/test_logger.py): Unit test to verify logger functionality
  - [test\_zerotier.py](tests/commands/util/test_zerotier.py): Unit tests for the zerotier utility
 
