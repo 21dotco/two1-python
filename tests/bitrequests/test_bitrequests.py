@@ -45,6 +45,11 @@ class MockWallet:
         """Mock sign message for bittransfer."""
         return "mock signed message"
 
+    def get_message_signing_public_key(self):
+        mock_pubkey = mock.Mock()
+        mock_pubkey.compressed_bytes = b'test_21_pubkey'
+        return mock_pubkey
+
 
 class MockBitRequests(BitRequests):
     def make_402_payment(self, response, max_price):
