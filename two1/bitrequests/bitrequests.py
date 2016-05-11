@@ -182,8 +182,12 @@ class BitTransferRequests(BitRequests):
 
     def __init__(self, wallet, username=None):
         """Initialize the bittransfer with wallet and username."""
+        from two1.server.machine_auth_wallet import MachineAuthWallet
         super().__init__()
-        self.wallet = wallet
+        if isinstance(wallet, MachineAuthWallet):
+            self.wallet = wallet
+        else:
+            self.wallet = MachineAuthWallet(wallet)
         if username is None:
             import two1.commands.util.config as config
             self.username = config.Config().username
