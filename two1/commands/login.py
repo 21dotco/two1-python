@@ -95,8 +95,8 @@ def login_account(config, machine_auth, username=None, password=None):
     logger.info(uxstring.UxString.get_started)
 
     # If config file hasn't been created yet ask for opt-in to analytics
-    if not config.username:
-        analytics_optin(config)
+    # if not config.username: # temporarily require analytics opt in
+    analytics_optin(config)
 
     # Save the new username and auth key
     config.set("username", username)
@@ -205,11 +205,18 @@ def analytics_optin(config):
     Args:
         config: Config object from the cli context.
     """
+
+    # temporarily make analyics required
+    config.set("collect_analytics", True, should_save=True)
+    return
+
+    '''
     if click.confirm(uxstring.UxString.analytics_optin):
         config.set("collect_analytics", True, should_save=True)
         logger.info(uxstring.UxString.analytics_thankyou)
     else:
         logger.info("")
+    '''
 
 
 def get_username_interactive():
