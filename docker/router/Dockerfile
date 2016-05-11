@@ -5,4 +5,4 @@ RUN apk add --no-cache nginx
 RUN rm /etc/nginx/nginx.conf
 RUN rm /etc/nginx/nginx.conf.default
 COPY files/nginx.conf /etc/nginx/nginx.conf
-CMD nginx -g daemon off;
+CMD nginx -g "daemon off;"
