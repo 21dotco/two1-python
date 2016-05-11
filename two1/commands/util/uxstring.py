@@ -82,6 +82,9 @@ class UxString:
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
         "This will help us debug any issues and improve software quality."
     analytics_thankyou = "Thank you!\n"
+    analytics_default_optin = 'By default, 21.co collects user analytics information to help us debug any issues '\
+                              'and improve software quality. You may opt out by editing your two1.json configuration'\
+                              ' file and setting "collect_analytics" to "false"'
     unconfirmed_email = "Before logging in, you must activate your 21 account using the " \
                         "email sent to you at {}. If you can't find the email, please visit 21.co/activation."
 
