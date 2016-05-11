@@ -145,7 +145,7 @@ class Doctor(object):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(self.SOCKET_TIMEOUT)
-            _ = sock.connect((url.hostname, port))
+            sock.connect((url.hostname, port))
         except socket.timeout:
             return False
         except ConnectionRefusedError:
@@ -330,7 +330,7 @@ class Doctor(object):
         check_str = "IP Address"
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            _ = sock.connect(("8.8.8.8", 80))
+            sock.connect(("8.8.8.8", 80))
             ip_address = sock.getsockname()[0]
         except socket.timeout:
             return Check.Result.FAIL, check_str, "Timeout Error on connection"
@@ -532,14 +532,45 @@ class Doctor(object):
                                     Human readable message describing the check
                                     HTTP status code from the request
         """
-        check_str = "21 Slack"
-        url = "https://slack.21.co"
-        result = Check.Result.FAIL
-        response = requests.get(url)
-        if response.status_code < 400:
-            result = Check.Result.PASS
+        return self._check_server("21 Slack", "https://slack.21.co")
 
-        return result, check_str, response.status_code
+    def check_server_website(self):
+        """ Checks if the 21.co is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    HTTP status code from the request
+        """
+        return self._check_server("21 Website", "https://21.co")
+
+    def check_server_mkt(self):
+        """ Checks if the 21 marketplace is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    HTTP status code from the request
+        """
+        return self._check_server("21 Marketplace", "https://21.co/mkt")
+
+    def _check_server(self, check_str, url):
+        """ Checks if the <check_str> server at <url> is up
+
+        Returns:
+            Check.Result, str, str: Result of the check
+                                    Human readable message describing the check
+                                    HTTP status code from the request
+        """
+        try:
+            response = requests.get(url)
+        except requests.exceptions.RequestException:
+            return Check.Result.FAIL, check_str, url
+
+        if response.status_code >= 400:
+            return Check.Result.FAIL, check_str, url
+
+        return Check.Result.PASS, check_str, url
 
     def check_BC_raspbian_apt(self):
         """ Checks if the raspbian mirror is up
