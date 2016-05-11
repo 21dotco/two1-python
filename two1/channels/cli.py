@@ -6,6 +6,7 @@ import time
 import sys
 import os
 
+from two1 import TWO1_VERSION
 from two1.wallet import Wallet, Two1Wallet
 
 from . import PaymentChannelClient
@@ -72,6 +73,7 @@ def format_expiration_time(expires):
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
+@click.version_option(TWO1_VERSION, message='21 v%(version)s')
 @click.pass_context
 def main(ctx, json):
     """Command-line utility for managing payment channels.
