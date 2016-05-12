@@ -282,6 +282,9 @@ class UxString:
                                   "Please visit 21.co/learn to discover new ways you can earn " \
                                   "bitcoin."
 
+    no_earn_allocations = "Enable the faucet by connecting a social network to your 21 account. " \
+                          "Please visit {}/{}/config/social to do so."
+
     # mining
     mining_show_dashboard_prompt = "About to show the 21 mining dashboard!\n\n" + \
         "Hit any key to launch the dashboard. "
