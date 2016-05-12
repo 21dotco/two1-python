@@ -484,9 +484,9 @@ $ 21 sell status
                                     manager.get_server_port())
 
 
-@sell.command()
+@sell.command(name="list")
 @click.pass_context
-def list(ctx):
+def list_command(ctx):
     """
 List services available to sell.
 
