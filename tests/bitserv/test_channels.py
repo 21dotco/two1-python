@@ -210,7 +210,7 @@ def test_status_close_channel():
     # Open the channel and make a payment
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
     payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
-    amount = channel_server.redeem(payment_txid)
+    channel_server.redeem(payment_txid)
 
     # Test that channel close fails without a valid signature
     with pytest.raises(TransactionVerificationError):
