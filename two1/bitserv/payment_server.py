@@ -225,9 +225,16 @@ class PaymentServer:
                 raise BadTransactionError('Payment must pay to merchant pubkey.')
 
             # Verify that both payments are not below the dust limit
-            if any(p.value < PaymentServer.DUST_LIMIT for p in payment_tx.outputs):
-                raise BadTransactionError(
-                    'Final payment must have outputs greater than {}.'.format(PaymentServer.DUST_LIMIT))
+            for output_index, output in enumerate(payment_tx.outputs):
+                if output.value < PaymentServer.DUST_LIMIT:
+                    # Payment to merchant is less than dust limit
+                    if output_index == index:
+                        raise BadTransactionError(
+                            'Initial payment must be greater than {}.'.format(PaymentServer.DUST_LIMIT))
+                    # Payment to customer is less than dust limit
+                    else:
+                        raise BadTransactionError(
+                            'Payment channel balance is not large enough to make payment.')
 
             # Validate that the payment is more than the last one
             new_pmt_amt = payment_tx.outputs[index].value

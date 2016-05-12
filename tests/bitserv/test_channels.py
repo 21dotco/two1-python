@@ -12,6 +12,7 @@ from two1.channels.statemachine import PaymentChannelRedeemScript
 from two1.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.bitserv.payment_server import TransactionVerificationError
+from two1.bitserv.payment_server import BadTransactionError
 from two1.bitserv.models import DatabaseSQLite3, ChannelSQLite3
 
 
@@ -300,3 +301,31 @@ def test_channel_sync(monkeypatch):
     channel_server.sync()
     test_state = channel_server._db.pc.lookup(deposit_txid_a).state
     assert test_state == ChannelSQLite3.CLOSED, 'Channel should be CLOSED'
+
+
+def test_channel_low_balance_message():
+    """Test that the channel server returns a useful error when the balance is low."""
+    channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
+    test_client = _create_client_txs()
+
+    # Open the channel and make a payment
+    deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
+    channel_server.redeem(payment_txid)
+
+    # Create a payment that almost completely drains the channel
+    payment_tx2 = _create_client_payment(test_client, 17)
+    payment_txid2 = channel_server.receive_payment(deposit_txid, payment_tx2)
+    channel_server.redeem(payment_txid2)
+
+    # Make a payment that spends more than the remaining channel balance
+    payment_tx3 = _create_client_payment(test_client, 18)
+    with pytest.raises(BadTransactionError) as exc:
+        channel_server.receive_payment(deposit_txid, payment_tx3)
+
+    assert 'Payment channel balance' in str(exc)
+
+    # Test that channel close succeeds
+    good_signature = codecs.encode(cust_wallet._private_key.sign(deposit_txid).to_der(), 'hex_codec')
+    closed = channel_server.close(deposit_txid, good_signature)
+    assert closed
