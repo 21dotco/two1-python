@@ -158,8 +158,7 @@ class PaymentServer:
                 raise TransactionVerificationError('Transaction locktime must be further in the future.')
 
             # Open and save the payment channel
-            channel = self._db.pc.create(
-                deposit_tx, merch_pubkey, amount, redeem_script.expiration_time)
+            self._db.pc.create(deposit_tx, merch_pubkey, amount, redeem_script.expiration_time)
 
             # Set the channel to `ready` if zeroconf is enabled
             if self.zeroconf:
