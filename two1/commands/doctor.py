@@ -128,7 +128,7 @@ class Doctor(object):
         return {specialty: [check.to_dict() for check in self.checks[specialty]] for specialty in self.checks.keys()}
 
     def make_http_connection(self, url):
-        """ Uses sockets to connet to the server url
+        """ Uses sockets to connect to the server url
 
         Args:
             url (str): url string with or without a port
@@ -479,7 +479,7 @@ class Doctor(object):
         return result, check_str, two1.TWO1_POOL_URL
 
     def check_server_21_logging(self):
-        """ Checks if the 21 loggin server is up
+        """ Checks if the 21 logging server is up
 
         Returns:
             Check.Result, str, str: Result of the check
