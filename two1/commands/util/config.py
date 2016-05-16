@@ -65,7 +65,7 @@ class Config:
             do_update_check = True
         if do_update_check:
             actual_version = two1.TWO1_VERSION
-            stable_versions, latest_version = version.get_two1_versions_pypi()
+            latest_version = version.get_latest_two1_version_pypi()
             self.set('last_update_check', time.time(), should_save=True)
             if not version.is_version_gte(actual_version, latest_version):
                 logger.warning(uxstring.update_required)
