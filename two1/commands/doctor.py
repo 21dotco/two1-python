@@ -96,7 +96,6 @@ class Doctor(object):
     # lookup for ports based upon scheme if the hard-coded config value doesn't have a port
     PORT_MAPPING = {'https': 443, 'http': 80}
 
-
     def __init__(self, two1_config):
         """ constructor of the Doctor class
 
@@ -211,7 +210,7 @@ class Doctor(object):
                                     The actaul two1 version installed on the system
         """
         check_str = "21 Tool Version"
-        stable_versions, latest_version = version.get_two1_versions_pypi()
+        latest_version = version.get_latest_two1_version_pypi()
         actual_version = two1.TWO1_VERSION
 
         if version.is_version_gte(actual_version, latest_version):

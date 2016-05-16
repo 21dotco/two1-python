@@ -8,12 +8,10 @@ from distutils.version import LooseVersion
 import two1
 
 
-def get_two1_versions_pypi():
-    """ fetch stable and latest versions of two1
-    from pypi.
+def get_latest_two1_version_pypi():
+    """ Fetch latest version of two1 from pypi.
 
     Returns:
-        stable_versions (str): stable versions of two1
         latest_version (str): latest version of two1
     """
     url = parse.urljoin(
@@ -23,7 +21,7 @@ def get_two1_versions_pypi():
     stable_versions = [
         version for version in versions if not parse_version(version).is_prerelease]
     latest_version = max(stable_versions, key=parse_version)
-    return stable_versions, latest_version
+    return latest_version
 
 
 def is_version_gte(actual, expected):
