@@ -94,10 +94,6 @@ def login_account(config, machine_auth, username=None, password=None):
     logger.info(uxstring.UxString.payout_address.format(payout_address))
     logger.info(uxstring.UxString.get_started)
 
-    # If config file hasn't been created yet ask for opt-in to analytics
-    if not config.username:
-        analytics_optin(config)
-
     # Save the new username and auth key
     config.set("username", username)
     config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
@@ -194,28 +190,7 @@ def create_account_on_bc(config, machine_auth):
             config.set("mining_auth_pubkey", machine_auth_pubkey_b64)
             config.save()
 
-            # Ask for opt-in to analytics
-            analytics_optin(config)
-
             break
-
-
-def analytics_optin(config):
-    """ Set the collect_analytics flag to enable analytics collection.
-    Args:
-        config: Config object from the cli context.
-    """
-
-    config.set("collect_analytics", True, should_save=True)
-    logger.info(uxstring.UxString.analytics_default_optin)
-
-    '''
-    if click.confirm(uxstring.UxString.analytics_optin):
-        config.set("collect_analytics", True, should_save=True)
-        logger.info(uxstring.UxString.analytics_thankyou)
-    else:
-        logger.info("")
-    '''
 
 
 def get_username_interactive():
