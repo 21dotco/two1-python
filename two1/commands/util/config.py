@@ -59,9 +59,12 @@ class Config:
     def check_update(self):
         """Check for any new updates to 21"""
         do_update_check = False
-        if 'last_update_check' not in self.state:
-            do_update_check = True
-        elif self.last_update_check < time.time() - self.update_check_interval:
+        try:
+            if 'last_update_check' not in self.state:
+                do_update_check = True
+            elif self.last_update_check < time.time() - self.update_check_interval:
+                do_update_check = True
+        except TypeError:
             do_update_check = True
         if do_update_check:
             actual_version = two1.TWO1_VERSION
