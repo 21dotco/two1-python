@@ -3,6 +3,7 @@
 import base64
 import re
 import logging
+import sys
 
 # 3rd party imports
 import click
@@ -113,6 +114,12 @@ def create_account_on_bc(config, machine_auth):
     # get the payout address and the pubkey from the machine auth wallet
     machine_auth_pubkey_b64 = base64.b64encode(machine_auth.public_key.compressed_bytes).decode()
     payout_address = machine_auth.wallet.current_address
+
+    # Don't attempt to create an account if the user indicates they
+    # already have an account (defaults to No)
+    if click.confirm(uxstring.UxString.already_have_account):
+        logger.info(uxstring.UxString.please_login)
+        sys.exit()
 
     logger.info(uxstring.UxString.missing_account)
     email = None

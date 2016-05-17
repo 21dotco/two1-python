@@ -51,6 +51,8 @@ class UxString:
     # account creation
     creating_account = "Creating 21.co account. Username: {}"
     missing_account = "Looks like you do not have a 21.co account. Let's create one..."
+    already_have_account = "Do you already have a 21.co account?"
+    please_login = "Please login by running {}".format(click.style("21 login", bold=True))
 
     account_failed = "Failed to create 21.co account."
     username_exists = "User {} already exists."
