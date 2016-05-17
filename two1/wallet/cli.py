@@ -586,7 +586,12 @@ def list_balances(ctx, byaddress):
               is_flag=True,
               default=False,
               show_default=True,
-              help="Provide amount to send in satoshis instead of BTC")
+              help="Provide amount to send in satoshis")
+@click.option('--btc', '-b',
+              is_flag=True,
+              default=False,
+              show_default=True,
+              help="Provide amount to send in BTC")
 @click.option('--use-unconfirmed', '-uu',
               is_flag=True,
               default=False,
@@ -604,7 +609,7 @@ def list_balances(ctx, byaddress):
 @click.pass_context
 @handle_exceptions
 @log_usage
-def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
+def send_to(ctx, address, amount, satoshis, btc, use_unconfirmed, fees, account):
     """ Send bitcoin to a single address
 
     \b
@@ -613,6 +618,8 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
     """
     w = ctx.obj['wallet']
 
+    if satoshis and btc:
+        ctx.fail("Can't specify both BTC and satoshis.")
     if satoshis:
         try:
             amount_satoshis = int(amount)
@@ -620,8 +627,9 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
             ctx.fail("'%s' is not a valid amount. " % (amount) +
                      "When using the --satoshis flag, you must specify the amount as an integer.")
     else:
-        logger.warn("Specifying the send amount in BTC is deprecated. Use the --satoshis flag "
-                    "to specify the amount in satoshis.")
+        if not btc:
+            logger.warn("Specifying the send amount without units is deprecated. Use the --satoshis flag "
+                        "to specify the amount in satoshis and --btc for bitcoin.")
         try:
             amount_satoshis = int(decimal.Decimal(amount) * satoshi_to_btc)
         except decimal.InvalidOperation:
@@ -657,10 +665,15 @@ def send_to(ctx, address, amount, satoshis, use_unconfirmed, fees, account):
               default=False,
               show_default=True,
               help="Provide threshold in satoshis instead of BTC")
+@click.option('--btc', '-b',
+              is_flag=True,
+              default=False,
+              show_default=True,
+              help="Provide amount to send in BTC")
 @click.pass_context
 @handle_exceptions
 @log_usage
-def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
+def spread_utxos(ctx, num_addresses, threshold, account, satoshis, btc):
     """ Spreads out all UTXOs with value > threshold (in BTC)
 
     \b
@@ -677,6 +690,8 @@ def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
     """
     w = ctx.obj['wallet']
 
+    if satoshis and btc:
+        ctx.fail("Can't specify both BTC and satoshis.")
     if satoshis:
         try:
             threshold_satoshis = int(threshold)
@@ -684,8 +699,9 @@ def spread_utxos(ctx, num_addresses, threshold, account, satoshis):
             ctx.fail("'%s' is not a valid threshold. " % (threshold) +
                      "When using the --satoshis flag, you must specify the amount as an integer.")
     else:
-        logger.warn("Specifying the spreadutxos threshold in BTC is deprecated. Use the --satoshis flag "
-                    "to specify the amount in satoshis.")
+        if not btc:
+            logger.warn("Specifying the spreadutxos threshold without units is deprecated. Use the --satoshis flag "
+                        "to specify the amount in satoshis or --btc for bitcoin.")
         try:
             threshold_satoshis = int(decimal.Decimal(threshold) * satoshi_to_btc)
         except decimal.InvalidOperation:
