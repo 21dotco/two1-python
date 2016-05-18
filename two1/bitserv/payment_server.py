@@ -132,15 +132,6 @@ class PaymentServer:
         self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
         self._sync_thread.start()
 
-    def discovery(self):
-        """Return the merchant's public key.
-
-        A customer requests a public key from a merchant. This allows the
-        customer to create a multi-signature payment transaction with both the
-        customer and merchant's public keys.
-        """
-        return self._wallet.get_public_key()
-
     def identify(self):
         """Query the payment server's merchant information and server configuration.
 
