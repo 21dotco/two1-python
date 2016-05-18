@@ -60,7 +60,6 @@ def test_get_transactions_by_id(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (twentyone_provider, True),
                              (insight_provider, False),
                          ])
 def test_provider_json_error(provider, testnet):
@@ -86,7 +85,6 @@ def test_provider_json_error(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (twentyone_provider, True),
                              (insight_provider, False),
                          ])
 def test_transaction_send(provider, testnet):
