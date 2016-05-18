@@ -71,7 +71,7 @@ class Config:
             latest_version = version.get_latest_two1_version_pypi()
             self.set('last_update_check', time.time(), should_save=True)
             if not version.is_version_gte(actual_version, latest_version):
-                logger.warning(uxstring.update_required)
+                logger.warning(uxstring.UxString.update_required)
 
     def load_file_config(self, config_file):
         """Set config properties based on a file."""
