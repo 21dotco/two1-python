@@ -346,7 +346,8 @@ class UxString:
                           "the Blockchain.",
         "BC": "Your bitcoin bonus for booting the 21 Bitcoin Computer.",
         "coinbase_purchase": "You bought and transferred bitcoin to your account through "
-                             "Coinbase."
+                             "Coinbase.",
+        "linkedin_connection": "You connected your Linkedin profile to your 21 account."
     }
 
     empty_logs = "[No events yet]"
