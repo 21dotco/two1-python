@@ -379,7 +379,7 @@ class UxString:
                       " to verify you have successfully joined."
     invalid_network = "Invalid network specified, please verify the network name."
     join_cmd = click.style("21 join", bold=True, reset=False)
-    successful_leave = "Leaved network {}."
+    successful_leave = "Left network {}."
 
     no_network = click.style("You are not part of any network. Run: 21 join", fg="blue")
     install_zerotier = click.style("To join a network you must have zerotier-one installed.\n"
