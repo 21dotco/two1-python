@@ -32,11 +32,13 @@ class PaymentChannelServerBase:
     def __init__(self):
         pass
 
-    def get_public_key(self):
-        """Get the public key of the merchant to pay to.
+    def get_info(self):
+        """Get the public information of the merchant.
 
         Returns:
-            str: Serialized compressed public key (ASCII hex).
+            dict: Dictionary of merchant information
+             -public_key: Serialized compressed public key (ASCII hex).
+             -zeroconf: Whether the server supports zero-confirmation deposit transactions.
 
         """
         raise NotImplementedError()
@@ -137,7 +139,7 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         self._url = url
         self._requests = RequestsWrapper()
 
-    def get_public_key(self):
+    def get_info(self):
         r = self._requests.get(self._url)
         if r.status_code != 200:
             raise PaymentChannelServerError(
@@ -151,7 +153,7 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
                 "Unsupported protocol version: Server version is {}, client version is {}.".format(
                     channel_info['version'], HTTPPaymentChannelServer.PROTOCOL_VERSION))
 
-        return channel_info['public_key']
+        return channel_info
 
     def open(self, deposit_tx, redeem_script):
         r = self._requests.post(self._url, data={'deposit_tx': deposit_tx, 'redeem_script': redeem_script})
@@ -233,8 +235,8 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         with open(deposit_txid + ".server.tx", "w") as f:
             json.dump(channel_json, f)
 
-    def get_public_key(self):
-        return codecs.encode(self._wallet.get_payout_public_key().compressed_bytes, 'hex_codec').decode('utf-8')
+    def get_info(self):
+        return {'public_key': codecs.encode(self._wallet.get_payout_public_key().compressed_bytes, 'hex_codec').decode('utf-8'), 'zeroconf': True}
 
     def open(self, deposit_tx, redeem_script):
         # Deserialize deposit tx and redeem script

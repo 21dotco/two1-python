@@ -133,16 +133,15 @@ class PaymentChannel:
             # Create server instance
             payment_server = protocol(url)
 
-            # Call get_public_key() on server
+            # Call get_info() on server
             try:
-                pubkey = payment_server.get_public_key()
+                info = payment_server.get_info()
             except server.PaymentChannelServerError as e:
                 raise PaymentChannelError("Server: " + str(e))
 
             # Call create() on state machine
             try:
-                (deposit_tx, redeem_script) = sm.create(
-                    pubkey, deposit_amount, int(time.time() + expiration_time), fee_amount, zeroconf, use_unconfirmed)
+                (deposit_tx, redeem_script) = sm.create(info['public_key'], deposit_amount, int(time.time() + expiration_time), fee_amount, info.get('zeroconf', zeroconf), use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 
