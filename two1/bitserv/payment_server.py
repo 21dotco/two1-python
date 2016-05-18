@@ -141,6 +141,16 @@ class PaymentServer:
         """
         return self._wallet.get_public_key()
 
+    def identify(self):
+        """Query the payment server's merchant information and server configuration.
+
+        Returns:
+            (dict): a key-value store that contains the merchant's public key and other custom config.
+        """
+        return dict(public_key=self._wallet.get_public_key(),
+                    version=self.PROTOCOL_VERSION,
+                    zeroconf=self.zeroconf)
+
     @lock
     def open(self, deposit_tx, redeem_script):
         """Open a payment channel.
