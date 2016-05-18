@@ -9,7 +9,7 @@ from any Unix command line.
 Quickstart
 ----------
 
-Installation!!
+Installation
 ^^^^^^^^^^^^
 
 Python v3.4+ is required. To install the lib and CLI, run:
