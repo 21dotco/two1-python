@@ -285,7 +285,7 @@ class UxString:
                                   "bitcoin."
 
     no_earn_allocations = (
-        "Please enable the faucet by connecting a social network to your 21 account at {}/{}/config/social."
+        "Please enable the faucet by connecting a social network to your 21 account at {}/{}/config/profile."
     )
 
     # mining
