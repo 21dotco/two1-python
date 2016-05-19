@@ -99,7 +99,7 @@ class PaymentServer:
     """Thread and process lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None, zeroconf=True, sync_period=600, db_dir=None):
+                 blockchain=None, zeroconf=False, sync_period=600, db_dir=None):
         """Initalize the payment server.
 
         Args:

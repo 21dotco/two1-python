@@ -151,7 +151,7 @@ def test_identify():
         'hex_codec').decode('utf-8')
     assert merchant_public_key == test_public_key
     assert pc_config['version'] == channel_server.PROTOCOL_VERSION
-    assert pc_config['zeroconf'] is True
+    assert pc_config['zeroconf'] is False
 
 
 def test_channel_server_open():

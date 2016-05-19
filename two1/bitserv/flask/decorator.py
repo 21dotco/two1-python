@@ -43,7 +43,7 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600,
+    def __init__(self, app, wallet, allowed_methods=None, zeroconf=False, sync_period=600,
                  endpoint='/payment', db_dir=None, username=None):
         """Configure bitserv settings.
 
