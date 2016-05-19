@@ -240,7 +240,11 @@ class PaymentServer:
 
         # Verify that the payment channel is ready
         if channel.state == ChannelSQLite3.CONFIRMING:
-            raise ChannelClosedError('Payment channel not ready.')
+            confirmed = self._blockchain.check_confirmed(channel.deposit_txid)
+            if confirmed:
+                self._db.pc.update_state(channel.deposit_txid, ChannelSQLite3.READY)
+            else:
+                raise ChannelClosedError('Payment channel not ready.')
         elif channel.state == ChannelSQLite3.CLOSED:
             raise ChannelClosedError('Payment channel closed.')
 
