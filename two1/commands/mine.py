@@ -9,6 +9,7 @@ import logging
 import os
 import random
 import subprocess
+import sys
 import time
 
 # 3rd party imports
@@ -96,6 +97,7 @@ def _mine(config, client, wallet, dashboard=False):
             start_cpu_mining(config.username, client, wallet)
     else:
         logger.info(uxstring.UxString.use_21_earn_instead)
+        sys.exit(1)
 
 
 def is_minerd_running():
