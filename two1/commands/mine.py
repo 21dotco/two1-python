@@ -2,14 +2,14 @@
 Mine bitcoin on a 21 Bitcoin Computer.
 """
 # standard python imports
-import json
-import subprocess
-import time
-import os
-import random
 from collections import namedtuple
 import base64
+import json
 import logging
+import os
+import random
+import subprocess
+import time
 
 # 3rd party imports
 import click
@@ -21,7 +21,7 @@ from two1.bitcoin.txn import Transaction
 from two1.server import message_factory
 from two1.commands.util import decorators
 from two1.commands import status
-from two1.commands.util.bitcoin_computer import has_mining_chip
+from two1.commands.util import bitcoin_computer
 from two1.bitcoin.hash import Hash
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
@@ -85,7 +85,7 @@ def _mine(config, client, wallet, dashboard=False):
         wallet (two1.wallet.Wallet): a user's wallet instance
         dashboard (bool): shows minertop dashboard if True
     """
-    if has_mining_chip():
+    if bitcoin_computer.has_mining_chip():
         if not is_minerd_running():
             start_minerd(config, dashboard)
         elif dashboard:
@@ -288,7 +288,7 @@ def get_work(client):
             raise exceptions.MiningDisabledError(uxstring.UxString.no_earn_allocations.format(
                 two1.TWO1_WWW_HOST, client.username))
         elif e.status_code == 404:
-            if has_mining_chip():
+            if bitcoin_computer.has_mining_chip():
                 raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
             else:
                 raise exceptions.MiningDisabledError(uxstring.UxString.earn_limit_reached)
