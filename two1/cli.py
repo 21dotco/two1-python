@@ -143,8 +143,7 @@ For full documentation, visit 21.co/learn.
 main.add_command(buy)
 main.add_command(buybitcoin)
 main.add_command(doctor)
-if bitcoin_computer.has_mining_chip():
-    main.add_command(mine)
+main.add_command(mine)
 main.add_command(status)
 main.add_command(update)
 main.add_command(uninstall)
