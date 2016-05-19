@@ -41,6 +41,7 @@ from two1.commands.rate import rate
 from two1.commands.publish import publish
 from two1.commands.profile import profile
 from two1.commands.join import join
+from two1.commands.market import market
 from two1.commands.sell import sell
 from two1.commands.earn import earn
 from two1.commands.faucet import faucet
@@ -159,6 +160,7 @@ main.add_command(publish)
 main.add_command(login)
 main.add_command(profile)
 main.add_command(join)
+main.add_command(market)
 main.add_command(earn)
 main.add_command(faucet)
 
