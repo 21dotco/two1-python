@@ -159,8 +159,12 @@ def status_wallet(client, wallet, detail=False):
     total_balance = user_balances.twentyone + user_balances.onchain
 
     if total_balance == 0:
-        logger.info(uxstring.UxString.status_empty_wallet.format(click.style("21 mine",
-                                                                             bold=True)))
+        if bitcoin_computer.has_mining_chip():
+            command = "21 mine"
+        else:
+            command = "21 earn"
+        logger.info(uxstring.UxString.status_empty_wallet.format(
+            click.style(command, bold=True)))
     else:
         buy21 = click.style("21 buy", bold=True)
         buy21help = click.style("21 buy --help", bold=True)
