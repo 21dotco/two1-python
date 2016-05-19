@@ -1,11 +1,16 @@
 """Unit tests for `21 config`."""
+import sys
 import json
 import pytest
 import unittest.mock as mock
+from io import TextIOWrapper, BytesIO
+from contextlib import contextmanager
 
 import two1.wallet as wallet
 import two1.commands.util.config as config
 import two1.commands.util.exceptions as exceptions
+import two1.commands.util.uxstring as uxstring
+
 
 CONFIG_DATA = json.dumps(dict(
     contact='two1@21.co', maxspend=25000, sellprice=11000, stderr='.two1/two1.stderr',
@@ -13,6 +18,21 @@ CONFIG_DATA = json.dumps(dict(
     auto_update=False, verbose=False, sortby='price',
     collect_analytics=True))
 PARTIAL_CONFIG_DATA = json.dumps(dict(contact='21@21.co'))
+
+
+@contextmanager
+def capture_stdout(command, *args, **kwargs):
+    """Captures stdout"""
+    old_stdout = sys.stdout
+    sys.stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
+    command(*args, **kwargs)
+    # get output
+    sys.stdout.seek(0)
+    out = sys.stdout.read()
+    # restore stdout
+    sys.stdout.close()
+    sys.stdout = old_stdout
+    yield out
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
@@ -78,6 +98,64 @@ def test_save_config():
     assert new_config['username'] == 'TEST_USERNAME'
     assert new_config['some_list_key'] == [123, 456, 789]
     assert len(new_config.keys()) == num_config_keys + 1
+
+
+@mock.patch('os.path.exists', mock.Mock(return_value=True))
+@mock.patch('two1.TWO1_VERSION', '0.0.0')
+def test_prompts_update_needed():
+    """Test Config object will suggest update if needed."""
+    tmp_config_data = json.loads(CONFIG_DATA)
+    # set an old timestamp
+    tmp_config_data['last_update_check'] = 0.0
+    mock_config = mock.mock_open(read_data=json.dumps(tmp_config_data))
+    with mock.patch('two1.commands.util.config.Config.save', return_value=None):
+        with mock.patch('two1.commands.util.config.open', mock_config, create=True):
+            with capture_stdout(config.Config, 'config_file') as output:
+                output = output.strip()
+                assert(len(output) > 0)
+                assert(output in uxstring.UxString.update_required)
+
+
+@mock.patch('os.path.exists', mock.Mock(return_value=True))
+@mock.patch('two1.TWO1_VERSION', '0.0.0')
+def test_needs_update_legacy_last_update_check():
+    """Test for a legacy two1.json with an older last_update_check, and that
+    it does not throw an error"""
+    mock_config = mock.mock_open(read_data=CONFIG_DATA)
+    with mock.patch('two1.commands.util.config.open', mock_config, create=True):
+        c = config.Config('config_file')
+        c.set('last_update_check', "", should_save=True)
+    try:
+        c.check_update()
+    except ValueError:
+        pytest.fail("Error dealing with legacy timestamp")
+
+
+@mock.patch('os.path.exists', mock.Mock(return_value=True))
+def test_last_update_check_set():
+    """Asert last_update_check is set in a config with none."""
+    mock_config = mock.mock_open(read_data=CONFIG_DATA)
+    assert 'last_update_check' not in CONFIG_DATA
+    with mock.patch('two1.commands.util.config.open', mock_config, create=True):
+        conf = config.Config('config_file')
+        # last_update_check should now be set after
+        # initalizing the config object.
+        assert hasattr(conf, 'last_update_check')
+        assert 'last_update_check' in json.loads(
+            mock_config.return_value.write.call_args[0][0])
+
+
+@mock.patch('os.path.exists', mock.Mock(return_value=True))
+def test_needs_old_last_update_check_with_new_version():
+    """Test for a last_update_check more than 3600 seconds ago, but version is new
+    and that it does not suggest an update"""
+    mock_config = mock.mock_open(read_data=CONFIG_DATA)
+    with mock.patch('two1.commands.util.config.open', mock_config, create=True):
+        c = config.Config('config_file')
+        c.set('last_update_check', 000000.000, should_save=True)
+
+    with capture_stdout(config.Config, 'config_file') as output:
+        assert len(output.strip()) == 0
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
