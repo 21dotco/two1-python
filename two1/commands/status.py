@@ -14,7 +14,7 @@ import two1.channels as channels
 from two1.channels.cli import format_expiration_time
 from two1.commands.util import decorators
 from two1.commands.util import uxstring
-from two1.commands.util.bitcoin_computer import has_mining_chip, get_hashrate
+from two1.commands.util import bitcoin_computer
 
 Balances = collections.namedtuple('Balances', ['twentyone', 'onchain', 'pending', 'flushed', 'channels'])
 
@@ -70,11 +70,11 @@ def status_mining(client):
     Returns:
         dict: a dictionary containing 'is_mining', 'hashrate', and 'mined' values
     """
-    has_chip = has_mining_chip()
+    has_chip = bitcoin_computer.has_mining_chip()
     is_mining, mined, hashrate = None, None, None
     if has_chip:
         try:
-            hashrate = get_hashrate("15min")
+            hashrate = bitcoin_computer.get_hashrate("15min")
             if hashrate > 0:
                 hashrate = uxstring.UxString.status_mining_hashrate.format(hashrate/1e9)
             else:

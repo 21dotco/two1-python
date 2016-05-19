@@ -14,12 +14,12 @@ from two1.commands.util import uxstring
     (0, uxstring.UxString.status_mining_hashrate_unknown, uxstring.UxString.status_mining_success),
     (50e9, uxstring.UxString.status_mining_hashrate.format(50), uxstring.UxString.status_mining_success),
 ])
-@mock.patch('two1.commands.status.has_mining_chip', return_value=True)
+@mock.patch('two1.commands.status.bitcoin_computer.has_mining_chip', return_value=True)
 def test_status_with_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click, return_value, hashrate, is_mining):
     """Test 21 status for a user with a mining chip."""
 
     mock_options = dict(side_effect=return_value) if isinstance(return_value, Exception) else dict(return_value=return_value)
-    with mock.patch('two1.commands.status.get_hashrate', **mock_options):
+    with mock.patch('two1.commands.status.bitcoin_computer.get_hashrate', **mock_options):
         status_rv = status._status(mock_config, mock_rest_client, mock_wallet, False)
 
     assert mock_rest_client.mock_get_mined_satoshis.call_count == 1
@@ -40,7 +40,7 @@ def test_status_with_chip(mock_config, mock_rest_client, mock_wallet, patch_rest
 
 
 @pytest.mark.unit
-@mock.patch('two1.commands.status.has_mining_chip', return_value=False)
+@mock.patch('two1.commands.status.bitcoin_computer.has_mining_chip', return_value=False)
 def test_status_no_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click):
     """Test 21 status for a user without a mining chip."""
     status_rv = status._status(mock_config, mock_rest_client, mock_wallet, False)
@@ -63,7 +63,7 @@ def test_status_no_chip(mock_config, mock_rest_client, mock_wallet, patch_rest_c
 
 
 @pytest.mark.unit
-@mock.patch('two1.commands.status.has_mining_chip', return_value=True)
+@mock.patch('two1.commands.status.bitcoin_computer.has_mining_chip', return_value=True)
 def test_status_detail(mock_config, mock_rest_client, mock_wallet, patch_rest_client, patch_click):
     """Test 21 status detail view."""
     with mock.patch('two1.channels.PaymentChannelClient', mock_objects.MockChannelClient):
