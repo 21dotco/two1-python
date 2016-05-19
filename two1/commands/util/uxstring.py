@@ -268,7 +268,10 @@ class UxString:
         "is 100 USD.", fg="red")
 
     # earning
-    use_21_earn_instead = "Try 21 earn instead. 21 mine only works on a 21 Bitcoin Computer."
+    use_21_earn_instead = click.style(
+        "21 mine only works on Bitcoin Computers. Try 21 earn, 21 faucet, or 21 sell instead.",
+        fg='red', bold=True
+    )
     earn_start = "Earn bitcoin by doing microtasks."
     earn_task_notyet = "Only the 'faucet' task is currently available. Check back for the '{}' microtask soon."
     earn_task_use_faucet = "This option will be available soon. Use 21 faucet to request bitcoin."
