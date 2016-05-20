@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 @decorators.catch_all
 def rate(ctx, list, app_id, rating):
     """Rate an app listed in the 21 Marketplace.
-
 \b
 Usage
 _____
@@ -35,12 +34,10 @@ $ 21 rate Xe8 3
     - Xe8 is the id of the app that you want to rate.  This id can be found with `21 search`.
     - 3 is the rating to apply. A rating should be an integer between 1-5.
 You can update the rating for an app at anytime with `21 rate`.
-
-
 \b
 List all the apps that you have rated.
 $ 21 rate --list
-    """
+"""
     # pylint: disable=redefined-builtin
     if list:
         _list(ctx.obj["client"])
