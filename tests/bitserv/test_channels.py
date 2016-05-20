@@ -3,6 +3,7 @@ import time
 import codecs
 import pytest
 import collections
+import multiprocessing
 
 import two1.bitcoin.utils as utils
 from two1.bitcoin import Script, Hash
@@ -13,6 +14,7 @@ from two1.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.bitserv.payment_server import TransactionVerificationError
 from two1.bitserv.payment_server import BadTransactionError
+from two1.bitserv.payment_server import RedeemPaymentError
 from two1.bitserv.models import DatabaseSQLite3, ChannelSQLite3
 
 
@@ -333,3 +335,50 @@ def test_channel_low_balance_message():
     good_signature = codecs.encode(cust_wallet._private_key.sign(deposit_txid).to_der(), 'hex_codec')
     closed = channel_server.close(deposit_txid, good_signature)
     assert closed
+
+
+def test_channel_redeem_race_condition():
+    """Test ability lock multiprocess redeems."""
+    # Clear test database
+    multiprocess_db = '/tmp/bitserv_test.sqlite3'
+    with open(multiprocess_db, 'w') as f:
+        f.write('')
+
+    # Initialize test vectors
+    channel_server._db = DatabaseSQLite3(multiprocess_db)
+    test_client = _create_client_txs()
+    deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
+
+    # Cache channel result for later
+    channel = channel_server._db.pc.lookup(deposit_txid)
+
+    # This is a function that takes a long time
+    def delayed_pc_lookup(deposit_txid):
+        time.sleep(0.5)
+        return channel
+
+    # This is the normal function
+    def normal_pc_lookup(deposit_txid):
+        return channel
+
+    # This function is called between the first lookup and the final record update
+    # We make sure this function takes extra long the first time its called
+    # in order to expose the race condition
+    channel_server._db.pc.lookup = delayed_pc_lookup
+
+    # Start the first redeem in its own process and allow time to begin
+    p = multiprocessing.Process(target=channel_server.redeem, args=(payment_txid,))
+    p.start()
+    time.sleep(0.1)
+
+    # After starting the first redeem, reset the function to take a normal amount of time
+    channel_server._db.pc.lookup = normal_pc_lookup
+
+    # To test the race, this redeem is called while the other redeem is still in-process
+    # Because this call occurs after the first, it should raise a redeem error
+    with pytest.raises(RedeemPaymentError):
+        channel_server.redeem(payment_txid)
+
+    # Block on the first process to make sure it completes
+    p.join()
