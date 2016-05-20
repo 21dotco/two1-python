@@ -11,13 +11,20 @@ import requests
 import two1
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
+from two1.server import machine_auth_wallet
 
 
 class TwentyOneRestClient(object):
-    def __init__(self, server_url, machine_auth, username=None,
-                 version="0"):
-        self.auth = machine_auth
-        self.server_url = server_url
+    def __init__(self, server_url=None, machine_auth=None, username=None,
+                 version="0", machine_wallet=None):
+        if machine_auth is None and machine_wallet is not None:
+            self.auth = machine_auth_wallet.MachineAuthWallet(machine_wallet)
+        elif machine_auth is not None:
+            self.auth = machine_auth
+        else:
+            raise ValueError('You must provide either a machine_auth or a wallet.')
+
+        self.server_url = server_url if server_url is not None else two1.TWO1_HOST
         self.version = version
         if username:
             self.username = username.lower()
