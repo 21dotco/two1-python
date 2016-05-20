@@ -3,6 +3,7 @@ import os
 import time
 import codecs
 import threading
+import multiprocessing
 
 from two1.bitcoin.utils import pack_u32
 from two1.bitcoin import Transaction, Hash, Signature, Script
@@ -43,6 +44,24 @@ class TransactionVerificationError(PaymentServerError):
     pass
 
 
+class HeavyLock:
+
+    """An inter-process, inter-thread lock."""
+
+    def __init__(self):
+        """Return a new HeavyLock instance."""
+        self.tlock = threading.Lock()
+        self.plock = multiprocessing.Lock()
+
+    def __enter__(self):
+        self.tlock.acquire()
+        self.plock.acquire()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.plock.release()
+        self.tlock.release()
+
+
 class PaymentServer:
 
     """Payment channel handling.
@@ -75,8 +94,8 @@ class PaymentServer:
     PROTOCOL_VERSION = 2
     """Payment channel protocol version."""
 
-    lock = threading.Lock()
-    """Thread lock for database access."""
+    lock = HeavyLock()
+    """Thread and process lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
                  blockchain=None, zeroconf=True, sync_period=600, db_dir=None):
