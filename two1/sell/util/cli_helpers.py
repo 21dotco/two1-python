@@ -478,7 +478,7 @@ def get_balances(services, client):
         try:
             service_mnemonic = services_info.get(service).get("mnemonic")
 
-            wallet = Two1Wallet.import_from_mnemonic(service_mnemonic)
+            wallet = Two1Wallet.import_from_mnemonic(mnemonic=service_mnemonic)
             template["wallet"] = wallet.balances["total"]
 
             channel_client = channels.PaymentChannelClient(wallet)

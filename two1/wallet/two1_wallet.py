@@ -383,8 +383,8 @@ class Two1Wallet(BaseWallet):
         return (wallet, mnemonic)
 
     @staticmethod
-    def import_from_mnemonic(mnemonic,
-                             data_provider=None,
+    def import_from_mnemonic(data_provider=None,
+                             mnemonic=None,
                              passphrase='',
                              utxo_selector=utxo_selector_smallest_first,
                              account_type=DEFAULT_ACCOUNT_TYPE):
@@ -405,6 +405,9 @@ class Two1Wallet(BaseWallet):
 
         if data_provider is None:
             data_provider = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
+
+        if mnemonic is None:
+            raise ValueError("'mnemonic' must be provided to import_from_mnemonic.")
 
         if account_type not in account_types:
             raise ValueError("account_type must be one of %r" %

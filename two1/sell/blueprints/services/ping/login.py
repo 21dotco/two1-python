@@ -24,7 +24,7 @@ def login_21():
 
     mnemonic = os.environ["TWO1_WALLET_MNEMONIC"]
 
-    wallet = Two1Wallet.import_from_mnemonic(mnemonic)
+    wallet = Two1Wallet.import_from_mnemonic(mnemonic=mnemonic)
 
     if not os.path.exists(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH)):
         os.makedirs(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH))

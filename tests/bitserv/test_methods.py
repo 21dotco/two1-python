@@ -13,7 +13,7 @@ from two1.bitserv.payment_methods import TransactionBroadcastError
 from two1.bitserv.payment_methods import PaymentBelowDustLimitError
 
 
-test_wallet = Two1Wallet.import_from_mnemonic('six words test wallet on fleek')
+test_wallet = Two1Wallet.import_from_mnemonic(mnemonic='six words test wallet on fleek')
 
 
 def _build_void_transaction(price=None, address=None):
