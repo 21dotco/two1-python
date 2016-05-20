@@ -469,7 +469,6 @@ def get_balances(services, client):
     with open(Two1Composer.SERVICES_WALLET_FILE, "r") as f:
         services_info = json.load(f)
 
-    provider = TwentyOneProvider()
     balances = {}
     for service in services:
         template = {"buffer": None,
@@ -479,7 +478,7 @@ def get_balances(services, client):
         try:
             service_mnemonic = services_info.get(service).get("mnemonic")
 
-            wallet = Two1Wallet.import_from_mnemonic(provider, service_mnemonic)
+            wallet = Two1Wallet.import_from_mnemonic(service_mnemonic)
             template["wallet"] = wallet.balances["total"]
 
             channel_client = channels.PaymentChannelClient(wallet)
@@ -681,7 +680,7 @@ def get_payments_server_balance(provider):
         info = json.load(f)
 
     mnemonic = info["mnemonic"]
-    wallet = Two1Wallet.import_from_mnemonic(provider, mnemonic)
+    wallet = Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=mnemonic)
 
     balances = {"onchain": None,
                 "channels": None}
