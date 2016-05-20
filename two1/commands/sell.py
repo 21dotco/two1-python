@@ -560,11 +560,11 @@ $ 21 sell sweep <services>...
 
         if all:
             start_string = "Sweeping all service balances..."
-            clients = {service_name: Two1Wallet.import_from_mnemonic(provider, service_details['mnemonic'])
+            clients = {service_name: Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=service_details['mnemonic'])
                        for service_name, service_details in services_info.items()}
         elif requested_services_set.issubset(available_services_set):
             start_string = "Sweeping balances for " + ", ".join(services) + "..."
-            clients = {service_name: Two1Wallet.import_from_mnemonic(provider, services_info[service_name]['mnemonic'])
+            clients = {service_name: Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=services_info[service_name]['mnemonic'])
                        for service_name in services}
         else:
             unavailable_requested_services = requested_services_set.difference(available_services_set)
@@ -582,7 +582,7 @@ $ 21 sell sweep <services>...
         except:
             logger.info(click.style("The payment server wallet information file seems to be corrupted, exiting..."), fg="magenta")
             sys.exit()
-        clients = {"payment channels": Two1Wallet.import_from_mnemonic(provider, payments_info['mnemonic'])}
+        clients = {"payment channels": Two1Wallet.import_from_mnemonic(data_provider=provider, mnemonic=payments_info['mnemonic'])}
 
     logger.info(click.style(start_string, fg=cli_helpers.TITLE_COLOR))
 

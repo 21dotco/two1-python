@@ -8,6 +8,7 @@ import time
 import base64
 import os
 import pyaes
+import two1
 from jsonrpcclient.exceptions import ReceivedErrorResponse
 from pbkdf2 import PBKDF2
 from two1.bitcoin.crypto import HDKey
@@ -382,16 +383,17 @@ class Two1Wallet(BaseWallet):
         return (wallet, mnemonic)
 
     @staticmethod
-    def import_from_mnemonic(data_provider, mnemonic,
+    def import_from_mnemonic(mnemonic,
+                             data_provider=None,
                              passphrase='',
                              utxo_selector=utxo_selector_smallest_first,
                              account_type=DEFAULT_ACCOUNT_TYPE):
         """ Creates a Two1Wallet from an existing mnemonic.
 
         Args:
+            mnemonic (str): The mnemonic representing the wallet seed.
             data_provider (BaseProvider): An instance of a derived
                 two1.blockchain.BaseProvider class as described above.
-            mnemonic (str): The mnemonic representing the wallet seed.
             passphrase (str): A passphrase to lock the wallet with.
             utxo_selector (function): A filtering function with the
                 prototype documented above.
@@ -400,6 +402,9 @@ class Two1Wallet(BaseWallet):
         Returns:
             Two1Wallet: The wallet instance.
         """
+
+        if data_provider is None:
+            data_provider = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
 
         if account_type not in account_types:
             raise ValueError("account_type must be one of %r" %

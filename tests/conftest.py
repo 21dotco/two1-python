@@ -285,7 +285,9 @@ def patch_rest_client(monkeypatch, mock_config, mock_wallet):
     machine_auth = MachineAuthWallet(mock_wallet)
     _patch_rest_client = mock_objects.MockTwentyOneRestClient(None, machine_auth, mock_config.username)
     for mock_function in mock_objects.MockTwentyOneRestClient.DEFAULT_VALUES.keys():
-        monkeypatch.setattr(server.rest_client.TwentyOneRestClient, mock_function, getattr(_patch_rest_client, mock_function))
+        monkeypatch.setattr(
+            server.rest_client.TwentyOneRestClient, mock_function, getattr(_patch_rest_client, mock_function)
+        )
     return _patch_rest_client
 
 

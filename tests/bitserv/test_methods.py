@@ -5,7 +5,6 @@ import two1.bitcoin as bitcoin
 from two1.bitserv import OnChain
 from two1.bitserv.models import OnChainSQLite3
 from two1.wallet import Two1Wallet
-from two1.blockchain import TwentyOneProvider
 
 from two1.bitserv.payment_methods import InsufficientPaymentError
 from two1.bitserv.payment_methods import InvalidPaymentParameterError
@@ -14,8 +13,7 @@ from two1.bitserv.payment_methods import TransactionBroadcastError
 from two1.bitserv.payment_methods import PaymentBelowDustLimitError
 
 
-test_wallet = Two1Wallet.import_from_mnemonic(TwentyOneProvider(),
-                                              'six words test wallet on fleek')
+test_wallet = Two1Wallet.import_from_mnemonic('six words test wallet on fleek')
 
 
 def _build_void_transaction(price=None, address=None):
@@ -24,9 +22,13 @@ def _build_void_transaction(price=None, address=None):
     _, hash160 = bitcoin.utils.address_to_key_hash(address)
     h = codecs.encode(b'test hash for a fake payment txn', 'hex_codec').decode()
     outpoint = bitcoin.Hash(h)
-    inputs = [bitcoin.TransactionInput(outpoint=outpoint, outpoint_index=0, script=bitcoin.Script(), sequence_num=0xffffffff)]
+    inputs = [bitcoin.TransactionInput(
+        outpoint=outpoint, outpoint_index=0, script=bitcoin.Script(), sequence_num=0xffffffff
+    )]
     outputs = [bitcoin.TransactionOutput(value=price, script=bitcoin.Script.build_p2pkh(hash160))]
-    txn = bitcoin.Transaction(version=bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs=inputs, outputs=outputs, lock_time=0)
+    txn = bitcoin.Transaction(
+        version=bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs=inputs, outputs=outputs, lock_time=0
+    )
     return txn
 
 

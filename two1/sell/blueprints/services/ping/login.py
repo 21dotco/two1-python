@@ -7,7 +7,6 @@ from two1.server import machine_auth_wallet
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.daemonizer import get_daemonizer
 from two1.server import rest_client as _rest_client
-from two1.blockchain.twentyone_provider import TwentyOneProvider
 
 
 def login_21():
@@ -17,7 +16,7 @@ def login_21():
     d = None
     try:
         d = get_daemonizer()
-    except OSError as e:
+    except OSError:
         pass
 
     if d:
@@ -25,8 +24,7 @@ def login_21():
 
     mnemonic = os.environ["TWO1_WALLET_MNEMONIC"]
 
-    provider = TwentyOneProvider()
-    wallet = Two1Wallet.import_from_mnemonic(provider, mnemonic)
+    wallet = Two1Wallet.import_from_mnemonic(mnemonic)
 
     if not os.path.exists(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH)):
         os.makedirs(os.path.dirname(Two1Wallet.DEFAULT_WALLET_PATH))
