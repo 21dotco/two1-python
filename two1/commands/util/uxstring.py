@@ -375,7 +375,7 @@ class UxString:
     # join
     successful_join = "Joined network {}. It may take a few seconds for joining " \
                       "to take effect.\nRun " +\
-                      click.style("21 join --status", bold=True, fg="blue") +\
+                      click.style("21 market status", bold=True, fg="blue") +\
                       " to verify you have successfully joined."
     invalid_network = "Invalid network specified, please verify the network name."
     join_cmd = click.style("21 join", bold=True, reset=False)
