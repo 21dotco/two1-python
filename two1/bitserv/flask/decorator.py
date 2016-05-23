@@ -2,18 +2,22 @@
 import re
 from functools import wraps
 from urllib.parse import urlparse
-from flask import jsonify, request, views
-from werkzeug.exceptions import HTTPException, BadRequest, NotFound
+from flask import jsonify, request, views, Response
+from werkzeug.exceptions import HTTPException
 
 from ..payment_methods import OnChain, PaymentChannel, BitTransfer
 from ..payment_server import PaymentServer, PaymentChannelNotFoundError
+
+BAD_REQUEST = 400
+PAYMENT_REQUIRED = 402
+NOT_FOUND = 404
 
 
 class PaymentRequiredException(HTTPException):
 
     """Payment required exception."""
 
-    code = 402
+    code = PAYMENT_REQUIRED
 
     def get_body(self, context):
         """402 response body."""
@@ -112,7 +116,7 @@ class Payment:
                 try:
                     v = method.redeem_payment(price, request_headers, **kwargs)
                 except Exception as e:
-                    raise BadRequest(str(e))
+                    return Response(str(e), BAD_REQUEST)
                 return v
         return False
 
@@ -149,9 +153,9 @@ class Channel(views.MethodView):
             try:
                 return jsonify(self.server.status(deposit_txid))
             except PaymentChannelNotFoundError as e:
-                raise NotFound(str(e))
+                return Response(str(e), NOT_FOUND)
             except Exception as e:
-                raise BadRequest(str(e))
+                return Response(str(e), BAD_REQUEST)
 
     def post(self):
         """Open a payment channel.
@@ -177,7 +181,7 @@ class Channel(views.MethodView):
             # Respond with the deposit transaction id as confirmation
             return jsonify({'deposit_txid': deposit_txid})
         except Exception as e:
-            raise BadRequest(str(e))
+            return Response(str(e), BAD_REQUEST)
 
     def put(self, deposit_txid):
         """Receive payments inside a payment channel.
@@ -200,9 +204,9 @@ class Channel(views.MethodView):
             # Respond with the payment transaction id as confirmation
             return jsonify({'payment_txid': payment_txid})
         except PaymentChannelNotFoundError as e:
-            raise NotFound(str(e))
+            return Response(str(e), NOT_FOUND)
         except Exception as e:
-            raise BadRequest(str(e))
+            return Response(str(e), BAD_REQUEST)
 
     def delete(self, deposit_txid):
         """Close a payment channel.
@@ -227,6 +231,6 @@ class Channel(views.MethodView):
 
             return jsonify({'payment_txid': payment_txid})
         except PaymentChannelNotFoundError as e:
-            raise NotFound(str(e))
+            return Response(str(e), NOT_FOUND)
         except Exception as e:
-            raise BadRequest(str(e))
+            return Response(str(e), BAD_REQUEST)
