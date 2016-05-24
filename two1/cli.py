@@ -114,7 +114,7 @@ def parse_config(
               is_flag=True,
               envvar='TWO1_DEBUG',
               help='Display stack traces for errors.')
-@click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
+@click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
 @decorators.catch_all
 def main(ctx, config_file, config_pairs, debug):
