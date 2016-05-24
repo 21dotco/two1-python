@@ -281,7 +281,7 @@ def get_work(client):
         elif e.status_code == 403 and e.data.get("detail") == "TO201":
             raise exceptions.MiningDisabledError(uxstring.UxString.Error.suspended_account)
         elif e.status_code == 403 and e.data.get("detail") == "TO501":
-            raise exceptions.MiningDisabledError(uxstring.UxString.daily_mining_limit_reached)
+            raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
         elif e.status_code == 403 and e.data.get("detail") == "TO502":
             raise exceptions.MiningDisabledError(uxstring.UxString.lifetime_earn_limit_reached)
         elif e.status_code == 403 and e.data.get("detail") == "TO503":
@@ -289,7 +289,7 @@ def get_work(client):
                 two1.TWO1_WWW_HOST, client.username))
         elif e.status_code == 404:
             if has_mining_chip():
-                raise exceptions.MiningDisabledError(uxstring.UxString.daily_mining_limit_reached)
+                raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
             else:
                 raise exceptions.MiningDisabledError(uxstring.UxString.earn_limit_reached)
         else:
