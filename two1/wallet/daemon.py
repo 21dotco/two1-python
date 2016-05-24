@@ -19,7 +19,7 @@ from two1.wallet.exceptions import WalletNotLoadedError
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.two1_wallet import Wallet
 from two1.wallet.cli import validate_data_provider
-from two1.wallet.cli import WALLET_VERSION
+import two1
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEF_WALLET_UPDATE_INTERVAL = 25   # seconds
@@ -309,7 +309,7 @@ def sync_accounts():
 @click.option('--debug', '-d',
               is_flag=True,
               help='Sets the logging level to debug')
-@click.version_option(WALLET_VERSION)
+@click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
 def main(ctx, wallet_path, blockchain_data_provider,
          insight_url, insight_api_path,

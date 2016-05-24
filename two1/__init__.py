@@ -10,6 +10,7 @@ __version__ = '.'.join(map(str, VERSION))
 
 # Defines hard coded global variables
 TWO1_VERSION = __version__
+TWO1_VERSION_MESSAGE = '21 version %(version)s'
 TWO1_PACKAGE_NAME = 'two1'
 TWO1_USER_FOLDER = os.path.expanduser('~/.two1/')
 TWO1_CONFIG_FILE = TWO1_USER_FOLDER + 'two1.json'

@@ -28,7 +28,6 @@ from two1.wallet.two1_wallet import Wallet
 from two1.wallet.daemonizer import get_daemonizer
 
 
-WALLET_VERSION = "0.1.0"
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 REQUIRED_DATA_PROVIDER_PARAMS = {'insight': [],
                                  'twentyone': []}
@@ -173,7 +172,7 @@ def validate_data_provider(ctx, param, value):
 @click.option('--debug', '-d',
               is_flag=True,
               help='Turns on debugging messages.')
-@click.version_option(WALLET_VERSION)
+@click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
 def main(ctx, wallet_path, passphrase,
          blockchain_data_provider,
