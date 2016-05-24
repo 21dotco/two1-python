@@ -51,9 +51,11 @@ logger = logging.getLogger(__name__)
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
-def parse_config(config_file=two1.TWO1_CONFIG_FILE,
-                 config_dict=None,
-                 need_wallet_and_account=True):
+def parse_config(
+        config_file=two1.TWO1_CONFIG_FILE,
+        config_dict=None,
+        need_wallet_and_account=True,
+):
     """Get configuration information that is used to drive all 21 commands.
 
     This function is very useful for testing as it builds up several
@@ -84,11 +86,13 @@ def parse_config(config_file=two1.TWO1_CONFIG_FILE,
         client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, config.username)
         config.username = username
 
-    obj = dict(config=config,
-               wallet=wallet,
-               machine_auth=machine_auth,
-               username=username,
-               client=client)
+    obj = dict(
+        config=config,
+        wallet=wallet,
+        machine_auth=machine_auth,
+        username=username,
+        client=client,
+    )
     return obj
 
 
@@ -121,9 +125,11 @@ For full documentation, visit 21.co/learn.
     if uuid:
         two1.TWO1_DEVICE_ID = uuid
 
-    ctx.obj = parse_config(config_file,
-                           dict(config_pairs),
-                           need_wallet_and_account=need_wallet_and_account)
+    ctx.obj = parse_config(
+        config_file=config_file,
+        config_dict=dict(config_pairs),
+        need_wallet_and_account=need_wallet_and_account,
+    )
 
 
 main.add_command(buy)
