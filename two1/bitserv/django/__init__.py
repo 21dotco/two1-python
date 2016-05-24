@@ -1,7 +1,7 @@
 """Bitserv implementation for Django."""
 try:
-    import django
-    import rest_framework
+    import django  # noqa
+    import rest_framework  # noqa
 except ImportError:
     raise ImportError(
         '''21 Django integration requires the following packages:
