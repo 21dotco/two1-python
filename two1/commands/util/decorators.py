@@ -1,6 +1,5 @@
 """ All two1 command line related decorators """
 # standard python imports
-import os
 import json as jsonlib
 import functools
 import platform
@@ -129,7 +128,7 @@ def capture_usage(func):
             except Exception as e:
                 # ignore failures if not in debug mode since logging failure shouldn't be visible
                 # to normal flow of the user.
-                if "TWO1_DEBUG" in os.environ:
+                if ctx.obj['debug']:
                     raise e
 
         # protect against early cli failures
@@ -224,7 +223,7 @@ def catch_all(func):
             logger.error(uxstring.UxString.Error.server_err)
 
             # only dump the stack traces if the debug flag is set
-            if "TWO1_DEBUG" in os.environ:
+            if ctx.obj['debug']:
                 logger.error("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
                 logger.error("Args: {}".format(args), fg="red")
                 logger.error("Kwargs: {}".format(kwargs), fg="red")
