@@ -55,6 +55,7 @@ def parse_config(
         config_file=two1.TWO1_CONFIG_FILE,
         config_dict=None,
         need_wallet_and_account=True,
+        debug=False,
 ):
     """Get configuration information that is used to drive all 21 commands.
 
@@ -92,6 +93,7 @@ def parse_config(
         machine_auth=machine_auth,
         username=username,
         client=client,
+        debug=debug,
     )
     return obj
 
@@ -107,10 +109,14 @@ def parse_config(
               multiple=True,
               metavar='KEY VALUE',
               help='Overrides a config key/value pair.')
+@click.option('--debug',
+              is_flag=True,
+              envvar='TWO1_DEBUG',
+              help='Display stack traces for errors.')
 @click.version_option(two1.TWO1_VERSION, message='%(prog)s v%(version)s')
 @click.pass_context
 @decorators.catch_all
-def main(ctx, config_file, config_pairs):
+def main(ctx, config_file, config_pairs, debug):
     """Buy and sell anything on the internet for bitcoin.
 
 \b
@@ -129,6 +135,7 @@ For full documentation, visit 21.co/learn.
         config_file=config_file,
         config_dict=dict(config_pairs),
         need_wallet_and_account=need_wallet_and_account,
+        debug=debug,
     )
 
 
