@@ -16,10 +16,12 @@ from two1.server import machine_auth_wallet
 
 class TwentyOneRestClient(object):
     def __init__(self, server_url=None, machine_auth=None, username=None,
-                 version="0", machine_wallet=None):
-        if machine_auth is None and machine_wallet is not None:
-            self.auth = machine_auth_wallet.MachineAuthWallet(machine_wallet)
-        elif machine_auth is not None:
+                 version="0", wallet=None):
+        if machine_auth is not None and wallet is not None:
+            raise ValueError('You cannot provide both a machine_auth and a wallet.')
+        elif machine_auth is None and wallet is not None:
+            self.auth = machine_auth_wallet.MachineAuthWallet(wallet)
+        elif machine_auth is not None and wallet is None:
             self.auth = machine_auth
         else:
             raise ValueError('You must provide either a machine_auth or a wallet.')
