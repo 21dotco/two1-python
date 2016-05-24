@@ -311,8 +311,8 @@ class UxString:
     mining_status = "\nHere's the new status of your balance after mining:\n"
     mining_finish = "\nView your balance with {}, or spend with {}."
 
-    daily_mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
-                                 "Please try again in a few hours."
+    monthly_mining_limit_reached = "\nFurther mining advances are not possible at this time. " \
+                                   "Please try again in 30 days."
 
     mining_bitcoin_computer_needed = click.style(
         "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
