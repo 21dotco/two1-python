@@ -121,6 +121,17 @@ def capture_usage(func):
             args (tuple): tuple of args of the fuction
             kwargs (dict): keyword args of the function
         """
+
+        def _send_to_logger(data):
+            try:
+                # send usage payload to the logging server
+                requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
+            except Exception as e:
+                # ignore failures if not in debug mode since logging failure shouldn't be visible
+                # to normal flow of the user.
+                if "TWO1_DEBUG" in os.environ:
+                    raise e
+
         # protect against early cli failures
         if not ctx.obj or 'config' not in ctx.obj:
             return func(ctx, *args, **kwargs)
@@ -148,7 +159,7 @@ def capture_usage(func):
         }
 
         # send usage payload to the logging server
-        requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
+        _send_to_logger(data)
 
         try:
             # call decorated function and propigate args
@@ -173,7 +184,7 @@ def capture_usage(func):
                 data['message'] = ex._msg
 
             # send usage payload to the logging server
-            requests.post(two1.TWO1_LOGGER_SERVER + "/logs", jsonlib.dumps(data))
+            _send_to_logger(data)
 
             raise ex
 
