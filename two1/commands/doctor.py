@@ -77,7 +77,7 @@ class Doctor(object):
         "Darwin": "14.0.0"
         }
     UNMAINTAINED_OS = {
-        "Linux": "3.13.0",
+        "Linux": "3.10.0",
         "Darwin": "14.0.0"
         }
 
