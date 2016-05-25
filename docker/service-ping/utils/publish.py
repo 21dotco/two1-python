@@ -17,7 +17,7 @@ def publish_manifest(service, zt_ip, port):
         manifest_json = yaml.load(f)
 
     manifest_json["basePath"] = "/%s" % service
-    manifest_json["host"] = "%s:%s" % (zt_ip, port)    
+    manifest_json["host"] = "%s:%s" % (zt_ip, port)
     try:
         manifest_json["info"]["x-21-quick-buy"] = manifest_json["info"]["x-21-quick-buy"] % (zt_ip, port, service)
     except Exception:
