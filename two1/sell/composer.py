@@ -548,7 +548,7 @@ class Two1ComposerContainers(Two1Composer):
         running = True
 
         exec_resp = self.docker_client.exec_create('sell_%s' % service_name,
-                                                   'python3 /usr/src/app/utils/publish.py ' + \
+                                                   'python3 /usr/src/app/utils/publish.py ' +
                                                    service_name + " " + str(zt_ip) + " " + str(port))
         exec_id = exec_resp['Id']
         self.docker_client.exec_start(exec_id)
