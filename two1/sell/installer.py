@@ -13,7 +13,7 @@ class Two1SellInstaller:
     """
 
     SERVICE_DIR = os.path.expanduser("~/.two1/services")
-    DB_DIR = os.path.join(SERVICE_DIR, 'db')
+    DB_DIR = os.path.join(SERVICE_DIR, 'db_dir')
     DOCKER_TOOLS = ["Virtualbox", "Docker Machine", "Docker Compose", "Docker"]
 
     def __init__(self, system, distro):
@@ -314,11 +314,11 @@ class InstallerAWSUbuntuDebian(InstallerBase):
         try:
             if "services" not in os.listdir(os.path.expanduser("~/.two1")):
                 subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/")])
-                subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/db")])
+                subprocess.check_output(["mkdir", "-p", Two1SellInstaller.DB_DIR])
             subprocess.check_output(
                 ["cp", os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                     "util", "schema.sql"),
-                 os.path.expanduser("~/.two1/services/db")])
+                 Two1SellInstaller.DB_DIR])
         except Exception:
             raise
 
