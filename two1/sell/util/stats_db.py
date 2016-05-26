@@ -8,7 +8,7 @@ from contextlib import closing
 
 class Two1SellDB:
 
-    DEFAULT_DB_DIR = "~/.two1/services/db"
+    DEFAULT_DB_DIR = "~/.two1/services/db_dir"
 
     def __init__(self, db_dir=None):
         """ Init 21 sell database.

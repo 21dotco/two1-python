@@ -39,7 +39,7 @@ class Two1Composer(metaclass=ABCMeta):
     PRIMARY_ACCOUNT_FILE = os.path.join(PRIMARY_ACCOUNT_DIR, "two1.json")
 
     BASE_DIR = os.path.join(PRIMARY_ACCOUNT_DIR, "services")
-    DB_DIR = os.path.join(BASE_DIR, "db")
+    DB_DIR = os.path.join(BASE_DIR, "db_dir")
     SITES_ENABLED_PATH = os.path.join(BASE_DIR, "config", "sites-enabled")
     SITES_AVAILABLE_PATH = os.path.join(BASE_DIR, "config", "sites-available")
 
