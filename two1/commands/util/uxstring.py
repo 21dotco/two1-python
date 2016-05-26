@@ -296,7 +296,7 @@ class UxString:
 
     # wallet
     wallet_top_title = click.style("Your 21 wallets:\n", fg="magenta")
-    wallet_title = click.style("Wallet {}", fg="yellow")
+    wallet_title = click.style("{}", fg="yellow")
     wallet_pub_key = "    Public Key       : {} "
     wallet_payout_address = "    Current Address  : {} "
     primary_wallet_label = click.style(" [Primary Wallet]", fg="green")

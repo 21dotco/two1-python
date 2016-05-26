@@ -92,10 +92,10 @@ def _info(client, machine_auth):
     my_public_key = base64.b64encode(cb).decode()
 
     all_wallets = p.json()
-    logger.info("\n")
     counter = 1
+    logger.info("Wallets\n", fg="yellow")
     for wallet in all_wallets:
-        wallet_title = click.style(uxstring.UxString.wallet_title).format(counter)
+        wallet_title = click.style(uxstring.UxString.wallet_title).format(wallet["name"])
         if bool(wallet["is_primary"]):
             wallet_title += uxstring.UxString.primary_wallet_label
         if wallet["public_key"] == my_public_key:
