@@ -264,15 +264,24 @@ $ 21 sell start --all
         sys.exit()
 
     # start microservices
+    two1_services = manager.list_available_services()
     if all:
         try:
-            valid_services = manager.list_available_services()
+            valid_services = two1_services
         except Exception:
-            logger.info(click.style("Error: unable to fetch machine images.  Please try again or "
+            logger.info(click.style("Error: unable to fetch machine images. Please try again or "
                                     "contact support@21.co.", fg="magenta"))
             sys.exit()
     else:
-        valid_services = services
+        valid_services = []
+        for serv in services:
+            if serv in two1_services:
+                valid_services.append(serv)
+
+    if len(valid_services) <= 0:
+        logger.info(click.style("No service available to sell. Please try again or "
+                                "contact support@21.co.", fg="magenta"))
+        sys.exit()
 
     def failed_to_build_hook(service_name):
         cli_helpers.print_str(service_name, ["Failed to build"], "FALSE", False)
@@ -411,10 +420,8 @@ $ 21 sell stop --all
             except Exception:
                 logger.info("Unable to get running services.", fg="magenta")
                 sys.exit()
-            if len(valid_services) > 0:
-                valid_services += Two1Composer.BASE_SERVICES
-            else:
-                valid_services = services
+        else:
+            valid_services = services
         cli_helpers.start_long_running("Stopping services",
                                        services_stopper,
                                        valid_services)
