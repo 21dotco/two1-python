@@ -43,7 +43,7 @@ class Two1Composer(metaclass=ABCMeta):
     SITES_ENABLED_PATH = os.path.join(BASE_DIR, "config", "sites-enabled")
     SITES_AVAILABLE_PATH = os.path.join(BASE_DIR, "config", "sites-available")
 
-    COMPOSE_FILE = os.path.join(BASE_DIR, "production.yaml")
+    COMPOSE_FILE = os.path.join(BASE_DIR, "21-compose.yaml")
 
     BASE_SERVICES = ["router", "payments", "base"]
 
@@ -62,7 +62,7 @@ class Two1Composer(metaclass=ABCMeta):
             super().__init__(Two1Composer.COMPOSE_FILE)
 
         def _filler(self):
-            """ Create the base production.yaml.
+            """ Create the base service description file.
             """
             return {
                 'version': '2',
@@ -219,7 +219,7 @@ class Two1ComposerContainers(Two1Composer):
         self._create_base_server(server_port)  # create base router server config
         self._create_payments_route()  # create route to payments server
 
-        # generate production.yaml service description
+        # generate service description (yaml)
         machine_wallet = wallet or self.default_wallet.create(self.provider)[1]
         with self.ComposerYAMLContext(username, password, server_port, machine_wallet) as composer_yaml:
             if composer_yaml['services']['payments']['environment'][
