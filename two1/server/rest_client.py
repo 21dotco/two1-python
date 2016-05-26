@@ -297,14 +297,23 @@ class TwentyOneRestClient(object):
         return (self._request(sign_username=self.username,
                               path=path).json())[self.username]
 
-    def set_primary_wallet(self, public_key=None):
-        # input is a compressed public key bytestring
-        if public_key is None:
-            public_key = self._wallet_pk
+    def set_primary_wallet(self, name=None):
 
+        # if name is passed in use that to set the primary wallet
+        # otherwise use the public key of the current machine
+        if name:
+            data = {
+                "wallet_name": name
+            }
+        else:
+            public_key = self._wallet_pk
+            data = {
+                "public_key": public_key
+            }
+
+        data_json = json.dumps(data)
         path = "/pool/account/{}/wallets/primary/".format(self.username)
-        data = json.dumps({"public_key": public_key})
-        return self._request(sign_username=self.username, method="POST", path=path, data=data)
+        return self._request(sign_username=self.username, method="POST", path=path, data=data_json)
 
     def list_wallets(self):
         path = "/pool/account/{}/wallets/".format(self.username)

@@ -12,6 +12,8 @@ from two1.commands.util import decorators
 from two1.commands.util import uxstring
 
 # Creates a ClickLogger
+from two1.commands.util.exceptions import ServerRequestError
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,13 +46,13 @@ $ 21 wallet setprimary WALLET_NAME
 
 
 @wallet.command()
-@click.option('-pk', '--public_key', default=None, type=click.STRING,
-              help='Specify the wallet public key to set as primary.')
+@click.option('-n', '--name', default=None, type=click.STRING,
+              help='Name of the wallet to set as the primary wallet.')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
 @decorators.json_output
-def setprimary(ctx, public_key):
+def setprimary(ctx, name):
     """
 Set a primary wallet for your account.
 
@@ -62,7 +64,7 @@ $ 21 wallet setprimary
 Sets the wallet with the name WALLET_NAME as your primary wallet.
 $ 21 wallet setprimary WALLET_NAME
     """
-    return _set_primary_wallet(ctx.obj['client'], public_key)
+    return _set_primary_wallet(ctx.obj['client'], name)
 
 
 @wallet.command()
@@ -77,18 +79,17 @@ View a list of the wallets associated with your account.
     return _info(ctx.obj['client'], ctx.obj['machine_auth'])
 
 
-def _set_primary_wallet(client, public_key):
+def _set_primary_wallet(client, name):
     # Check if the public_key is encoded properly
-    if public_key is not None:
-        try:
-            public_key = base58.b58decode_check(public_key)
-        except ValueError:
-            raise click.ClickException(uxstring.UxString.wallet_bad_pubkey.format(
-                public_key
-            ))
-
     # client controls the default public_key
-    return client.set_primary_wallet(public_key)
+    try:
+        client.set_primary_wallet(name)
+    except ServerRequestError as e:
+        if e.status_code == 404:
+            logger.info(uxstring.UxString.wallet_name_not_found.format(name), fg="red")
+            return
+
+    logger.info(uxstring.UxString.set_primary_wallet_success.format(name), fg="green")
 
 
 def _info(client, machine_auth):
@@ -99,7 +100,6 @@ def _info(client, machine_auth):
     my_public_key = base64.b64encode(cb).decode()
 
     all_wallets = p.json()
-    counter = 1
     logger.info("Wallets\n", fg="yellow")
     for wallet in all_wallets:
         wallet_title = click.style(uxstring.UxString.wallet_title).format(wallet["name"])
@@ -111,7 +111,6 @@ def _info(client, machine_auth):
         logger.info(wallet_title)
         lines = [uxstring.UxString.wallet_pub_key.format(wallet["public_key"]),
                  uxstring.UxString.wallet_payout_address.format(wallet["payout_address"])]
-        counter += 1
         logger.info("\n".join(lines))
 
     logger.info("\n")
