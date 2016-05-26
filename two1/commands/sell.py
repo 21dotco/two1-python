@@ -624,7 +624,7 @@ $ 21 sell sweep
 
     provider = TwentyOneProvider()
     try:
-        wallet = Two1Wallet.import_from_mnemonic(provier=provider, mnemonic=manager.get_services_mnemonic())
+        wallet = Two1Wallet.import_from_mnemonic(provider, manager.get_services_mnemonic())
     except Exception:
         logger.info(click.style("Error: unable to import wallet mnemonic.  Please check to make "
                                 "sure the mnemonic exists in %s "
