@@ -315,10 +315,6 @@ class InstallerAWSUbuntuDebian(InstallerBase):
             if "services" not in os.listdir(os.path.expanduser("~/.two1")):
                 subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/")])
                 subprocess.check_output(["mkdir", "-p", os.path.expanduser("~/.two1/services/db")])
-            subprocess.check_output(["cp", "-r",
-                                     os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                  "blueprints"),
-                                     os.path.expanduser("~/.two1/services")])
             subprocess.check_output(
                 ["cp", os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                     "util", "schema.sql"),
