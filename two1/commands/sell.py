@@ -422,9 +422,15 @@ $ 21 sell stop --all
                 sys.exit()
         else:
             valid_services = services
-        cli_helpers.start_long_running("Stopping services",
-                                       services_stopper,
-                                       valid_services)
+        if len(valid_services) > 0:
+            logger.info(click.style("Stopping services.", fg=cli_helpers.TITLE_COLOR))
+            # stop bitcoin-payable microservices
+            try:
+                services_stopper(valid_services)
+            except Exception:
+                logger.info("Unable to stop services.", fg="magenta")
+        else:
+            logger.info(click.style("All services are stopped.", fg="magenta"))
 
     if manager.status_machine() == VmState.STOPPED:
         if delete_vm:
