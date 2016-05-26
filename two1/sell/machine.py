@@ -129,6 +129,7 @@ class Two1Machine:
         return zt_ip
 
     def write_machine_config(self, server_port):
+        os.makedirs(os.path.dirname(self.MACHINE_CONFIG_FILE), exist_ok=True)
         with open(self.MACHINE_CONFIG_FILE, "w") as f:
             json.dump(server_port, f)
 
