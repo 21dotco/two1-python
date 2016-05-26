@@ -17,17 +17,28 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def wallet():
-    """ View, manage, and configure your 21 wallets.
+    """ View and manage your 21 wallets.
 
 \b
 Usage
 -----
-Set the current wallet as your master wallet, allowing you to
-aggregate information about all wallets from one place.
+Each time you log in to a new machine with your 21 account, a new wallet will be created for you.
+This command allows you to view and manage all of the wallets associated with your account.
+Your account has one primary wallet. The primary wallet is the wallet that your 21 buffer will be flushed
+into when you do `21 flush`.
 
+\b
+Displays information about all of your wallets.
+$ 21 wallet info
+
+\b
+Sets the wallet on your current machine as the primary wallet.
 $ 21 wallet setprimary
 
-$ 21 wallet info
+\b
+Sets the wallet with the name WALLET_NAME as your primary wallet.
+$ 21 wallet setprimary WALLET_NAME
+
 """
     pass
 
@@ -41,18 +52,15 @@ $ 21 wallet info
 @decorators.json_output
 def setprimary(ctx, public_key):
     """
+Set a primary wallet for your account.
+
 \b
-Sets the current default wallet as the primary wallet for your 21.co account.
+Sets the wallet on your current machine as the primary wallet.
 $ 21 wallet setprimary
 
 \b
-Sets a specific wallet as the primary wallet for your 21.co account.
-$ 21 wallet setprimary PUBLIC_KEY
-
-\b
-The wallet public keys linked to your 21.co account can be obtained by using
-info:
-$ 21 wallet info
+Sets the wallet with the name WALLET_NAME as your primary wallet.
+$ 21 wallet setprimary WALLET_NAME
     """
     return _set_primary_wallet(ctx.obj['client'], public_key)
 
@@ -65,7 +73,6 @@ def info(ctx):
     """
 \b
 View a list of the wallets associated with your account.
-$ 21 wallet info
     """
     return _info(ctx.obj['client'], ctx.obj['machine_auth'])
 
