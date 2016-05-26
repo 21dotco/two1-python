@@ -303,6 +303,9 @@ class UxString:
     primary_wallet_desc = "The wallet that your 21 buffer will be flushed into."
     current_wallet_label = click.style(" [Current Wallet]", fg="magenta")
     current_wallet_desc = "The active wallet on your current machine."
+    wallet_name_not_found = "You don't have a wallet named {}."
+    set_primary_wallet_success = "{} was successfully set as your primary wallet."
+
     # mining
     mining_show_dashboard_prompt = "About to show the 21 mining dashboard!\n\n" + \
         "Hit any key to launch the dashboard. "
