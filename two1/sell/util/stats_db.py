@@ -14,6 +14,7 @@ class Two1SellDB:
         """ Init 21 sell database.
         """
         db_directory = db_dir or Two1SellDB.DEFAULT_DB_DIR
+        os.makedirs(os.path.expanduser(db_directory), exist_ok=True)
         self.db_path = os.path.join(os.path.expanduser(db_directory), "stats.db")
         self.schema_path = os.path.join(os.path.expanduser(db_directory), "schema.sql")
 

@@ -40,6 +40,7 @@ class Two1Composer(metaclass=ABCMeta):
 
     BASE_DIR = os.path.join(PRIMARY_ACCOUNT_DIR, "services")
     DB_DIR = os.path.join(BASE_DIR, "db_dir")
+    os.makedirs(DB_DIR, exist_ok=True)
     SITES_ENABLED_PATH = os.path.join(BASE_DIR, "config", "sites-enabled")
     SITES_AVAILABLE_PATH = os.path.join(BASE_DIR, "config", "sites-available")
 
