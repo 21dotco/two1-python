@@ -89,7 +89,7 @@ class UxString:
                         "email sent to you at {}. If you can't find the email, please visit 21.co/activation."
 
     flush_success = (
-        click.style("Flush to Blockchain\n", fg='magenta') +
+        click.style("\nFlushing to Blockchain\n", fg='magenta') +
         "Your satoshis will be sent to you on the Blockchain in the next payout cycle.\n"
         "Estimated time of payout: ~20 minutes.\n"
         "To check progress:  https://blockexplorer.com/address/{}\n"
@@ -351,6 +351,17 @@ class UxString:
 
     flush_invalid_address = click.style(
         "The Bitcoin address you specified is not a valid Bitcoin address.", fg="red")
+
+    flush_pre_confirmation = "You are about to flush {} from your 21 buffer. \nNote that if you " \
+                             "flush your balance, you will not be able to perform the instant " \
+                             "buys enabled by the buffer (needed by some tutorials at " \
+                             "21.co/learn). \nThe flushed amount will be deposited to the Bitcoin " \
+                             "address {} belonging to {}."
+
+    flushing_to_other_wallet = "This wallet is not located on your current computer. You can use " \
+                               "'21 wallet info' to get more information."
+
+    flush_confirmation = "Are you sure you want to continue ?"
     # ad
     buy_ad = click.style("Get a 21 Bitcoin Computer at https://21.co/buy", fg="magenta")
 
