@@ -166,6 +166,18 @@ $ 21 sell start --all
                 cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
         else:
             sys.exit()
+    # ensure docker service is running
+    if manager.status_docker() == False:
+        if click.confirm(click.style(
+                "Docker service is not running. Would you like to start "
+                "the service?", fg=cli_helpers.PROMPT_COLOR)):
+            try:
+                manager.start_docker()
+                cli_helpers.print_str("Docker", ["Started"], "TRUE", True)
+            except Two1MachineNetworkStartException:
+                cli_helpers.print_str("Docker", ["Not started"], "FALSE", False)
+        else:
+            sys.exit()
 
     # join the 21market network
     if manager.get_market_address() == "":
