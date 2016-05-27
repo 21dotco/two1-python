@@ -1,5 +1,6 @@
 """ Flushes current off-chain balance to the blockchain """
 # standard python imports
+import base64
 import logging
 
 # 3rd party importss
@@ -51,10 +52,10 @@ Flushes 30000 satoshis from your 21.co buffer to the Bitcoin Address 1A1zP1eP5QG
         amount = currency.Price(amount, denomination).satoshis
     else:
         amount = None
-    _flush(ctx.obj['client'], ctx.obj['wallet'], amount, payout_address)
+    _flush(ctx.obj['client'], ctx.obj['wallet'], ctx.obj['machine_auth'], amount, payout_address)
 
 
-def _flush(client, wallet, amount=None, payout_address=None):
+def _flush(client, wallet, machine_auth, amount=None, payout_address=None):
     """ Flushes current off-chain balance to the blockchain
 
     Args:
@@ -75,10 +76,32 @@ def _flush(client, wallet, amount=None, payout_address=None):
         except ValueError:
             logger.error(uxstring.UxString.flush_invalid_address)
             return
+
+    # select the wallet and the associated payout address for the flush
+    all_wallets = client.list_wallets().json()
+    wallet_payout_address, wallet_name = _select_flush_wallet(client, payout_address, all_wallets)
+
+    wallet_payout_address_styled = click.style(wallet_payout_address, bold=True)
+    wallet_name_styled = _style_wallet_name(wallet_name, payout_address is None)
+    amount_styled = _style_amount(amount)
+
+    logger.info(uxstring.UxString.flush_pre_confirmation.format(amount_styled,
+                                                                wallet_payout_address_styled,
+                                                                wallet_name_styled))
+
+    # if the user is flushing to a wallet not on their computer, show them a warning
+    if not _payout_address_belongs_to_current_wallet(wallet_payout_address,
+                                                     all_wallets,
+                                                     machine_auth):
+        logger.info(uxstring.UxString.flushing_to_other_wallet)
+
+    if not click.confirm(uxstring.UxString.flush_confirmation):
+        return
+
     try:
         response = client.flush_earnings(amount=amount, payout_address=payout_address)
         if response.ok:
-            success_msg = uxstring.UxString.flush_success.format(wallet.current_address)
+            success_msg = uxstring.UxString.flush_success.format(wallet_payout_address)
             logger.info(success_msg)
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
@@ -87,3 +110,78 @@ def _flush(client, wallet, amount=None, payout_address=None):
             logger.info(uxstring.UxString.flush_not_enough_earnings.format(amount), fg="red")
         else:
             raise ex
+
+
+def _select_flush_wallet(client, payout_address, all_wallets):
+    """ selects the wallet name and the associated payout_address for the flush.
+
+    If no payout_address is specified, primary wallet of the user will be used.
+    Otherwise all the user's wallets are searched for a matching payout_address.
+    If none of the user's wallets match the payout_address the wallet is an external
+    wallet and the function returns None.
+
+    Args:
+        client (two1.server.rest_client.TwentyOneRestClient): an object for
+            sending authenticated requests to the TwentyOne backend.
+        payout_address (str): Optionally None string indicating the passed in payout_address
+        from the command invokation.
+        all_wallets (list): List of dictionaries containing wallet info
+
+    Returns:
+        payout_address (str): The final payout address that the buffer will be flushed to
+        wallet_name (str): The name of the wallet that the buffer will be flushed to.
+        If payout_address does not belong to any of the user's wallets, wallet_name is None
+    """
+
+    wallet_name = None
+
+    # payout_address is None we are flushing to the primary wallet
+    if payout_address is None:
+        # let the index error propagate if there is no primary wallet
+        primary_wallet = [w for w in all_wallets if w["is_primary"]][0]
+        wallet_payout_address = primary_wallet["payout_address"]
+        wallet_name = primary_wallet["name"]
+    else:
+        # find a user wallet that is tied to the payout_address
+        target_wallet_list = [w for w in all_wallets if w["payout_address"] == payout_address]
+        if len(target_wallet_list) > 0:
+            target_wallet = target_wallet_list[0]
+            wallet_payout_address = target_wallet["payout_address"]
+            wallet_name = target_wallet["name"]
+        # User is flushing to an external wallet
+        else:
+            wallet_payout_address = payout_address
+
+    return wallet_payout_address, wallet_name
+
+
+def _style_amount(amount):
+    if amount:
+        amount_str = click.style("{} satoshis".format(amount), bold=True)
+    else:
+        amount_str = click.style("the entire balance", bold=True)
+
+    return amount_str
+
+
+def _style_wallet_name(wallet_name, is_primary):
+    if wallet_name:
+        if is_primary:
+            wallet_name_styled = "your primary wallet named " + click.style(wallet_name, bold=True)
+        else:
+            wallet_name_styled = "your wallet named " + click.style(wallet_name, bold=True)
+    else:
+        wallet_name_styled = click.style("an external wallet", bold=True)
+
+    return wallet_name_styled
+
+
+def _payout_address_belongs_to_current_wallet(payout_address, all_wallets, machine_auth):
+    target_wallet_list = [w for w in all_wallets if w["payout_address"] == payout_address]
+    if len(target_wallet_list) == 0:
+        return False
+    else:
+        target_wallet = target_wallet_list[0]
+        cb = machine_auth.public_key.compressed_bytes
+        current_public_key = base64.b64encode(cb).decode()
+        return target_wallet["public_key"] == current_public_key
