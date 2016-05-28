@@ -12,7 +12,7 @@ from abc import abstractmethod
 from two1.commands.util import zerotier
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
-from two1.sell.exceptions.exceptions_machine import *
+from two1.sell.exceptions import exceptions_machine
 
 logger = logging.getLogger(__name__)
 
@@ -286,31 +286,31 @@ class Two1MachineVirtual(Two1Machine):
                 }, f)
             return 0
         except:
-            raise Two1MachineCreateException()
+            raise exceptions_machine.Two1MachineCreateException()
 
     def delete_machine(self):
         """ Delete a custom VM.
         """
         if self.status_machine() == VmState.NOEXIST:
-            raise Two1MachineDoesNotExist()
+            raise exceptions_machine.Two1MachineDoesNotExist()
         try:
             subprocess.check_output(["docker-machine", "rm", "--force", self.name], stderr=subprocess.DEVNULL)
             return 0
         except:
-            raise Two1MachineDeleteException()
+            raise exceptions_machine.Two1MachineDeleteException()
 
     def start_machine(self):
         """ Start 21 VM.
         """
         if self.status_machine() == VmState.NOEXIST:
-            raise Two1MachineExistException(self.name)
+            raise exceptions_machine.Two1MachineExistException(self.name)
         try:
             if self.status_machine() != VmState.RUNNING:
                 subprocess.check_output(["docker-machine", "start", self.name], stderr=subprocess.DEVNULL)
             return 0
         except:
             self.stop_machine()
-            raise Two1MachineStartException()
+            raise exceptions_machine.Two1MachineStartException()
 
     def stop_machine(self):
         """ Stop 21 VM.
@@ -320,7 +320,7 @@ class Two1MachineVirtual(Two1Machine):
                 subprocess.check_output(["docker-machine", "stop", self.name], stderr=subprocess.DEVNULL)
             return 0
         except:
-            raise Two1MachineStopException()
+            raise exceptions_machine.Two1MachineStopException()
 
     def status_machine(self):
         """ Get status of virtual machine.
@@ -355,4 +355,4 @@ class Two1MachineVirtual(Two1Machine):
             environ.update(machine_env)
             return environ
         except:
-            raise Two1MachineException()
+            raise exceptions_machine.Two1MachineException()

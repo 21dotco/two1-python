@@ -267,7 +267,6 @@ def test_reset_file_positions():
     assert test_file_2.read() == b'Second message.'
 
     # Test a list of 2-tuples
-    file_list = [('one', test_file_1), ('two', test_file_2)]
     assert test_file_1.read() == b''
     assert test_file_2.read() == b''
     bit_req._reset_file_positions(file_dict, None)

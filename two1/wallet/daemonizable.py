@@ -95,13 +95,16 @@ def serdes_args(serialize, cls, method_name, *args, **kwargs):
 
     for i, a in enumerate(args):
         pname = param_names[i]
-        serdes = lambda x: x
+
+        def serdes(x):
+            return x
         if pname in ms_args:
             serdes = ms_args[pname].get(t, serdes)
         new_args.append(serdes(a))
 
     for pname, val in kwargs.items():
-        serdes = lambda x: x
+        def serdes(x):
+            return x
         if pname in ms_args:
             serdes = ms_args[pname].get(t, serdes)
         new_kwargs[pname] = serdes(val)

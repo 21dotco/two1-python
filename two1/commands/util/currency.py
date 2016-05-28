@@ -38,7 +38,8 @@ class Price:
         elif denomination.lower() in Price.USD:
             self.denomination = Price.USD
         else:
-            raise exceptions.Two1Error('Unknown denomination: {}.\nValid denominations: {}.'.format(denomination, Price.DENOMINATIONS))
+            raise exceptions.Two1Error(
+                'Unknown denomination: {}.\nValid denominations: {}.'.format(denomination, Price.DENOMINATIONS))
         self.amount = amount
         self.rest_client = rest_client if rest_client else create_default_rest_client()
 

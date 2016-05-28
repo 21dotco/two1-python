@@ -418,12 +418,12 @@ class Script(object):
         try:
             sig_bytes = self[0]
             hash_type = sig_bytes[-1]
-            _ = Signature.from_der(sig_bytes[:-1])
+            Signature.from_der(sig_bytes[:-1])
         except ValueError:
             raise TypeError("Signature does not appear to be valid")
 
         try:
-            _ = PublicKey.from_bytes(self[1])
+            PublicKey.from_bytes(self[1])
         except ValueError:
             raise TypeError("Public key does not appear to be valid")
 
@@ -483,7 +483,8 @@ class Script(object):
 
         Returns:
             dict: With the following key/value pairs:
-                'signatures' (list): List of DER-encoded signatures with hash_type appended at the end of the byte string.
+                'signatures' (list): List of DER-encoded signatures with
+                                     hash_type appended at the end of the byte string.
                 'redeem_script' (Script): The associated redeem script.
         """
         # A signature script should start with OP_0

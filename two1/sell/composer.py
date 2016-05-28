@@ -17,7 +17,7 @@ from docker.utils import kwargs_from_env as docker_env
 # two1 imports
 from two1.wallet import Two1Wallet
 from two1.blockchain import TwentyOneProvider
-from two1.sell.exceptions.exceptions_composer import *
+from two1.sell.exceptions import exceptions_composer as exceptions
 from two1.sell.util.context import YamlDataContext
 
 
@@ -505,7 +505,7 @@ class Two1ComposerContainers(Two1Composer):
                         "}\n"
                         )
         except Exception:
-            raise Two1ComposerServiceDefinitionException()
+            raise exceptions.Two1ComposerServiceDefinitionException()
 
     @staticmethod
     def _create_service_route(service):
@@ -522,7 +522,7 @@ class Two1ComposerContainers(Two1Composer):
                         "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
                         "}\n")
         except Exception:
-            raise Two1ComposerRouteException()
+            raise exceptions.Two1ComposerRouteException()
 
     @staticmethod
     def _create_payments_route():
@@ -539,7 +539,7 @@ class Two1ComposerContainers(Two1Composer):
                         "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
                         "}\n")
         except Exception:
-            raise Two1ComposerRouteException()
+            raise exceptions.Two1ComposerRouteException()
 
     def publish_service(self, service_name, zt_ip, port,
                         published_hook, already_published_hook, failed_to_publish_hook,

@@ -150,7 +150,7 @@ def test_composer_start_stop_services(sys_platform):
 
     manager.manager.build_base_services()
     manager.manager.build_market_services(services)
-    status_env = manager.manager.write_global_services_env('jgfreshprod23', 'Tester123')
+    manager.manager.write_global_services_env('jgfreshprod23', 'Tester123')
 
     manager.manager.start_services(services)
     assert 1 == 1

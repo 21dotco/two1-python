@@ -142,7 +142,7 @@ def test_p256(curve):
 
     sig_pt, _ = curve.sign(message, private_key)
 
-    derived_ys = curve.y_from_x(sig_pt.x)
+    curve.y_from_x(sig_pt.x)
     assert sig_pt.x == 0xEFD48B2AACB6A8FD1140DD9CD45E81D69D2C877B56AAF991C34D0EA84EAF3716
     assert sig_pt.y == 0xF7CB1C942D657C41D436C7A1B6E29F65F3E900DBB9AFF4064DC4AB2F843ACDA8
 
@@ -244,7 +244,7 @@ def test_secp256k1(curve):
     sig_pt, _ = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
-    assert sig_full == 0x934b1ea10a4b3c1757e2b0c017d0b6143ce3c9a7e6a4a49860d7a6ab210ee3d82442ce9d2b916064108014783e923ec36b49743e2ffa1c4496f01a512aafd9e5
+    assert sig_full == 0x934b1ea10a4b3c1757e2b0c017d0b6143ce3c9a7e6a4a49860d7a6ab210ee3d82442ce9d2b916064108014783e923ec36b49743e2ffa1c4496f01a512aafd9e5  # nopep8
 
     private_key = 0x1
     message = b"All those moments will be lost in time, like tears in rain. Time to die..."
@@ -256,7 +256,7 @@ def test_secp256k1(curve):
     sig_pt, _ = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
-    assert sig_full == 0x8600dbd41e348fe5c9465ab92d23e3db8b98b873beecd930736488696438cb6b547fe64427496db33bf66019dacbf0039c04199abb0122918601db38a72cfc21
+    assert sig_full == 0x8600dbd41e348fe5c9465ab92d23e3db8b98b873beecd930736488696438cb6b547fe64427496db33bf66019dacbf0039c04199abb0122918601db38a72cfc21  # nopep8
 
     private_key = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140
     message = b"Satoshi Nakamoto"
@@ -268,7 +268,7 @@ def test_secp256k1(curve):
     sig_pt, rec_id = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
-    assert sig_full == 0xfd567d121db66e382991534ada77a6bd3106f0a1098c231e47993447cd6af2d06b39cd0eb1bc8603e159ef5c20a5c8ad685a45b06ce9bebed3f153d10d93bed5
+    assert sig_full == 0xfd567d121db66e382991534ada77a6bd3106f0a1098c231e47993447cd6af2d06b39cd0eb1bc8603e159ef5c20a5c8ad685a45b06ce9bebed3f153d10d93bed5  # nopep8
 
     private_key = 0xf8b8af8ce3c7cca5e300d33939540c10d45ce001b8f252bfbc57ba0342904181
     message = b"Alan Turing"
@@ -280,10 +280,10 @@ def test_secp256k1(curve):
     sig_pt, _ = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
-    assert sig_full == 0x7063ae83e7f62bbb171798131b4a0564b956930092b33b07b395615d9ec7e15c58dfcc1e00a35e1572f366ffe34ba0fc47db1e7189759b9fb233c5b05ab388ea
+    assert sig_full == 0x7063ae83e7f62bbb171798131b4a0564b956930092b33b07b395615d9ec7e15c58dfcc1e00a35e1572f366ffe34ba0fc47db1e7189759b9fb233c5b05ab388ea  # nopep8
 
     private_key = 0xe91671c46231f833a6406ccbea0e3e392c76c167bac1cb013f6f1013980455c2
-    message = b"There is a computer disease that anybody who works with computers knows about. It's a very serious disease and it interferes completely with the work. The trouble with computers is that you 'play' with them!"
+    message = b"There is a computer disease that anybody who works with computers knows about. It's a very serious disease and it interferes completely with the work. The trouble with computers is that you 'play' with them!"  # nopep8
     k = curve._nonce_rfc6979(private_key, hashlib.sha256(message).digest())
 
     assert k == 0x1F4B84C23A86A221D233F2521BE018D9318639D5B8BBD6374A8A59232D16AD3D
@@ -292,4 +292,4 @@ def test_secp256k1(curve):
     sig_pt, _ = make_low_s(curve, sig_pt, rec_id)
     sig_full = (sig_pt.x << curve.nlen) + sig_pt.y
 
-    assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6
+    assert sig_full == 0xb552edd27580141f3b2a5463048cb7cd3e047b97c9f98076c32dbdf85a68718b279fa72dd19bfae05577e06c7c0c1900c371fcd5893f7e1d56a37d30174671f6  # nopep8

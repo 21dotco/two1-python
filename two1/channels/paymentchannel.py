@@ -82,7 +82,9 @@ class PaymentChannel:
         self._blockchain = blockchain
 
     @staticmethod
-    def open(database, wallet, blockchain, url, deposit_amount, expiration_time, fee_amount, zeroconf, use_unconfirmed=False):
+    def open(
+            database, wallet, blockchain, url, deposit_amount, expiration_time, fee_amount, zeroconf,
+            use_unconfirmed=False):
         """Open a payment channel at the specified URL.
 
         Args:
@@ -119,7 +121,8 @@ class PaymentChannel:
         elif expiration_time <= 0:
             raise ValueError("Expiration time should be positive.")
         elif expiration_time < PaymentChannel.MIN_EXPIRATION_TIMEOUT:
-            raise ValueError("Expiration time should be at least {} seconds.".format(PaymentChannel.MIN_EXPIRATION_TIMEOUT))
+            raise ValueError("Expiration time should be at least {} seconds.".format(
+                PaymentChannel.MIN_EXPIRATION_TIMEOUT))
 
         with database:
             # Create a new database model
@@ -138,7 +141,8 @@ class PaymentChannel:
 
             # Call create() on state machine
             try:
-                (deposit_tx, redeem_script) = sm.create(pubkey, deposit_amount, int(time.time() + expiration_time), fee_amount, zeroconf, use_unconfirmed)
+                (deposit_tx, redeem_script) = sm.create(
+                    pubkey, deposit_amount, int(time.time() + expiration_time), fee_amount, zeroconf, use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 

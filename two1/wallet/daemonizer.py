@@ -361,11 +361,9 @@ WantedBy=default.target
 
         if cls.installed():
             try:
-                sc = subprocess.check_output(["systemctl",
-                                              "--user",
-                                              "enable",
-                                              cls.SERVICE_NAME],
-                                             stderr=subprocess.STDOUT)
+                subprocess.check_output(
+                    ["systemctl", "--user", "enable", cls.SERVICE_NAME],
+                    stderr=subprocess.STDOUT)
                 rv = cls.enabled()
             except subprocess.CalledProcessError as e:
                 raise DaemonizerError("Couldn't enable service: %s" % e)
@@ -550,7 +548,7 @@ class Launchd(Daemonizer):
         cls.indent(pl)
 
         xml_str = b'<?xml version="1.0" encoding="UTF-8"?>\n'
-        xml_str += b'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+        xml_str += b'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'  # nopep8
         xml_str += ET.tostring(pl, encoding='UTF-8')
 
         cls.PLIST_FILE_PATH.write_text(xml_str.decode(), encoding='UTF-8')

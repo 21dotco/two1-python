@@ -128,7 +128,9 @@ class Two1WalletWrapper(WalletWrapperBase):
     def create_deposit_tx(self, script_address, amount, fee, use_unconfirmed=False):
         # Sign deposit transaction to script address
         try:
-            return self._wallet.build_signed_transaction({script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True, expiration=Two1WalletWrapper.DEPOSIT_CACHE_TIMEOUT)[0]
+            return self._wallet.build_signed_transaction(
+                {script_address: amount + fee}, fees=fee, use_unconfirmed=use_unconfirmed, insert_into_cache=True,
+                expiration=Two1WalletWrapper.DEPOSIT_CACHE_TIMEOUT)[0]
         except wallet.exceptions.WalletBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
@@ -141,8 +143,10 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         # Build unsigned refund transaction
         inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0xfffffffe)]
-        outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
-        refund_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, expiration_time)
+        outputs = [bitcoin.TransactionOutput(deposit_amount, bitcoin.Script.build_p2pkh(
+            redeem_script.customer_public_key.hash160()))]
+        refund_tx = bitcoin.Transaction(
+            bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, expiration_time)
 
         # Sign refund transaction
         public_key = redeem_script.customer_public_key
@@ -151,7 +155,8 @@ class Two1WalletWrapper(WalletWrapperBase):
         sig = refund_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
 
         # Update input script sig
-        script_sig = bitcoin.Script([sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL), b"\x00", bytes(redeem_script)])
+        script_sig = bitcoin.Script([sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL),
+                                     b"\x00", bytes(redeem_script)])
         refund_tx.inputs[0].script = script_sig
 
         return refund_tx
@@ -165,7 +170,11 @@ class Two1WalletWrapper(WalletWrapperBase):
 
         # Build unsigned payment transaction
         inputs = [bitcoin.TransactionInput(deposit_tx.hash, deposit_utxo_index, bitcoin.Script(), 0xffffffff)]
-        outputs = [bitcoin.TransactionOutput(amount, bitcoin.Script.build_p2pkh(redeem_script.merchant_public_key.hash160())), bitcoin.TransactionOutput(deposit_amount - amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
+        outputs = [
+            bitcoin.TransactionOutput(
+                amount, bitcoin.Script.build_p2pkh(redeem_script.merchant_public_key.hash160())),
+            bitcoin.TransactionOutput(
+                deposit_amount - amount, bitcoin.Script.build_p2pkh(redeem_script.customer_public_key.hash160()))]
         payment_tx = bitcoin.Transaction(bitcoin.Transaction.DEFAULT_TRANSACTION_VERSION, inputs, outputs, 0x0)
 
         # Sign payment transaction
@@ -175,7 +184,9 @@ class Two1WalletWrapper(WalletWrapperBase):
         sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
 
         # Update input script sig
-        script_sig = bitcoin.Script([sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL), "OP_1", bytes(redeem_script)])
+        script_sig = bitcoin.Script([
+            sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL),
+            "OP_1", bytes(redeem_script)])
         payment_tx.inputs[0].script = script_sig
 
         return payment_tx

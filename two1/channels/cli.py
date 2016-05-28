@@ -17,7 +17,17 @@ from . import PaymentChannelState
 CHANNELS_DB_PATH = os.environ.get("CHANNELS_DB_PATH", PaymentChannelClient.DEFAULT_CHANNELS_DB_PATH)
 WALLET_PATH = os.environ.get("WALLET_PATH", Two1Wallet.DEFAULT_WALLET_PATH)
 
-COLORS = {"black": "\x1b[1;30m", "red": "\x1b[1;31m", "green": "\x1b[1;32m", "yellow": "\x1b[1;33m", "blue": "\x1b[1;34m", "magenta": "\x1b[1;35m", "cyan": "\x1b[1;36m", "white": "\x1b[1;37m", "reset": "\x1b[0m"}
+COLORS = {
+    "black": "\x1b[1;30m",
+    "red": "\x1b[1;31m",
+    "green": "\x1b[1;32m",
+    "yellow": "\x1b[1;33m",
+    "blue": "\x1b[1;34m",
+    "magenta": "\x1b[1;35m",
+    "cyan": "\x1b[1;36m",
+    "white": "\x1b[1;37m",
+    "reset": "\x1b[0m"
+}
 
 
 def format_state(state):
@@ -135,7 +145,8 @@ def cli_list(ctx):
 @click.argument('expiration', type=click.INT)
 @click.option('--fee', default=10000, help="Fee amount in satoshis.")
 @click.option('--zeroconf', default=False, is_flag=True, help="Use payment channel without deposit confirmation.")
-@click.option('--use-unconfirmed', default=False, is_flag=True, help="Use unconfirmed transactions to build deposit transaction.")
+@click.option(
+    '--use-unconfirmed', default=False, is_flag=True, help="Use unconfirmed transactions to build deposit transaction.")
 def cli_open(ctx, url, deposit, expiration, fee, zeroconf, use_unconfirmed):
     """Open a payment channel at the specified URL.
 
@@ -166,7 +177,8 @@ def cli_open(ctx, url, deposit, expiration, fee, zeroconf, use_unconfirmed):
         status = ctx.obj['client'].status(url)
         print("Opened {}".format(status.url))
         print("Deposit txid {}".format(status.deposit_txid))
-        print("Balance: {}. Deposit: {}. Expires in {}.".format(status.balance, status.deposit, format_expiration_time(status.expiration_time)))
+        print("Balance: {}. Deposit: {}. Expires in {}.".format(status.balance, status.deposit, format_expiration_time(
+            status.expiration_time)))
 
 
 @click.command('pay', help="Create payment to channel.")
@@ -229,9 +241,23 @@ def cli_status(ctx, url):
     status = ctx.obj['client'].status(url)
 
     if ctx.obj['json']:
-        print(json.dumps({'result': {'url': status.url, 'state': str(status.state), 'ready': status.ready, 'balance': status.balance, 'deposit': status.deposit, 'creation_time': status.creation_time, 'expiration_time': status.expiration_time, 'expired': status.expired, 'deposit_txid': status.deposit_txid, 'spend_txid': status.spend_txid}}))
+        print(json.dumps(
+            {'result': {
+                'url': status.url,
+                'state': str(status.state),
+                'ready': status.ready,
+                'balance': status.balance,
+                'deposit': status.deposit,
+                'creation_time': status.creation_time,
+                'expiration_time': status.expiration_time,
+                'expired': status.expired,
+                'deposit_txid': status.deposit_txid,
+                'spend_txid': status.spend_txid
+            }}))
     else:
-        print("{}. Balance: {}. Deposit: {}. Expires in {}.".format(format_state(str(status.state)), status.balance, status.deposit, format_expiration_time(status.expiration_time)))
+        print("{}. Balance: {}. Deposit: {}. Expires in {}.".format(
+            format_state(str(status.state)), status.balance, status.deposit, format_expiration_time(
+                status.expiration_time)))
 
 
 @click.command('info', help="Get details of channel.")
@@ -257,7 +283,26 @@ def cli_info(ctx, url):
     status = ctx.obj['client'].status(url, include_txs=True)
 
     if ctx.obj['json']:
-        print(json.dumps({'result': {'url': status.url, 'state': str(status.state), 'ready': status.ready, 'balance': status.balance, 'deposit': status.deposit, 'creation_time': status.creation_time, 'expiration_time': status.expiration_time, 'expired': status.expired, 'deposit_txid': status.deposit_txid, 'spend_txid': status.spend_txid, 'transactions': {'deposit_tx': status.transactions.deposit_tx, 'refund_tx': status.transactions.refund_tx, 'payment_tx': status.transactions.payment_tx, 'spend_tx': status.transactions.spend_tx}}}))
+        print(json.dumps(
+            {'result': {
+                'url': status.url,
+                'state': str(status.state),
+                'ready': status.ready,
+                'balance': status.balance,
+                'deposit': status.deposit,
+                'creation_time': status.creation_time,
+                'expiration_time': status.expiration_time,
+                'expired': status.expired,
+                'deposit_txid': status.deposit_txid,
+                'spend_txid': status.spend_txid,
+                'transactions': {
+                    'deposit_tx': status.transactions.deposit_tx,
+                    'refund_tx': status.transactions.refund_tx,
+                    'payment_tx': status.transactions.payment_tx,
+                    'spend_tx': status.transactions.spend_tx
+                }
+            }}
+        ))
     else:
         print()
         print(COLORS['blue'] + status.url + COLORS['reset'])
@@ -314,7 +359,18 @@ def cli_close(ctx, url):
     status = ctx.obj['client'].status(url)
 
     if ctx.obj['json']:
-        print(json.dumps({'result': {'url': status.url, 'state': str(status.state), 'ready': status.ready, 'balance': status.balance, 'deposit': status.deposit, 'expiration_time': status.expiration_time, 'expired': status.expired, 'deposit_txid': status.deposit_txid, 'spend_txid': status.spend_txid}}))
+        print(json.dumps(
+            {'result': {
+                'url': status.url,
+                'state': str(status.state),
+                'ready': status.ready,
+                'balance': status.balance,
+                'deposit': status.deposit,
+                'expiration_time': status.expiration_time,
+                'expired': status.expired,
+                'deposit_txid': status.deposit_txid,
+                'spend_txid': status.spend_txid
+            }}))
     else:
         print("Channel closed. Balance: {}. Deposit: {}.".format(status.balance, status.deposit))
         print("Expected spend txid {}".format(status.spend_txid))

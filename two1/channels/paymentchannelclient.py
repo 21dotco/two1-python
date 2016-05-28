@@ -12,11 +12,33 @@ from . import paymentchannel
 logger = logging.getLogger('channels')
 
 
-PaymentChannelStatus = collections.namedtuple('PaymentChannelStatus', ['url', 'state', 'ready', 'balance', 'deposit', 'fee', 'creation_time', 'expiration_time', 'expired', 'deposit_txid', 'spend_txid', 'transactions'])
+PaymentChannelStatus = collections.namedtuple(
+    'PaymentChannelStatus',
+    [
+        'url',
+        'state',
+        'ready',
+        'balance',
+        'deposit',
+        'fee',
+        'creation_time',
+        'expiration_time',
+        'expired',
+        'deposit_txid',
+        'spend_txid',
+        'transactions'
+    ])
 """Container for the status information of a payment channel."""
 
 
-PaymentChannelTransactions = collections.namedtuple('PaymentChannelTransactions', ['deposit_tx', 'refund_tx', 'payment_tx', 'spend_tx'])
+PaymentChannelTransactions = collections.namedtuple(
+    'PaymentChannelTransactions',
+    [
+        'deposit_tx',
+        'refund_tx',
+        'payment_tx',
+        'spend_tx'
+    ])
 """Container for the raw transactions of a payment channel."""
 
 
@@ -31,10 +53,12 @@ class PaymentChannelClient:
     DEFAULT_CHANNELS_DB_PATH = os.path.expanduser('~/.two1/channels/channels.sqlite3')
     """Default payment channel database path."""
 
-    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/bitcoin"
+    DEFAULT_TWENTYONE_BLOCKCHAIN_URL = os.environ.get(
+        "TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/bitcoin"
     """Default mainnet blockchain URL."""
 
-    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = os.environ.get("TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
+    DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL = os.environ.get(
+        "TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
     def __init__(self, wallet, db_path=DEFAULT_CHANNELS_DB_PATH, _database=None, _blockchain=None):
@@ -54,7 +78,9 @@ class PaymentChannelClient:
         if _blockchain:
             self._blockchain = _blockchain
         else:
-            self._blockchain = blockchain.TwentyOneBlockchain(PaymentChannelClient.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not wallet.testnet else PaymentChannelClient.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
+            self._blockchain = blockchain.TwentyOneBlockchain(
+                PaymentChannelClient.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not wallet.testnet
+                else PaymentChannelClient.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
 
         # Wallet wrapper interface
         self._wallet = walletwrapper.Two1WalletWrapper(wallet, self._blockchain)
@@ -76,7 +102,8 @@ class PaymentChannelClient:
         with self._database:
             for url in self._database.list():
                 if url not in self._channels:
-                    self._channels[url] = paymentchannel.PaymentChannel(url, self._database, self._wallet, self._blockchain)
+                    self._channels[url] = paymentchannel.PaymentChannel(
+                        url, self._database, self._wallet, self._blockchain)
 
     def open(self, url, deposit, expiration, fee=10000, zeroconf=False, use_unconfirmed=False):
         """Open a payment channel at the specified URL.
@@ -100,7 +127,9 @@ class PaymentChannelClient:
         """
         with self._database.lock:
             # Open the payment channel
-            channel = paymentchannel.PaymentChannel.open(self._database, self._wallet, self._blockchain, url, deposit, expiration, fee, zeroconf, use_unconfirmed)
+            channel = paymentchannel.PaymentChannel.open(
+                self._database, self._wallet, self._blockchain, url, deposit, expiration, fee, zeroconf,
+                use_unconfirmed)
 
             # Add it to our channels dictionary
             self._channels[channel.url] = channel
@@ -249,4 +278,6 @@ class PaymentChannelClient:
             else:
                 urls = list(self._channels.keys())
 
-            return sorted(urls, key=lambda url: (self._channels[url].ready, self._channels[url].balance, self._channels[url].creation_time), reverse=True)
+            return sorted(urls, key=lambda url: (
+                self._channels[url].ready, self._channels[url].balance, self._channels[url].creation_time),
+                          reverse=True)

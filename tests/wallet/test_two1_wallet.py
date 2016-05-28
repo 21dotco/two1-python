@@ -16,7 +16,7 @@ enc_key_salt = b'\xaa\xbb\xcc\xdd'
 passphrase = "test_wallet"
 passphrase_hash = PBKDF2.crypt(passphrase)
 
-master_key = "xprv9s21ZrQH143K2dUcTctuNw8oV8e7gi4ZbHFGAnyGJtWwmKbKTbLGtx48DQGzioGDdhVn8zFhJe8hbDdfDnK19ykxjwXLzd6EpxnTqi4zQGN"
+master_key = "xprv9s21ZrQH143K2dUcTctuNw8oV8e7gi4ZbHFGAnyGJtWwmKbKTbLGtx48DQGzioGDdhVn8zFhJe8hbDdfDnK19ykxjwXLzd6EpxnTqi4zQGN"  # nopep8
 master_seed = "tuna object element cancel hard nose faculty noble swear net subway offer"
 
 mkey_enc, mseed_enc = Two1Wallet.encrypt(master_key=master_key,
@@ -30,7 +30,7 @@ config = {'master_key': mkey_enc,
           'passphrase_hash': passphrase_hash,
           'key_salt': bytes_to_str(enc_key_salt),
           'account_type': "BIP44BitcoinMainnet",
-          'accounts': [{'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",
+          'accounts': [{'public_key': "xpub6CNX3TRAXGpoV1a3ai3Hs9R85t63V3k6BGsTaxZZMJJ4DL6kRY8riYA1r6hxyeuxgeb33FfBgrJrV6wxv6VXEVHAfPGJNw8ZzbEJHgsbmpz",  # nopep8
                         'last_payout_index': 2,
                         'last_change_index': 1}],
           'account_map': {'default': 0}}
@@ -235,31 +235,36 @@ def test_rest():
 
     # Should get past checking balance but raise a NotImplementedError
     with pytest.raises(NotImplementedError):
-        txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
-                              use_unconfirmed=False,
-                              amount=7700)
+        wallet.send_to(
+            address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+            use_unconfirmed=False,
+            amount=7700)
 
     # Should get past checking balance but raise a signing error
     with pytest.raises(NotImplementedError):
-        txid = wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
-                              use_unconfirmed=True,
-                              amount=12581)
+        wallet.send_to(
+            address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
+            use_unconfirmed=True,
+            amount=12581)
 
     # test number of addresses in spread_utxos
     with pytest.raises(ValueError):
-        txid = wallet.spread_utxos(threshold=500000,
-                                   num_addresses=0,
-                                   accounts=[])
+        wallet.spread_utxos(
+            threshold=500000,
+            num_addresses=0,
+            accounts=[])
     with pytest.raises(ValueError):
-        txid = wallet.spread_utxos(threshold=500000,
-                                   num_addresses=101,
-                                   accounts=[])
+        wallet.spread_utxos(
+            threshold=500000,
+            num_addresses=101,
+            accounts=[])
 
     # test units for spread_utxos
     with pytest.raises(exceptions.SatoshiUnitsError):
-        txid = wallet.spread_utxos(threshold=0.0001,
-                                   num_addresses=1,
-                                   accounts=[])
+        wallet.spread_utxos(
+            threshold=0.0001,
+            num_addresses=1,
+            accounts=[])
 
     # Finally check storing to a file
     params = {}

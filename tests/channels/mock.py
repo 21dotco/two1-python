@@ -10,7 +10,9 @@ import two1.channels.statemachine as statemachine
 class MockTwo1Wallet:
     """Mock Two1 Wallet interface for unit testing. See two1.wallet.Two1Wallet for API."""
 
-    PRIVATE_KEY = bitcoin.PrivateKey.from_bytes(codecs.decode("83407377a24a5cef75dedb0445d2da3a5389ed34c0f0c57266b1ed0a5ebb30c1", 'hex_codec'))
+    PRIVATE_KEY = bitcoin.PrivateKey.from_bytes(
+        codecs.decode("83407377a24a5cef75dedb0445d2da3a5389ed34c0f0c57266b1ed0a5ebb30c1", 'hex_codec'))
+
     "Customer private key."
 
     MOCK_UTXO_SCRIPT_PUBKEY = bitcoin.Script.build_p2pkh(PRIVATE_KEY.public_key.hash160())
@@ -21,7 +23,8 @@ class MockTwo1Wallet:
     def get_change_public_key(self):
         return self.PRIVATE_KEY.public_key
 
-    def build_signed_transaction(self, addresses_and_amounts, use_unconfirmed=False, insert_into_cache=False, fees=None, expiration=0):
+    def build_signed_transaction(
+            self, addresses_and_amounts, use_unconfirmed=False, insert_into_cache=False, fees=None, expiration=0):
         address = list(addresses_and_amounts.keys())[0]
         amount = addresses_and_amounts[address]
 
@@ -47,7 +50,8 @@ class MockTwo1Wallet:
 class MockPaymentChannelServer(server.PaymentChannelServerBase):
     """Mock Payment Channel Server interface for unit testing."""
 
-    PRIVATE_KEY = bitcoin.PrivateKey.from_bytes(codecs.decode("9d1ad8f765996474ff478ef65692a95dba0af2e24cd9e2cb6dfeee52ce2d38e8", 'hex_codec'))
+    PRIVATE_KEY = bitcoin.PrivateKey.from_bytes(
+        codecs.decode("9d1ad8f765996474ff478ef65692a95dba0af2e24cd9e2cb6dfeee52ce2d38e8", 'hex_codec'))
     "Merchant private key."
 
     blockchain = None
@@ -87,7 +91,7 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
         output_index = deposit_tx.output_index_for_address(redeem_script.hash160())
         assert output_index is not None, "Missing deposit tx P2SH output."
         assert deposit_tx.outputs[output_index].script.is_p2sh(), "Invalid deposit tx output P2SH script."
-        assert deposit_tx.outputs[output_index].script.get_hash160() == redeem_script.hash160(), "Invalid deposit tx output script P2SH address."
+        assert deposit_tx.outputs[output_index].script.get_hash160() == redeem_script.hash160(), "Invalid deposit tx output script P2SH address."  # nopep8
 
         self.channels[deposit_txid] = {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None}
 
@@ -99,24 +103,24 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
         redeem_script = self.channels[deposit_txid]['redeem_script']
         assert len(payment_tx.inputs) == 1, "Invalid payment tx inputs."
         assert len(payment_tx.outputs) == 2, "Invalid payment tx outputs."
-        assert bytes(payment_tx.inputs[0].script[-1]) == bytes(self.channels[deposit_txid]['redeem_script']), "Invalid payment tx redeem script."
+        assert bytes(payment_tx.inputs[0].script[-1]) == bytes(self.channels[deposit_txid]['redeem_script']), "Invalid payment tx redeem script."  # nopep8
 
         # Validate payment is greater than the last one
         if self.channels[deposit_txid]['payment_tx']:
             output_index = payment_tx.output_index_for_address(self.PRIVATE_KEY.public_key.hash160())
             assert output_index is not None, "Invalid payment tx output."
-            assert payment_tx.outputs[output_index].value > self.channels[deposit_txid]['payment_tx'].outputs[output_index].value, "Invalid payment tx output value."
+            assert payment_tx.outputs[output_index].value > self.channels[deposit_txid]['payment_tx'].outputs[output_index].value, "Invalid payment tx output value."  # nopep8
 
         # Sign payment tx
-        assert redeem_script.merchant_public_key.compressed_bytes == self.PRIVATE_KEY.public_key.compressed_bytes, "Public key mismatch."
-        sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, self.PRIVATE_KEY, redeem_script)[0]
+        assert redeem_script.merchant_public_key.compressed_bytes == self.PRIVATE_KEY.public_key.compressed_bytes, "Public key mismatch."  # nopep8
+        sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, self.PRIVATE_KEY, redeem_script)[0]  # nopep8
 
         # Update input script sig
-        payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL))
+        payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL))  # nopep8
 
         # Verify signature
         output_index = self.channels[deposit_txid]['deposit_tx'].output_index_for_address(redeem_script.hash160())
-        assert payment_tx.verify_input_signature(0, self.channels[deposit_txid]['deposit_tx'].outputs[output_index].script), "Payment tx input script verification failed."
+        assert payment_tx.verify_input_signature(0, self.channels[deposit_txid]['deposit_tx'].outputs[output_index].script), "Payment tx input script verification failed."  # nopep8
 
         # Save payment tx
         self.channels[deposit_txid]['payment_tx'] = payment_tx
@@ -133,7 +137,7 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
 
         # Verify deposit txid singature
         public_key = self.channels[deposit_txid]['redeem_script'].customer_public_key
-        assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
+        assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."  # nopep8
 
         # Broadcast to blockchain
         self.blockchain.broadcast_tx(self.channels[deposit_txid]['payment_tx'].to_hex())

@@ -120,7 +120,7 @@ $ 21 uninstall
         f.write(UNINSTALL_SH)
 
     try:
-        out = subprocess.check_output(['sh', f.name])
+        subprocess.check_output(['sh', f.name])
         logger.info(uxstring.UxString.uninstall_success)
     except subprocess.CalledProcessError:
         raise ValueError("uninstall error")

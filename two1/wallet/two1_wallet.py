@@ -636,7 +636,9 @@ class Two1Wallet(BaseWallet):
             # Make sure that the key serialization in the params matches
             # that from our init
             if a["public_key"] != self.accounts[i].key.public_key.to_b58check(self._testnet):
-                raise ValueError("Account params inconsistency detected: pub key for account %d (%s) does not match expected." % (i, name))
+                raise ValueError(
+                    "Account params inconsistency detected: pub key for account %d (%s) does not match expected." % (
+                        i, name))
 
     def _check_and_get_accounts(self, accounts):
         accts = []
@@ -1531,7 +1533,9 @@ class Two1Wallet(BaseWallet):
         fees = fee_calculator(num_utxos, total_value, fee_amounts)
 
         curr_utxo_selector = self.utxo_selector
-        s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
+
+        def s(utxos_by_addr, amount, num_outputs, fees):
+            return(utxos_by_addr, fees)
 
         self.utxo_selector = s
         tx_list = self.send_to(address=address,
@@ -1602,12 +1606,15 @@ class Two1Wallet(BaseWallet):
             per_addr_amount = int(spread_amount / num_addresses)
             if per_addr_amount <= txn_fees.DUST_LIMIT:
                 self.logger.error(
-                    "Amount to each address (%d satoshis) would be less than the dust limit. Choose a smaller number of addresses." %
+                    "Amount to each address (%d satoshis) would be less than the dust limit. "
+                    "Choose a smaller number of addresses." %
                     per_addr_amount)
                 break
 
             curr_utxo_selector = self.utxo_selector
-            s = lambda utxos_by_addr, amount, num_outputs, fees: (utxos_by_addr, fees)
+
+            def s(utxos_by_addr, amount, num_outputs, fees):
+                return(utxos_by_addr, fees)
 
             self.utxo_selector = s
 
@@ -1884,7 +1891,7 @@ class Wallet(object):
             wp = w.wallet_path()
             rv = w if wp == wallet_path else None
 
-        except (exceptions.DaemonNotRunningError, ReceivedErrorResponse) as e:
+        except (exceptions.DaemonNotRunningError, ReceivedErrorResponse):
             rv = None
 
         return rv

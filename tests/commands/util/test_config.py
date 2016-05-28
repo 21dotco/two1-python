@@ -87,7 +87,7 @@ def test_no_config_file_exists():
     mock_config.side_effect = [FileNotFoundError(), mock.DEFAULT]
     with mock.patch('two1.commands.util.config.Config.save', return_value=None):
         with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-            c = config.Config('config_file')
+            config.Config('config_file')
 
     assert mock_config.call_count == 2
     dc = json.loads(mock_config.return_value.write.call_args[0][0])
@@ -111,7 +111,7 @@ def test_no_config_file_exists():
 def test_invalid_config_file():
     """Test that an invalid `two1.json` file cannot be imported."""
     mock_config = mock.mock_open(mock=mock.Mock(side_effect=ValueError))
-    with mock.patch('two1.commands.util.config.open', mock_config, create=True), pytest.raises(exceptions.FileDecodeError):
+    with mock.patch('two1.commands.util.config.open', mock_config, create=True), pytest.raises(exceptions.FileDecodeError):  # nopep8
         config.Config('config_file')
 
     mock_config.assert_called_with('config_file', mode='r')
