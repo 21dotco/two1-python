@@ -1,5 +1,7 @@
 """Utility for making conversions among various currencies."""
+import click
 from two1.commands.util import exceptions
+from two1.commands.uninstall import uxstring
 
 
 def create_default_rest_client():
@@ -75,3 +77,24 @@ class Price:
         if self.denomination == Price.USD:
             return self.amount
         return self._get_usd_rate(self.satoshis)
+
+
+def convert_amount_to_satoshis_with_prompt(amount, denomination):
+    """ Converts and amount with denomination to satoshis. Prompts user if no denomination is specified.
+    Args:
+        amount (float): representing the amount to flush
+        denomination (str): One of [satoshis, bitcoins, usd]
+
+    Returns (int): converted amount to satoshis.
+    """
+    if amount != 0.0:
+        if denomination == '':
+            confirmed = click.confirm(uxstring.UxString.default_price_denomination, default=True)
+            if not confirmed:
+                raise exceptions.Two1Error(uxstring.UxString.cancel_command)
+            denomination = Price.SAT
+        amount = Price(amount, denomination).satoshis
+    else:
+        amount = None
+
+    return amount

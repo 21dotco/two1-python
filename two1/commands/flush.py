@@ -45,15 +45,8 @@ $21 flush 30000 satoshis -p 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 Flushes 30000 satoshis from your 21.co buffer to the Bitcoin Address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa .
 
     """
-    if amount != 0.0:
-        if denomination == '':
-            confirmed = click.confirm(uxstring.UxString.default_price_denomination, default=True)
-            if not confirmed:
-                raise exceptions.Two1Error(uxstring.UxString.cancel_command)
-            denomination = currency.Price.SAT
-        amount = currency.Price(amount, denomination).satoshis
-    else:
-        amount = None
+
+    amount = currency.convert_amount_to_satoshis_with_prompt(amount, denomination)
 
     _flush(ctx.obj['client'], ctx.obj['wallet'], ctx.obj['machine_auth'], amount, payout_address,
            silent)
