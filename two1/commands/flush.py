@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 @click.argument('denomination', default='', type=click.STRING)
 @click.option('-p', '--payout_address', default=None, type=click.STRING,
               help="The Bitcoin address that your 21.co buffer will be flushed to.")
-def flush(ctx, amount, denomination, payout_address):
+@click.option('-s', '--silent', is_flag=True, default=False,
+              help='Do not show the flush confirmation prompt.')
+def flush(ctx, amount, denomination, payout_address, silent):
     """ Flush your 21.co buffer to the blockchain.
 
 \b
@@ -52,10 +54,12 @@ Flushes 30000 satoshis from your 21.co buffer to the Bitcoin Address 1A1zP1eP5QG
         amount = currency.Price(amount, denomination).satoshis
     else:
         amount = None
-    _flush(ctx.obj['client'], ctx.obj['wallet'], ctx.obj['machine_auth'], amount, payout_address)
+
+    _flush(ctx.obj['client'], ctx.obj['wallet'], ctx.obj['machine_auth'], amount, payout_address,
+           silent)
 
 
-def _flush(client, wallet, machine_auth, amount=None, payout_address=None):
+def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silent=False):
     """ Flushes current off-chain balance to the blockchain
 
     Args:
@@ -69,9 +73,9 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None):
         ServerRequestError: if server returns an error code other than 401
     """
 
+    # check the payout address
     if payout_address:
         try:
-            # check whether this is a valid Bitcoin address
             base58.b58decode_check(payout_address)
         except ValueError:
             logger.error(uxstring.UxString.flush_invalid_address)
@@ -81,23 +85,17 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None):
     all_wallets = client.list_wallets().json()
     wallet_payout_address, wallet_name = _select_flush_wallet(client, payout_address, all_wallets)
 
-    wallet_payout_address_styled = click.style(wallet_payout_address, bold=True)
-    wallet_name_styled = _style_wallet_name(wallet_name, payout_address is None)
-    amount_styled = _style_amount(amount)
+    # ask user for confirmation
+    if not silent:
+        # if the user has not specified a payout_address then the buffer will be flushed to the
+        # primary wallet.
+        is_primary = payout_address is None
+        should_continue = _show_confirmation(machine_auth, amount, all_wallets,
+                                             wallet_payout_address, wallet_name, is_primary)
+        if not should_continue:
+            return
 
-    logger.info(uxstring.UxString.flush_pre_confirmation.format(amount_styled,
-                                                                wallet_payout_address_styled,
-                                                                wallet_name_styled))
-
-    # if the user is flushing to a wallet not on their computer, show them a warning
-    if not _payout_address_belongs_to_current_wallet(wallet_payout_address,
-                                                     all_wallets,
-                                                     machine_auth):
-        logger.info(uxstring.UxString.flushing_to_other_wallet)
-
-    if not click.confirm(uxstring.UxString.flush_confirmation):
-        return
-
+    # perform flush
     try:
         response = client.flush_earnings(amount=amount, payout_address=payout_address)
         if response.ok:
@@ -112,8 +110,43 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None):
             raise ex
 
 
+def _show_confirmation(machine_auth, amount, all_wallets, wallet_payout_address, wallet_name,
+                              is_primary):
+    """ Displays a confirmation prompt to the user with information about their flush.
+
+    Args:
+        machine_auth (two1.server.MachineAuth): Machine auth object corresponding to the current
+        wallet.
+        amount (int): The amount to be flushed
+        all_wallets (list): List of dictionaries representing all of the user's wallets.
+        wallet_payout_address (str): The payout address for the wallet we are flushing into.
+        wallet_name (str): The name of the wallet we are flushing into.
+        is_primary (boolean): Whether flush is being done to the primary wallet.
+
+    Returns (boolean): True if the user decides to continue with flush, False otherwise.
+    """
+    wallet_payout_address_styled = click.style(wallet_payout_address, bold=True)
+    wallet_name_styled = _style_wallet_name(wallet_name, is_primary)
+    amount_styled = _style_amount(amount)
+
+    logger.info(uxstring.UxString.flush_pre_confirmation.format(amount_styled,
+                                                                wallet_payout_address_styled,
+                                                                wallet_name_styled))
+
+    # if the user is flushing to a wallet not on their computer, show them a warning
+    if not _payout_address_belongs_to_current_wallet(wallet_payout_address,
+                                                     all_wallets,
+                                                     machine_auth):
+        logger.info(uxstring.UxString.flushing_to_other_wallet)
+
+    if not click.confirm(uxstring.UxString.flush_confirmation):
+        return False
+
+    return True
+
+
 def _select_flush_wallet(client, payout_address, all_wallets):
-    """ selects the wallet name and the associated payout_address for the flush.
+    """ Selects the wallet name and the associated payout_address for the flush.
 
     If no payout_address is specified, primary wallet of the user will be used.
     Otherwise all the user's wallets are searched for a matching payout_address.
@@ -125,12 +158,12 @@ def _select_flush_wallet(client, payout_address, all_wallets):
             sending authenticated requests to the TwentyOne backend.
         payout_address (str): Optionally None string indicating the passed in payout_address
         from the command invokation.
-        all_wallets (list): List of dictionaries containing wallet info
+        all_wallets (list): List of dictionaries representing all of the user's wallets.
 
     Returns:
         payout_address (str): The final payout address that the buffer will be flushed to
         wallet_name (str): The name of the wallet that the buffer will be flushed to.
-        If payout_address does not belong to any of the user's wallets, wallet_name is None
+        If payout_address does not belong to any of the user's wallets, wallet_name is None.
     """
 
     wallet_name = None
@@ -177,6 +210,16 @@ def _style_wallet_name(wallet_name, is_primary):
 
 
 def _payout_address_belongs_to_current_wallet(payout_address, all_wallets, machine_auth):
+    """Determines whether payout_address belongs to the current wallet on the user's computer.
+
+    Args:
+        payout_address (str): The payout address that the user has specified.
+        all_wallets (list): List of dictionaries containing wallet info.
+        machine_auth (two1.server.MachineAuth): Machine auth object corresponding to the current
+        wallet.
+
+    Returns: True if payout_address belongs to the wallet on the user's current computer.
+    """
     target_wallet_list = [w for w in all_wallets if w["payout_address"] == payout_address]
     if len(target_wallet_list) == 0:
         return False
