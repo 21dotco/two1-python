@@ -48,8 +48,8 @@ class Two1SellDB:
             c = db.cursor()
             existing_services = [i[0] for i in c.execute("select service from services_stats").fetchall()]
             if service not in existing_services:
-                c.execute("insert into services_stats (service, buffer_earnings, wallet_earnings, channel_earnings, request_count, last_buy_time) "
-                          "values (:service, :buffer_earnings, :wallet_earnings, :channel_earnings, :request_count, :last_buy_time) ",
+                c.execute("insert into services_stats (service, buffer_earnings, wallet_earnings, channel_earnings, request_count, last_buy_time) "  # nopep8
+                          "values (:service, :buffer_earnings, :wallet_earnings, :channel_earnings, :request_count, :last_buy_time) ",  # nopep8
                           {"service": service,
                            "buffer_earnings": price if request_type == "buffer" else 0,
                            "wallet_earnings": price if request_type == "wallet" else 0,

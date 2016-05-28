@@ -7,7 +7,8 @@ from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.exceptions import DataProviderError
 
 
-acct_pub_key = HDPublicKey.from_b58check("xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
+acct_pub_key = HDPublicKey.from_b58check(
+    "xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 twentyone_provider = TwentyOneProvider()
 insight_provider = InsightProvider("http://blockchain.21-stage.co:3001", insight_api_path="insight-api")
@@ -72,14 +73,12 @@ def test_provider_json_error(provider, testnet):
     )
     if testnet:
         txids = ["f19b101e3ede105b47c98dc54953f4dff195efb6654a168a22659585f92858b4"]
-        exp_len = 1
     else:
         txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
                  "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
-        exp_len = 2
     cp.testnet = testnet
     with pytest.raises(DataProviderError):
-        data = cp.get_transactions_by_id(txids)
+        cp.get_transactions_by_id(txids)
 
 
 @pytest.mark.parametrize("provider, testnet",
@@ -96,4 +95,4 @@ def test_transaction_send(provider, testnet):
         tx = "01000"
     cp.testnet = testnet
     with pytest.raises(DataProviderError):
-        data = cp.broadcast_transaction(tx)
+        cp.broadcast_transaction(tx)

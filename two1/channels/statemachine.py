@@ -81,7 +81,7 @@ class PaymentChannelModel:
         self.min_output_amount = kwargs.get('min_output_amount', None)
 
     def __repr__(self):
-        return "<Channel(url='{}', state='{}', creation_time={}, deposit_tx='{}', refund_tx='{}', payment_tx='{}', spend_tx='{}', spend_txid='{}', min_output_amount={})>".format(self.url, self.state, self.creation_time, self.deposit_tx, self.refund_tx, self.payment_tx, self.spend_tx, self.spend_txid, self.min_output_amount)
+        return "<Channel(url='{}', state='{}', creation_time={}, deposit_tx='{}', refund_tx='{}', payment_tx='{}', spend_tx='{}', spend_txid='{}', min_output_amount={})>".format(self.url, self.state, self.creation_time, self.deposit_tx, self.refund_tx, self.payment_tx, self.spend_tx, self.spend_txid, self.min_output_amount)  # nopep8
 
 
 class PaymentChannelRedeemScript(bitcoin.Script):
@@ -100,7 +100,7 @@ class PaymentChannelRedeemScript(bitcoin.Script):
             PaymentChannelRedeemScript: Instance of PaymentChannelRedeemScript.
 
         """
-        super().__init__(["OP_IF", merchant_public_key.compressed_bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", expiration_time.to_bytes(math.ceil(expiration_time.bit_length() / 8), 'little'), "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", customer_public_key.compressed_bytes, "OP_CHECKSIG"])
+        super().__init__(["OP_IF", merchant_public_key.compressed_bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", expiration_time.to_bytes(math.ceil(expiration_time.bit_length() / 8), 'little'), "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", customer_public_key.compressed_bytes, "OP_CHECKSIG"])  # nopep8
 
     @classmethod
     def from_bytes(cls, b):
@@ -116,7 +116,7 @@ class PaymentChannelRedeemScript(bitcoin.Script):
         self = cls.__new__(cls)
         bitcoin.Script.__init__(self, b)
 
-        if not bitcoin.Script.validate_template(self, ["OP_IF", bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", bytes, "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", bytes, "OP_CHECKSIG"]):
+        if not bitcoin.Script.validate_template(self, ["OP_IF", bytes, "OP_CHECKSIGVERIFY", "OP_ELSE", bytes, "OP_CHECKLOCKTIMEVERIFY", "OP_DROP", "OP_ENDIF", bytes, "OP_CHECKSIG"]):  # nopep8
             raise ValueError("Invalid payment channel redeem script.")
 
         return self
@@ -238,7 +238,7 @@ class PaymentChannelStateMachine:
 
         # Build deposit tx
         try:
-            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee_amount, use_unconfirmed=use_unconfirmed)
+            deposit_tx = self._wallet.create_deposit_tx(redeem_script.address(), deposit_amount + PaymentChannelStateMachine.PAYMENT_TX_MIN_OUTPUT_AMOUNT, fee_amount, use_unconfirmed=use_unconfirmed)  # nopep8
         except walletwrapper.InsufficientBalanceError as e:
             raise InsufficientBalanceError(str(e))
 
@@ -302,7 +302,9 @@ class PaymentChannelStateMachine:
         elif amount < 0:
             raise ValueError("Amount should be positive.")
         elif (self.balance_amount - amount) < 0:
-            raise InsufficientBalanceError("Insufficient payment channel balance: requested amount {}, remaining balance {}.".format(amount, self.balance_amount))
+            raise InsufficientBalanceError(
+                "Insufficient payment channel balance: requested amount {}, remaining balance {}.".format(
+                    amount, self.balance_amount))
 
         # If this is the first payment, ensure the payment is at least the dust
         # limit
@@ -310,7 +312,9 @@ class PaymentChannelStateMachine:
             amount = max(self._model.min_output_amount, amount)
 
         # Build payment tx
-        self._pending_payment_tx = self._wallet.create_payment_tx(self._model.deposit_tx, self._redeem_script, self.deposit_amount - self.balance_amount + amount, self.fee_amount)
+        self._pending_payment_tx = self._wallet.create_payment_tx(
+            self._model.deposit_tx, self._redeem_script, self.deposit_amount - self.balance_amount + amount,
+            self.fee_amount)
         self._pending_amount = amount
 
         self._model.state = PaymentChannelState.OUTSTANDING
@@ -406,7 +410,9 @@ class PaymentChannelStateMachine:
             raise InvalidTransactionError("Spent transaction input does not use deposit transction.")
 
         # Find output corresponding to our address
-        my_outputs = list(filter(lambda output: output.script.get_hash160() == self._customer_public_key.hash160(), spend_tx.outputs))
+        my_outputs = list(filter(
+            lambda output: output.script.get_hash160() == self._customer_public_key.hash160(),
+            spend_tx.outputs))
         if len(my_outputs) != 1:
             raise InvalidTransactionError("Invalid spent transaction outputs.")
 
@@ -487,7 +493,7 @@ class PaymentChannelStateMachine:
             int: Deposit amount in satoshis.
 
         """
-        return (self._model.refund_tx.outputs[0].value - self._model.min_output_amount) if self._model.refund_tx else None
+        return (self._model.refund_tx.outputs[0].value - self._model.min_output_amount) if self._model.refund_tx else None  # nopep8
 
     @property
     def fee_amount(self):
@@ -497,7 +503,7 @@ class PaymentChannelStateMachine:
             int: Fee amount in satoshis.
 
         """
-        return (self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].value - self._model.refund_tx.outputs[0].value) if self._model.refund_tx else None
+        return (self._model.deposit_tx.outputs[self.deposit_tx_utxo_index].value - self._model.refund_tx.outputs[0].value) if self._model.refund_tx else None  # nopep8
 
     @property
     def creation_time(self):
@@ -527,7 +533,7 @@ class PaymentChannelStateMachine:
             int or None: Output index in deposit transaction.
 
         """
-        return self._model.deposit_tx.output_index_for_address(self._redeem_script.hash160()) if self._model.deposit_tx else None
+        return self._model.deposit_tx.output_index_for_address(self._redeem_script.hash160()) if self._model.deposit_tx else None  # nopep8
 
     @property
     def deposit_tx(self):
@@ -558,7 +564,7 @@ class PaymentChannelStateMachine:
             str or None: DER-encoded signature (ASCII hex).
 
         """
-        return codecs.encode(self._wallet.sign(self.deposit_txid.encode('ascii'), self._customer_public_key).to_der(), 'hex_codec').decode() if self._model.deposit_tx else None
+        return codecs.encode(self._wallet.sign(self.deposit_txid.encode('ascii'), self._customer_public_key).to_der(), 'hex_codec').decode() if self._model.deposit_tx else None  # nopep8
 
     @property
     def refund_tx(self):

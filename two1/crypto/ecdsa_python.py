@@ -540,7 +540,8 @@ class EllipticCurve(EllipticCurveBase):
         elif n % 4 == 3:
             return pow(a, (n + 1) // 4, n)
         else:
-            raise NotImplementedError("The generalized modular square root using Tonelli-Shanks hasn't been implemented yet.")
+            raise NotImplementedError(
+                "The generalized modular square root using Tonelli-Shanks hasn't been implemented yet.")
 
     def __init__(self, p, a, b, n, G, h, hash_function):
         super().__init__(hash_function)

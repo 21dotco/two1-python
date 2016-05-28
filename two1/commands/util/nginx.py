@@ -118,7 +118,7 @@ ExecStart=/usr/local/bin/gunicorn %s-server:app --workers 1 --bind unix:%s%s.soc
 
 [Install]
 WantedBy=default.target
-        """ % (
+        """ % (  # nopep8
             appname,
             appdir,
             appname,

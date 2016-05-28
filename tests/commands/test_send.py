@@ -31,5 +31,5 @@ def test_send_errors(patch_click, mock_wallet, side_effect, user_message):
     """Test send error paths."""
     mock_wallet.send_to = mock.Mock(side_effect=side_effect)
     with pytest.raises(click.ClickException) as exc:
-        send_data = send._send(mock_wallet, 'myaddress', 10000, verbose=True)
+        send._send(mock_wallet, 'myaddress', 10000, verbose=True)
         assert str(exc) == user_message

@@ -39,10 +39,13 @@ class MockTwo1Wallet:
     def create_deposit_tx(self, hash160):
         """Return a mocked deposit transaction."""
         utxo_script_sig = Script.build_p2pkh(self._private_key.public_key.hash160())
-        inp = TransactionInput(outpoint=Hash('0' * 64), outpoint_index=0, script=utxo_script_sig, sequence_num=0xffffffff)
+        inp = TransactionInput(
+            outpoint=Hash('0' * 64), outpoint_index=0, script=utxo_script_sig, sequence_num=0xffffffff)
         out = TransactionOutput(value=100000, script=Script.build_p2sh(hash160))
         txn = Transaction(version=Transaction.DEFAULT_TRANSACTION_VERSION, inputs=[inp], outputs=[out], lock_time=0)
-        txn.sign_input(input_index=0, hash_type=Transaction.SIG_HASH_ALL, private_key=self._private_key, sub_script=utxo_script_sig)
+        txn.sign_input(
+            input_index=0, hash_type=Transaction.SIG_HASH_ALL, private_key=self._private_key,
+            sub_script=utxo_script_sig)
         return txn
 
     def create_payment_tx(self, deposit_tx, redeem_script, merchant_public_key,
@@ -66,7 +69,8 @@ class MockTwo1Wallet:
         sig = payment_tx.get_signature_for_input(0, Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
 
         # Update input script sig
-        script_sig = Script([sig.to_der() + utils.pack_compact_int(Transaction.SIG_HASH_ALL), 'OP_1', bytes(redeem_script)])
+        script_sig = Script(
+            [sig.to_der() + utils.pack_compact_int(Transaction.SIG_HASH_ALL), 'OP_1', bytes(redeem_script)])
         payment_tx.inputs[0].script = script_sig
 
         return payment_tx

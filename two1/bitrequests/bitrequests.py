@@ -369,8 +369,11 @@ class ChannelRequests(BitRequests):
 
         # Open a new channel if we don't have a usable one
         if not channel_url or not status.ready:
-            logger.debug("[ChannelRequests] Opening channel at {} with deposit {}.".format(server_url, self._deposit_amount))
-            channel_url = self._channelclient.open(server_url, self._deposit_amount, self._duration, zeroconf=ChannelRequests.DEFAULT_ZEROCONF, use_unconfirmed=ChannelRequests.DEFAULT_USE_UNCONFIRMED)
+            logger.debug("[ChannelRequests] Opening channel at {} with deposit {}.".format(
+                server_url, self._deposit_amount))
+            channel_url = self._channelclient.open(
+                server_url, self._deposit_amount, self._duration,
+                zeroconf=ChannelRequests.DEFAULT_ZEROCONF, use_unconfirmed=ChannelRequests.DEFAULT_USE_UNCONFIRMED)
             status = self._channelclient.status(channel_url)
             logger.debug("[ChannelRequests] Channel deposit txid is {}".format(status.deposit_txid))
 

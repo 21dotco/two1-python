@@ -179,7 +179,8 @@ class MockChannelClient:
         """Return a new MockChannelClient object."""
         self.wallet = wallet
         self.channels = {}
-        self.channels[MockChannelClient.URL] = MockChannelClient.Channel(MockChannelClient.BALANCE, channels.PaymentChannelState.READY, MockChannelClient.EXPIRATION)
+        self.channels[MockChannelClient.URL] = MockChannelClient.Channel(
+            MockChannelClient.BALANCE, channels.PaymentChannelState.READY, MockChannelClient.EXPIRATION)
 
     def sync(self):
         """Mocks the channel `sync` method."""

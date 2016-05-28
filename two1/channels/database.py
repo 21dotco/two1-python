@@ -94,7 +94,7 @@ class Sqlite3Database(DatabaseBase):
                                "spend_tx VARCHAR, "
                                "spend_txid VARCHAR, "
                                "min_output_amount INTEGER, "
-                               "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"
+                               "CONSTRAINT state CHECK (state IN ('OPENING', 'CONFIRMING_DEPOSIT', 'READY', 'OUTSTANDING', 'CONFIRMING_SPEND', 'CLOSED'))"  # nopep8
                                ");")
 
         if db_path == ":memory:":
@@ -168,7 +168,7 @@ class Sqlite3Database(DatabaseBase):
 
     def update(self, model):
         values = self._model_to_sqlite(model)
-        self._conn.execute("UPDATE channels SET state=?, creation_time=?, deposit_tx=?, refund_tx=?, payment_tx=?, spend_tx=?, spend_txid=?, min_output_amount=? WHERE url=?", values[1:] + (values[0],))
+        self._conn.execute("UPDATE channels SET state=?, creation_time=?, deposit_tx=?, refund_tx=?, payment_tx=?, spend_tx=?, spend_txid=?, min_output_amount=? WHERE url=?", values[1:] + (values[0],))  # nopep8
 
     def list(self):
         cur = self._conn.execute("SELECT url FROM channels")

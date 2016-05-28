@@ -110,7 +110,8 @@ class RequestsWrapper(object):
             try:
                 response = request(*args, **kwargs)
             except requests.exceptions.ConnectionError as e:
-                raise PaymentChannelConnectionError("Connecting to payment channel server: {}".format(e.request.url)) from None
+                raise PaymentChannelConnectionError(
+                    "Connecting to payment channel server: {}".format(e.request.url)) from None
             return response
         return _requests
 
@@ -139,13 +140,16 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
     def get_public_key(self):
         r = self._requests.get(self._url)
         if r.status_code != 200:
-            raise PaymentChannelServerError("Getting merchant public key: Status Code {}, {}".format(r.status_code, r.text))
+            raise PaymentChannelServerError(
+                "Getting merchant public key: Status Code {}, {}".format(r.status_code, r.text))
 
         channel_info = r.json()
 
         # Check protocol version before proceeding
         if channel_info['version'] != HTTPPaymentChannelServer.PROTOCOL_VERSION:
-            raise PaymentChannelServerError("Unsupported protocol version: Server version is {}, client version is {}.".format(channel_info['version'], HTTPPaymentChannelServer.PROTOCOL_VERSION))
+            raise PaymentChannelServerError(
+                "Unsupported protocol version: Server version is {}, client version is {}.".format(
+                    channel_info['version'], HTTPPaymentChannelServer.PROTOCOL_VERSION))
 
         return channel_info['public_key']
 
@@ -159,7 +163,8 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         if r.status_code == 404:
             raise PaymentChannelNotFoundError()
         elif r.status_code != 200:
-            raise PaymentChannelServerError("Sending payment transaction: Status Code {}, {}".format(r.status_code, r.text))
+            raise PaymentChannelServerError(
+                "Sending payment transaction: Status Code {}, {}".format(r.status_code, r.text))
 
         payment_tx_info = r.json()
         return payment_tx_info['payment_txid']
@@ -167,7 +172,8 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
     def status(self, deposit_txid):
         r = self._requests.get(self._url + "/" + deposit_txid)
         if r.status_code != 200:
-            raise PaymentChannelServerError("Getting payment channel status: Status Code {}, {}".format(r.status_code, r.text))
+            raise PaymentChannelServerError(
+                "Getting payment channel status: Status Code {}, {}".format(r.status_code, r.text))
 
         return r.json()
 
@@ -210,8 +216,10 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         # Deserialize into objects
         channel = {}
         channel['deposit_tx'] = bitcoin.Transaction.from_hex(channel_json['deposit_tx'])
-        channel['redeem_script'] = PaymentChannelRedeemScript.from_bytes(codecs.decode(channel_json['redeem_script'], 'hex_codec'))
-        channel['payment_tx'] = bitcoin.Transaction.from_hex(channel_json['payment_tx']) if channel_json['payment_tx'] else None
+        channel['redeem_script'] = PaymentChannelRedeemScript.from_bytes(
+            codecs.decode(channel_json['redeem_script'], 'hex_codec'))
+        channel['payment_tx'] = bitcoin.Transaction.from_hex(
+            channel_json['payment_tx']) if channel_json['payment_tx'] else None
         return channel
 
     def _store_channel(self, deposit_txid, channel):
@@ -241,11 +249,12 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         output_index = deposit_tx.output_index_for_address(redeem_script.hash160())
         assert output_index is not None, "Missing deposit tx P2SH output."
         assert deposit_tx.outputs[output_index].script.is_p2sh(), "Invalid deposit tx output P2SH script."
-        assert deposit_tx.outputs[output_index].script.get_hash160() == redeem_script.hash160(), "Invalid deposit tx output script P2SH address."
+        assert deposit_tx.outputs[output_index].script.get_hash160() == redeem_script.hash160(), "Invalid deposit tx output script P2SH address."  # nopep8
 
         # Store channel
         deposit_txid = str(deposit_tx.hash)
-        self._store_channel(deposit_txid, {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None})
+        self._store_channel(
+            deposit_txid, {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None})
 
     def pay(self, deposit_txid, payment_tx):
         # Load channel
@@ -265,7 +274,7 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         if channel['payment_tx']:
             output_index = payment_tx.output_index_for_address(redeem_script.merchant_public_key.hash160())
             assert output_index is not None, "Invalid payment tx output."
-            assert payment_tx.outputs[output_index].value > channel['payment_tx'].outputs[output_index].value, "Invalid payment tx output value."
+            assert payment_tx.outputs[output_index].value > channel['payment_tx'].outputs[output_index].value, "Invalid payment tx output value."  # nopep8
 
         # Sign payment tx
         public_key = redeem_script.merchant_public_key
@@ -274,11 +283,13 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         sig = payment_tx.get_signature_for_input(0, bitcoin.Transaction.SIG_HASH_ALL, private_key, redeem_script)[0]
 
         # Update input script sig
-        payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(bitcoin.Transaction.SIG_HASH_ALL))
+        payment_tx.inputs[0].script.insert(1, sig.to_der() + bitcoin.utils.pack_compact_int(
+            bitcoin.Transaction.SIG_HASH_ALL))
 
         # Verify signature
         output_index = channel['deposit_tx'].output_index_for_address(redeem_script.hash160())
-        assert payment_tx.verify_input_signature(0, channel['deposit_tx'].outputs[output_index].script), "Payment tx input script verification failed."
+        assert payment_tx.verify_input_signature(
+            0, channel['deposit_tx'].outputs[output_index].script), "Payment tx input script verification failed."
 
         # Save payment tx
         channel['payment_tx'] = payment_tx
@@ -300,7 +311,9 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
 
         # Verify deposit txid singature
         public_key = channel['redeem_script'].customer_public_key
-        assert public_key.verify(deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)), "Invalid deposit txid signature."
+        assert public_key.verify(
+            deposit_txid.encode(), bitcoin.Signature.from_der(deposit_txid_signature)
+        ), "Invalid deposit txid signature."
 
         # Return payment txid
         return str(channel['payment_tx'].hash)
