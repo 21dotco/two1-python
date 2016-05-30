@@ -5,7 +5,6 @@ import logging
 
 # 3rd party imports
 import click
-import base58
 
 # two1 imports
 from two1.commands.util import decorators
@@ -93,13 +92,12 @@ def _set_primary_wallet(client, name):
 
 
 def _info(client, machine_auth):
-    p = client.list_wallets()
+    all_wallets = client.list_wallets()
 
     # get current public key
     cb = machine_auth.public_key.compressed_bytes
     my_public_key = base64.b64encode(cb).decode()
 
-    all_wallets = p.json()
     logger.info("Wallets\n", fg="yellow")
     for wallet in all_wallets:
         wallet_title = click.style(uxstring.UxString.wallet_title).format(wallet["name"])

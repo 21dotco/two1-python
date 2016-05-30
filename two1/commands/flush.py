@@ -75,7 +75,7 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silen
             return
 
     # select the wallet and the associated payout address for the flush
-    all_wallets = client.list_wallets().json()
+    all_wallets = client.list_wallets()
     wallet_payout_address, wallet_name = _select_flush_wallet(client, payout_address, all_wallets)
 
     # ask user for confirmation
@@ -104,7 +104,7 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silen
 
 
 def _show_confirmation(machine_auth, amount, all_wallets, wallet_payout_address, wallet_name,
-                              is_primary):
+                       is_primary):
     """ Displays a confirmation prompt to the user with information about their flush.
 
     Args:

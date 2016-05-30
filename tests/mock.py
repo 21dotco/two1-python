@@ -127,6 +127,10 @@ class MockTwentyOneRestClient:
     DEFAULT_VALUES = dict(
         get_earnings=dict(total_earnings=EARNINGS, flushed_amount=FLUSHED, total_payouts=1),
         flush_earnings=unittest.mock.DEFAULT,
+        list_wallets=[dict(public_key="A6OwFY04TitVrO2fgUjbZ8sSMlei+EJlDizjukwdieqp",
+                           payout_address="1NMM77kBVMydR7m1PpvwXoqANt7ikijVHw",
+                           is_primary=True,
+                           name="test_wallet")],
         login=unittest.mock.DEFAULT,
         get_mined_satoshis=[dict(date=1456768320, amount=10000, reason='CLI'),
                             dict(date=1456768327, amount=10000, reason='CLI')],
@@ -157,6 +161,9 @@ class MockTwentyOneRestClient:
 
     def get_notifications(self, username, detailed=False):
         return self.mock_get_notifications(username, detailed)
+
+    def list_wallets(self):
+        return self.mock_list_wallets()
 
 
 class MockChannelClient:
