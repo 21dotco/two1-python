@@ -70,6 +70,7 @@ $ 21 wallet setprimary --name WALLET_NAME
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
+@decorators.json_output
 def info(ctx):
     """
 \b
@@ -86,9 +87,10 @@ def _set_primary_wallet(client, name):
     except ServerRequestError as e:
         if e.status_code == 404:
             logger.info(uxstring.UxString.wallet_name_not_found.format(name), fg="red")
-            return
+            return {'name': name, 'success': False}
 
     logger.info(uxstring.UxString.set_primary_wallet_success.format(name), fg="green")
+    return {'name': name, 'success': True}
 
 
 def _info(client, machine_auth):
@@ -117,3 +119,5 @@ def _info(client, machine_auth):
     logger.info("{} : {}".format(uxstring.UxString.current_wallet_label,
                                  uxstring.UxString.current_wallet_desc))
     logger.info("\n")
+
+    return all_wallets
