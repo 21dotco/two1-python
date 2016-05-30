@@ -61,7 +61,7 @@ $ 21 wallet setprimary
 
 \b
 Sets the wallet with the name WALLET_NAME as your primary wallet.
-$ 21 wallet setprimary WALLET_NAME
+$ 21 wallet setprimary --name WALLET_NAME
     """
     return _set_primary_wallet(ctx.obj['client'], name)
 
