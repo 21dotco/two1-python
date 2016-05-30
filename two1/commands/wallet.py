@@ -38,7 +38,7 @@ $ 21 wallet setprimary
 
 \b
 Sets the wallet with the name WALLET_NAME as your primary wallet.
-$ 21 wallet setprimary WALLET_NAME
+$ 21 wallet setprimary --name WALLET_NAME
 
 """
     pass
@@ -83,13 +83,15 @@ def _set_primary_wallet(client, name):
     # Check if the public_key is encoded properly
     # client controls the default public_key
     try:
-        client.set_primary_wallet(name)
+        primary_wallet_info = client.set_primary_wallet(name)
     except ServerRequestError as e:
         if e.status_code == 404:
             logger.info(uxstring.UxString.wallet_name_not_found.format(name), fg="red")
             return {'name': name, 'success': False}
 
-    logger.info(uxstring.UxString.set_primary_wallet_success.format(name), fg="green")
+    primary_wallet_name = primary_wallet_info["primary_wallet_name"]
+    logger.info(uxstring.UxString.set_primary_wallet_success.format(primary_wallet_name),
+                fg="green")
     return {'name': name, 'success': True}
 
 
