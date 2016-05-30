@@ -313,7 +313,8 @@ class TwentyOneRestClient(object):
 
         data_json = json.dumps(data)
         path = "/pool/account/{}/wallets/primary/".format(self.username)
-        return self._request(sign_username=self.username, method="POST", path=path, data=data_json)
+        resp = self._request(sign_username=self.username, method="POST", path=path, data=data_json)
+        return resp.json()
 
     def list_wallets(self):
         path = "/pool/account/{}/wallets/".format(self.username)
