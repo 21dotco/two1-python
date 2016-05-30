@@ -317,7 +317,8 @@ class TwentyOneRestClient(object):
 
     def list_wallets(self):
         path = "/pool/account/{}/wallets/".format(self.username)
-        return self._request(sign_username=self.username, method="GET", path=path)
+        resp = self._request(sign_username=self.username, method="GET", path=path)
+        return resp.json()
 
 
 if __name__ == "__main__":
