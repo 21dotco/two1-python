@@ -45,33 +45,36 @@ Usage
 @market.command()
 @click.pass_context
 @decorators.catch_all
+@decorators.json_output
 @decorators.capture_usage
 @decorators.check_notifications
 def status(ctx):
     """View the status of joined networks."""
-    show_network_status()
+    return show_network_status()
 
 
 @market.command()
 @click.argument("network", default="21market")
 @click.pass_context
 @decorators.catch_all
+@decorators.json_output
 @decorators.capture_usage
 @decorators.check_notifications
 def join(ctx, network):
     """Join 21's p2p network."""
-    join_wrapper(ctx.obj['client'], network)
+    return join_wrapper(ctx.obj['client'], network)
 
 
 @market.command()
 @click.argument("network", default="21market")
 @click.pass_context
 @decorators.catch_all
+@decorators.json_output
 @decorators.capture_usage
 @decorators.check_notifications
 def leave(ctx, network):
     """Leave 21's p2p network."""
-    _leave(ctx.obj['client'], network)
+    return _leave(ctx.obj['client'], network)
 
 
 def join_wrapper(client, network):
@@ -79,9 +82,10 @@ def join_wrapper(client, network):
     response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
     if response == "y":
         logger.info(uxstring.UxString.superuser_password)
-        _join(client, network)
+        return _join(client, network)
     else:
         logger.info(uxstring.UxString.join_network_beta_exit)
+        return {'joined': False, 'reason': 'did not wish to continue'}
 
 
 def _join(client, network):
@@ -103,20 +107,23 @@ def _join(client, network):
             zerotier.start_daemon()
         else:
             logger.info(uxstring.UxString.install_zerotier)
-            return
+            return {'joined': False, 'reason': 'zerotier-one not installed'}
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
             network_id = response.json().get("networkid")
             zerotier.join_network(network_id)
             logger.info(uxstring.UxString.successful_join.format(click.style(network, fg="magenta")))
+            return {'joined': True}
     except exceptions.ServerRequestError as e:
         if e.status_code == 400:
             logger.info(uxstring.UxString.invalid_network)
+            return {'joined': False, 'reason': 'invalid network'}
         else:
             raise e
     except subprocess.CalledProcessError as e:
         logger.info(str(e))
+        return {'joined': False, 'reason': str(e)}
 
 
 def _leave(client, network):
@@ -134,7 +141,7 @@ def _leave(client, network):
         zerotier.start_daemon()
     else:
         logger.info(uxstring.UxString.install_zerotier)
-        return
+        return {'left': False, 'reason': 'zerotier-one not installed'}
     is_in_network = False
     for ntwk in zerotier.list_networks():
         if ntwk['name'] == network:
@@ -143,12 +150,14 @@ def _leave(client, network):
             break
     if not is_in_network:
         logger.info('not in network')
-        return
+        return {'left': False, 'reason': 'not in network'}
     try:
         zerotier.leave_network(nwid)
         logger.info(uxstring.UxString.successful_leave.format(click.style(network, fg="magenta")))
+        return {'left': True}
     except subprocess.CalledProcessError as e:
         logger.info(str(e))
+        return {'left': False, 'reason': str(e)}
 
 
 def show_network_status():
@@ -162,3 +171,5 @@ def show_network_status():
         for name, ip in networks_info.items():
             rows.append([name, ip])
         logger.info(tabulate(rows, headers, tablefmt="simple"))
+
+    return [{'network_name': name, 'ip': ip} for (name, ip) in networks_info.items()]
