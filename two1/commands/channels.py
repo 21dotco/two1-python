@@ -1,0 +1,1 @@
+from two1.channels.cli import main as channels

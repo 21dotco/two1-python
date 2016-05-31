@@ -81,7 +81,7 @@ def format_expiration_time(expires):
         return "{} sec".format(seconds)
 
 
-@click.group(context_settings=dict(help_option_names=['-h', '--help']))
+@click.group('channels', context_settings=dict(help_option_names=['-h', '--help']))
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
 @click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
@@ -94,12 +94,12 @@ def main(ctx, json):
     merchant will accept as proof of payment within the 402 payments protocol.
     Example of opening a channel, making payments, and closing the channel:
 
-    $ channels open https://mkt.21.co/bitcoin_auth/payment 100000 120\n
-    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ channels info https://mkt.21.co/bitcoin_auth/payment\n
-    $ channels close https://mkt.21.co/bitcoin_auth/payment\n
+    $ 21 channels open https://mkt.21.co/bitcoin_auth/payment 100000 120\n
+    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
+    $ 21 channels info https://mkt.21.co/bitcoin_auth/payment\n
+    $ 21 channels close https://mkt.21.co/bitcoin_auth/payment\n
     """
     client = PaymentChannelClient(Wallet(WALLET_PATH), CHANNELS_DB_PATH)
     ctx.obj = {'client': client, 'json': json}
