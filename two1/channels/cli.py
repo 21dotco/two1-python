@@ -81,14 +81,14 @@ def format_expiration_time(expires):
         return "{} sec".format(seconds)
 
 
-@click.group('channels', context_settings=dict(help_option_names=['-h', '--help']))
+@click.group('channels', context_settings={'help_option_names': ['-h', '--help']})
 @click.option("--json", is_flag=True, default=False, help="JSON output.")
 @click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
 def main(ctx, json):
-    """Command-line utility for managing payment channels.
+    """Manage payment channels.
 
-    The `channels` tool is used for creating, opening, closing, and conducting
+    The `21 channels` command is used for creating, opening, closing, and conducting
     diagnostics for the payment channel micropayments protocol. After opening
     a channel with a merchant, making a payment returns a token, which the
     merchant will accept as proof of payment within the 402 payments protocol.
