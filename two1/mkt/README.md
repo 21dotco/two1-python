@@ -1,6 +1,6 @@
 # Two1 Marketplace
 
-The `two1.mkt` module provides a convenient wrapper for interacting with the 21.co marketplace. 
+The `two1.mkt` module provides a convenient wrapper for interacting with first-parts apps in the 21.co marketplace. 
 
 ### Basic Usage
 
@@ -31,14 +31,14 @@ To use `mkt` we need to find a host and issue a request for some resource. The f
 ``` python
 from two1 import mkt
 
-mkt.zipdata.collect
+mkt.zip_code_data..zipdata.collect
 ```
 
 What's happening:
 
 1. Importing `mkt` implicitly instantiates a new Market object
-1. The default host is set to `https://mkt.21.co`
-1. The lookup of attribute `zipdata.collect` sets the request URI to `https://mkt.21.co/zipdata/collect`
+2. The default host is set to `https://mkt.21.co/21dotco`
+3. The lookup of attribute `zip_code_data.zipdata.collect` sets the request URI to `https://mkt.21.co/21dotco/zip_code_data/zipdata/collect`
 
 Next, we need to define how we will query data to that URI.
 
@@ -52,16 +52,15 @@ Since `GET` requests accept data as simple key-value pairs, we also represent th
 mkt.zipdata.collect(zip_code=94109)
 ```
 
-This is functionally equivalent to buying the marketplace API `https://mkt.21.co/zipdata/collect?zip_code=94109`. 
+This is functionally equivalent to buying the marketplace API `https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109`. 
 
 
 On the other hand, `POST` requests can send more complex data, and is more aptly represented in JSON format:
 
 ```python
-mkt.extract_title.url({"url": "https://21.co"})
+mkt.extract_title.extract_title.url({"url": "https://21.co"})
 ```
 
-This is functionally eqiuvalent to buying the marketplace API `https://mkt.21.co/extract_title/url` with `"{\"url\": \"https://21.co\"}"` serialized in the body (and a header `Content-Type: application/json`)
+This is functionally eqiuvalent to buying the marketplace API `https://mkt.21.co/21dotco/extract_title/extract_title/url` with `"{\"url\": \"https://21.co\"}"` serialized in the body (and a header `Content-Type: application/json`)
 
 So how do we know when to use one syntax versus another? You'll need to be familiar with the API that you're purchasing and know how it expects to receive data. Until further changes are made to the underlying 402 protocol, we can't reliably predict what request type that and API supports in advance.
-

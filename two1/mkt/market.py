@@ -11,7 +11,7 @@ class Market:
         mkt.sentiment.analyze('This is a positive statement!')
     """
 
-    DEFAULT_MARKET_HOST = 'https://mkt.21.co'
+    DEFAULT_MARKET_HOST = 'https://mkt.21.co/21dotco'
 
     def __init__(self):
         """Return a new Market instance."""
@@ -25,13 +25,13 @@ class Market:
         return self
 
     def __call__(self, _data=None, **kwargs):
-        """Make a HTTP to the requested resource.
+        """Make a HTTP to the requested first-party app resource.
 
         This method allows `mkt` to be called directly in order to send an
-        HTTP request to a resource. It will use the base url `self.host`,
+        HTTP request to a first-party app resource. It will use the base url `self.host`,
         combined with any attributes following `mkt` in its call.
 
-        e.g. mkt.this.resource() will send a GET to https://mkt.21.co/this/resource
+        e.g. mkt.this.resource() will send a GET to https://mkt.21.co/21dotco/this/resource
 
         Optionally, self.host can be overriden by users. Calls default to using
         a GET request if no parameters are passed.
