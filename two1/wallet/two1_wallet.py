@@ -1535,7 +1535,7 @@ class Two1Wallet(BaseWallet):
         curr_utxo_selector = self.utxo_selector
 
         def s(utxos_by_addr, amount, num_outputs, fees):
-            return(utxos_by_addr, fees)
+            return (utxos_by_addr, fees)
 
         self.utxo_selector = s
         tx_list = self.send_to(address=address,
@@ -1614,7 +1614,7 @@ class Two1Wallet(BaseWallet):
             curr_utxo_selector = self.utxo_selector
 
             def s(utxos_by_addr, amount, num_outputs, fees):
-                return(utxos_by_addr, fees)
+                return (utxos_by_addr, fees)
 
             self.utxo_selector = s
 
