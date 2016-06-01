@@ -39,7 +39,7 @@ def status(ctx, detail):
 
 
 def _status(config, client, wallet, detail):
-    """ Reports two1 stataus including balances, username, and mining hashrate
+    """ Reports two1 status including balances, username, and mining hashrate
 
     Args:
         config (Config): config object used for getting .two1 information
