@@ -236,7 +236,8 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
             json.dump(channel_json, f)
 
     def get_info(self):
-        return {'public_key': codecs.encode(self._wallet.get_payout_public_key().compressed_bytes, 'hex_codec').decode('utf-8'), 'zeroconf': True}
+        return {'public_key': codecs.encode(self._wallet.get_payout_public_key().compressed_bytes,
+                'hex_codec').decode('utf-8'), 'zeroconf': True}
 
     def open(self, deposit_tx, redeem_script):
         # Deserialize deposit tx and redeem script
