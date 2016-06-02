@@ -334,7 +334,7 @@ class Transaction(object):
 
     @staticmethod
     def from_hex(h):
-        """ Deserializes a hex-ecnoded string into a Transaction.
+        """ Deserializes a hex-encoded string into a Transaction.
 
         Args:
             h (str): hex-encoded string starting with the version.
