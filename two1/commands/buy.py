@@ -137,6 +137,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
     # Handle data if applicable
     if data or data_file:
         method = 'POST' if method == 'GET' else method
+    if data:
         data, headers['Content-Type'] = _parse_post_data(data)
 
     # Make the paid request for the resource
