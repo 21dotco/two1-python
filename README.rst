@@ -2,7 +2,7 @@ two1
 ====
 
 ``two1`` (``21``) is a command line tool and library that allows users
-to mine Bitcoin, use it to buy and sell API calls, set up world-readable
+to earn Bitcoin, use it to buy and sell API calls, set up world-readable
 machine-payable endpoints, and publish them to the ``21.co`` marketplace
 from any Unix command line.
 
