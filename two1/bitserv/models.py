@@ -120,6 +120,8 @@ class PaymentDatabase:
 
         Args:
             payment_txid (str): payment txid used to identify the payment.
+        Returns:
+            bool: True if the payment was redeemed successfully, False otherwise
         """
         raise NotImplementedError()
 
@@ -215,7 +217,9 @@ class PaymentDjango(ChannelDatabase):
 
     def redeem(self, payment_txid):
         """Update payment entry to be redeemed."""
-        self.Payment.objects.filter(payment_txid=payment_txid).update(is_redeemed=True)
+        row_count = self.Payment.objects.filter(payment_txid=payment_txid, is_redeemed=False).update(is_redeemed=True)
+        # Return whether or not we successfully redeemed the payment
+        return True if row_count == 1 else False
 
 
 # *************************** Default SQLite3 ****************************** #
@@ -344,9 +348,11 @@ class PaymentSQLite3(PaymentDatabase):
     def redeem(self, payment_txid):
         """Update payment entry to be redeemed."""
         update = ('UPDATE payment_channel_spend SET is_redeemed=? '
-                  'WHERE payment_txid=?')
+                  'WHERE payment_txid=? AND is_redeemed=0')
         self.c.execute(update, (PaymentSQLite3.WAS_REDEEMED, payment_txid))
         self.connection.commit()
+        # Return whether or not we successfully redeemed the payment
+        return True if self.c.rowcount == 1 else False
 
 
 ##############################################################################

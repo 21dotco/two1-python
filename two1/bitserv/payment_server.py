@@ -366,12 +366,12 @@ class PaymentServer:
         elif channel.state == ChannelSQLite3.CLOSED:
             raise ChannelClosedError('Payment channel closed.')
 
-        # Verify that the payment has not already been redeemed
-        if payment.is_redeemed:
-            raise RedeemPaymentError('Payment already redeemed.')
-
         # Calculate and redeem the current payment
-        self._db.pmt.redeem(payment_txid)
+        redeem_success = self._db.pmt.redeem(payment_txid)
+
+        # Verify that the payment has not already been redeemed
+        if not redeem_success:
+            raise RedeemPaymentError('Payment already redeemed.')
         return payment.amount
 
     @lock
