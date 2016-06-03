@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
               help="The Bitcoin address that your 21.co buffer will be flushed to.")
 @click.option('-s', '--silent', is_flag=True, default=False,
               help='Do not show the flush confirmation prompt.')
-@click.option('-tp', '--to_primary', is_flag=True, default=False,
+@click.option('-t', '--to_primary', is_flag=True, default=False,
               help='Flushes to your primary wallet.')
 def flush(ctx, amount, denomination, payout_address, silent, to_primary):
     """ Flush your 21.co buffer to the blockchain.

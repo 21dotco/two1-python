@@ -25,8 +25,7 @@ Usage
 -----
 Each time you log in to a new machine with your 21 account, a new wallet will be created for you.
 This command allows you to view and manage all of the wallets associated with your account.
-Your account has one primary wallet. The primary wallet is the wallet that your 21 buffer will be flushed
-into when you do `21 flush`.
+Your account has one primary wallet. You can use `21 flush -t` to flush your buffer to your primary wallet.
 
 \b
 Displays information about all of your wallets.
