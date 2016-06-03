@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
               help="The Bitcoin address that your 21.co buffer will be flushed to.")
 @click.option('-s', '--silent', is_flag=True, default=False,
               help='Do not show the flush confirmation prompt.')
-@click.option('-tp', '--toprimary', is_flag=True, default=False,
+@click.option('-tp', '--to_primary', is_flag=True, default=False,
               help='Flushes to your primary wallet.')
-def flush(ctx, amount, denomination, payout_address, silent, toprimary):
+def flush(ctx, amount, denomination, payout_address, silent, to_primary):
     """ Flush your 21.co buffer to the blockchain.
 
 \b
@@ -46,12 +46,16 @@ You can use the following denominations: satoshis, bitcoins, and USD.
 $ 21 flush 30000 satoshis -p 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 Flushes 30000 satoshis from your 21.co buffer to the Bitcoin Address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa .
 
+\b
+$ 21 flush --to_primary
+Flushes all of your 21.co buffer to your primary wallet. Note that your primary wallet may not be
+located on your current computer. You can use the `21 wallet` command to manage your primary wallet.
     """
 
     amount = currency.convert_amount_to_satoshis_with_prompt(amount, denomination)
 
     _flush(ctx.obj['client'], ctx.obj['wallet'], ctx.obj['machine_auth'], amount, payout_address,
-           silent, toprimary)
+           silent, to_primary)
 
 
 def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silent=False,
