@@ -300,7 +300,7 @@ class UxString:
     wallet_pub_key = "    Public Key       : {} "
     wallet_payout_address = "    Current Address  : {} "
     primary_wallet_label = click.style(" [Primary Wallet]", fg="green")
-    primary_wallet_desc = "The wallet that your 21 buffer will be flushed into."
+    primary_wallet_desc = "Your designated primary wallet."
     current_wallet_label = click.style(" [Current Wallet]", fg="magenta")
     current_wallet_desc = "The active wallet on your current machine."
     wallet_name_not_found = "You don't have a wallet named {}."
