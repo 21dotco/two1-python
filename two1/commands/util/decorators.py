@@ -146,12 +146,21 @@ def capture_usage(func):
         if hasattr(config, "username"):
             username = config.username
 
+        def get_full_name(ctx):
+            """
+            Return the fully qualified name of the command.
+            """
+            if ctx.parent is None:  # This is `two1.cli.main`
+                return '21'
+            else:
+                return get_full_name(ctx.parent) + '_' + ctx.command.name
+
         # log payload as a dict
         data = {
             "channel": "cli",
             "level": "info",
             "username": username,
-            "command": ctx.command.name,
+            "command": get_full_name(ctx),
             "params": ctx.params,
             "platform": "{}-{}".format(platform.system(), platform.release()),
             "version": two1.TWO1_VERSION
