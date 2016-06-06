@@ -132,12 +132,8 @@ def _leave(client, network):
         network (str): the name of the network being joined. Defaults
         to 21market
     """
-    if zerotier.is_installed():
-        # ensures the zerotier daemon is running
-        zerotier.start_daemon()
-    else:
-        logger.info(uxstring.UxString.install_zerotier)
-        return {'left': False, 'reason': 'zerotier-one not installed'}
+    # ensures the zerotier daemon is running
+    zerotier.start_daemon()
     is_in_network = False
     for ntwk in zerotier.list_networks():
         if ntwk['name'] == network:
