@@ -57,7 +57,7 @@ class Two1Manager:
         return self.machine.status_networking()
 
     def get_market_address(self):
-        """ Check if connected to 21market network.
+        """ Check if connected to 21mkt network.
         """
         return self.machine.host
 
@@ -67,8 +67,7 @@ class Two1Manager:
         return self.machine.port
 
     def connect_market(self, client, network="21mkt"):
-        """ Connect to 21market network.
-
+        """ Connect to 21mkt network.
         Args:
             client: Client to join network
             network: Network to join
@@ -78,8 +77,7 @@ class Two1Manager:
     def create_machine(self, vm_name=Two1MachineVirtual.DEFAULT_VM_NAME,
                        vdisk_size=Two1MachineVirtual.DEFAULT_VDISK_SIZE,
                        vm_memory=Two1MachineVirtual.DEFAULT_VM_MEMORY,
-                       service_port=Two1Machine.DEFAULT_SERVICE_PORT,
-                       zt_interface=Two1Machine.DEFAULT_ZEROTIER_INTERFACE):
+                       service_port=Two1Machine.DEFAULT_SERVICE_PORT):
         """ Create the virtual machine.
 
         Args:
@@ -87,10 +85,14 @@ class Two1Manager:
             vdisk_size: Size of disk for the VM in MB.
             vm_memory: Size of memory for the VM in MB
             service_port: Port on which the router container will listen.
-            zt_interface: ZeroTier interface to be bridged in the VM.
         """
         return self.machine.create_machine(vm_name, vdisk_size, vm_memory,
-                                           service_port, zt_interface)
+                                           service_port)
+
+    def read_machine_config(self, *args):
+        """Read machine config from file.
+        """
+        return self.machine.read_machine_config(*args)
 
     def write_machine_config(self, *args):
         """ Write machine config to file.
@@ -129,6 +131,11 @@ class Two1Manager:
 
     # composer layer
 
+    def read_server_config(self, *args):
+        """Reads configuration of containerized servers.
+        """
+        return self.composer.read_server_config(*args)
+
     def initialize_server(self, *args):
         """ Initialize micropayments server config files.
         """
@@ -162,6 +169,14 @@ class Two1Manager:
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.stop_services(*args)
+
+    def force_stop_services(self, *args):
+        """ Silently force stops all services.
+        """
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.silently_force_stop_all_services()
 
     def status_services(self, *args):
         """ Get status of all services.
@@ -199,7 +214,7 @@ class Two1Manager:
         self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.publish_service(*args, **kwargs)
+        return self.composer.publish_service(*args)
 
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)

@@ -73,12 +73,6 @@ class InstallerBase:
         return
 
     @abstractmethod
-    def install_zerotier(self):
-        """ Install Zerotier for network virtualization.
-        """
-        return
-
-    @abstractmethod
     def install_docker_tools(self):
         """ Install docker, docker-machine, docker-compose.
         """
@@ -96,10 +90,6 @@ class InstallerMac(InstallerBase):
     """
     VERSION_OS = subprocess.check_output(["uname", "-s"]).decode()
     VERSION_HW = subprocess.check_output(["uname", "-m"]).decode()
-
-    # zerotier
-    ZEROTIER_PKG_URL = "https://download.zerotier.com/dist/"
-    ZEROTIER_PKG = "ZeroTier One.pkg"
 
     # docker toolbox
     DOCKER_TOOLBOX_URL = "https://github.com/docker/toolbox/releases/download/v1.11.0/DockerToolbox-1.11.0.pkg"
@@ -169,13 +159,6 @@ class InstallerMac(InstallerBase):
         else:
             installed.append(True)
 
-        packages.append("Zerotier")
-        try:
-            subprocess.check_output(["zerotier-cli", "-v"])
-        except:
-            installed.append(False)
-        else:
-            installed.append(True)
         return list(zip(packages, installed))
 
     def _cleanup(self):
@@ -199,35 +182,6 @@ class InstallerMac(InstallerBase):
             return False
         else:
             return True
-
-    def install_zerotier(self):
-        """ Install Zerotier virual network service.
-
-        Sources:
-            https://www.zerotier.com/product-one.shtml
-        """
-        if not self.program_installed("zerotier-cli"):
-            self._make_tmp()
-            try:
-                subprocess.check_output(["curl", InstallerMac.ZEROTIER_PKG_URL +
-                                        InstallerMac.ZEROTIER_PKG.replace(" ", "%20"),
-                                        "-o",
-                                         os.path.expanduser("~/.two1/tmp/") +
-                                         InstallerMac.ZEROTIER_PKG.replace(" ", "-")],
-                                        stderr=subprocess.DEVNULL)
-                subprocess.check_output(["sudo", "installer", "-pkg",
-                                        os.path.expanduser("~/.two1/tmp/") +
-                                        InstallerMac.ZEROTIER_PKG.replace(" ", "-"),
-                                        "-target", "/"],
-                                        stderr=subprocess.DEVNULL)
-                exit_code = 0
-            except Exception as e:
-                print(e)
-                exit_code = 1
-            self._cleanup()
-        else:
-            exit_code = 0
-        return exit_code
 
     def install_virtual_box(self):
         """ Install virtual box on Mac OS X.

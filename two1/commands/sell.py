@@ -2,6 +2,7 @@
 """
 # standard python imports
 import sys
+import time
 import logging
 
 # 3rd party imports
@@ -105,12 +106,11 @@ $ 21 sell stop --help
 @click.option('-w', '--wait-time',
               type=int, default=10)
 @click.option('--no-vm', is_flag=True, default=False)
-@click.option('--no-zt-dep', is_flag=True, default=False)
-@click.option('--publishing-ip', type=str)
+@click.option('-y', '--assume-yes', is_flag=True, default=False)
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def start(ctx, services, all, wait_time, no_vm, no_zt_dep, publishing_ip):
+def start(ctx, services, all, wait_time, no_vm, assume_yes):
     """
 Start selling a containerized service.
 
@@ -136,27 +136,30 @@ $ 21 sell start --all
     manager = ctx.obj['manager']
     installer = ctx.obj['installer']
 
-    if no_zt_dep:
-        if isinstance(installer.installer, InstallerMac):
-            logger.info(click.style("ZeroTier required to run 21 sell on Mac.",
-                                    fg=cli_helpers.PROMPT_COLOR))
+    if cli_helpers.running_old_sell(manager, installer):
+        if click.confirm(click.style(("It appears that you are running an old version of 21 sell.\n",
+                                      "In order to continue using 21 sell, you must update the 21 VM.\n"
+                                      "Would you like to delete the existing VM and create a new one?"),
+                                     fg=cli_helpers.WARNING_COLOR)):
+            logger.info(click.style("Your ", fg=cli_helpers.TITLE_COLOR) +
+                        click.style("`21 sell`", bold=True, fg=cli_helpers.TITLE_COLOR) +
+                        click.style(" system will now restart. This can take up to 10 minutes.",
+                                    fg=cli_helpers.TITLE_COLOR))
+            upgrade_21_sell(ctx, services, all, wait_time, no_vm)
             sys.exit()
-        if publishing_ip is None:
-            logger.info(click.style("--no-zt-dep must be used in "
-                                    "conjunction with --publishing-ip <IP_TO_PUBLISH>.",
-                                    fg=cli_helpers.PROMPT_COLOR))
+        else:
+            logger.info(click.style("Please note that your services may be unreachable without this update.",
+                                    fg=cli_helpers.WARNING_COLOR))
             sys.exit()
 
     logger.info(click.style("Checking dependencies.", fg=cli_helpers.TITLE_COLOR))
     deps_list = installer.check_dependencies()
-    if no_zt_dep:
-        del deps_list[[name for name, installed in deps_list].index("Zerotier")]
     all_deps_installed = cli_helpers.package_check(deps_list, True)
 
     # install virtualbox, docker, and zerotier deps
     if not all_deps_installed:
-        if click.confirm(click.style("Would you like to install the missing packages?",
-                                     fg=cli_helpers.PROMPT_COLOR)):
+        if assume_yes or click.confirm(click.style("Would you like to install the missing packages?",
+                                                   fg=cli_helpers.PROMPT_COLOR)):
             logger.info(click.style("Installing missing dependencies.", fg=cli_helpers.TITLE_COLOR))
             all_installed = cli_helpers.install_missing_dependencies(deps_list,
                                                                      installer)
@@ -165,62 +168,18 @@ $ 21 sell start --all
         else:
             sys.exit()
 
-    # pick up docker group permissions by force logout (via user prompt)
+    # pick up docker group permissions by forced logout
     if cli_helpers.check_needs_logout(installer):
         sys.exit()
-
-    # connect to zerotier virtual network
-    if not manager.status_networking():
-        if no_zt_dep:
-            pass
-        elif click.confirm(click.style(
-                "ZeroTier One virtual network service is not running. Would you like to start "
-                "the service?", fg=cli_helpers.PROMPT_COLOR)):
-            try:
-                manager.start_networking()
-                cli_helpers.print_str("ZeroTier One", ["Started"], "TRUE", True)
-            except Two1MachineNetworkStartException:
-                cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
-        else:
-            sys.exit()
-    # ensure docker service is running
-    if manager.status_docker() is False:
-        if click.confirm(click.style(
-                "Docker service is not running. Would you like to start "
-                "the service?", fg=cli_helpers.PROMPT_COLOR)):
-            try:
-                manager.start_docker()
-                cli_helpers.print_str("Docker", ["Started"], "TRUE", True)
-            except Two1MachineNetworkStartException:
-                cli_helpers.print_str("Docker", ["Not started"], "FALSE", False)
-        else:
-            sys.exit()
-
-    # join the 21market network
-    if manager.get_market_address() == "":
-        if no_zt_dep:
-            pass
-        elif click.confirm(click.style(
-                "21market network not connected. Would you like to join 21market?", fg=cli_helpers.PROMPT_COLOR)):
-            logger.info("You might need to enter your superuser password.")
-            manager.connect_market(ctx.obj['client'])
-            if manager.get_market_address() == "":
-                cli_helpers.print_str("21market", ["Joined"], "TRUE", True)
-            else:
-                cli_helpers.print_str("21market", ["Unable to join"], "FALSE", False)
-        else:
-            sys.exit()
-    else:
-        cli_helpers.print_str("21market", ["Joined"], "TRUE", True)
 
     if isinstance(manager.machine, Two1MachineVirtual):
         logger.info(click.style("Checking virtual machine status.", fg=cli_helpers.TITLE_COLOR))
         just_started = False
         vm_status = manager.status_machine()
         if vm_status == VmState.NOEXIST:
-            if click.confirm(click.style("  21 virtual machine does not exist. "
-                                         "Would you like to create it?",
-                                         fg=cli_helpers.PROMPT_COLOR)):
+            if assume_yes or click.confirm(click.style("  21 virtual machine does not exist. "
+                                                       "Would you like to create it?",
+                                                       fg=cli_helpers.PROMPT_COLOR)):
                 vm_config = cli_helpers.get_vm_options()
                 try:
                     cli_helpers.start_long_running("Creating machine (this may take a few minutes)",
@@ -228,8 +187,7 @@ $ 21 sell start --all
                                                    "21",
                                                    vm_config.disk_size,
                                                    vm_config.vm_memory,
-                                                   vm_config.server_port,
-                                                   vm_config.network_interface)
+                                                   vm_config.server_port)
                     manager.write_machine_config(vm_config._asdict())
                     cli_helpers.print_str("21 virtual machine", ["Created"], "TRUE", True)
 
@@ -240,17 +198,6 @@ $ 21 sell start --all
                 sys.exit()
 
         if vm_status != VmState.RUNNING:
-            if not manager.status_networking():
-                if click.confirm(click.style(
-                        "ZeroTier One virtual network service is not running. "
-                        "Would you like to start the service?", fg=cli_helpers.PROMPT_COLOR)):
-                    try:
-                        manager.start_networking()
-                        cli_helpers.print_str("ZeroTier One", ["Started"], "TRUE", True)
-                    except Two1MachineNetworkStartException:
-                        cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
-                else:
-                    sys.exit()
             try:
                 cli_helpers.start_long_running("Starting machine (this may take a few minutes)",
                                                manager.start_machine)
@@ -271,6 +218,57 @@ $ 21 sell start --all
     else:
         server_port = cli_helpers.get_server_port()
         manager.write_machine_config({"server_port": server_port})
+
+    # connect to zerotier virtual network
+    if not manager.status_networking():
+        try:
+            if not isinstance(manager.machine, Two1MachineVirtual):
+                if assume_yes or click.confirm(click.style(
+                        "ZeroTier One virtual network service is not running. Would you like to start "
+                        "the service?", fg=cli_helpers.PROMPT_COLOR)):
+                    manager.start_networking()
+                else:
+                    sys.exit()
+            else:
+                cli_helpers.start_long_running("Starting ZeroTier One", manager.start_networking)
+
+            cli_helpers.print_str("ZeroTier One", ["Started"], "TRUE", True)
+        except Two1MachineNetworkStartException:
+            cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
+            sys.exit()
+
+    # join the 21mkt network
+    if manager.get_market_address() == "":
+        if not isinstance(manager.machine, Two1MachineVirtual):
+            if assume_yes or click.confirm(click.style(
+               "21mkt network not connected. Would you like to join 21mkt?", fg=cli_helpers.PROMPT_COLOR)):
+                logger.info("You might need to enter your superuser password.")
+                manager.connect_market(ctx.obj["client"])
+            else:
+                sys.exit()
+        else:
+            cli_helpers.start_long_running("Connecting to 21mkt", manager.connect_market, ctx.obj["client"])
+
+        if manager.get_market_address() != "":
+            cli_helpers.print_str("21mkt", ["Joined"], "TRUE", True)
+        else:
+            cli_helpers.print_str("21mkt", ["Unable to join"], "FALSE", False)
+            sys.exit()
+    else:
+        cli_helpers.print_str("21mkt", ["Joined"], "TRUE", True)
+
+    # ensure docker service is running
+    if manager.status_docker() is False:
+        if assume_yes or click.confirm(click.style(
+                "Docker service is not running. Would you like to start "
+                "the service?", fg=cli_helpers.PROMPT_COLOR)):
+            try:
+                manager.start_docker()
+                cli_helpers.print_str("Docker", ["Started"], "TRUE", True)
+            except Two1MachineNetworkStartException:
+                cli_helpers.print_str("Docker", ["Not started"], "FALSE", False)
+        else:
+            sys.exit()
 
     # generate machine wallet & initialize micropayments server
     logger.info(click.style("Initializing micropayments server.", fg=cli_helpers.TITLE_COLOR))
@@ -314,30 +312,6 @@ $ 21 sell start --all
                                 "contact support@21.co.", fg="magenta"))
         sys.exit()
 
-    def failed_to_build_hook(service_name):
-        cli_helpers.print_str(service_name, ["Failed to build"], "FALSE", False)
-
-    def built_hook(service_name):
-        cli_helpers.print_str(service_name, ["Built"], "TRUE", True)
-
-    def failed_to_start_hook(service_name):
-        cli_helpers.print_str(service_name, ["Failed to start"], "FALSE", False)
-
-    def started_hook(service_name):
-        cli_helpers.print_str(service_name, ["Started"], "TRUE", True)
-
-    def failed_to_restart_hook(service_name):
-        cli_helpers.print_str(service_name, ["Failed to restart"], "FALSE", False)
-
-    def restarted_hook(service_name):
-        cli_helpers.print_str(service_name, ["Restarted"], "TRUE", True)
-
-    def failed_to_up_hook(service_name):
-        cli_helpers.print_str(service_name, ["Failed to up"], "FALSE", False)
-
-    def up_hook(service_name):
-        cli_helpers.print_str(service_name, ["Up"], "TRUE", True)
-
     logger.info(click.style("Pulling latest images.", fg=cli_helpers.TITLE_COLOR))
     selected_services = list(set(['service-' + name for name in valid_services]).union(
             set(Two1Composer.BASE_SERVICES)))
@@ -349,8 +323,13 @@ $ 21 sell start --all
 
     logger.info(click.style("Starting services.", fg=cli_helpers.TITLE_COLOR))
     try:
-        manager.start_services(valid_services, failed_to_start_hook, started_hook,
-                               failed_to_restart_hook, restarted_hook, failed_to_up_hook, up_hook)
+        manager.start_services(valid_services,
+                               cli_helpers.failed_to_start_hook,
+                               cli_helpers.started_hook,
+                               cli_helpers.failed_to_restart_hook,
+                               cli_helpers.restarted_hook,
+                               cli_helpers.failed_to_up_hook,
+                               cli_helpers.up_hook)
     except Exception:
         logger.info("Unable to start services.", fg="magenta")
         sys.exit()
@@ -361,7 +340,7 @@ $ 21 sell start --all
         logger.info("Unable to fetch running services.", fg="magenta")
         sys.exit()
 
-    published_stats = cli_helpers.prompt_to_publish(started_services, manager, publishing_ip)
+    published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes)
     for stat in published_stats:
         cli_helpers.print_str(stat[0],
                               stat[2],
@@ -701,3 +680,137 @@ $ 21 sell sweep
                                             "fees" % (total_value - fee, fee)], "SUCCESS", True)
     else:
         sys.exit()
+
+
+def upgrade_21_sell(ctx, services, all, wait_time, no_vm):
+    manager = ctx.obj['manager']
+
+    def resetting_system():
+        manager.force_stop_services()
+        manager.delete_machine()
+
+    cli_helpers.start_long_running("Resetting system",
+                                   resetting_system)
+
+    if isinstance(manager.machine, Two1MachineVirtual):
+        machine_config = manager.read_machine_config()
+        if machine_config == {}:
+            logger.info(click.style("Your ", fg=cli_helpers.WARNING_COLOR) +
+                        click.style("`21 sell`", bold=True, fg=cli_helpers.WARNING_COLOR) +
+                        click.style(" system is misconfigured. Please contact support@21.co",
+                                    fg=cli_helpers.WARNING_COLOR))
+            sys.exit()
+        try:
+            cli_helpers.start_long_running("Recreating 21 virtual machine",
+                                           manager.create_machine,
+                                           "21",
+                                           machine_config["disk_size"],
+                                           machine_config["vm_memory"],
+                                           machine_config["server_port"])
+            cli_helpers.print_str("21 virtual machine", ["Recreated"], "TRUE", True)
+            manager.write_machine_config(machine_config)
+
+        except Two1MachineCreateException:
+            cli_helpers.print_str("21 virtual machine", ["Not recreated"], "FALSE", False)
+            logger.info(click.style("Please try running this command again or contact support@21.co",
+                                    fg=cli_helpers.TITLE_COLOR))
+            sys.exit()
+
+        try:
+            cli_helpers.start_long_running("Restarting 21 virtual machine",
+                                           manager.start_machine)
+            cli_helpers.print_str("21 virtual machine", ["Restarted"], "TRUE", True)
+
+        except Two1MachineStartException:
+            cli_helpers.print_str("21 virtual machine", ["Not restarted"], "FALSE", False)
+            logger.info(click.style("Please try running this command again or contact support@21.co",
+                                    fg=cli_helpers.TITLE_COLOR))
+            sys.exit()
+
+    try:
+        cli_helpers.start_long_running("Restarting ZeroTier One", manager.start_networking)
+        cli_helpers.print_str("ZeroTier One", ["Restarted"], "True", True)
+
+    except Two1MachineNetworkStartException:
+        cli_helpers.print_str("ZeroTier One", ["Not restarted"], "FALSE", False)
+        logger.info(click.style("Please try running this command again or contact support@21.co",
+                                fg=cli_helpers.TITLE_COLOR))
+        sys.exit()
+
+    cli_helpers.start_long_running("Reconnecting to 21mkt", manager.connect_market, ctx.obj["client"])
+    if manager.get_market_address() != "":
+        cli_helpers.print_str("21mkt", ["Rejoined"], "True", True)
+    else:
+        cli_helpers.print_str("21mkt", ["Not rejoined"], "False", False)
+        logger.info(click.style("Please try running this command again or contact support@21.co",
+                                fg=cli_helpers.TITLE_COLOR))
+        sys.exit()
+
+    if manager.status_docker() is False:
+        try:
+            cli_helpers.start_long_running("Restarting Docker service", manager.start_docker)
+            cli_helpers.print_str("Docker", ["Restarted"], "TRUE", True)
+        except Two1MachineNetworkStartException:
+            cli_helpers.print_str("Docker", ["Not restarted"], "False", True)
+            logger.info(click.style("Please try running this command again or contact support@21.co",
+                                    fg=cli_helpers.TITLE_COLOR))
+            sys.exit()
+
+    two1_services = manager.list_available_services()
+    if all:
+        valid_services = two1_services
+    else:
+        valid_services = []
+        for serv in services:
+            if serv in two1_services:
+                valid_services.append(serv)
+
+    if len(valid_services) <= 0:
+        logger.info(click.style("No valid server found. Please try running this command again or contact support@21.co",
+                                fg=cli_helpers.TITLE_COLOR))
+        sys.exit()
+
+    logger.info(click.style("Pulling latest images.", fg=cli_helpers.TITLE_COLOR))
+    selected_services = list(set(['service-' + name for name in valid_services]).union(
+            set(Two1Composer.BASE_SERVICES)))
+    try:
+        manager.pull_latest_images(selected_services)
+    except Exception:
+        logger.info("Unable to pull latest images.", fg="magenta")
+        sys.exit()
+
+    logger.info(click.style("Restarting services.", fg=cli_helpers.TITLE_COLOR))
+    try:
+        manager.start_services(valid_services,
+                               cli_helpers.failed_to_start_hook,
+                               cli_helpers.started_hook,
+                               cli_helpers.failed_to_restart_hook,
+                               cli_helpers.restarted_hook,
+                               cli_helpers.failed_to_up_hook,
+                               cli_helpers.up_hook)
+
+    except Exception as e:
+        print(e)
+        logger.info("Unable to start services.", fg="magenta")
+        sys.exit()
+
+    try:
+        started_services = manager.get_running_services()
+    except Exception:
+        logger.info("Unable to fetch running services.", fg="magenta")
+        sys.exit()
+
+    published_stats = cli_helpers.prompt_to_publish(started_services, manager, True)
+    for stat in published_stats:
+        cli_helpers.print_str(stat[0],
+                              stat[2],
+                              "TRUE" if stat[1] else "FALSE",
+                              stat[1])
+
+    # help tip message
+    logger.info(click.style("\nTip: (1) run ", fg=cli_helpers.PROMPT_COLOR) +
+                click.style("`21 publish list`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
+                click.style(" to see your published services.\n", fg=cli_helpers.PROMPT_COLOR) +
+                click.style("     (2) run ", fg=cli_helpers.PROMPT_COLOR) +
+                click.style("`21 sell status --detail`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
+                click.style(" to see your microservice balances.", fg=cli_helpers.PROMPT_COLOR))
