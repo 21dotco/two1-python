@@ -51,9 +51,6 @@ def cli_json(*args):
         json.decoder.JSONDecodeError: If the json string could not be successfully
             parsed into a dict.
     """
-    if not all([isinstance(arg, str) for arg in args]):
-        raise ValueError("Error: arg can only be strings")
-
     result = cli(*(args + ("-j",)))
     text = result.decode('utf-8')
     return json.loads(text)
