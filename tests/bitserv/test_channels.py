@@ -14,7 +14,6 @@ from two1.bitserv.payment_server import PaymentServer, PaymentServerError
 from two1.bitserv.payment_server import PaymentChannelNotFoundError
 from two1.bitserv.payment_server import TransactionVerificationError
 from two1.bitserv.payment_server import BadTransactionError
-from two1.bitserv.payment_server import RedeemPaymentError
 from two1.bitserv.models import DatabaseSQLite3, ChannelSQLite3
 
 
@@ -379,9 +378,10 @@ def test_channel_redeem_race_condition():
     channel_server._db.pc.lookup = normal_pc_lookup
 
     # To test the race, this redeem is called while the other redeem is still in-process
-    # Because this call occurs after the first, it should raise a redeem error
-    with pytest.raises(RedeemPaymentError):
-        channel_server.redeem(payment_txid)
+    # Because this call makes it to the final database update first, it should be successful
+    channel_server.redeem(payment_txid)
 
-    # Block on the first process to make sure it completes
+    # The multiprocess redeem is intentionally made slow, and will finish after the redeem above
+    # Because of this, the multiprocess redeem should throw and exception and exit with an error
     p.join()
+    assert p.exitcode == 1
