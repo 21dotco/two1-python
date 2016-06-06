@@ -22,8 +22,7 @@ class ChannelViewSet(ViewSet):
 
     def list(self, request, format='json'):
         """Return the merchant's public key."""
-        return Response({'public_key': payment.server.discovery(),
-                        'version': payment.server.PROTOCOL_VERSION})
+        return Response(payment.server.identify())
 
     def create(self, request, format='json'):
         """Open a payment channel.

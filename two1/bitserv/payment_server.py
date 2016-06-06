@@ -99,7 +99,7 @@ class PaymentServer:
     """Thread and process lock for database access."""
 
     def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None, zeroconf=True, sync_period=600, db_dir=None):
+                 blockchain=None, zeroconf=False, sync_period=600, db_dir=None):
         """Initalize the payment server.
 
         Args:
@@ -132,14 +132,15 @@ class PaymentServer:
         self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
         self._sync_thread.start()
 
-    def discovery(self):
-        """Return the merchant's public key.
+    def identify(self):
+        """Query the payment server's merchant information and server configuration.
 
-        A customer requests a public key from a merchant. This allows the
-        customer to create a multi-signature payment transaction with both the
-        customer and merchant's public keys.
+        Returns:
+            (dict): a key-value store that contains the merchant's public key and other custom config.
         """
-        return self._wallet.get_public_key()
+        return dict(public_key=self._wallet.get_public_key(),
+                    version=self.PROTOCOL_VERSION,
+                    zeroconf=self.zeroconf)
 
     @lock
     def open(self, deposit_tx, redeem_script):
@@ -239,7 +240,11 @@ class PaymentServer:
 
         # Verify that the payment channel is ready
         if channel.state == ChannelSQLite3.CONFIRMING:
-            raise ChannelClosedError('Payment channel not ready.')
+            confirmed = self._blockchain.check_confirmed(channel.deposit_txid)
+            if confirmed:
+                self._db.pc.update_state(channel.deposit_txid, ChannelSQLite3.READY)
+            else:
+                raise ChannelClosedError('Payment channel not ready.')
         elif channel.state == ChannelSQLite3.CLOSED:
             raise ChannelClosedError('Payment channel closed.')
 

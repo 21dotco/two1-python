@@ -43,7 +43,7 @@ class Payment:
 
     """Class to store merchant settings."""
 
-    def __init__(self, app, wallet, allowed_methods=None, zeroconf=True, sync_period=600,
+    def __init__(self, app, wallet, allowed_methods=None, zeroconf=False, sync_period=600,
                  endpoint='/payment', db_dir=None, username=None):
         """Configure bitserv settings.
 
@@ -147,8 +147,7 @@ class Channel(views.MethodView):
     def get(self, deposit_txid):
         """Return the merchant's public key or info about a channel."""
         if deposit_txid is None:
-            return jsonify({'public_key': self.server.discovery(),
-                            'version': self.server.PROTOCOL_VERSION})
+            return jsonify(self.server.identify())
         else:
             try:
                 return jsonify(self.server.status(deposit_txid))

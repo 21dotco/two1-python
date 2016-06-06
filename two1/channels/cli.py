@@ -144,9 +144,11 @@ def cli_list(ctx):
 @click.argument('deposit', type=click.INT)
 @click.argument('expiration', type=click.INT)
 @click.option('--fee', default=10000, help="Fee amount in satoshis.")
-@click.option('--zeroconf', default=False, is_flag=True, help="Use payment channel without deposit confirmation.")
-@click.option(
-    '--use-unconfirmed', default=False, is_flag=True, help="Use unconfirmed transactions to build deposit transaction.")
+@click.option('--zeroconf', default=False, is_flag=True,
+              help="Use payment channel without deposit confirmation. This preference " +
+              "will be overriden by server configuration if applicable.")
+@click.option('--use-unconfirmed', default=False, is_flag=True,
+              help="Use unconfirmed transactions to build deposit transaction.")
 def cli_open(ctx, url, deposit, expiration, fee, zeroconf, use_unconfirmed):
     """Open a payment channel at the specified URL.
 

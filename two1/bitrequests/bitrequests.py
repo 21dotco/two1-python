@@ -367,6 +367,14 @@ class ChannelRequests(BitRequests):
                 logger.debug("[ChannelRequests] Channel spend txid is {}".format(status.spend_txid))
                 channel_url = None
 
+            # Check if the channel deposit is still being confirmed
+            elif status.state == ChannelRequests.channels.PaymentChannelState.CONFIRMING_DEPOSIT:
+                logger.debug("[ChannelRequests] Channel deposit tx still being confirmed.")
+                self._channelclient.sync(channel_url)
+                status = self._channelclient.status(channel_url)
+                if not status.ready:
+                    raise ChannelRequests.channels.NotReadyError("Channel not ready.")
+
         # Open a new channel if we don't have a usable one
         if not channel_url or not status.ready:
             logger.debug("[ChannelRequests] Opening channel at {} with deposit {}.".format(

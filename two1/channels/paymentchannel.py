@@ -54,10 +54,10 @@ class PaymentChannel:
     """Rebroadcast timeout for the deposit, if it hasn't been confirmed by the
     blockchain."""
 
-    MIN_EXPIRATION_TIMEOUT = 12*3600
+    MIN_EXPIRATION_TIMEOUT = 12 * 3600
     """Minimum channel duration."""
 
-    REFUND_BROADCAST_TIME_OFFSET = 90*60
+    REFUND_BROADCAST_TIME_OFFSET = 90 * 60
     """Refund broadcast time offset to take into account the effect of Median
     time-past (MTP) or BIP113. Broadcasting before this offset to the locktime
     may result in a non-final transaction classification and error from a
@@ -133,16 +133,17 @@ class PaymentChannel:
             # Create server instance
             payment_server = protocol(url)
 
-            # Call get_public_key() on server
+            # Call get_info() on server
             try:
-                pubkey = payment_server.get_public_key()
+                info = payment_server.get_info()
             except server.PaymentChannelServerError as e:
                 raise PaymentChannelError("Server: " + str(e))
 
             # Call create() on state machine
             try:
                 (deposit_tx, redeem_script) = sm.create(
-                    pubkey, deposit_amount, int(time.time() + expiration_time), fee_amount, zeroconf, use_unconfirmed)
+                    info['public_key'], deposit_amount, int(time.time() + expiration_time),
+                    fee_amount, info.get('zeroconf', zeroconf), use_unconfirmed)
             except statemachine.InsufficientBalanceError as e:
                 raise InsufficientBalanceError(str(e))
 

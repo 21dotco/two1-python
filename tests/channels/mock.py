@@ -74,8 +74,8 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
         super().__init__()
         self._url = url
 
-    def get_public_key(self):
-        return codecs.encode(self.PRIVATE_KEY.public_key.compressed_bytes, 'hex_codec').decode('utf-8')
+    def get_info(self):
+        return {'public_key': codecs.encode(self.PRIVATE_KEY.public_key.compressed_bytes, 'hex_codec').decode('utf-8')}
 
     def open(self, deposit_tx, redeem_script):
         # Deserialize deposit tx and redeem script

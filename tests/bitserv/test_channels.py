@@ -141,14 +141,17 @@ def _create_client_payment(client, num):
         TEST_PMT_AMOUNT * num, TEST_FEE_AMOUNT).to_hex()
 
 
-def test_discovery():
-    """Test ability to discover a new payment channel."""
+def test_identify():
+    """Test ability to identify a payment server."""
     channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
-    merchant_public_key = channel_server.discovery()
+    pc_config = channel_server.identify()
+    merchant_public_key = pc_config['public_key']
     test_public_key = codecs.encode(
         merch_wallet._private_key.public_key.compressed_bytes,
         'hex_codec').decode('utf-8')
     assert merchant_public_key == test_public_key
+    assert pc_config['version'] == channel_server.PROTOCOL_VERSION
+    assert pc_config['zeroconf'] is False
 
 
 def test_channel_server_open():
