@@ -28,13 +28,15 @@ def test_is_installed(mock_return_value, outcome):
     ((), ValueError),
     (("sheep"), None),
     ("goat", None)])
-def test_cli(args, outcome):
+@mock.patch('two1.commands.util.zerotier.is_installed')
+def test_cli(is_installed_mock, args, outcome):
     """ Simple test to check input params
 
         We do not want to test ALL zerotier commands here. This test is
         specifically checking the zerotier.cli() funciton and NOT the
         zerotier cli output.
     """
+    is_installed_mock.return_value = True
     with mock.patch('two1.commands.util.zerotier.subprocess.check_output'):
         if outcome is None:
             zerotier.cli(args)
@@ -50,11 +52,13 @@ def test_cli(args, outcome):
     ("goat", {"test": "dict"}),
     (("sheep"), '{"test":None}'.encode()),
     ])
-def test_cli_json(args, outcome):
+@mock.patch('two1.commands.util.zerotier.is_installed')
+def test_cli_json(is_installed_mock, args, outcome):
     """ Simple test to check input params and json results
 
         Mock zerotier.cli to return a fake json respose from zerotier-cli.
     """
+    is_installed_mock.return_value = True
     # expecting valid output from zerotier.cli
     if isinstance(outcome, dict):
         cli_return_value = json.dumps(outcome).encode()
@@ -153,7 +157,6 @@ def test_get_address_by_id(network_id, list_networks_ret_val, outcome):
     (MULTIPLE_NETWORKS, {'21market': "10.244.223.250", '': ""}),
     (SINGLE_NETWORKS, {'21market': "10.244.223.250"}),
     (EMPTY_NETWORKS, {}),
-    (ValueError, {})
     ])
 def test_get_all_addresses(list_networks_ret_val, outcome):
     """ Tests zerotier.get_all_addresses function """
@@ -257,11 +260,14 @@ def test_leave_network(mock_cli, network_id, outcome):
 @mock.patch('two1.commands.util.zerotier.subprocess.check_output')
 @mock.patch('two1.commands.util.zerotier.platform.system')
 @mock.patch('two1.commands.util.zerotier.shutil.which')
-def test_start_daemon(which_mock, system_mock, check_output_mock,
-                      which_side_effect, system_return_value, cmd, outcome):
+@mock.patch('two1.commands.util.zerotier.is_installed')
+def test_start_daemon(
+        is_installed_mock, which_mock, system_mock, check_output_mock,
+        which_side_effect, system_return_value, cmd, outcome):
     """ Tests various platforms and sytem configs if the daemon can be started """
     which_mock.side_effect = which_side_effect
     system_mock.return_value = system_return_value
+    is_installed_mock.return_value = True
 
     if isinstance(outcome, str):
         check_output_mock.return_value = outcome

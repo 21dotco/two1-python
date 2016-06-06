@@ -102,12 +102,8 @@ def _join(client, network):
         ServerRequestError: if server returns an error code other than 401
     """
     try:
-        if zerotier.is_installed():
-            # ensures the zerotier daemon is running
-            zerotier.start_daemon()
-        else:
-            logger.info(uxstring.UxString.install_zerotier)
-            return {'joined': False, 'reason': 'zerotier-one not installed'}
+        # ensures the zerotier daemon is running
+        zerotier.start_daemon()
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
@@ -136,12 +132,8 @@ def _leave(client, network):
         network (str): the name of the network being joined. Defaults
         to 21market
     """
-    if zerotier.is_installed():
-        # ensures the zerotier daemon is running
-        zerotier.start_daemon()
-    else:
-        logger.info(uxstring.UxString.install_zerotier)
-        return {'left': False, 'reason': 'zerotier-one not installed'}
+    # ensures the zerotier daemon is running
+    zerotier.start_daemon()
     is_in_network = False
     for ntwk in zerotier.list_networks():
         if ntwk['name'] == network:

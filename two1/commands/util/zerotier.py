@@ -3,9 +3,15 @@
 Simple wrapper for zerotier-cli
 """
 import json
+import logging
+import platform
 import subprocess
 import shutil
-import platform
+import sys
+
+from two1.commands.util import uxstring
+
+logger = logging.getLogger(__name__)
 
 
 def is_installed():
@@ -30,6 +36,10 @@ def cli(*args):
         ValueError: if any of the args are not strings.
         CalledProcessError: If the cli call failed.
     """
+    if not is_installed():
+        logger.info(uxstring.UxString.install_zerotier)
+        sys.exit(1)
+
     if not all([isinstance(arg, str) for arg in args]):
         raise ValueError("Error: args can only be strings")
 
@@ -51,9 +61,6 @@ def cli_json(*args):
         json.decoder.JSONDecodeError: If the json string could not be successfully
             parsed into a dict.
     """
-    if not all([isinstance(arg, str) for arg in args]):
-        raise ValueError("Error: arg can only be strings")
-
     result = cli(*(args + ("-j",)))
     text = result.decode('utf-8')
     return json.loads(text)
@@ -185,6 +192,10 @@ def start_daemon():
         EnvironmentError: if you your ststem is not yet supported.
         CalledProcessError: if the command to start the daemon failed.
     """
+    if not is_installed():
+        logger.info(uxstring.UxString.install_zerotier)
+        sys.exit(1)
+
     if platform.system() in "Linux":
         if shutil.which("systemctl"):
             cmd = ('sudo', 'systemctl', 'start', 'zerotier-one.service')
@@ -249,10 +260,7 @@ def get_all_addresses():
             if no networks are found.
     """
     result = {}
-    try:
-        networks = list_networks()
-    except (ValueError, subprocess.CalledProcessError):
-        return result
+    networks = list_networks()
 
     for network in networks:
         if len(network["assignedAddresses"]) > 0:
