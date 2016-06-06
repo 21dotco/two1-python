@@ -409,9 +409,12 @@ class UxString:
     successful_leave = "Left network {}."
 
     no_network = click.style("You are not part of any network. Run: 21 join", fg="blue")
-    install_zerotier = click.style("To join a network you must have zerotier-one installed.\n"
-                                   "See installation instructions at:\n"
-                                   "\n\thttps://www.zerotier.com/product-one.shtml\n")
+    install_zerotier = click.style(
+        "To join a network you must have zerotier-one installed.\n"
+        "See installation instructions at:\n"
+        "\n\thttps://www.zerotier.com/product-one.shtml\n",
+        fg='red'
+    )
 
     join_network_beta_warning = """
 21 is in Beta: warning

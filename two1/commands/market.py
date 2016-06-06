@@ -102,12 +102,8 @@ def _join(client, network):
         ServerRequestError: if server returns an error code other than 401
     """
     try:
-        if zerotier.is_installed():
-            # ensures the zerotier daemon is running
-            zerotier.start_daemon()
-        else:
-            logger.info(uxstring.UxString.install_zerotier)
-            return {'joined': False, 'reason': 'zerotier-one not installed'}
+        # ensures the zerotier daemon is running
+        zerotier.start_daemon()
         zt_device_address = zerotier.device_address()
         response = client.join(network, zt_device_address)
         if response.ok:
