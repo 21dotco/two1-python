@@ -1,8 +1,5 @@
 two1.bitcoin.block
 ----------------------
-This submodule provides the MerkleNode, Block, BlockHeader, and
-CompactBlock classes. It allows you to work programmatically with
-the individual blocks in the Bitcoin blockchain.
 
 .. automodule:: two1.bitcoin.block
     :members:
@@ -11,9 +8,6 @@ the individual blocks in the Bitcoin blockchain.
 
 two1.bitcoin.crypto
 -----------------------
-This submodule provides the PublicKey, PrivateKey, and Signature
-classes. It also provides HDPublicKey and HDPrivateKey classes for
-working with HD wallets.
 
 .. automodule:: two1.bitcoin.crypto
     :members:
@@ -22,8 +16,6 @@ working with HD wallets.
 
 two1.bitcoin.exceptions
 ---------------------------
-This is a simple submodule that enumerates the different kinds
-of exceptions that the ``two1.bitcoin`` module raises.
 
 .. automodule:: two1.bitcoin.exceptions
     :members:
@@ -32,11 +24,6 @@ of exceptions that the ``two1.bitcoin`` module raises.
 
 two1.bitcoin.script
 -----------------------
-This submodule provides a single Script class that has knowledge
-of all Bitcoin opcodes. At the simplest level, it can read in the raw
-bytes of a Bitcoin script, parse it, and determine what type of script
-it is (P2PKH, P2SH, multi-sig, etc). It also provides capabilities
-for building more complex scripts programmatically.
 
 .. automodule:: two1.bitcoin.script
     :members:
@@ -45,10 +32,6 @@ for building more complex scripts programmatically.
 
 two1.bitcoin.txn
 --------------------
-This submodule provides Transaction, Coinbase, TransactionInput,
-TransactionOutput, and UnspentTransactionOutput classes for building
-and parsing Bitcoin transactions and their constituent inputs and
-outputs.
 
 .. automodule:: two1.bitcoin.txn
     :members:
@@ -57,10 +40,6 @@ outputs.
 
 two1.bitcoin.utils
 ----------------------
-This submodule provides functions for accomplishing common tasks
-encountered in creating and parsing Bitcoin objects, like turning
-difficulties into targets or deserializing and serializing various
-kinds of packed byte formats.
 
 .. automodule:: two1.bitcoin.utils
     :members:
