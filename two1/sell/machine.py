@@ -164,7 +164,7 @@ class Two1MachineNative(Two1Machine):
     def start_networking(self):
         """ Start ZeroTier daemon.
         """
-        if not self.status_zerotier():
+        if not self.status_networking():
             try:
                 subprocess.check_output(['sudo', 'service', 'zerotier-one', 'start'], stderr=subprocess.DEVNULL)
             except subprocess.CalledProcessError:

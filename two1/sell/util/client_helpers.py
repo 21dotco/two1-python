@@ -43,7 +43,8 @@ def get_platform():
                                        label="boot2docker")
         elif os.path.isfile('/sys/hypervisor/uuid') and (
                 'debian-8.' in detected_distro.lower() or
-                'ubuntu-14.04' in detected_distro.lower()):
+                'ubuntu-14.04' in detected_distro.lower() or
+                'ubuntu-16.04' in detected_distro.lower()):
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=True,
