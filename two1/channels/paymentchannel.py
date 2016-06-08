@@ -335,7 +335,8 @@ class PaymentChannel:
         """Get readiness of payment channel.
 
         Returns:
-            bool: True if payment channel is ready for payments, False if it is
+            bool:
+                True if payment channel is ready for payments, False if it is
                 not.
 
         """
