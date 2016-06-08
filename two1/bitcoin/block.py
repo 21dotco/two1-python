@@ -265,7 +265,7 @@ class Block(object):
         and continues with all nodes in the tree, one-in from the left edge.
 
         Returns:
-            edge (List(bytes)): List of hashes corresponding to the merkle edge
+            edge (list): a list of hashes corresponding to the merkle edge
         """
         return self._get_merkle_edge()
 

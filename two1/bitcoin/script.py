@@ -188,8 +188,9 @@ class Script(object):
             redeem_script (Script): The script used to redeem the coins.
 
         Returns:
-            Script: A multisig signature script. Note: if len(sigs) is less
-               than the minimum number required, the script will not be valid.
+            Script:
+                A multisig signature script. Note: if len(sigs) is less
+                than the minimum number required, the script will not be valid.
         """
         multisig_params = redeem_script.extract_multisig_redeem_info()
 
@@ -236,7 +237,8 @@ class Script(object):
                 validate script.
 
         Returns:
-            bool: True if script has the same OPs and types as template,
+            bool:
+                True if the script has the same OPs and types as template,
                 False otherwise.
         """
         if len(script) != len(template):
@@ -365,7 +367,8 @@ class Script(object):
         """ Returns the script's abstract syntax tree.
 
         Returns:
-            list: a nested list of opcodes which follow the flow of a script's
+            list:
+                a nested list of opcodes which follow the flow of a script's
                 conditional if/else branching.
         """
         if not self._ast:
@@ -402,7 +405,8 @@ class Script(object):
         """ Returns the signature and corresponding public key.
 
         Returns:
-            dict: Contains three keys:
+            dict:
+                Contains three keys:
                 'hash_type': Integer
                 'signature': The DER-encoded signature
                 'public_key': The bytes corresponding the public key.
@@ -435,10 +439,11 @@ class Script(object):
         """ Returns information about the multisig redeem script
 
         Returns:
-            dict: Contains the following list of keys:
-               'm' (int): Required number of signatures.
-               'n' (int): Maximum number of signatures.
-               'public_keys' (list): List of byte strings corresponding to public keys.
+            dict:
+                Contains the following list of keys:
+                'm' (int): Required number of signatures.
+                'n' (int): Maximum number of signatures.
+                'public_keys' (list): List of byte strings corresponding to public keys.
         """
         exc = TypeError("This script is not a multisig redeem script.")
 
@@ -482,9 +487,10 @@ class Script(object):
         """ Returns information about a multisig signature script.
 
         Returns:
-            dict: With the following key/value pairs:
+            dict:
+                With the following key/value pairs:
                 'signatures' (list): List of DER-encoded signatures with
-                                     hash_type appended at the end of the byte string.
+                hash_type appended at the end of the byte string.
                 'redeem_script' (Script): The associated redeem script.
         """
         # A signature script should start with OP_0

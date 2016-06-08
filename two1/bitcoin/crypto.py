@@ -63,7 +63,8 @@ class PrivateKeyBase(object):
         """ Returns the public key associated with this private key.
 
         Returns:
-            PublicKey: The PublicKey object that corresponds to this
+            PublicKey:
+                The PublicKey object that corresponds to this
                 private key.
         """
         return self._public_key
@@ -83,7 +84,8 @@ class PrivateKeyBase(object):
                the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
-            ECPointAffine: a raw point (r = pt.x, s = pt.y) which is
+            ECPointAffine:
+                a raw point (r = pt.x, s = pt.y) which is
                 the signature.
         """
         raise NotImplementedError
@@ -363,7 +365,8 @@ class PrivateKey(PrivateKeyBase):
         """ Returns the public key associated with this private key.
 
         Returns:
-            PublicKey: The PublicKey object that corresponds to this
+            PublicKey:
+                The PublicKey object that corresponds to this
                 private key.
         """
         if self._public_key is None:
@@ -386,7 +389,8 @@ class PrivateKey(PrivateKeyBase):
                 the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
-            ECPointAffine: a raw point (r = pt.x, s = pt.y) which is
+            ECPointAffine:
+                a raw point (r = pt.x, s = pt.y) which is
                 the signature.
         """
         if isinstance(message, str):
@@ -604,7 +608,7 @@ class PublicKey(PublicKeyBase):
     def from_hex(h):
         """ Generates a public key object from a hex-encoded string.
 
-            See from_bytes() for requirements of the hex string.
+        See from_bytes() for requirements of the hex string.
 
         Args:
             h (str): A hex-encoded string.
@@ -625,8 +629,9 @@ class PublicKey(PublicKeyBase):
                The recovery_id must not be None!
 
         Returns:
-            PublicKey: A PublicKey object derived from the
-               signature, it it exists. None otherwise.
+            PublicKey:
+                A PublicKey object derived from the
+                signature, it it exists. None otherwise.
         """
         if signature.recovery_id is None:
             raise ValueError("The signature must have a recovery_id.")
@@ -993,7 +998,8 @@ class HDKey(object):
             key (str): A Base58Check encoded key.
 
         Returns:
-            HDPrivateKey or HDPublicKey: Either an HD private or
+            HDPrivateKey or HDPublicKey:
+                Either an HD private or
                 public key object, depending on what was serialized.
         """
         return HDKey.from_bytes(base58.b58decode_check(key))
@@ -1010,7 +1016,8 @@ class HDKey(object):
             b (bytes): A byte stream conforming to the above.
 
         Returns:
-            HDPrivateKey or HDPublicKey: Either an HD private or
+            HDPrivateKey or HDPublicKey:
+                Either an HD private or
                 public key object, depending on what was serialized.
         """
         if len(b) < 78:
@@ -1053,15 +1060,17 @@ class HDKey(object):
     @staticmethod
     def from_hex(h):
         """ Generates either a HDPrivateKey or HDPublicKey from the underlying
-            hex-encoded string.
+        hex-encoded string.
 
-            The serialization must conform to the description in:
-            https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+        The serialization must conform to the description in:
+        https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+
         Args:
             h (str): A hex-encoded string conforming to the above.
 
         Returns:
-            HDPrivateKey or HDPublicKey: Either an HD private or
+            HDPrivateKey or HDPublicKey:
+                Either an HD private or
                 public key object, depending on what was serialized.
         """
         return HDKey.from_bytes(bytes.fromhex(h))
@@ -1207,8 +1216,9 @@ class HDKey(object):
         """ Serialization of the key for testnet.
 
         Returns:
-            bytes: A 78-byte serialization of the key, specifically for
-               testnet (i.e. the first 2 bytes will be 0x0435).
+            bytes:
+                A 78-byte serialization of the key, specifically for
+                testnet (i.e. the first 2 bytes will be 0x0435).
         """
         return self._serialize(True)
 
@@ -1267,9 +1277,10 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
                mnemonic string.
 
         Returns:
-            HDPrivateKey, str: a tuple consisting of the master
-               private key and a mnemonic string from which the seed
-               can be recovered.
+            HDPrivateKey, str:
+                a tuple consisting of the master
+                private key and a mnemonic string from which the seed
+                can be recovered.
         """
         if strength % 32 != 0:
             raise ValueError("strength must be a multiple of 32")
@@ -1353,7 +1364,8 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         """ Returns the public key associated with this private key.
 
         Returns:
-            HDPublicKey: The HDPublicKey object that corresponds to this
+            HDPublicKey:
+                The HDPublicKey object that corresponds to this
                 private key.
         """
         if self._public_key is None:
@@ -1381,7 +1393,8 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
                 the hash outside (e.g. handling Bitcoin bugs).
 
         Returns:
-            ECPointAffine: a raw point (r = pt.x, s = pt.y) which is
+            ECPointAffine:
+                a raw point (r = pt.x, s = pt.y) which is
                 the signature.
         """
         return self._key.raw_sign(message, do_hash)
@@ -1419,9 +1432,10 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
 
         Args:
             message (bytes or str): Message to be signed.
-            compressed (bool): True if the corresponding public key will be
-            used in compressed format. False if the uncompressed version
-            is used.
+            compressed (bool):
+                True if the corresponding public key will be
+                used in compressed format. False if the uncompressed version
+                is used.
 
         Returns:
             bytes: A Base64-encoded byte string of the signed message.
