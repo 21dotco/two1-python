@@ -1,6 +1,6 @@
 # Two1 Marketplace
 
-The `two1.mkt` module provides a convenient wrapper for interacting with first-parts apps in the 21.co marketplace. 
+The `two1.mkt` module provides a convenient wrapper for interacting with first-party apps in the 21.co marketplace. 
 
 ### Basic Usage
 
@@ -31,7 +31,7 @@ To use `mkt` we need to find a host and issue a request for some resource. The f
 ``` python
 from two1 import mkt
 
-mkt.zip_code_data..zipdata.collect
+mkt.zip_code_data.zipdata.collect
 ```
 
 What's happening:
