@@ -94,12 +94,12 @@ def main(ctx, json):
     merchant will accept as proof of payment within the 402 payments protocol.
     Example of opening a channel, making payments, and closing the channel:
 
-    $ 21 channels open https://mkt.21.co/bitcoin_auth/payment 100000 120\n
-    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ 21 channels pay https://mkt.21.co/bitcoin_auth/payment 100\n
-    $ 21 channels info https://mkt.21.co/bitcoin_auth/payment\n
-    $ 21 channels close https://mkt.21.co/bitcoin_auth/payment\n
+    $ channels open https://mkt.21.co/21dotco/payments/channel 100000 120\n
+    $ channels pay https://mkt.21.co/21dotco/payments/channel 100\n
+    $ channels pay https://mkt.21.co/21dotco/payments/channel 100\n
+    $ channels pay https://mkt.21.co/21dotco/payments/channel 100\n
+    $ channels info https://mkt.21.co/21dotco/payments/channel\n
+    $ channels close https://mkt.21.co/21dotco/payments/channel\n
     """
     client = PaymentChannelClient(Wallet(WALLET_PATH), CHANNELS_DB_PATH)
     ctx.obj = {'client': client, 'json': json}
