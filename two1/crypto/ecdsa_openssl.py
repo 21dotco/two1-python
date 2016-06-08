@@ -174,8 +174,9 @@ class EllipticCurve(EllipticCurveBase):
             random_generator (generator): The random generator to use.
 
         Returns:
-            tuple: A private key in the range of 1 to `self.n - 1`
-               and an ECPointAffine containing the public key point.
+            tuple:
+                A private key in the range of 1 to `self.n - 1`
+                and an ECPointAffine containing the public key point.
         """
         private = random_generator.randrange(1, self.n)
         return private, self.public_key(private)
