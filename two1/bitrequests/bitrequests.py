@@ -47,7 +47,8 @@ class BitRequests(object):
             max_price (int): maximum allowed price for a request (in satoshi).
 
         Returns:
-            headers (dict): dict of headers with payment data to send to the
+            headers (dict):
+                dict of headers with payment data to send to the
                 API server to inform payment status for the resource.
         """
         raise NotImplementedError()
@@ -59,7 +60,8 @@ class BitRequests(object):
             url (string): URL of the requested resource.
 
         Returns:
-            headers (dict): dict of headers from the resource.
+            headers (dict):
+                dict of headers from the resource.
                 Example: {'price': 5000, 'username': 'some_merchant'}
         """
         raise NotImplementedError()
@@ -109,7 +111,8 @@ class BitRequests(object):
             max_price (int): maximum allowed price for a request (in satoshi).
 
         Returns:
-            response (requests.response): successful response from paying for
+            response (requests.response):
+                successful response from paying for
                 the requested resource.
         """
         # Make the initial request for the resource
