@@ -15,7 +15,8 @@ def get_daemonizer():
     """ Returns the appropriate daemonizer class for the system.
 
     Returns:
-        Daemonizer: A daemonizer class that can be used to install/uninstall,
+        Daemonizer:
+            A daemonizer class that can be used to install/uninstall,
             enable/disable, and start/stop the daemon. If the init system of
             the OS is not supported, this will be None.
     """
@@ -56,7 +57,8 @@ class Daemonizer(object):
         """ Installs the daemon into the init system.
 
         Returns:
-            bool: True if the daemon was successfully installed, False
+            bool:
+                True if the daemon was successfully installed, False
                 otherwise.
         """
         raise NotImplementedError
@@ -66,7 +68,8 @@ class Daemonizer(object):
         """ Un-installs the daemon from the init system.
 
         Returns:
-            bool: True if the daemon was successfully un-installed, False
+            bool:
+                True if the daemon was successfully un-installed, False
                 otherwise.
         """
         raise NotImplementedError
@@ -86,7 +89,8 @@ class Daemonizer(object):
         """ Enables the daemon within the init system.
 
         Returns:
-            bool: True if the daemon was successfully enabled, False
+            bool:
+                True if the daemon was successfully enabled, False
                 otherwise.
         """
         raise NotImplementedError
@@ -96,7 +100,8 @@ class Daemonizer(object):
         """ Disables the daemon within the init system.
 
         Returns:
-            bool: True if the daemon was successfully disabled, False
+            bool:
+                True if the daemon was successfully disabled, False
                 otherwise.
         """
         raise NotImplementedError
@@ -116,7 +121,8 @@ class Daemonizer(object):
         """ Starts the daemon.
 
         Returns:
-            bool: True if the daemon was successfully started, False
+            bool:
+                True if the daemon was successfully started, False
                 otherwise.
         """
         raise NotImplementedError
@@ -126,7 +132,8 @@ class Daemonizer(object):
         """ Stops the daemon.
 
         Returns:
-            bool: True if the daemon was successfully stopped, False
+            bool:
+                True if the daemon was successfully stopped, False
                 otherwise.
         """
         raise NotImplementedError
@@ -160,7 +167,8 @@ WantedBy=default.target
         """ Checks to see if systemd/systemctl are installed.
 
         Returns:
-            bool: True if both systemd and systemctl are installed and
+            bool:
+                True if both systemd and systemctl are installed and
                 in the path.
         """
         return shutil.which("systemctl") is not None
@@ -294,7 +302,8 @@ WantedBy=default.target
                 'api_key_secret': The API secret to use (if required)
 
         Returns:
-            bool: True if the daemon was successfully installed, False
+            bool:
+                True if the daemon was successfully installed, False
                 otherwise.
         """
         rv = False
@@ -329,7 +338,8 @@ WantedBy=default.target
         file from /etc/systemd/user.
 
         Returns:
-            bool: True if the daemon was successfully un-installed, False
+            bool:
+                True if the daemon was successfully un-installed, False
                 otherwise.
         """
         if cls.SERVICE_FILE_PATH.exists():
@@ -352,7 +362,8 @@ WantedBy=default.target
         """ Enables the daemon within systemd.
 
         Returns:
-            bool: True if the daemon was successfully enabled, False
+            bool:
+                True if the daemon was successfully enabled, False
                 otherwise.
         """
         rv = False
@@ -376,7 +387,8 @@ WantedBy=default.target
         """ Disables the daemon within systemd.
 
         Returns:
-            bool: True if the daemon was successfully disabled, False
+            bool:
+                True if the daemon was successfully disabled, False
                 otherwise.
         """
         rv = False
@@ -408,7 +420,8 @@ WantedBy=default.target
         """ Starts the daemon.
 
         Returns:
-            bool: True if the daemon was successfully started, False
+            bool:
+                True if the daemon was successfully started, False
                 otherwise.
         """
         rv = False
@@ -433,7 +446,8 @@ WantedBy=default.target
         """ Stops the daemon.
 
         Returns:
-            bool: True if the daemon was successfully stopped, False
+            bool:
+                True if the daemon was successfully stopped, False
                 otherwise.
         """
         rv = False
@@ -575,7 +589,8 @@ class Launchd(Daemonizer):
                 'api_key_secret': The API secret to use (if required)
 
         Returns:
-            bool: True if the daemon was successfully installed, False
+            bool:
+                True if the daemon was successfully installed, False
                 otherwise.
         """
         dpo = data_provider_options
@@ -604,7 +619,8 @@ class Launchd(Daemonizer):
         file from ~/Library/LaunchAgents.
 
         Returns:
-            bool: True if the daemon was successfully un-installed, False
+            bool:
+                True if the daemon was successfully un-installed, False
                 otherwise.
         """
         cls.stop()
@@ -639,7 +655,8 @@ class Launchd(Daemonizer):
         """ Disables the agent by removing the PLIST file.
 
         Returns:
-            bool: True if the agent was successfully uninstalled, False
+            bool:
+                True if the agent was successfully uninstalled, False
                 otherwise.
         """
         return cls.uninstall()
@@ -672,7 +689,8 @@ class Launchd(Daemonizer):
         """ Starts the agent.
 
         Returns:
-            bool: True if the agent was successfully started, False
+            bool:
+                True if the agent was successfully started, False
                 otherwise.
         """
         rv = False
@@ -699,7 +717,8 @@ class Launchd(Daemonizer):
         """ Stops the agent.
 
         Returns:
-            bool: True if the agent was successfully stopped, False
+            bool:
+                True if the agent was successfully stopped, False
                 otherwise.
         """
         rv = True

@@ -170,7 +170,8 @@ class Two1Wallet(BaseWallet):
         """ Returns whether a wallet is locked with a passphrase.
 
         Returns:
-            bool: True if the wallet has been locked with a
+            bool:
+                True if the wallet has been locked with a
                 passphrase, False otherwise.
         """
         locked = False
@@ -192,7 +193,8 @@ class Two1Wallet(BaseWallet):
         the wallet.
 
         Returns:
-            bool: True if the wallet file exists and is ready to use,
+            bool:
+                True if the wallet file exists and is ready to use,
                 False otherwise.
 
         """
@@ -216,7 +218,8 @@ class Two1Wallet(BaseWallet):
         wallet.
 
         Returns:
-            bool: True if the default wallet has been configured and
+            bool:
+                True if the default wallet has been configured and
                 ready to use. Otherwise False.
         """
         return Two1Wallet.check_wallet_file()
@@ -235,7 +238,8 @@ class Two1Wallet(BaseWallet):
                 variable of the same name.
 
         Returns:
-            bool: True if the wallet was created and written to disk,
+            bool:
+                True if the wallet was created and written to disk,
                 False otherwise.
         """
         wallet_path = config_options.get('wallet_path',
@@ -735,11 +739,12 @@ class Two1Wallet(BaseWallet):
         index for the chain are checked.
 
         Args:
-            addresses (list(str)): list of Base58Check encoded addresses.
+            addresses (list): list of Base58Check encoded addresses.
 
         Returns:
-            dict: Dict keyed by address with the path (account index first)
-               corresponding to the derivation path for that key.
+            dict:
+                Dict keyed by address with the path (account index first)
+                corresponding to the derivation path for that key.
         """
         addrs = addresses
         found = {}
@@ -764,8 +769,9 @@ class Two1Wallet(BaseWallet):
             address (str): Base58Check encoded bitcoin address.
 
         Returns:
-            str or None: The full key derivation path if found. Otherwise,
-               returns None.
+            str or None:
+                The full key derivation path if found. Otherwise,
+                returns None.
         """
         found = self.find_addresses([address])
 
@@ -807,10 +813,11 @@ class Two1Wallet(BaseWallet):
             accounts (list): A list of either account indices or names.
 
         Returns:
-            dict: A dict keyed by address containing a list of
-               UnspentTransactionOutput objects for that address. Only
-               addresses for which there are current UTXOs are
-               included.
+            dict:
+                A dict keyed by address containing a list of
+                UnspentTransactionOutput objects for that address. Only
+                addresses for which there are current UTXOs are
+                included.
         """
         utxos = {}
         for acct in self._check_and_get_accounts(accounts):
@@ -884,7 +891,8 @@ class Two1Wallet(BaseWallet):
             accounts (list): A list of either account indices or names.
 
         Returns:
-            dict: A dict keyed by account name containing a list of bitcoin
+            dict:
+                A dict keyed by account name containing a list of bitcoin
                 addresses for that account.
         """
         addresses = {}
@@ -1038,7 +1046,8 @@ class Two1Wallet(BaseWallet):
                 retrieved and used to sign the message.
 
         Returns:
-            str: A Base64-encoded string of the signature.
+            str:
+                A Base64-encoded string of the signature.
                 The first byte of the encoded message contains information
                 about how to recover the public key. In bitcoind parlance,
                 this is the magic number containing the recovery ID and
@@ -1167,7 +1176,7 @@ class Two1Wallet(BaseWallet):
                 greater than CacheManager.PROVISIONAL_MAX_DURATION
                 seconds in the future.
             fees (int): Specify the fee amount manually.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
@@ -1320,7 +1329,7 @@ class Two1Wallet(BaseWallet):
                 greater than CacheManager.PROVISIONAL_MAX_DURATION
                 seconds in the future.
             fees (int): Specify the fee amount manually.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
@@ -1363,7 +1372,7 @@ class Two1Wallet(BaseWallet):
                 greater than CacheManager.PROVISIONAL_MAX_DURATION
                 seconds in the future.
             fees (int): Specify the fee amount manually.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
@@ -1392,7 +1401,7 @@ class Two1Wallet(BaseWallet):
                send to that address.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             fees (int): Specify the fee amount manually.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
@@ -1430,7 +1439,7 @@ class Two1Wallet(BaseWallet):
             amount (int): The amount of Bitcoin - *in satoshis* - to send.
             use_unconfirmed (bool): Use unconfirmed transactions if necessary.
             fees (int): Specify the fee amount manually.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                not provided, all discovered accounts may be used based
                on the chosen UTXO selection algorithm.
 
@@ -1451,7 +1460,7 @@ class Two1Wallet(BaseWallet):
         Args:
             threshold (int): UTXO value must be >= to this value.
             include_unconfirmed (bool): Include unconfirmed UTXOs.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                 not provided, all discovered accounts will be done.
         """
         if not accounts:
@@ -1495,7 +1504,7 @@ class Two1Wallet(BaseWallet):
 
         Args:
             address (str): Bitcoin address to send entire balance to.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                 not provided, all discovered accounts will be done.
             fee_calculator (callable): A callable that calculates the
                 fee needed in satoshis from positional arguments
@@ -1558,7 +1567,7 @@ class Two1Wallet(BaseWallet):
             threshold (int): UTXO value must be >= to this value (in satoshis).
             num_addresses (int): Number of addresses to spread out the
                 matching UTXOs over. This must be > 1 and <= 100.
-            accounts (list(str or int)): List of accounts to use. If
+            accounts (list): List of accounts to use. If
                 not provided, all discovered accounts will be done.
         """
         # Limit the number of spreading addresses so that we don't
@@ -1636,7 +1645,8 @@ class Two1Wallet(BaseWallet):
         """ Balance for the wallet.
 
         Returns:
-            dict: Keys are 'confirmed' and 'total' with values being in
+            dict:
+                Keys are 'confirmed' and 'total' with values being in
                 satoshis. The 'total' balance includes any unconfirmed
                 transactions.
         """
@@ -1879,7 +1889,8 @@ class Wallet(object):
                 should have loaded up.
 
         Returns:
-            UnixSocketServerProxy: Returns the wallet proxy object
+            UnixSocketServerProxy:
+                Returns the wallet proxy object
                 used to communicate with the daemon, or None if the
                 daemon is not running.
         """
