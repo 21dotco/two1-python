@@ -60,7 +60,8 @@ class PaymentBase:
         """Derived list of headers to use for payment processing.
 
         Returns:
-            (list): List of required headers that a client should present
+            (list):
+                List of required headers that a client should present
                 in order to redeem a payment of this method.
                 Example: ['Bitcoin-Transaction']
         """
@@ -72,7 +73,8 @@ class PaymentBase:
         Args:
             price: Endpoint price in satoshis
         Returns:
-            (dict): Dict of headers that the server uses to inform the client
+            (dict):
+                Dict of headers that the server uses to inform the client
                 how to remit payment for the resource.
                 Example: {'address': '1MDxJYsp4q4P46RiigaGzrdyi3dsNWCTaR', 'price': 500}
         """
