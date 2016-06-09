@@ -1,6 +1,5 @@
 """Buy from a machine-payable endpoint."""
 # standart python imports
-import re
 import sys
 import json
 import urllib.parse
@@ -118,12 +117,15 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
             raise click.ClickException(uxstring.UxString.buy_channel_aborted)
 
     # Parse the url and validate its format
-    if re.match(r'^(((\w*)(\/){0,1})(\w*)){0,2}(\/){0,1}$', resource):
+    parse_result = urllib.parse.urlparse(resource)
+
+    # match for short address syntax through 21 market
+    if parse_result.scheme == "" and parse_result.netloc == "":
         resource = 'https://mkt.21.co/' + resource
-    _resource = urllib.parse.urlparse(resource)
+        parse_result = urllib.parse.urlparse(resource)
 
     # Assume `http` as default protocol
-    if 'http' not in _resource.scheme:
+    if 'http' not in parse_result.scheme:
         resource = 'http://' + resource
 
     # Retrieve 402-related header information, print it, then exit
