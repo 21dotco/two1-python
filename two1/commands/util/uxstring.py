@@ -14,10 +14,12 @@ def ux(name, *args, **kwargs):
     """Format the given ux string and print to the log.
 
     Instead of doing this:
-    >>> logger.info(uxstring.UxString.foo.format(username, reward))
+    >>> logger.info(UxString.creating_account.format('john'))
+    Creating 21.co account. Username: john
 
     You can do this:
-    >>> ux('foo', username, reward)
+    >>> ux('creating_account', 'john')
+    Creating 21.co account. Username: john
 
     This simplifies much of the CLI UX.
     """
