@@ -8,6 +8,9 @@ import json
 import codecs
 import logging
 import requests
+import urllib.parse
+
+import two1.commands.util.exceptions as exceptions
 
 logger = logging.getLogger('bitrequests')
 
@@ -253,11 +256,17 @@ class OnChainRequests(BitRequests):
 
     HTTP_BITCOIN_PRICE = 'price'
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
+    HTTP_PAYER_21USERNAME = 'Payer-21Username'
 
     def __init__(self, wallet):
         """Initialize the on-chain request with a wallet."""
         super().__init__()
         self.wallet = wallet
+        try:
+            import two1.commands.util.config as config
+            self.username = config.Config().username
+        except exceptions.FileDecodeError:
+            self.username = None
 
     def make_402_payment(self, response, max_price):
         """Make an on-chain payment."""
@@ -286,10 +295,12 @@ class OnChainRequests(BitRequests):
         logger.debug('[OnChainRequests] Signed transaction: {}'.format(
             onchain_payment))
 
-        return {
-            'Bitcoin-Transaction': onchain_payment,
-            'Return-Wallet-Address': return_address
-        }
+        res = {'Bitcoin-Transaction': onchain_payment,
+               'Return-Wallet-Address': return_address,
+               OnChainRequests.HTTP_BITCOIN_PRICE: price}
+        if self.username:
+            res[OnChainRequests.HTTP_PAYER_21USERNAME] = urllib.parse.quote(self.username)
+        return res
 
     def get_402_info(self, url):
         """Get on-chain payment information about the resource."""
@@ -308,6 +319,7 @@ class ChannelRequests(BitRequests):
     HTTP_BITCOIN_PRICE = 'price'
     HTTP_BITCOIN_PAYMENT_CHANNEL_SERVER = 'bitcoin-payment-channel-server'
     HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN = 'bitcoin-payment-channel-token'
+    HTTP_PAYER_21USERNAME = 'Payer-21Username'
 
     DEFAULT_DEPOSIT_AMOUNT = 100000
     DEFAULT_DURATION = 86400
@@ -320,6 +332,11 @@ class ChannelRequests(BitRequests):
         self._channelclient = ChannelRequests.channels.PaymentChannelClient(wallet)
         self._deposit_amount = deposit_amount
         self._duration = duration
+        try:
+            import two1.commands.util.config as config
+            self.username = config.Config().username
+        except exceptions.FileDecodeError:
+            self.username = None
 
     def make_402_payment(self, response, max_price):
         """Make a channel payment."""
@@ -390,7 +407,11 @@ class ChannelRequests(BitRequests):
             # negotiate a new channel.
             return self.make_402_payment(response, max_price)
 
-        return {ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token}
+        res = {ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token,
+               ChannelRequests.HTTP_BITCOIN_PRICE: price}
+        if self.username:
+            res[ChannelRequests.HTTP_PAYER_21USERNAME] = urllib.parse.quote(self.username)
+        return res
 
     def get_402_info(self, url):
         """Get channel payment information about the resource."""
