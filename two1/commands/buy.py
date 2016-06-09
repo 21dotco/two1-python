@@ -79,8 +79,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
             function decorator.
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        machine_auth (two1.server.machine_auth.MachineAuthWallet): a wallet used
-            for machine authentication.
+        machine_auth (two1.server.machine_auth_wallet.MachineAuthWallet): a wallet
+            used for machine authentication.
         resource (str): a URI of the form scheme://host:port/path with `http`
             and `https` strictly enforced as required schemes.
         info_only (bool): if True, do not purchase the resource, and cause the
