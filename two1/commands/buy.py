@@ -1,5 +1,6 @@
 """Buy from a machine-payable endpoint."""
 # standart python imports
+import re
 import sys
 import json
 import urllib.parse
@@ -65,6 +66,41 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
 
+def parse_resource(resource):
+    """
+    >>> parse_resource('https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504')
+    'https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504'
+
+    >>> parse_resource('https://10.10.10.10:5000/buy')
+    'https://10.10.10.10:5000/buy'
+
+    >>> parse_resource('10.10.10.10:5000/buy')
+    'http://10.10.10.10:5000/buy'
+
+    >>> parse_resource('21dotco/zip_code_data/zipdata/collect?zip_code=10504')
+    'https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504'
+
+    >>> parse_resource('10.10.10.10:50')
+    'http://10.10.10.10:50'
+
+    """
+    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource):
+        resource = 'http://' + resource
+
+    # Parse the url and validate its format
+    parse_result = urllib.parse.urlparse(resource)
+
+    # match for short address syntax through 21 market
+    if parse_result.scheme == "" and parse_result.netloc == "":
+        resource = 'https://mkt.21.co/' + resource
+        parse_result = urllib.parse.urlparse(resource)
+
+    # Assume `http` as default protocol
+    if not parse_result.scheme:
+        resource = 'http://' + resource
+    return resource
+
+
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(),
          method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
     """Purchase a 402-enabled resource via CLI.
@@ -79,8 +115,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
             function decorator.
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
-        machine_auth (two1.server.machine_auth.MachineAuthWallet): a wallet used
-            for machine authentication.
+        machine_auth (two1.server.machine_auth_wallet.MachineAuthWallet): a wallet
+            used for machine authentication.
         resource (str): a URI of the form scheme://host:port/path with `http`
             and `https` strictly enforced as required schemes.
         info_only (bool): if True, do not purchase the resource, and cause the
@@ -116,17 +152,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         if not confirmed:
             raise click.ClickException(uxstring.UxString.buy_channel_aborted)
 
-    # Parse the url and validate its format
-    parse_result = urllib.parse.urlparse(resource)
-
-    # match for short address syntax through 21 market
-    if parse_result.scheme == "" and parse_result.netloc == "":
-        resource = 'https://mkt.21.co/' + resource
-        parse_result = urllib.parse.urlparse(resource)
-
-    # Assume `http` as default protocol
-    if 'http' not in parse_result.scheme:
-        resource = 'http://' + resource
+    resource = parse_resource(resource)
 
     # Retrieve 402-related header information, print it, then exit
     if info_only:
