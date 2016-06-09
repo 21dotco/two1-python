@@ -106,6 +106,16 @@ def check_notifications(func):
     return functools.update_wrapper(_check_notifications, func)
 
 
+def get_full_name(ctx):
+    """
+    Return the fully qualified name of the command.
+    """
+    if ctx.parent is None:  # This is `two1.cli.main`
+        return '21'
+    else:
+        return get_full_name(ctx.parent) + '_' + ctx.command.name
+
+
 def capture_usage(func):
     """ Wraps a 21 CLI command in a function that logs usage statistics
 
@@ -145,15 +155,6 @@ def capture_usage(func):
         username = "unknown"
         if hasattr(config, "username"):
             username = config.username
-
-        def get_full_name(ctx):
-            """
-            Return the fully qualified name of the command.
-            """
-            if ctx.parent is None:  # This is `two1.cli.main`
-                return '21'
-            else:
-                return get_full_name(ctx.parent) + '_' + ctx.command.name
 
         # log payload as a dict
         data = {
