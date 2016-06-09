@@ -193,7 +193,8 @@ class PaymentChannelStateMachine:
                 deposit transaction.
 
         Returns:
-            tuple: Serialized deposit transaction (ASCII hex), and serialized
+            tuple:
+                Serialized deposit transaction (ASCII hex), and serialized
                 redeem script (ASCII hex).
 
         Raises:

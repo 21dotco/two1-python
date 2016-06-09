@@ -68,7 +68,8 @@ class BaseWallet(object):
         wallet.
 
         Returns:
-            bool: True if the wallet has been configured and ready to
+            bool:
+                True if the wallet has been configured and ready to
                 use otherwise False
         """
         raise NotImplementedError('Abstract class, `is_configured` must be overridden')

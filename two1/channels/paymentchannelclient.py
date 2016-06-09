@@ -202,7 +202,8 @@ class PaymentChannelClient:
             include_txs (bool): Include raw channel transactions.
 
         Returns:
-            PaymentChannelStatus: Named tuple with url (str), state
+            PaymentChannelStatus:
+                Named tuple with url (str), state
                 (PaymentChannelState), ready (bool), balance (int, satoshis),
                 deposit (int, satoshis), fee (int, satoshis), creation_time
                 (float, UNIX time), expiration_time (int, UNIX time), expired

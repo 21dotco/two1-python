@@ -40,8 +40,9 @@ class TransactionInput(object):
             b (bytes): byte stream starting with the outpoint.
 
         Returns:
-            tuple: First element of the tuple is the TransactionInput
-                   object and the second is the remaining byte stream.
+            tuple:
+                 First element of the tuple is the TransactionInput
+                 object and the second is the remaining byte stream.
         """
         outpoint = b[0:32]
         outpoint_index, b1 = unpack_u32(b[32:])
@@ -193,8 +194,9 @@ class TransactionOutput(object):
             b (bytes): byte-stream beginning with the value.
 
         Returns:
-            tuple: First element of the tuple is a TransactionOutput,
-                   the second is the remainder of the byte stream.
+            tuple:
+                First element of the tuple is a TransactionOutput,
+                the second is the remainder of the byte stream.
         """
         value, b0 = unpack_u64(b)
         script_len, b0 = unpack_compact_int(b0)
@@ -304,8 +306,9 @@ class Transaction(object):
             b (bytes): byte stream starting with the version.
 
         Returns:
-            tuple: First element of the tuple is the Transaction,
-                   second is the remainder of the byte stream.
+            tuple:
+                First element of the tuple is the Transaction,
+                second is the remainder of the byte stream.
         """
         # First 4 bytes are version
         version = struct.unpack('<I', b[:4])[0]
@@ -466,10 +469,10 @@ class Transaction(object):
                                 sub_script):
         """ Returns the signature for an input.
 
-            This function only returns the signature for an input, it
-            does not insert the signature into the script member of
-            the input. It also does not validate that the given private key
-            matches any public keys in the sub_script.
+        This function only returns the signature for an input, it
+        does not insert the signature into the script member of
+        the input. It also does not validate that the given private key
+        matches any public keys in the sub_script.
 
         Args:
             input_index (int): The index of the input to sign.
@@ -481,7 +484,8 @@ class Transaction(object):
                 script if the outpoint is P2SH.
 
         Returns:
-            tuple: A tuple containing the signature object and the message that
+            tuple:
+                A tuple containing the signature object and the message that
                 was signed.
         """
         if input_index < 0 or input_index >= len(self.inputs):
@@ -799,7 +803,8 @@ class Transaction(object):
             testnet (bool): True if the transaction is a testnet transaction.
 
         Returns:
-            dict: A dict containing the following key/value pairs:
+            dict:
+                A dict containing the following key/value pairs:
                 'inputs': list of lists of addresses, one per input
                 'outputs': list of lists of addresses, one per output
         """

@@ -184,9 +184,10 @@ class HDAccount(object):
             addresses (list(str)): List of Base58Check encoded addresses
 
         Returns:
-            dict: Dictionary keyed by address where the value is a tuple
-               containing the chain (0 or 1) and child index in the chain.
-               Only found addresses are included in the dict.
+            dict:
+                Dictionary keyed by address where the value is a tuple
+                containing the chain (0 or 1) and child index in the chain.
+                Only found addresses are included in the dict.
         """
         found = {}
         for change in [0, 1]:
@@ -351,7 +352,8 @@ class HDAccount(object):
         account.
 
         Returns:
-            dict: 'confirmed' and 'total' keys with balance values in
+            dict:
+                'confirmed' and 'total' keys with balance values in
                 satoshis for each. The total balance includes
                 unconfirmed transactions.
         """
