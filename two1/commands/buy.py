@@ -65,6 +65,21 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
 
+def parse_resource(resource):
+    # Parse the url and validate its format
+    parse_result = urllib.parse.urlparse(resource)
+
+    # match for short address syntax through 21 market
+    if parse_result.scheme == "" and parse_result.netloc == "":
+        resource = 'https://mkt.21.co/' + resource
+        parse_result = urllib.parse.urlparse(resource)
+
+    # Assume `http` as default protocol
+    if 'http' not in parse_result.scheme:
+        resource = 'http://' + resource
+    return resource
+
+
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(),
          method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
     """Purchase a 402-enabled resource via CLI.
@@ -116,17 +131,7 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         if not confirmed:
             raise click.ClickException(uxstring.UxString.buy_channel_aborted)
 
-    # Parse the url and validate its format
-    parse_result = urllib.parse.urlparse(resource)
-
-    # match for short address syntax through 21 market
-    if parse_result.scheme == "" and parse_result.netloc == "":
-        resource = 'https://mkt.21.co/' + resource
-        parse_result = urllib.parse.urlparse(resource)
-
-    # Assume `http` as default protocol
-    if 'http' not in parse_result.scheme:
-        resource = 'http://' + resource
+    resource = parse_resource(resource)
 
     # Retrieve 402-related header information, print it, then exit
     if info_only:
