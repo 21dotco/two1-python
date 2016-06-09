@@ -1,5 +1,6 @@
 """Buy from a machine-payable endpoint."""
 # standart python imports
+import re
 import sys
 import json
 import urllib.parse
@@ -66,6 +67,26 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
 
 
 def parse_resource(resource):
+    """
+    >>> parse_resource('https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504')
+    'https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504'
+
+    >>> parse_resource('https://10.10.10.10:5000/buy')
+    'https://10.10.10.10:5000/buy'
+
+    >>> parse_resource('10.10.10.10:5000/buy')
+    'http://10.10.10.10:5000/buy'
+
+    >>> parse_resource('21dotco/zip_code_data/zipdata/collect?zip_code=10504')
+    'https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=10504'
+
+    >>> parse_resource('10.10.10.10:50')
+    'http://10.10.10.10:50'
+
+    """
+    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource):
+        resource = 'http://' + resource
+
     # Parse the url and validate its format
     parse_result = urllib.parse.urlparse(resource)
 
@@ -75,7 +96,7 @@ def parse_resource(resource):
         parse_result = urllib.parse.urlparse(resource)
 
     # Assume `http` as default protocol
-    if 'http' not in parse_result.scheme:
+    if not parse_result.scheme:
         resource = 'http://' + resource
     return resource
 
