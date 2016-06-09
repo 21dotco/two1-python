@@ -109,6 +109,12 @@ def check_notifications(func):
 def get_full_name(ctx):
     """
     Return the fully qualified name of the command.
+
+    >>> main_ctx = click.Context(click.Command('main'))
+    >>> market_ctx = click.Context(click.Command('market'), parent=main_ctx)
+    >>> join_ctx = click.Context(click.Command('join'), parent=market_ctx)
+    >>> get_full_name(join_ctx)
+    '21_market_join'
     """
     if ctx.parent is None:  # This is `two1.cli.main`
         return '21'
