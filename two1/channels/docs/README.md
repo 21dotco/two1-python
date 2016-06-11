@@ -54,7 +54,7 @@ Payment channels consist of negotiating an `open` stage, an active `ready` stage
 
     ```
 
-    How do we spend these transactions? Well in terms of a refund, you'll notice that the CLTV-style refund/payment transaction can behave in two different ways. The `OP_IF` opcode will branch depending on whether the value immediately preceeding it is `0` or `1`. In the case of a refund, we craft it as follows. Notice that we pay back less than we initially deposited, leaving fees for the transaction to be confirmed.
+    How do we spend these transactions? Well in terms of a refund, you'll notice that the CLTV-style refund/payment transaction can behave in two different ways. The `OP_IF` opcode will branch depending on whether the value immediately preceding it is `0` or `1`. In the case of a refund, we craft it as follows. Notice that we pay back less than we initially deposited, leaving fees for the transaction to be confirmed.
 
     ```
     Refund layout:
@@ -94,7 +94,7 @@ Payment channels consist of negotiating an `open` stage, an active `ready` stage
 
 #### Channel close
 
-- **Customer requests merchant to close the channel.** This happens if the customer spends the the full balance of the channel, or simply wishes to discontinue making payments in the channel. It is not a required part of the protocol, but it is generally courteous for the customer to do so. The merchant would then sign the remaining half of the transaction and broadcast it to the network.
+- **Customer requests merchant to close the channel.** This happens if the customer spends the full balance of the channel, or simply wishes to discontinue making payments in the channel. It is not a required part of the protocol, but it is generally courteous for the customer to do so. The merchant would then sign the remaining half of the transaction and broadcast it to the network.
 
     ```
     Fully-signed payment layout:
