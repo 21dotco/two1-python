@@ -2,9 +2,9 @@
 
 ![21 logo](docs/img/21_banner.png "21")
 
-`two1` is an open source project containing a command line tool and python library that enable you to build the [machine-payable web](https://21.co).
+21 is building the [machine-payable web](https://21.co).
 
-You can buy bitcoin at the command line or earn it by selling machine-payable APIs that you've published to the [21 Marketplace](https://21.co/mkt). Use this bitcoin to purchase other API calls or send it to another address you control. The package includes:
+The `two1` open source project contains both a command line tool and Python library that you can use to buy bitcoin at the command line or to earn bitcoin by selling machine-payable APIs that you've published to the [21 Marketplace](https://21.co/mkt). Use this bitcoin to purchase other API calls or send it to another address you control. The package includes:
 
 - an HD wallet to securely manage your bitcoin
 - crypto and bitcoin libraries to build bitcoin/blockchain applications
