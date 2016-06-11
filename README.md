@@ -1,4 +1,4 @@
-# 21: Build the Machine-payable Web [![Build Status](https://travis-ci.org/21dotco/two1-python.svg?branch=master)](https://travis-ci.org/21dotco/two1-python)
+# 21: Build the Machine-Payable Web [![Build Status](https://travis-ci.org/21dotco/two1-python.svg?branch=master)](https://travis-ci.org/21dotco/two1-python)
 
 ![21 logo](docs/img/21_banner.png "21")
 
