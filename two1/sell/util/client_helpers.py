@@ -28,8 +28,8 @@ def get_platform():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=False,
-                                       help_message="The `21 sell` service manager "
-                                       "is not yet supported on the Bitcoin Computer. "
+                                       help_message="`21 sell` is currently only available on "
+                                       "Mac OS X and Ubuntu 14.04 on Amazon Web Services. "
                                        "Please visit %s to get started hosting "
                                        "machine-payable servers on your Bitcoin "
                                        "Computer." % PING21_LEARN_URL,
@@ -54,12 +54,12 @@ def get_platform():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=False,
-                                       help_message="The `21 sell` service manager is not "
-                                       "yet available on this system.",
+                                       help_message="`21 sell` is currently only available on "
+                                       "Mac OS X and Ubuntu 14.04 LTS on Amazon Web Services.",
                                        label="")
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
                                is_supported=False,
                                help_message="",
-                               label="The `21 sell` service manager is not yet "
-                               "available on this system.")
+                               label="`21 sell` is currently only available on "
+                               "Mac OS X and Ubuntu 14.04 LTS on Amazon Web Services.")
