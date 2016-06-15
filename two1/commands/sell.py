@@ -167,7 +167,7 @@ $ 21 sell start --all
         else:
             sys.exit()
     # ensure docker service is running
-    if manager.status_docker() == False:
+    if manager.status_docker() is False:
         if click.confirm(click.style(
                 "Docker service is not running. Would you like to start "
                 "the service?", fg=cli_helpers.PROMPT_COLOR)):

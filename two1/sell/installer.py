@@ -31,7 +31,7 @@ class Two1SellInstaller:
             # ubuntu/debian aws
             self.DOCKER_TOOLS.remove('Virtualbox')
             self.DOCKER_TOOLS.remove('Docker Machine')
-            self.installer = InstallerAWSUbuntuDebian()
+            self.installer = InstallerDebian()
         else:
             sys.exit()
 
@@ -286,7 +286,7 @@ class InstallerMac(InstallerBase):
         return exit_code
 
 
-class InstallerAWSUbuntuDebian(InstallerBase):
+class InstallerDebian(InstallerBase):
     """ Debian/Ubuntu Installer.
     """
 
