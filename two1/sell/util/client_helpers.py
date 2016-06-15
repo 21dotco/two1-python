@@ -57,6 +57,12 @@ def get_platform():
                                        help_message="`21 sell` is currently only available on "
                                        "Mac OS X and Ubuntu 14.04 LTS on Amazon Web Services.",
                                        label="")
+        elif 'centos' in detected_distro.lower():
+            return PlatformDescription(detected_os=detected_os,
+                                       detected_distro=detected_distro,
+                                       is_supported=True,
+                                       help_message="",
+                                       label="centos")
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
                                is_supported=False,

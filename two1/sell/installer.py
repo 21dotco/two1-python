@@ -24,7 +24,10 @@ class Two1SellInstaller:
             # mac os x
             self.installer = InstallerMac()
         elif system == "Linux" and (
-                'debian-8.' in distro.lower() or 'ubuntu-14.04' in distro.lower() or 'ubuntu-16.04' in distro.lower()):
+                'debian-8.' in distro.lower() or
+                'ubuntu-14.04' in distro.lower() or
+                'ubuntu-16.04' in distro.lower() or
+                'centos' in distro.lower()):
             # ubuntu/debian aws
             self.DOCKER_TOOLS.remove('Virtualbox')
             self.DOCKER_TOOLS.remove('Docker Machine')
