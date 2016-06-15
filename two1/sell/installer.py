@@ -228,17 +228,6 @@ class InstallerMac(InstallerBase):
             exit_code = 0
         return exit_code
 
-    def uninstall_zerotier(self):
-        """ Uninstall Zerotier One.
-        """
-        if self.program_installed("zerotier-cli"):
-            print("Uninstalling Zerotier One...")
-            try:
-                subprocess.check_output(["sudo", "/Library/Application Support/ZeroTier/One/uninstall.sh"])
-                print("ZeroTier One successfully removed.")
-            except Exception as e:
-                print(e)
-
     def install_virtual_box(self):
         """ Install virtual box on Mac OS X.
         """
@@ -376,17 +365,6 @@ class InstallerDebian(InstallerBase):
             try:
                 subprocess.check_output(zt_in.format(
                     self.ZEROTIER_PKG_URL, self.ZEROTIER_PKG), shell=True, stderr=subprocess.DEVNULL)
-            except subprocess.CalledProcessError as e:
-                return e.returncode
-
-    def uninstall_zerotier(self):
-        """ Uninstall ZeroTier One.
-        """
-        if self.program_installed("zerotier-cli"):
-            try:
-                subprocess.check_output("sudo dpkg -r zerotier-one",
-                                        shell=True,
-                                        stderr=subprocess.DEVNULL)
             except subprocess.CalledProcessError as e:
                 return e.returncode
 
