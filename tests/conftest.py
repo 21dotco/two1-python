@@ -260,7 +260,7 @@ def patch_click(monkeypatch):
 
 @pytest.fixture()
 def patch_bitrequests(monkeypatch, mock_config, mock_machine_auth):
-    """ Fixture that injects a MockBitRequests monketpatches the regular BitRequests
+    """ Fixture that injects a MockBitRequests monkeypatches the regular BitRequests
 
     Returns:
         MockBitRequests: a mock bitrequests object
