@@ -339,7 +339,7 @@ class ChannelRequests(BitRequests):
         # Verify resource cost against our budget
         if max_price and price > max_price:
             max_price_err = 'Resource price ({}) exceeds max price ({}).'
-            raise ValueError(max_price_err.format(price, max_price))
+            raise ResourcePriceGreaterThanMaxPriceError(max_price_err.format(price, max_price))
 
         # Look up channel
         channel_urls = self._channelclient.list(server_url)
