@@ -41,22 +41,20 @@ def get_platform():
                                        help_message="The `21 sell` service manager is not "
                                        "yet supported within another boot2docker VM.",
                                        label="boot2docker")
-        elif os.path.isfile('/sys/hypervisor/uuid') and (
-                'debian-8.' in detected_distro.lower() or
-                'ubuntu-14.04' in detected_distro.lower() or
-                'ubuntu-16.04' in detected_distro.lower()):
+        elif 'debian-8.' in detected_distro.lower() or \
+                'ubuntu-14.04' in detected_distro.lower() or \
+                'ubuntu-16.04' in detected_distro.lower():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=True,
                                        help_message="",
-                                       label="aws_ubuntu")
-        elif 'debian' in detected_distro.lower() or 'ubuntu' in detected_distro.lower():
+                                       label="debian")
+        elif 'centos' in detected_distro.lower():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
-                                       is_supported=False,
-                                       help_message="`21 sell` is currently only available on "
-                                       "Mac OS X and Ubuntu 14.04 LTS on Amazon Web Services.",
-                                       label="")
+                                       is_supported=True,
+                                       help_message="",
+                                       label="centos")
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
                                is_supported=False,

@@ -107,6 +107,16 @@ class Two1Manager:
         """
         return self.machine.start_machine()
 
+    def start_docker(self):
+        """ Start the docker service.
+        """
+        return self.machine.start_docker()
+
+    def status_docker(self):
+        """ Get the docker service status
+        """
+        return self.machine.status_docker()
+
     def stop_machine(self):
         """ Stop the virtual machine.
         """

@@ -25,7 +25,7 @@ from two1.wallet import Two1Wallet
 from two1 import TWO1_HOST as TWO1_HOST
 from two1.server import machine_auth_wallet
 from two1.blockchain import TwentyOneProvider
-from two1.sell.installer import InstallerAWSUbuntuDebian
+from two1.sell.installer import InstallerDebian
 from two1.sell.machine import Two1Machine, Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.util.stats_db import Two1SellDB
@@ -123,7 +123,7 @@ def check_needs_logout(generic_installer):
         Returns: (bool) True:  if user does not need to restart
                  (bool) False:
     """
-    if isinstance(generic_installer.installer, InstallerAWSUbuntuDebian):
+    if isinstance(generic_installer.installer, InstallerDebian):
         if not generic_installer.installer.already_in_group():
             logger.info(click.style(
                 "Docker installation requires a user to log out and log "

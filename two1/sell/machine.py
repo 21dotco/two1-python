@@ -85,6 +85,11 @@ class Two1Machine:
         """
 
     @abstractmethod
+    def status_docker(self):
+        """ Get docker status.
+        """
+
+    @abstractmethod
     def status_networking(self):
         """ Get network status.
         """
@@ -156,10 +161,31 @@ class Two1MachineNative(Two1Machine):
         """
         return VmState.NOEXIST
 
+    def status_docker(self):
+        """ Get current status of docker
+        """
+        rv = False
+        try:
+            output = subprocess.check_output(['ps', '-A']).decode()
+            rv = "docker" in output
+        except subprocess.CalledProcessError:
+            pass
+        return rv
+
     def env(self):
         """ Get machine env.
         """
         return dict(os.environ)
+
+    def start_docker(self):
+        """ Start docker daemon."""
+        rv = False
+        if not self.status_docker():
+            try:
+                subprocess.check_output(["sudo", "service", "docker", "start"], stderr=subprocess.DEVNULL)
+            except subprocess.CalledProcessError:
+                rv = False
+        return rv
 
     def start_networking(self):
         """ Start ZeroTier daemon.
@@ -219,6 +245,14 @@ class Two1MachineVirtual(Two1Machine):
             return MachineState.NOREADY
 
     # public api
+
+    def status_docker(self):
+        """ Get docker status."""
+        pass
+
+    def start_docker(self):
+        """ Get docker status."""
+        pass
 
     def start_networking(self):
         """ Start ZeroTier One service.
