@@ -107,7 +107,8 @@ def test_buy_headers(patch_click, mock_config, mock_machine_auth, patch_bitreque
 def test_non_buy(patch_click, mock_config, mock_machine_auth, patch_bitrequests, mock_rest_client):
     """Test a buy that does not hit a 402-payable endpoint."""
     resource = 'http://127.0.0.1:5000'
-    buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource, method='put')
+    with pytest.raises(SystemExit):
+        buy._buy(mock_config, mock_rest_client, mock_machine_auth, resource, method='put')
 
     assert patch_bitrequests.method == 'put'
     assert patch_bitrequests.url == resource

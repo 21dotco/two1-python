@@ -281,9 +281,9 @@ class BitTransfer(PaymentBase):
             logger.debug('[BitServ] Client failed to connect to server.')
 
         # handle verification server bad response
-        if 'message' in verification_response.text:
-            raise InvalidPaymentParameterError(
-                verification_response.json()['message']
-            )
+        try:
+            error = verification_response.json()['error']
+        except (ValueError, KeyError):
+            raise ServerError(verification_response.content)
         else:
-            raise ServerError
+            raise PaymentError(error)

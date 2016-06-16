@@ -4,8 +4,12 @@ from functools import wraps
 from urllib.parse import urlparse
 from flask import jsonify, request, views, Response
 from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import BadRequest
 
-from ..payment_methods import OnChain, PaymentChannel, BitTransfer
+from ..payment_methods import BitTransfer
+from ..payment_methods import OnChain
+from ..payment_methods import PaymentChannel
+from ..payment_methods import PaymentError
 from ..payment_server import PaymentServer, PaymentChannelNotFoundError
 
 BAD_REQUEST = 400
@@ -90,7 +94,13 @@ class Payment:
                     kwargs.update({'server_url': url.scheme + '://' + url.netloc})
 
                 # Continue to the API view if payment is valid or price is 0
-                if _price == 0 or self.is_valid_payment(_price, request.headers, **kwargs):
+                if _price == 0:
+                    return fn(*fn_args, **fn_kwargs)
+                try:
+                    contains_payment = self.contains_payment(_price, request.headers, **kwargs)
+                except BadRequest as e:
+                    return Response(e.description, BAD_REQUEST)
+                if contains_payment:
                     return fn(*fn_args, **fn_kwargs)
                 else:
                     # Get headers for initial 402 response
@@ -101,7 +111,7 @@ class Payment:
             return _fn
         return decorator
 
-    def is_valid_payment(self, price, request_headers, **kwargs):
+    def contains_payment(self, price, request_headers, **kwargs):
         """Validate the payment information received in the request headers.
 
         Args:
@@ -109,15 +119,20 @@ class Payment:
             request_headers (dict): Headers sent by client with their request.
             keyword args: Any other headers needed to verify payment.
         Returns:
-            (bool): Whether or not the payment is deemed valid.
+            (bool): True if payment is valid,
+                False if no payment attached (402 initiation).
+        Raises:
+            BadRequest: If request is malformed.
+
         """
         for method in self.allowed_methods:
             if method.should_redeem(request_headers):
                 try:
-                    v = method.redeem_payment(price, request_headers, **kwargs)
+                    return method.redeem_payment(price, request_headers, **kwargs)
+                except PaymentError as e:
+                    raise BadRequest(str(e))
                 except Exception as e:
-                    return Response(str(e), BAD_REQUEST)
-                return v
+                    raise BadRequest(repr(e))
         return False
 
 

@@ -112,8 +112,7 @@ class BitRequests(object):
 
         Returns:
             response (requests.response):
-                successful response from paying for
-                the requested resource.
+                response from paying for the requested resource.
         """
         # Make the initial request for the resource
         response = requests.request(method, url, **kwargs)
@@ -139,19 +138,13 @@ class BitRequests(object):
         else:
             kwargs['headers'] = payment_headers
 
-        # Complete the original resource request
         paid_response = requests.request(method, url, **kwargs)
+        setattr(paid_response, 'amount_paid', int(response.headers['price']))
 
-        # Log success or failure of the operation
         if paid_response.status_code == requests.codes.ok:
             logger.debug('[BitRequests] Successfully purchased resource.')
         else:
-            if 'detail' in paid_response.text:
-                raise ValueError(paid_response.json()["detail"])
             logger.debug('[BitRequests] Could not purchase resource.')
-
-        # Add the amount that was paid as an attribute to the response object
-        setattr(paid_response, 'amount_paid', int(response.headers['price']))
 
         return paid_response
 

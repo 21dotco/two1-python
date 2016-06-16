@@ -76,6 +76,12 @@ class MockBitResponse:
     def json(self):
         return json.loads(self.content)
 
+    @property
+    def ok(self):
+        if 400 <= self.status_code < 600:
+            return False
+        return True
+
 
 class MockBitRequests:
 
