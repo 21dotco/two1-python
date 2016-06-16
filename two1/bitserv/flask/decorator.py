@@ -6,7 +6,10 @@ from flask import jsonify, request, views, Response
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import BadRequest
 
-from ..payment_methods import OnChain, PaymentChannel, BitTransfer
+from ..payment_methods import BitTransfer
+from ..payment_methods import OnChain
+from ..payment_methods import PaymentChannel
+from ..payment_methods import PaymentError
 from ..payment_server import PaymentServer, PaymentChannelNotFoundError
 
 BAD_REQUEST = 400
@@ -126,6 +129,8 @@ class Payment:
             if method.should_redeem(request_headers):
                 try:
                     return method.redeem_payment(price, request_headers, **kwargs)
+                except PaymentError as e:
+                    raise BadRequest(str(e))
                 except Exception as e:
                     raise BadRequest(repr(e))
         return False
