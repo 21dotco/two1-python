@@ -62,7 +62,7 @@ class Payment:
                         headers[header] = v
 
                 # Continue to the API view if payment is valid or price is 0
-                if _price == 0 or self.is_valid_payment(_price, headers, **kwargs):
+                if _price == 0 or self.contains_payment(_price, headers, **kwargs):
                     return fn(request, *fn_args, **fn_kwargs)
                 else:
                     # Get headers for initial 402 response
@@ -73,7 +73,7 @@ class Payment:
             return _fn
         return decorator
 
-    def is_valid_payment(self, price, request_headers, **kwargs):
+    def contains_payment(self, price, request_headers, **kwargs):
         """Validate the payment information received in the request headers.
 
         Args:
@@ -81,7 +81,10 @@ class Payment:
             request_headers (dict): Headers sent by client with their request.
             keyword args: Any other headers needed to verify payment.
         Returns:
-            (bool): Whether or not the payment is deemed valid.
+            (bool): True if payment is valid,
+                False if no payment attached (402 initiation).
+        Raises:
+            ParseError: If request is malformed.
         """
         for method in self.allowed_methods:
             if method.should_redeem(request_headers):
