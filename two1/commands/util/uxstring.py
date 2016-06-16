@@ -656,20 +656,6 @@ Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
 
         # version errors
         resource_price_greater_than_max_price = "{} \nPlease use --maxprice to adjust the maximum price."
-        insufficient_funds_mine_more = str(
-            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to view your balance. "
-            "Type {} to get more satoshis.\n\nYou may also"
-            " use your on-chain balance for this transaction. It will include a small tx fee. To use "
-            "on-chain balance add {} to your buy command."
-        ).format(click.style("21 status", bold=True), click.style("21 earn", bold=True),
-                 click.style("-p onchain", bold=True))
-        insufficient_funds_earn_more = str(
-            "Insufficient satoshis for off-chain (zero-fee) transaction. Type {} to view your balance. "
-            "Type {} to get more satoshis.\n\nYou may also"
-            " use your on-chain balance for this transaction. It will include a small tx fee. To use "
-            "on-chain balance add {} to your buy command."
-        ).format(click.style("21 status", bold=True), click.style("21 earn", bold=True),
-                 click.style("-p onchain", bold=True))
 
         # account errors
         login_error_username = "Can not log into account, username not set"
