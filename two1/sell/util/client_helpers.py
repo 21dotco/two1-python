@@ -3,6 +3,8 @@ import os
 import platform
 from collections import namedtuple
 
+SUPPORTED_SYSTEMS = """`21 sell` is currently only available on
+Mac OS X, Ubuntu 14.04/16.04, and CentOS-7. """
 PING21_LEARN_URL = "https://21.co/learn/ping21-earn-bitcoin-by-monitoring-uptime-and-latency"
 PlatformDescription = namedtuple('PlatformDescription', ['detected_os',
                                                          'detected_distro',
@@ -28,11 +30,10 @@ def get_platform():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=False,
-                                       help_message="`21 sell` is currently only available on "
-                                       "Mac OS X and Ubuntu 14.04 on Amazon Web Services. "
+                                       help_message="%s "
                                        "Please visit %s to get started hosting "
                                        "machine-payable servers on your Bitcoin "
-                                       "Computer." % PING21_LEARN_URL,
+                                       "Computer." % (SUPPORTED_SYSTEMS, PING21_LEARN_URL),
                                        label="21bc")
         elif 'boot2docker' in detected_distro.lower():
             return PlatformDescription(detected_os=detected_os,
@@ -49,7 +50,7 @@ def get_platform():
                                        is_supported=True,
                                        help_message="",
                                        label="debian")
-        elif 'centos' in detected_distro.lower():
+        elif 'centos-7' in detected_distro.lower():
             return PlatformDescription(detected_os=detected_os,
                                        detected_distro=detected_distro,
                                        is_supported=True,
@@ -58,6 +59,5 @@ def get_platform():
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
                                is_supported=False,
-                               help_message="",
-                               label="`21 sell` is currently only available on "
-                               "Mac OS X and Ubuntu 14.04 LTS on Amazon Web Services.")
+                               help_message=SUPPORTED_SYSTEMS,
+                               label="")
