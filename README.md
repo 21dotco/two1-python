@@ -57,37 +57,17 @@ and the `two1`
 [documentation](https://21.co/learn/#reference-21-library).
 
 ## Developers
-If you'd like to contribute to `two1`, please use the following steps
-to clone the repository and get it set up on your system.
+To edit and run the two1 source code:
 
-Clone this repository:
-
-``` bash
+```shell
 $ git clone https://github.com/21dotco/two1-python.git
 $ cd two1-python/
-```
-
-Install the requirements:
-
-``` bash
-$ pip3 install -r requirements.txt
-```
-
-Install 21 as an editable python library:
-
-``` bash
-$ pip3 install -e .
+$ pip3 install -r requirements.txt  # Install the requirements
+$ pip3 install -e .  # Install 21 as an editable python library
 ```
 
 Your changes to the source will now be reflected in your system
-installation in real-time. When you open a pull request against this
-repository, your code will automatically be built and tested.
-
-Run the tests:
-
-``` bash
-$ python3 -m pytest
-```
+installation in real-time.
 
 ## Docker
 You can pull [Docker](https://www.docker.com/) images with
