@@ -16,6 +16,8 @@ DEFAULT_OUTPUT_SIZE_KB = 0.04
 
 DUST_LIMIT_PER_KB = 5000  # satoshis
 # Dust limit is Min fee for 180 bytes * 3
+# The 3 is a magic number in Bitcoin Core
+# cf. https://github.com/bitcoin/bitcoin/blob/28ad4d9fc2be102786a8c6c32ebecb466b2a03dd/src/primitives/transaction.h#L175
 DUST_LIMIT = int(DUST_LIMIT_PER_KB * 0.18 * 3)
 
 _fee_session = None
