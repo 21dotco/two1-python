@@ -101,5 +101,5 @@ class YamlDataContext(LoadableDumpableDataContext):
         def dumper(data, f):
             """A wrapper around yaml.dump which dumps to a file object à la json.dump
             """
-            f.write(yaml.dump(data, default_flow_style=False))
-        super().__init__(yaml_file_path, yaml.load, dumper)
+            f.write(yaml.safe_dump(data, default_flow_style=False))
+        super().__init__(yaml_file_path, yaml.safe_load, dumper)

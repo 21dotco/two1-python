@@ -62,6 +62,26 @@ class Two1Composer(metaclass=ABCMeta):
             self.mnemonic = mnemonic
             super().__init__(Two1Composer.COMPOSE_FILE)
 
+        def __enter__(self):
+            sup = super().__enter__()
+            for service in self.data['services']:
+                service_definition = self.data['services'][service]
+                if 'environment' in service_definition:
+
+                    if 'TWO1_USERNAME' in service_definition['environment'] and self.username is not None:
+                        service_definition['environment']['TWO1_USERNAME'] = self.username
+
+                    if 'TWO1_PASSWORD' in service_definition['environment'] and self.password is not None:
+                        service_definition['environment']['TWO1_PASSWORD'] = self.password
+
+                    if 'TWO1_WALLET_MNEMONIC' in service_definition['environment'] and self.mnemonic is not None:
+                        service_definition['environment']['TWO1_WALLET_MNEMONIC'] = self.mnemonic
+
+                    if 'PAYMENT_SERVER_IP' in service_definition['environment'] and self.server_port is not None:
+                        rest = service_definition['environment']['PAYMENT_SERVER_IP'].rsplit(':', maxsplit=1)[-1]
+                        service_definition['environment']['PAYMENT_SERVER_IP'] = '%s:%s' % (rest, self.server_port)
+            return sup
+
         def _filler(self):
             """ Create the base service description file.
             """
