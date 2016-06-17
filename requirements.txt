@@ -1,7 +1,6 @@
 PyYAML==3.11
 arrow==0.6.0
 base58==0.2.2
-click==4.1
 docker-py==1.8.0
 flake8==2.5.4
 future==0.15.2
@@ -23,4 +22,3 @@ responses==0.5.0
 sha256==0.1
 simplejson==3.7.3
 tabulate==0.7.5
-validate_email==1.3
