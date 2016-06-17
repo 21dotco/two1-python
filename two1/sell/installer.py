@@ -367,6 +367,7 @@ class InstallerDebian(InstallerBase):
                     self.ZEROTIER_PKG_URL, self.ZEROTIER_PKG), shell=True, stderr=subprocess.DEVNULL)
             except subprocess.CalledProcessError as e:
                 return e.returncode
+        return 0
 
     def install_docker_tools(self):
         """ Install Docker Compose and Docker Enginer on AWS Linux.

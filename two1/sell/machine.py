@@ -2,6 +2,7 @@
 import os
 import re
 import json
+import time
 import subprocess
 import logging
 from enum import Enum
@@ -192,14 +193,19 @@ class Two1MachineNative(Two1Machine):
         """
         if not self.status_networking():
             try:
-                subprocess.check_output(['sudo', 'service', 'zerotier-one', 'start'], stderr=subprocess.DEVNULL)
+                subprocess.Popen(['sudo', 'service', 'zerotier-one', 'start'], stderr=subprocess.DEVNULL)
             except subprocess.CalledProcessError:
-                rv = 1
+                return 1
             else:
-                rv = 0
+                now = time.time()
+
+                while time.time() <= now + 10:
+                    if self.status_networking():
+                        return 0
+
+                return 1
         else:
-            rv = 0
-        return rv
+            return 0
 
     def stop_networking(self):
         """ Stop ZeroTier daemon.

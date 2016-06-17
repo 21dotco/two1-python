@@ -94,27 +94,34 @@ def dots(text, long_thread):
 def install_missing_dependencies(dependencies_list, installer):
     """ Install missing dependencies.
     """
-    if False in [docker_dep[1] for docker_dep in dependencies_list if
-                 docker_dep[0] in installer.DOCKER_TOOLS]:
+    if any(package in installer.DOCKER_TOOLS and installed is False for package, installed in dependencies_list):
         subprocess.check_output(["sudo", "-k"])
         subprocess.check_output(["sudo", "-S", "whoami"])
-        docker_installed = start_long_running("Installing Docker Tools",
-                                              installer.install_docker_tools)
-        print_str("Docker",
-                  ["Installed" if docker_installed else "Not installed"],
-                  "TRUE" if docker_installed else "FALSE",
-                  docker_installed)
-        if [vb_dep[1] for vb_dep in dependencies_list if vb_dep[0] == "Zerotier"][0] is False:
-            zerotier_installed = start_long_running("Installing ZeroTier",
-                                                    installer.install_zerotier)
-            print_str("ZeroTier",
-                      ["Installed" if zerotier_installed else "Not installed"],
-                      "TRUE" if zerotier_installed else "FALSE",
-                      zerotier_installed)
-        installed = installer.check_dependencies()
-        return package_check(installed, True)
-    else:
-        return True
+        docker_installed = start_long_running(
+            "Installing Docker Tools",
+            installer.install_docker_tools
+            )
+        print_str(
+            "Docker",
+            ["Installed" if docker_installed else "Not installed"],
+            "TRUE" if docker_installed else "FALSE",
+            docker_installed
+            )
+
+    if any(package == "Zerotier" and installed is False for package, installed in dependencies_list):
+        zerotier_installed = start_long_running(
+            "Installing ZeroTier",
+            installer.install_zerotier
+            )
+        print_str(
+            "ZeroTier",
+            ["Installed" if zerotier_installed else "Not installed"],
+            "TRUE" if zerotier_installed else "FALSE",
+            zerotier_installed
+            )
+
+    installed = installer.check_dependencies()
+    return package_check(installed, True)
 
 
 def check_needs_logout(generic_installer):
