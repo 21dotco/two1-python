@@ -1,3 +1,8 @@
+#!/bin/bash
+
+sudo apt-get install python3-pip
+
+cat <<eof > in
 PyYAML==3.11
 arrow==0.6.0
 base58==0.2.2
@@ -22,3 +27,11 @@ responses==0.5.0
 sha256==0.1
 simplejson==3.7.3
 tabulate==0.7.5
+eof
+
+pip3 install -r in
+     
+rm -f in
+
+echo 'Dependencies installed!'
+echo '"python txHex2JSON.py" to run'
