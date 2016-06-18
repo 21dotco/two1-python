@@ -38,7 +38,7 @@ class BitshareCoinbaseTransaction(Transaction):
 
 class CoinbaseTransactionBuilder(object):
 
-    """ See: https://lib.org/en/developer-reference#coinbase
+    """ See: https://bitcoin.org/en/developer-reference#coinbase
         Builds a coinbase txn:
         Creates a single input with no outpoint. The input script is defined as
         block height, iscript0, enonce1, enonce2, iscript1.

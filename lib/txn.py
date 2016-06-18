@@ -21,7 +21,7 @@ from lib.utils import unpack_u64
 
 
 class TransactionInput(object):
-    """ See https://lib.org/en/developer-reference#txin
+    """ See https://bitcoin.org/en/developer-reference#txin
 
     Args:
         outpoint (Hash): A Hash object of the UTXO hash.
@@ -104,7 +104,7 @@ class TransactionInput(object):
 
 
 class CoinbaseInput(TransactionInput):
-    """ See https://lib.org/en/developer-reference#coinbase
+    """ See https://bitcoin.org/en/developer-reference#coinbase
 
     Args:
         height (uint): The height of the block coinbase is part of
@@ -179,7 +179,7 @@ class CoinbaseInput(TransactionInput):
 
 
 class TransactionOutput(object):
-    """ See https://lib.org/en/developer-reference#txout
+    """ See https://bitcoin.org/en/developer-reference#txout
 
     Args:
         value (int): Number of satoshis to be spent. Endianness: host
@@ -279,7 +279,7 @@ class UnspentTransactionOutput(object):
 
 
 class Transaction(object):
-    """ See https://lib.org/en/developer-reference#raw-transaction-format
+    """ See https://bitcoin.org/en/developer-reference#raw-transaction-format
 
     Args:
         version (int): Transaction version (should always be

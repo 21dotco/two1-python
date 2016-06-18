@@ -27,9 +27,9 @@ class BlockHeader(object):
         block header.
 
         Serialization & deserialization are done according to:
-        https://lib.org/en/developer-reference#block-headers
+        https://bitcoin.org/en/developer-reference#block-headers
         For definitions of hash byte order, see:
-        https://lib.org/en/developer-reference#hash-byte-order
+        https://bitcoin.org/en/developer-reference#hash-byte-order
 
         Args:
             version (uint): The block version. Endianness: host
@@ -136,7 +136,7 @@ class Block(object):
     passed in during initialization.
 
     Serialization and deserialization are done according to:
-    https://lib.org/en/developer-reference#serialized-blocks
+    https://bitcoin.org/en/developer-reference#serialized-blocks
 
     Args:
         height (uint): Block height

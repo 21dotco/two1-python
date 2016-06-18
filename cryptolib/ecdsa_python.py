@@ -8,7 +8,7 @@ from cryptolib.ecdsa_base import EllipticCurveBase
 
 # Links
 # https://en.wikibooks.org/wiki/Cryptography/Elliptic_curve
-# https://en.lib.it/wiki/Secp256k1
+# https://en.bitcoin.it/wiki/Secp256k1
 # https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 # http://www.coindesk.com/math-behind-bitcoin/
 # https://bitcointalk.org/index.php?topic=289795.120
