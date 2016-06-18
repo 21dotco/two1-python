@@ -1,5 +1,6 @@
 # flake8: noqa
-"""the following functionality:
+"""The bitcoin module within the 21 Bitcoin Library (``bitcoin``) provides
+the following functionality:
 
 1. Serialization/deserialization of all Bitcoin data structures:
    blocks and block headers, transactions, scripts, public/private

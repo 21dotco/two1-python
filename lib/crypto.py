@@ -8,12 +8,12 @@ import hashlib
 import hmac
 from mnemonic.mnemonic import Mnemonic
 import random
-from .utils import bytes_to_str
-from .utils import address_to_key_hash
-from .utils import rand_bytes
-from .cryptolib.ecdsa_base import Point
-from .cryptolib.ecdsa import ECPointAffine
-from .cryptolib.ecdsa import secp256k1
+from lib.utils import bytes_to_str
+from lib.utils import address_to_key_hash
+from lib.utils import rand_bytes
+from cryptolib.ecdsa_base import Point
+from cryptolib.ecdsa import ECPointAffine
+from cryptolib.ecdsa import secp256k1
 
 bitcoin_curve = secp256k1()
 

@@ -5,12 +5,12 @@ import copy
 import hashlib
 import struct
 
-from .crypto import PublicKey
-from .crypto import Signature
-from .exceptions import ScriptInterpreterError
-from .hash import Hash
-from .script import Script
-import utils
+from lib.crypto import PublicKey
+from lib.crypto import Signature
+from lib.exceptions import ScriptInterpreterError
+from lib.hash import Hash
+from lib.script import Script
+from lib import utils
 
 
 class ScriptInterpreter(object):
@@ -168,7 +168,7 @@ class ScriptInterpreter(object):
         Raises:
             ValueError: If there is no Transaction object in self._data
         """
-        from .txn import Transaction
+        from lib.txn import Transaction
         if not isinstance(self._txn, Transaction):
             raise ScriptInterpreterError("No transaction found!")
 

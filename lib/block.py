@@ -3,9 +3,9 @@ classes. It allows you to work programmatically with the individual blocks in
 the Bitcoin blockchain."""
 from sha256 import sha256 as sha256_midstate
 
-from hash import Hash
-from .txn import Transaction
-from .utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
+from lib.hash import Hash
+from lib.txn import Transaction
+from lib.utils import bytes_to_str, pack_u32, unpack_u32, bits_to_target, pack_compact_int, unpack_compact_int
 
 
 class MerkleNode:
@@ -27,9 +27,9 @@ class BlockHeader(object):
         block header.
 
         Serialization & deserialization are done according to:
-        https://org/en/developer-reference#block-headers
+        https://lib.org/en/developer-reference#block-headers
         For definitions of hash byte order, see:
-        https://org/en/developer-reference#hash-byte-order
+        https://lib.org/en/developer-reference#hash-byte-order
 
         Args:
             version (uint): The block version. Endianness: host
@@ -136,7 +136,7 @@ class Block(object):
     passed in during initialization.
 
     Serialization and deserialization are done according to:
-    https://org/en/developer-reference#serialized-blocks
+    https://lib.org/en/developer-reference#serialized-blocks
 
     Args:
         height (uint): Block height

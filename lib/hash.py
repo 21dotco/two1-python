@@ -2,12 +2,12 @@
 in a user-friendly way."""
 import hashlib
 
-from .utils import bytes_to_str
+from lib.utils import bytes_to_str
 
 
 class Hash(object):
     """ Wrapper around a byte string for handling SHA-256 hashes used
-        in  Specifically, this class is useful for disambiguating
+        in lib. Specifically, this class is useful for disambiguating
         the required hash ordering.
 
         This assumes that a hex string is in RPC order and a

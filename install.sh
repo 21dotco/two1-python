@@ -1,6 +1,7 @@
 #!/bin/bash
 
-sudo apt-get install python3-pip
+sudo sudo apt-get install python3-setuptools
+sudo easy_install3 pip
 
 cat <<eof > in
 PyYAML==3.11
@@ -29,9 +30,8 @@ simplejson==3.7.3
 tabulate==0.7.5
 eof
 
-pip3 install -r in
+sudo pip3 install -r in
      
 rm -f in
 
-echo 'Dependencies installed!'
-echo '"python txHex2JSON.py" to run'
+echo '"./txHex2JSON" to run'

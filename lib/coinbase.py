@@ -1,7 +1,7 @@
 """
 Builds the coinbase transaction
 """
-from .txn import CoinbaseInput, Transaction
+from lib.txn import CoinbaseInput, Transaction
 
 
 class BitshareCoinbaseTransaction(Transaction):
@@ -13,7 +13,7 @@ class BitshareCoinbaseTransaction(Transaction):
 
     Args:
         version (int): Transaction version (should always be 1). Endianness: host
-        inputs (list(TransactionInput)): all the inputs that spend 
+        inputs (list(TransactionInput)): all the inputs that spend lib.
         outputs (list(TransactionOutput)): all the outputs to which bitcoin is sent.
            *This should include the Bitshare-added output.*
         lock_time (int): Time or a block number. Endianness: host
@@ -25,7 +25,7 @@ class BitshareCoinbaseTransaction(Transaction):
 
     def client_serialize(self):
         """ Serializes the coinbase transaction without the Bitshare-added output
-            or the lock-time. This is useful specifically for creating work for
+            or the lock-time. This is useful specifically for creating work for 21
             Bitshare chips.
 
         Returns:
@@ -38,7 +38,7 @@ class BitshareCoinbaseTransaction(Transaction):
 
 class CoinbaseTransactionBuilder(object):
 
-    """ See: https://org/en/developer-reference#coinbase
+    """ See: https://lib.org/en/developer-reference#coinbase
         Builds a coinbase txn:
         Creates a single input with no outpoint. The input script is defined as
         block height, iscript0, enonce1, enonce2, iscript1.
@@ -79,7 +79,7 @@ class CoinbaseTransactionBuilder(object):
             enonce2 (bytes): byte stream to place in the coinbase input script. Must be
                              enonce2_len bytes long.
             padding (bytes) (Optional): byte stream to pad at the end of the coinbase script. This
-                                        is used only for Bitshare devices that require the
+                                        is used only for 21 Bitshare devices that require the
                                         Coinbase size without the last output and lock-time to be
                                         a multiple of 512 bits.
          """
@@ -98,7 +98,7 @@ class CoinbaseTransactionBuilder(object):
             bitshare hasher and so we ignore that one.
 
         Returns:
-            padding (bytes): The necessary padding for Bitshare devices.
+            padding (bytes): The necessary padding for 21 Bitshare devices.
         """
         # build the whole thing including the last output
         placeholder_input = self.build_input(self._enonce1_placeholder, self._enonce2_placeholder)
@@ -127,7 +127,7 @@ class CoinbaseTransactionBuilder(object):
         """ Build coinb1 and coinb2 for pool work distribution.
 
         Args:
-            bitshare (bool): True if this will be used for a Bitshare device, False
+            bitshare (bool): True if this will be used for a 21 Bitshare device, False
                              otherwise.
 
         Returns:
@@ -159,7 +159,7 @@ class CoinbaseTransactionBuilder(object):
                              enonce1_len bytes long.
             enonce2 (bytes): byte stream to place in the coinbase input script. Must be
                              enonce2_len bytes long.
-            bitshare (bool): True if this will be used for a Bitshare device, False
+            bitshare (bool): True if this will be used for a 21 Bitshare device, False
                              otherwise.
         """
 

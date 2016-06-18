@@ -8,15 +8,15 @@ import copy
 import re
 import struct
 
-from .crypto import PublicKey
-from .crypto import Signature
-from .exceptions import ScriptParsingError
-from .utils import bytes_to_str
-from .utils import hash160
-from .utils import key_hash_to_address
-from .utils import pack_var_str
-from .utils import unpack_var_str
-from .utils import render_int
+from lib.crypto import PublicKey
+from lib.crypto import Signature
+from lib.exceptions import ScriptParsingError
+from lib.utils import bytes_to_str
+from lib.utils import hash160
+from lib.utils import key_hash_to_address
+from lib.utils import pack_var_str
+from lib.utils import unpack_var_str
+from lib.utils import render_int
 
 
 class Script(object):
@@ -809,7 +809,7 @@ class Script(object):
     def __bytes__(self):
         """ Serializes the object into a byte stream.
         It does *not* prepend the length of the script to the returned
-        bytes. To do so, call .utils.pack_var_str() passing
+        bytes. To do so, call lib.utils.pack_var_str() passing
         in the returned bytes.
 
         Returns:

@@ -59,7 +59,7 @@ def render_int(n):
 
     When packing the height into the coinbase script, the integer
     representing the height must be encoded in the shortest possible
-    manner. See: https://org/en/developer-reference#coinbase.
+    manner. See: https://lib.org/en/developer-reference#coinbase.
 
     Args:
         n (int): number to be encoded.
@@ -89,7 +89,7 @@ def render_int(n):
 
 def pack_compact_int(i):
     """ See
-    https://org/en/developer-reference#compactsize-unsigned-integers
+    https://lib.org/en/developer-reference#compactsize-unsigned-integers
 
     Args:
         i (int): Integer to be serialized.
@@ -109,7 +109,7 @@ def pack_compact_int(i):
 
 def unpack_compact_int(bytestr):
     """ See
-    https://org/en/developer-reference#compactsize-unsigned-integers
+    https://lib.org/en/developer-reference#compactsize-unsigned-integers
 
     Args:
         bytestr (bytes): bytes containing an unsigned integer to be
@@ -213,7 +213,7 @@ def unpack_var_str(b):
 
 def bits_to_target(bits):
     """ Decodes the full target from a compact representation.
-    See: https://org/en/developer-reference#target-nbits
+    See: https://lib.org/en/developer-reference#target-nbits
 
     Args:
         bits (int): Compact target (32 bits)
@@ -228,7 +228,7 @@ def bits_to_target(bits):
 
 def bits_to_difficulty(bits):
     """ Determines the difficulty corresponding to bits.
-    See: https://en.it/wiki/Difficulty
+    See: https://en.lib.it/wiki/Difficulty
 
     Args:
         bits (int): Compact target (32 bits)
@@ -343,7 +343,7 @@ def hash160(b):
 
 def compute_reward(height):
     """ Computes the block reward for a block at the supplied height.
-    See: https://en.it/wiki/Controlled_supply for the reward
+    See: https://en.lib.it/wiki/Controlled_supply for the reward
     schedule.
 
     Args:

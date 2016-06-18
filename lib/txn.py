@@ -4,24 +4,24 @@ parsing Bitcoin transactions and their constituent inputs and outputs."""
 import copy
 import struct
 
-import crypto
-from .exceptions import ScriptInterpreterError
-from .hash import Hash
-from .script import Script
-from .script_interpreter import ScriptInterpreter
-from .utils import address_to_key_hash
-from .utils import bytes_to_str
-from .utils import pack_compact_int
-from .utils import pack_u32
-from .utils import pack_u64
-from .utils import pack_var_str
-from .utils import unpack_compact_int
-from .utils import unpack_u32
-from .utils import unpack_u64
+from lib import crypto
+from lib.exceptions import ScriptInterpreterError
+from lib.hash import Hash
+from lib.script import Script
+from lib.script_interpreter import ScriptInterpreter
+from lib.utils import address_to_key_hash
+from lib.utils import bytes_to_str
+from lib.utils import pack_compact_int
+from lib.utils import pack_u32
+from lib.utils import pack_u64
+from lib.utils import pack_var_str
+from lib.utils import unpack_compact_int
+from lib.utils import unpack_u32
+from lib.utils import unpack_u64
 
 
 class TransactionInput(object):
-    """ See https://org/en/developer-reference#txin
+    """ See https://lib.org/en/developer-reference#txin
 
     Args:
         outpoint (Hash): A Hash object of the UTXO hash.
@@ -104,7 +104,7 @@ class TransactionInput(object):
 
 
 class CoinbaseInput(TransactionInput):
-    """ See https://org/en/developer-reference#coinbase
+    """ See https://lib.org/en/developer-reference#coinbase
 
     Args:
         height (uint): The height of the block coinbase is part of
@@ -179,7 +179,7 @@ class CoinbaseInput(TransactionInput):
 
 
 class TransactionOutput(object):
-    """ See https://org/en/developer-reference#txout
+    """ See https://lib.org/en/developer-reference#txout
 
     Args:
         value (int): Number of satoshis to be spent. Endianness: host
@@ -279,13 +279,13 @@ class UnspentTransactionOutput(object):
 
 
 class Transaction(object):
-    """ See https://org/en/developer-reference#raw-transaction-format
+    """ See https://lib.org/en/developer-reference#raw-transaction-format
 
     Args:
         version (int): Transaction version (should always be
             1). Endianness: host
         inputs (list(TransactionInput)): all the inputs that spend
-            
+            lib.
         outputs (list(TransactionOutput)): all the outputs to which
             bitcoin is sent.
         lock_time (int): Time or a block number. Endianness: host

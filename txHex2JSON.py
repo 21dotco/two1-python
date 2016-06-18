@@ -7,7 +7,8 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    hexStr = raw_input("Input transaction hex: ")
+hexStr = input("Input transaction hex: ")
+tx = Transaction.from_bytes(bytes.fromhex(hexStr))
 
 if __name__ == "__main__":
     main()
