@@ -379,7 +379,10 @@ class UxString:
         "coinbase_purchase": "You bought and transferred bitcoin to your account through "
                              "Coinbase.",
         "linkedin_connection": "You connected your Linkedin profile to your 21 account.",
-        "github_connection": "You connected your GitHub profile to your 21 account."
+        "facebook_connection": "You connected your Facebook profile to your 21 account.",
+        "github_connection": "You connected your GitHub profile to your 21 account.",
+        "twitter_connection": "You connected your Twitter profile to your 21 account.",
+        "google_connection": "You connected your Google profile to your 21 account."
     }
 
     empty_logs = "[No events yet]"
