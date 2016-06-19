@@ -82,8 +82,10 @@ def parse_resource(resource):
     >>> parse_resource('10.10.10.10:50')
     'http://10.10.10.10:50'
 
+    >>> parse_resource('localhost:8000/buy')
+    'http://localhost:8000/buy'
     """
-    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource):
+    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource) or resource.startswith('localhost'):
         resource = 'http://' + resource
 
     # Parse the url and validate its format
