@@ -90,13 +90,12 @@ def parse_resource(resource):
     parse_result = urllib.parse.urlparse(resource)
 
     # match for short address syntax through 21 market
-    if parse_result.scheme == "" and parse_result.netloc == "":
+    if not parse_result.scheme and not parse_result.netloc:
         resource = 'https://mkt.21.co/' + resource
         parse_result = urllib.parse.urlparse(resource)
+    elif not (parse_result.scheme and parse_result.netloc):
+        raise ValueError('Unable to parse resource: %s' % resource)
 
-    # Assume `http` as default protocol
-    if not parse_result.scheme:
-        resource = 'http://' + resource
     return resource
 
 
