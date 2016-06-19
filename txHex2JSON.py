@@ -8,7 +8,7 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-hexStr = input("Input Bitcoin transaction hex: ")
+hexStr = input("\nInput Bitcoin transaction hex: ")
 tx, _ = Transaction.from_bytes(bytes.fromhex(hexStr))
 jsonobj = Transaction.__json__(tx)
 
