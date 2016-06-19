@@ -3,6 +3,7 @@ TransactionOutput, and UnspentTransactionOutput classes for building and
 parsing Bitcoin transactions and their constituent inputs and outputs."""
 import copy
 import struct
+import json
 
 from lib import crypto
 from lib.exceptions import ScriptInterpreterError
@@ -345,7 +346,7 @@ class Transaction(object):
         Returns:
             Transaction: the deserialized Transaction object.
         """
-        tx, _ = Transaction.from_bytes(bytes.fromhex(h))
+
         return tx
 
     def __init__(self, version, inputs, outputs, lock_time):
@@ -763,6 +764,20 @@ class Transaction(object):
             s += "\t%s\n" % (o)
 
         return s
+
+    def __json__(self):
+        """ Returns a json formatting of this transaction.
+        """
+        inputs = ""
+        for i in self.inputs:
+            inputs += "%s" % (i)
+
+        outputs = ""
+        for o in self.outputs:
+            outputs += "%s" % (o)
+
+        jsonobj = {u"Version": self.version, u"Locktime": self.lock_time, u"Inputs": [inputs], u"Outputs": [outputs]}
+        return jsonobj
 
     def __bytes__(self):
         """ Serializes the object into a byte stream.
