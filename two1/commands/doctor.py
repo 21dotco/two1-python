@@ -226,7 +226,7 @@ class Doctor(object):
                                     Human readable message describing the check
                                     The name of the operating system
         """
-        check_str = "Operating System"
+        check_str = "OS Kernel"
         actual_os = platform.system()
         if actual_os in self.SUPPORTED_OS.keys():
             return Check.Result.PASS, check_str, actual_os
@@ -241,7 +241,7 @@ class Doctor(object):
                                     Human readable message describing the check
                                     Operating system version
         """
-        check_str = "Operating System Release Version"
+        check_str = "OS Kernel Version"
         actual_os = platform.system()
         actual_os_version = platform.release()
 
