@@ -82,21 +82,22 @@ def parse_resource(resource):
     >>> parse_resource('10.10.10.10:50')
     'http://10.10.10.10:50'
 
+    >>> parse_resource('localhost:8000/buy')
+    'http://localhost:8000/buy'
     """
-    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource):
+    if re.match(r'^[0-9]+(?:\.[0-9]+){3}:[0-9]+', resource) or resource.startswith('localhost'):
         resource = 'http://' + resource
 
     # Parse the url and validate its format
     parse_result = urllib.parse.urlparse(resource)
 
     # match for short address syntax through 21 market
-    if parse_result.scheme == "" and parse_result.netloc == "":
+    if not parse_result.scheme and not parse_result.netloc:
         resource = 'https://mkt.21.co/' + resource
         parse_result = urllib.parse.urlparse(resource)
+    elif not (parse_result.scheme and parse_result.netloc):
+        raise ValueError('Unable to parse resource: %s' % resource)
 
-    # Assume `http` as default protocol
-    if not parse_result.scheme:
-        resource = 'http://' + resource
     return resource
 
 
