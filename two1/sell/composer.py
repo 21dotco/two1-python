@@ -240,14 +240,18 @@ class Two1ComposerContainers(Two1Composer):
         self._create_base_server(server_port)  # create base router server config
         self._create_payments_route()  # create route to payments server
 
+        new_wallet = None  # rv[1], not None if mnemonic is replaced in this function
+
         # generate service description (yaml)
-        machine_wallet = wallet or self.default_wallet.create(self.provider)[1]
-        with self.ComposerYAMLContext(username, password, server_port, machine_wallet) as composer_yaml:
-            if composer_yaml['services']['payments']['environment'][
-                    'TWO1_WALLET_MNEMONIC'] == machine_wallet:
-                new_wallet = machine_wallet
-            else:
-                new_wallet = None
+        with self.ComposerYAMLContext(username, password, server_port) as composer_yaml:
+            try:
+                mnemonic = composer_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+                if not mnemonic or mnemonic == str(None):  # if mnemonic is Falsy or uninitialized
+                    raise ValueError()
+            except (KeyError, ValueError):  # catches if mnemonic is Falsy or doesn't exist in dict tree
+                new_machine_wallet = self.default_wallet.create(self.provider)[1]
+                composer_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC'] = new_machine_wallet
+                new_wallet = new_machine_wallet
 
         return 0, new_wallet
 
