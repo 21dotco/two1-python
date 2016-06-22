@@ -1229,9 +1229,9 @@ class Two1Wallet(BaseWallet):
         enough_money = bool(selected_utxos)
         if total_with_fees > balance or not enough_money:
             raise exceptions.WalletBalanceError(
-                ("Balance (%d satoshis) is not sufficient to send %d satoshis + fees (%d satoshis). " +
-                 "We found the following utxos: %s") %
-                (balance, total_amount, fees, selected_utxos))
+                "Balance (%d satoshis) is less than payment (%d satoshis) + fees (%d satoshis) = %d satoshis. " %
+                (balance, total_amount, fees, total_with_fees)
+            )
 
         if use_unconfirmed and total_with_fees > c_balance:
             self.logger.warning("Using unconfirmed inputs to complete transaction.")
