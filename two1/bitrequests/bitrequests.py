@@ -10,6 +10,7 @@ import logging
 import requests
 import urllib.parse
 
+from two1.commands.util import config
 import two1.commands.util.exceptions as exceptions
 
 logger = logging.getLogger('bitrequests')
@@ -189,7 +190,6 @@ class BitTransferRequests(BitRequests):
         else:
             self.wallet = MachineAuthWallet(wallet)
         if username is None:
-            import two1.commands.util.config as config
             self.username = config.Config().username
         else:
             self.username = username
@@ -263,7 +263,6 @@ class OnChainRequests(BitRequests):
         super().__init__()
         self.wallet = wallet
         try:
-            import two1.commands.util.config as config
             self.username = config.Config().username
         except exceptions.FileDecodeError:
             self.username = None
@@ -295,12 +294,12 @@ class OnChainRequests(BitRequests):
         logger.debug('[OnChainRequests] Signed transaction: {}'.format(
             onchain_payment))
 
-        res = {'Bitcoin-Transaction': onchain_payment,
-               'Return-Wallet-Address': return_address,
-               OnChainRequests.HTTP_BITCOIN_PRICE: price}
-        if self.username:
-            res[OnChainRequests.HTTP_PAYER_21USERNAME] = urllib.parse.quote(self.username)
-        return res
+        return {
+            'Bitcoin-Transaction': onchain_payment,
+            'Return-Wallet-Address': return_address,
+            OnChainRequests.HTTP_BITCOIN_PRICE: price,
+            OnChainRequests.HTTP_PAYER_21USERNAME: urllib.parse.quote(self.username) if self.username else None
+        }
 
     def get_402_info(self, url):
         """Get on-chain payment information about the resource."""
@@ -333,7 +332,6 @@ class ChannelRequests(BitRequests):
         self._deposit_amount = deposit_amount
         self._duration = duration
         try:
-            import two1.commands.util.config as config
             self.username = config.Config().username
         except exceptions.FileDecodeError:
             self.username = None
@@ -407,11 +405,11 @@ class ChannelRequests(BitRequests):
             # negotiate a new channel.
             return self.make_402_payment(response, max_price)
 
-        res = {ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token,
-               ChannelRequests.HTTP_BITCOIN_PRICE: price}
-        if self.username:
-            res[ChannelRequests.HTTP_PAYER_21USERNAME] = urllib.parse.quote(self.username)
-        return res
+        return {
+            ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token,
+            ChannelRequests.HTTP_BITCOIN_PRICE: price,
+            ChannelRequests.HTTP_PAYER_21USERNAME: urllib.parse.quote(self.username) if self.username else None,
+        }
 
     def get_402_info(self, url):
         """Get channel payment information about the resource."""
