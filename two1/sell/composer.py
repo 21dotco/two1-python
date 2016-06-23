@@ -62,6 +62,26 @@ class Two1Composer(metaclass=ABCMeta):
             self.mnemonic = mnemonic
             super().__init__(Two1Composer.COMPOSE_FILE)
 
+        def __enter__(self):
+            sup = super().__enter__()
+            for service in self.data['services']:
+                service_definition = self.data['services'][service]
+                if 'environment' in service_definition:
+
+                    if 'TWO1_USERNAME' in service_definition['environment'] and self.username is not None:
+                        service_definition['environment']['TWO1_USERNAME'] = self.username
+
+                    if 'TWO1_PASSWORD' in service_definition['environment'] and self.password is not None:
+                        service_definition['environment']['TWO1_PASSWORD'] = self.password
+
+                    if 'TWO1_WALLET_MNEMONIC' in service_definition['environment'] and self.mnemonic is not None:
+                        service_definition['environment']['TWO1_WALLET_MNEMONIC'] = self.mnemonic
+
+                    if 'PAYMENT_SERVER_IP' in service_definition['environment'] and self.server_port is not None:
+                        rest = service_definition['environment']['PAYMENT_SERVER_IP'].rsplit(':', maxsplit=1)[-1]
+                        service_definition['environment']['PAYMENT_SERVER_IP'] = '%s:%s' % (rest, self.server_port)
+            return sup
+
         def _filler(self):
             """ Create the base service description file.
             """
@@ -220,14 +240,18 @@ class Two1ComposerContainers(Two1Composer):
         self._create_base_server(server_port)  # create base router server config
         self._create_payments_route()  # create route to payments server
 
+        new_wallet = None  # rv[1], not None if mnemonic is replaced in this function
+
         # generate service description (yaml)
-        machine_wallet = wallet or self.default_wallet.create(self.provider)[1]
-        with self.ComposerYAMLContext(username, password, server_port, machine_wallet) as composer_yaml:
-            if composer_yaml['services']['payments']['environment'][
-                    'TWO1_WALLET_MNEMONIC'] == machine_wallet:
-                new_wallet = machine_wallet
-            else:
-                new_wallet = None
+        with self.ComposerYAMLContext(username, password, server_port) as composer_yaml:
+            try:
+                mnemonic = composer_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+                if not mnemonic or mnemonic == str(None):  # if mnemonic is Falsy or uninitialized
+                    raise ValueError()
+            except (KeyError, ValueError):  # catches if mnemonic is Falsy or doesn't exist in dict tree
+                new_machine_wallet = self.default_wallet.create(self.provider)[1]
+                composer_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC'] = new_machine_wallet
+                new_wallet = new_machine_wallet
 
         return 0, new_wallet
 
