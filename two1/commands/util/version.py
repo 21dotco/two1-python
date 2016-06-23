@@ -14,14 +14,9 @@ def get_latest_two1_version_pypi():
     Returns:
         latest_version (str): latest version of two1
     """
-    url = parse.urljoin(
-        two1.TWO1_PYPI_HOST, "api/package/{}/".format(two1.TWO1_PACKAGE_NAME))
+    url = parse.urljoin(two1.TWO1_PYPI_HOST, "pypi/two1/json")
     response = requests.get(url)
-    versions = [package['version'] for package in response.json()['packages']]
-    stable_versions = [
-        version for version in versions if not parse_version(version).is_prerelease]
-    latest_version = max(stable_versions, key=parse_version)
-    return latest_version
+    return response.json()['info']['version']
 
 
 def is_version_gte(actual, expected):

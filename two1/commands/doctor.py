@@ -215,8 +215,8 @@ class Doctor(object):
 
         if version.is_version_gte(actual_version, latest_version):
             return Check.Result.PASS, check_str, actual_version
-
-        return Check.Result.FAIL, check_str, actual_version
+        else:
+            return Check.Result.FAIL, check_str, actual_version
 
     def check_general_operating_system(self):
         """ Checks if the OS is supported
@@ -487,10 +487,11 @@ class Doctor(object):
                                     Human readable message describing the check
                                     Url to the 21 pypi server
         """
-        check_str = "21 Pypicloud"
-        result = Check.Result.FAIL
+        check_str = "Python Package Index"
         if self.make_http_connection(two1.TWO1_PYPI_HOST):
             result = Check.Result.PASS
+        else:
+            result = Check.Result.FAIL
 
         return result, check_str, two1.TWO1_PYPI_HOST
 
