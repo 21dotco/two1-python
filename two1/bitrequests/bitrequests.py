@@ -10,6 +10,7 @@ import logging
 import requests
 import urllib.parse
 
+import two1
 from two1.commands.util import config
 import two1.commands.util.exceptions as exceptions
 
@@ -28,6 +29,11 @@ class UnsupportedPaymentMethodError(BitRequestsError):
 
 class ResourcePriceGreaterThanMaxPriceError(BitRequestsError):
     """Raised when paying for a resource whose price exceeds the client's maximum allowable price."""
+    pass
+
+
+class InsufficientBalanceError(BitRequestsError):
+    """Raised when attempting to pay for a resource which has a price that exceedes the available balance."""
     pass
 
 
@@ -181,9 +187,10 @@ class BitTransferRequests(BitRequests):
     HTTP_BITCOIN_ADDRESS = 'bitcoin-address'
     HTTP_BITCOIN_USERNAME = 'username'
 
-    def __init__(self, wallet, username=None):
+    def __init__(self, wallet, username=None, client=None):
         """Initialize the bittransfer with wallet and username."""
         from two1.server.machine_auth_wallet import MachineAuthWallet
+        from two1.server import rest_client
         super().__init__()
         if isinstance(wallet, MachineAuthWallet):
             self.wallet = wallet
@@ -193,6 +200,11 @@ class BitTransferRequests(BitRequests):
             self.username = config.Config().username
         else:
             self.username = username
+        if client is None:
+            self.client = rest_client.TwentyOneRestClient(
+                two1.TWO1_HOST, self.wallet, self.username)
+        else:
+            self.client = client
 
     def make_402_payment(self, response, max_price):
         """Make a bit-transfer payment to the payment-handling service."""
@@ -209,6 +221,12 @@ class BitTransferRequests(BitRequests):
 
         # Convert string headers into correct data types
         price = int(price)
+
+        # verify that we have the money to purchase the resource
+        buffer_balance = self.client.get_earnings()["total_earnings"]
+        if price > buffer_balance:
+            insuff_funds_err = 'Resource price ({}) exceeds buffer balance ({}).'
+            raise InsufficientBalanceError(insuff_funds_err.format(price, buffer_balance))
 
         # Verify resource cost against our budget
         if max_price and price > max_price:
