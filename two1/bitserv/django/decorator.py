@@ -51,8 +51,10 @@ class Payment:
                 # Calculate resource cost
                 nonlocal price
                 _price = price(request) if callable(price) else price
+
                 # Need better way to pass server url to payment methods (FIXME)
-                kwargs.update({'server_url': request.scheme + '://' + request.get_host()})
+                if 'server_url' not in kwargs:
+                    kwargs.update({'server_url': request.scheme + '://' + request.get_host()})
 
                 # Convert from django META object to normal header format
                 headers = {}
