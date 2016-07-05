@@ -422,18 +422,30 @@ class UxString:
     )
 
     join_network_beta_warning = """
-21 is in Beta: warning
-----------------------
-Note that by executing this command you make it possible for others
-to directly connect to you in order to buy your digital goods for
-bitcoin. You can stand up a bitcoin-payable server instantly on any
-machine that others can buy from.  As such, please remember that the
-21 software is in beta and not ready for commercial release.  WE ARE
-PROVIDING THE 21 SOFTWARE AS-IS, AND YOU ASSUME ALL RISK OF USING
-21 WHILE IN BETA.  To help protect the security of your systems when
-using 21 while in beta, we recommend you running the software on an
-EC2 instance, an old laptop, or a small standalone machine like a 21
-Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer (21.co/diy).
+WARNING
+-------
+Note that the 21 Network operates very similarly to a public Wi-Fi
+access point, and carries with it the same security risks as a public
+"hotspot" that allows each device to connect to all other devices on the
+same network.  By executing this command to join the 21 Network, you make
+it possible for others to directly connect to your device.  In addition
+to being able to buy your digital goods for bitcoin, they will be able
+to access other services shared by your device such as shared folders
+(including Dropbox and Time Capsule folders) and streaming media (such
+as provided by iTunes).  Accordingly, you may also see services shared
+by other users.
+
+Please remember that the 21 software is in beta and not ready for
+commercial release.  WE ARE PROVIDING THE 21 SOFTWARE AS-IS, AND YOU
+ASSUME ALL RISK OF USING 21 WHILE IN BETA.
+
+To help protect the security of your systems when using 21 while in
+beta, we recommend you running the software on an EC2 instance, an old
+laptop that doesn't provide any shared resources, or a small standalone
+machine such as a 21 Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer
+(21.co/diy).
+
+Network:
 """
     join_network_beta_exit = "OK, understood. Check out 21.co/buy or 21.co/diy to set up a standalone machine."
 
