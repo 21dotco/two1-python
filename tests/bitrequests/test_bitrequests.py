@@ -21,6 +21,11 @@ class MockRequest:
     text = ""
 
 
+class MockTwentyOneRestClient:
+    def get_earnings(self):
+        return {"total_earnings": 10000000}
+
+
 class MockWallet:
 
     """Mock Wallet for testing BitRequests."""
@@ -71,6 +76,8 @@ def mockrequest(*args, **kwargs):
 config = config.Config()
 # Inject the mock wallet into config as a test dependency
 wallet = MockWallet()
+# Mock two1 rest client
+client = MockTwentyOneRestClient()
 
 
 def test_onchain_request():
@@ -98,7 +105,7 @@ def test_onchain_request():
 
 def test_bittransfer_request():
     """Test that it handles bit-transfer requests."""
-    bit_req = BitTransferRequests(wallet, config.username)
+    bit_req = BitTransferRequests(wallet, config.username, client)
     test_max_price = 10000
     price = 1000
     address = 'test_bitserv_host_address'
