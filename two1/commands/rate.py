@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @click.argument('app_id', required=False, type=click.STRING)
 @click.argument('rating', required=False, type=click.INT)
 @decorators.catch_all
+@decorators.capture_usage
 def rate(ctx, list, app_id, rating):
     """Rate an app listed in the 21 Marketplace.
 \b
