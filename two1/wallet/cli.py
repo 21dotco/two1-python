@@ -542,10 +542,14 @@ def balance(ctx, account):
               is_flag=True,
               default=False,
               help="List non-zero balances for each address")
+@click.option('--byutxos',
+              is_flag=True,
+              default=False,
+              help="List non-zero balances for each utxo")
 @click.pass_context
 @handle_exceptions
 @log_usage
-def list_balances(ctx, byaddress):
+def list_balances(ctx, byaddress, byutxos):
     """ Prints the current balances of each account.
     """
     w = ctx.obj['wallet']
@@ -566,7 +570,26 @@ def list_balances(ctx, byaddress):
                     click.echo("{:35s}: {} satoshis (confirmed), {} satoshis (total)".format(
                         addr, balances['confirmed'], balances['total']
                     ))
-        click.echo("")
+            click.echo("")
+
+        if byutxos:
+            by_utxo = w.get_utxos(include_unconfirmed=True)
+            if by_utxo:
+                click.echo("")
+            i = 1
+            for addr, utxos in by_utxo.items():
+                for utxo in utxos:
+                    if utxo.value > 0:
+                        click.echo("#{}".format(i))
+                        i += 1
+                        click.echo("txid         : {}".format(utxo.transaction_hash))
+                        click.echo("output_index : {}".format(utxo.outpoint_index))
+                        click.echo("address      : {}".format(addr))
+                        click.echo("amount       : {}".format(utxo.value))
+                        click.echo("scriptPubKey : {}".format(utxo.script))
+                        click.echo("confirmations: {}".format(utxo.num_confirmations))
+                        click.echo("")
+            click.echo("")
 
     cb = w.confirmed_balance()
     ucb = w.unconfirmed_balance()
