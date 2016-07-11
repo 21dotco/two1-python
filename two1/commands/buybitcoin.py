@@ -252,20 +252,11 @@ def buy_bitcoin(client, amount):
         try:
             resp = client.buy_bitcoin_from_exchange(amount, "satoshis", commit=True)
         except exceptions.ServerRequestError as e:
-            PHOTO_ID_ERROR = "Before you will be able to complete this buy, "\
-                "you must provide additional information at "\
-                "https://www.coinbase.com/photo-id"
-            USERNAME_ERROR = "To process payments we require a valid user name. "\
-                "Please go to settings to update your information."
             if e.status_code == 403 and e.data.get("error") == "TO703":
                 logger.error(uxstring.UxString.coinbase_max_buy_reached)
                 return
-            elif e.status_code == 500 and e.data.get("error") == PHOTO_ID_ERROR:
-                logger.error(uxstring.UxString.coinbase_needs_photo_id)
-                return
-            elif e.status_code == 500 and e.data.get("error") == USERNAME_ERROR:
-                logger.error(uxstring.UxString.coinbase_needs_username)
-                return
+            elif e.status_code == 422:
+                logger.error(e.data.get("message"))
 
         buy_result = resp.json()
         if buy_result["status"] == "canceled":

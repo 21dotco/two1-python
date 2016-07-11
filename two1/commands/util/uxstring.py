@@ -259,12 +259,6 @@ class UxString:
     coinbase_max_buy_reached = click.style(
         "You have reached the daily maximum for Bitcoin purchases. Please try again in a few "
         "hours.", fg="red")
-    coinbase_needs_photo_id = click.style(
-        "You need to supply a photo ID to Coinbase. "
-        "Please do this at: https://www.coinbase.com/photo-id", fg="red")
-    coinbase_needs_username = click.style(
-        "You need to set a username for your Coinbase profile. "
-        "Please do this at: https://www.coinbase.com/settings", fg="red")
     coinbase_amount_too_high = click.style(
         "The amount you entered is too high. The maximum daily bitcoin purchase limit "
         "is 100 USD.", fg="red")
