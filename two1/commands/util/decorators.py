@@ -173,6 +173,9 @@ def capture_usage(func):
             "version": two1.TWO1_VERSION
         }
 
+        # do not post a file to our logger.
+        if 'data_file' in data['params']:
+            data['params']['data_file'] = str(data['params']['data_file'])
         # send usage payload to the logging server
         _send_to_logger(data)
 
