@@ -170,8 +170,11 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
 
     # Make the paid request for the resource
     try:
+        kwargs = {'max_price': maxprice, 'data': data, 'headers': headers}
+        if data_file:
+            kwargs['files'] = {'file': data_file}
         response = requests.request(
-            method.lower(), resource, max_price=maxprice, data=data or data_file, headers=headers
+            method.lower(), resource, **kwargs
         )
     except bitrequests.ResourcePriceGreaterThanMaxPriceError as e:
         raise click.ClickException(uxstring.UxString.Error.resource_price_greater_than_max_price.format(e))
