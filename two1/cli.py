@@ -127,7 +127,7 @@ For detailed help, run 21 help --detail.
 For full documentation, visit 21.co/learn.
 """
     need_wallet_and_account = ctx.invoked_subcommand not in (
-        'help', 'update', 'login', 'doctor')
+        'help', 'update', 'login', 'doctor', 'uninstall')
 
     # Set UUID if available
     uuid = bitcoin_computer.get_device_uuid()
