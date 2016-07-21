@@ -105,7 +105,7 @@ class PaymentChannelClient:
                     self._channels[url] = paymentchannel.PaymentChannel(
                         url, self._database, self._wallet, self._blockchain)
 
-    def open(self, url, deposit, expiration, fee=10000, zeroconf=False, use_unconfirmed=False):
+    def open(self, url, deposit, expiration, fee=30000, zeroconf=False, use_unconfirmed=False):
         """Open a payment channel at the specified URL.
 
         Args:

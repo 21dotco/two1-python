@@ -143,7 +143,7 @@ def cli_list(ctx):
 @click.argument('url', type=click.STRING)
 @click.argument('deposit', type=click.INT)
 @click.argument('expiration', type=click.INT)
-@click.option('--fee', default=10000, help="Fee amount in satoshis.")
+@click.option('--fee', default=30000, help="Fee amount in satoshis.")
 @click.option('--zeroconf', default=False, is_flag=True,
               help="Use payment channel without deposit confirmation. This preference " +
               "will be overriden by server configuration if applicable.")

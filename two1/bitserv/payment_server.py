@@ -76,7 +76,7 @@ class PaymentServer:
         "TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
-    MIN_TX_FEE = 5000
+    MIN_TX_FEE = 30000
     """Minimum transaction fee for payment channel deposit/payment."""
 
     DUST_LIMIT = 3000
