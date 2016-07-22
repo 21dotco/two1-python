@@ -107,6 +107,9 @@ class Payment:
                     payment_headers = {}
                     for method in self.allowed_methods:
                         payment_headers.update(method.get_402_headers(_price, **kwargs))
+                    # Accessing the .files attribute of a request
+                    # drains the input stream.
+                    request.files
                     raise PaymentRequiredException(payment_headers)
             return _fn
         return decorator
