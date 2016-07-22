@@ -175,7 +175,7 @@ class TwentyOneProvider(BaseProvider):
                                            auth=self.auth,
                                            **kwargs)
 
-            # A non 200 status_code from is an exception
+            # A non 200 status_code is an exception
             if result.status_code != 200:
                 try:
                     data = result.json()
@@ -257,23 +257,22 @@ class TwentyOneProvider(BaseProvider):
         """
         ret = {}
         for txid in ids:
-            r = self._request("GET", "transactions/%s" % txid)
-            data = r.json()
+            response = self._request("GET", "transactions/%s" % txid)
+            data = response.json()
 
-            if r.status_code == 200:
-                block_hash = None
-                if data['block_hash']:
-                    block_hash = Hash(data['block_hash'])
-                metadata = dict(block=data['block_height'],
-                                block_hash=block_hash,
-                                network_time=timegm(arrow.get(
-                                    data['chain_received_at']).datetime.timetuple()),
-                                confirmations=data['confirmations'])
-                txn, _ = self.txn_from_json(data)
-                assert str(txn.hash) == txid
+            block_hash = None
+            if data['block_hash']:
+                block_hash = Hash(data['block_hash'])
+            metadata = dict(block=data['block_height'],
+                            block_hash=block_hash,
+                            network_time=timegm(arrow.get(
+                                data['chain_received_at']).datetime.timetuple()),
+                            confirmations=data['confirmations'])
+            txn, _ = self.txn_from_json(data)
+            assert str(txn.hash) == txid
 
-                ret[txid] = dict(metadata=metadata,
-                                 transaction=txn)
+            ret[txid] = dict(metadata=metadata,
+                             transaction=txn)
 
         return ret
 
@@ -306,14 +305,8 @@ class TwentyOneProvider(BaseProvider):
         Returns:
             int: Block height
         """
-        r = self._request("GET", "blocks/latest")
-
-        ret = None
-        if r.status_code == 200:
-            data = r.json()
-            ret = data['height']
-
-        return ret
+        response_body = self._request("GET", "blocks/latest").json()
+        return response_body['height']
 
     def get_balance(self, address_list):
         """ Deprecated Method
