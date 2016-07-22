@@ -177,8 +177,13 @@ class TwentyOneProvider(BaseProvider):
 
             # A non 200 status_code from is an exception
             if result.status_code != 200:
-                data = result.json()
-                raise exceptions.DataProviderError(data['message'])
+                try:
+                    data = result.json()
+                    raise exceptions.DataProviderError(data['message'])
+                except:
+                    # response has no json
+                    raise exceptions.DataProviderError(result.reason)
+
             return result
 
         except requests.exceptions.ConnectionError:
@@ -292,19 +297,8 @@ class TwentyOneProvider(BaseProvider):
                 "transaction must be one of: bytes, str, Transaction.")
 
         data = {"signed_hex": signed_hex}
-        r = self._request("POST", "transactions/send", data=data)
-        if r.status_code == 200:
-            j = r.json()
-            return j["transaction_hash"]
-        elif r.status_code == 400:
-            j = r.json()
-
-            # TODO: Change this to some more meaningful exception type
-            raise exceptions.TransactionBroadcastError(j['message'])
-        else:
-            # Some other status code... should never happen.
-            raise exceptions.TransactionBroadcastError(
-                "Unexpected response: %r" % r.status_code)
+        response_body = self._request("POST", "transactions/send", data=data).json()
+        return response_body["transaction_hash"]
 
     def get_block_height(self):
         """ Returns the latest block height
