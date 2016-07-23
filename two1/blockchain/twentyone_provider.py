@@ -292,7 +292,7 @@ class TwentyOneProvider(BaseProvider):
                 "transaction must be one of: bytes, str, Transaction.")
 
         data = {"signed_hex": signed_hex}
-        r = self._request("POST", "transactions/send", json=data)
+        r = self._request("POST", "transactions/send", data=data)
         if r.status_code == 200:
             j = r.json()
             return j["transaction_hash"]
