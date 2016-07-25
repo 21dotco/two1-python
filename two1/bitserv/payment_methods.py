@@ -277,13 +277,14 @@ class BitTransfer(PaymentBase):
             )
             if verification_response.ok:
                 return True
+            else:
+                # handle verification server bad response
+                try:
+                    error = verification_response.json()['error']
+                    raise PaymentError(error)
+                except (ValueError, KeyError):
+                    raise ServerError(verification_response.content)
         except requests.ConnectionError:
-            logger.debug('[BitServ] Client failed to connect to server.')
-
-        # handle verification server bad response
-        try:
-            error = verification_response.json()['error']
-        except (ValueError, KeyError):
-            raise ServerError(verification_response.content)
-        else:
-            raise PaymentError(error)
+            err_str = '[BitServ] Client failed to connect to server.'
+            logger.debug(err_str)
+            raise ServerError(err_str)
