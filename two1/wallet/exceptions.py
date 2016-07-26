@@ -60,3 +60,11 @@ class SatoshiUnitsError(WalletError, TypeError):
 
 class DustLimitError(WalletError, ValueError):
     pass
+
+
+class TransactionBuilderException(Exception):
+    pass
+
+
+class OverfullTransactionException(TransactionBuilderException):
+    pass
