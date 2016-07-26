@@ -2,8 +2,9 @@
 information about a blockchain by contacting a server."""
 from calendar import timegm
 from collections import defaultdict
-import os
 import arrow
+import json
+import os
 
 from urllib.parse import urljoin
 
@@ -175,10 +176,14 @@ class TwentyOneProvider(BaseProvider):
                                            auth=self.auth,
                                            **kwargs)
 
-            # A non 200 status_code from is an exception
+            # A non 200 status_code is an exception
             if result.status_code != 200:
-                data = result.json()
-                raise exceptions.DataProviderError(data['message'])
+                try:
+                    data = result.json()
+                    raise exceptions.DataProviderError(data.get('message', str(data)))
+                except json.JSONDecodeError:
+                    raise exceptions.DataProviderError(result.reason)
+
             return result
 
         except requests.exceptions.ConnectionError:
@@ -252,23 +257,22 @@ class TwentyOneProvider(BaseProvider):
         """
         ret = {}
         for txid in ids:
-            r = self._request("GET", "transactions/%s" % txid)
-            data = r.json()
+            response = self._request("GET", "transactions/%s" % txid)
+            data = response.json()
 
-            if r.status_code == 200:
-                block_hash = None
-                if data['block_hash']:
-                    block_hash = Hash(data['block_hash'])
-                metadata = dict(block=data['block_height'],
-                                block_hash=block_hash,
-                                network_time=timegm(arrow.get(
-                                    data['chain_received_at']).datetime.timetuple()),
-                                confirmations=data['confirmations'])
-                txn, _ = self.txn_from_json(data)
-                assert str(txn.hash) == txid
+            block_hash = None
+            if data['block_hash']:
+                block_hash = Hash(data['block_hash'])
+            metadata = dict(block=data['block_height'],
+                            block_hash=block_hash,
+                            network_time=timegm(arrow.get(
+                                data['chain_received_at']).datetime.timetuple()),
+                            confirmations=data['confirmations'])
+            txn, _ = self.txn_from_json(data)
+            assert str(txn.hash) == txid
 
-                ret[txid] = dict(metadata=metadata,
-                                 transaction=txn)
+            ret[txid] = dict(metadata=metadata,
+                             transaction=txn)
 
         return ret
 
@@ -292,19 +296,8 @@ class TwentyOneProvider(BaseProvider):
                 "transaction must be one of: bytes, str, Transaction.")
 
         data = {"signed_hex": signed_hex}
-        r = self._request("POST", "transactions/send", data=data)
-        if r.status_code == 200:
-            j = r.json()
-            return j["transaction_hash"]
-        elif r.status_code == 400:
-            j = r.json()
-
-            # TODO: Change this to some more meaningful exception type
-            raise exceptions.TransactionBroadcastError(j['message'])
-        else:
-            # Some other status code... should never happen.
-            raise exceptions.TransactionBroadcastError(
-                "Unexpected response: %r" % r.status_code)
+        response_body = self._request("POST", "transactions/send", data=data).json()
+        return response_body["transaction_hash"]
 
     def get_block_height(self):
         """ Returns the latest block height
@@ -312,14 +305,8 @@ class TwentyOneProvider(BaseProvider):
         Returns:
             int: Block height
         """
-        r = self._request("GET", "blocks/latest")
-
-        ret = None
-        if r.status_code == 200:
-            data = r.json()
-            ret = data['height']
-
-        return ret
+        response_body = self._request("GET", "blocks/latest").json()
+        return response_body['height']
 
     def get_balance(self, address_list):
         """ Deprecated Method
