@@ -23,7 +23,7 @@ install_requires = ['arrow',
                     'protobuf==3.0.0a3',
                     'pyaes',
                     'tabulate',
-                    'jsonrpcclient',
+                    'jsonrpcclient==2.0.1',
                     'jsonrpcserver==3.1.1',
                     'pyyaml'
                     ]
