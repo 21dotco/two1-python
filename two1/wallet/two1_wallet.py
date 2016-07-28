@@ -1183,7 +1183,7 @@ class Two1Wallet(BaseWallet):
         Returns:
             list(WalletTransaction): A list of WalletTransaction objects
         """
-        total_amount = 0
+        subtotal_amount = 0
         # Add up total amount & check for any outputs that are below
         # the dust limit as they would make the transaction non-standard
         for addr, amount in addresses_and_amounts.items():
@@ -1195,46 +1195,38 @@ class Two1Wallet(BaseWallet):
                 raise exceptions.DustLimitError(
                     "Can't send %d satoshis to %s: amount is below dust limit!" %
                     (amount, addr))
-            total_amount += amount
+            subtotal_amount += amount
 
         if not accounts:
             accts = self._accounts
-            c_balance = self.confirmed_balance()
-            u_balance = self.unconfirmed_balance()
         else:
             accts = self._check_and_get_accounts(accounts)
-            c_balance = 0
-            u_balance = 0
-            for a in accts:
-                c_balance += a.balance['confirmed']
-                u_balance += a.balance['total']
-
-        if use_unconfirmed:
-            balance = u_balance
-        else:
-            balance = min(c_balance, u_balance)
 
         # Now get the unspents from all accounts and select which we
         # want to use
         utxos_by_addr = self.get_utxos(include_unconfirmed=use_unconfirmed,
                                        accounts=accts)
 
+        total_available = sum(u.value for key, utxos in utxos_by_addr.items() for u in utxos)
         selected_utxos, fees = self.utxo_selector(utxos_by_addr=utxos_by_addr,
-                                                  amount=total_amount,
+                                                  amount=subtotal_amount,
                                                   num_outputs=len(addresses_and_amounts),
                                                   fees=fees)
 
         # Verify we have enough money
-        total_with_fees = total_amount + fees
+        total_with_fees = subtotal_amount + fees
         enough_money = bool(selected_utxos)
-        if total_with_fees > balance or not enough_money:
+        if not enough_money:
+            message = ('Available utxos (%d satoshis total) is less than '
+                       'payment (%d satoshis) + fees (%d satoshis) = %d satoshis. '
+                       'Available utxos: %r')
+            utxo_values = {address: [u.value for u in utxos] for address, utxos in selected_utxos.items()}
             raise exceptions.WalletBalanceError(
-                "Balance (%d satoshis) is less than payment (%d satoshis) + fees (%d satoshis) = %d satoshis. " %
-                (balance, total_amount, fees, total_with_fees)
+                message % (total_available, subtotal_amount, fees, total_with_fees, utxo_values)
             )
 
-        if use_unconfirmed and total_with_fees > c_balance:
-            self.logger.warning("Using unconfirmed inputs to complete transaction.")
+        if use_unconfirmed:
+            self.logger.warning("May be using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
         private_keys = self.get_private_keys(list(selected_utxos.keys()))
@@ -1274,7 +1266,7 @@ class Two1Wallet(BaseWallet):
                                 inputs=inputs,
                                 outputs=outputs,
                                 lock_time=0,
-                                value=total_amount,
+                                value=subtotal_amount,
                                 fees=fees)
 
         # Now sign all the inputs
