@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
               is_flag=True,
               default=False,
               help="List non-zero balances for each address")
+@click.pass_context
 @decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage

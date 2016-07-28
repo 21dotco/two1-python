@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option('--debug', is_flag=True, default=False,
               help='Include debug logs.')
+@click.pass_context
 @decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage

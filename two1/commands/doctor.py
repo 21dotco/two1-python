@@ -562,6 +562,7 @@ class Doctor(object):
 
 
 @click.command()
+@click.pass_context
 @decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage

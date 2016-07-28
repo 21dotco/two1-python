@@ -38,7 +38,6 @@ def json_output(f):
     """
 
     @click.option('--json', default=False, is_flag=True, help='Uses JSON output.')
-    @click.pass_context
     def _json_output(ctx, json, *args, **kwargs):
         """ This wrapper disables logging when json is set and restores it after print json value
 
