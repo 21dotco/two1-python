@@ -1225,8 +1225,8 @@ class Two1Wallet(BaseWallet):
                 message % (total_available, subtotal_amount, fees, total_with_fees, utxo_values)
             )
 
-        if use_unconfirmed and total_with_fees > self.confirmed_balance():
-            self.logger.warning("Using unconfirmed inputs to complete transaction.")
+        if use_unconfirmed:
+            self.logger.warning("May be using unconfirmed inputs to complete transaction.")
 
         # Get all private keys in one shot
         private_keys = self.get_private_keys(list(selected_utxos.keys()))
