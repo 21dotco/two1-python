@@ -9,24 +9,25 @@ http://click.pocoo.org/4/setuptools/
 from setuptools import setup
 
 
-install_requires = ['arrow',
-                    'base58',
-                    'docker-py==1.8.0',
-                    'pytest',
-                    'requests',
-                    'responses',
-                    'simplejson',
-                    'sha256',
-                    'path.py',
-                    'click==4.1',
-                    'mnemonic==0.13',
-                    'protobuf==3.0.0a3',
-                    'pyaes',
-                    'tabulate',
-                    'jsonrpcclient==2.0.1',
-                    'jsonrpcserver==3.1.1',
-                    'pyyaml'
-                    ]
+install_requires = [
+    'arrow',
+    'base58',
+    'click==4.1',
+    'docker-py==1.8.0',
+    'flake8',
+    'jsonrpcclient==2.0.1',
+    'jsonrpcserver==3.1.1',
+    'mnemonic==0.13',
+    'path.py',
+    'pexpect',
+    'protobuf==3.0.0a3',
+    'pyaes',
+    'pytest',
+    'pyyaml',
+    'requests',
+    'sha256',
+    'tabulate',
+]
 
 version = __import__('two1').TWO1_VERSION
 
