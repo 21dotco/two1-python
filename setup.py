@@ -23,9 +23,7 @@ install_requires = [
     'pytest',
     'pyyaml',
     'requests',
-    'responses',
     'sha256',
-    'simplejson',
     'tabulate',
 ]
 
