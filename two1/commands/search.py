@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 @click.command("search")
-@click.pass_context
 @click.argument('search_string', default=None, required=False)
-@decorators.catch_all
 @click.option('--json', default=False, is_flag=True, help='Uses JSON output.')
+@click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 def search(ctx, search_string, json):
     """Search for apps listed on the 21 Marketplace.

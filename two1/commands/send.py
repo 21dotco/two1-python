@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
               help="Use unconfirmed transactions/UTXOs")
 @click.option('--verbose', '-v', is_flag=True, default=False,
               help="Show all transaction inputs and outputs.")
-@decorators.catch_all
 @click.pass_context
+@decorators.catch_all
 def send(ctx, address, amount, denomination, use_unconfirmed, verbose):
     """Send a specified address some satoshis.
 

@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.pass_context
 @click.option('-sp', '--setpassword', is_flag=True, default=False,
               help='Set/update your 21 password')
 @click.option('-u', '--username', default=None, help='The username to login with')
 @click.option('-p', '--password', default=None, help='The password to login with')
+@click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
 def login(ctx, setpassword, username, password):

@@ -1,7 +1,7 @@
 PyYAML==3.11
 arrow==0.6.0
 base58==0.2.2
-click==4.1
+click==6.6
 docker-py==1.8.0
 flake8==2.6.0
 future==0.15.2

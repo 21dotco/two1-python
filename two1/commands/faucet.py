@@ -27,8 +27,8 @@ def _faucet(username, client, wallet):
 
 
 @click.command()
-@decorators.catch_all
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 def faucet(ctx):
     """ Request bitcoin from the 21 faucet.

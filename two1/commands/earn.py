@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option('-i', '--invite', default=None,
               help="Earn bitcoin for inviting friends to 21.")
-@decorators.catch_all
 @click.pass_context
+@decorators.catch_all
 @decorators.capture_usage
 def earn(ctx, invite):
     """ Earn bitcoin by doing microtasks.
