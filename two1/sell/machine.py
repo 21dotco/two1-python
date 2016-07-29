@@ -3,6 +3,7 @@ import os
 import re
 import json
 import time
+import shutil
 import subprocess
 import logging
 from enum import Enum
@@ -128,6 +129,8 @@ class Two1Machine:
             zt_ip (str): ZeroTier IP address.
         """
         try:
+            if not shutil.which('ifconfig'):
+                os.environ['PATH'] += ':/sbin'
             r = subprocess.check_output(["ifconfig"]).decode()
             zt_ip = Two1Machine.ZEROTIER_IP_PATTERN.search(r).group("ip")
         except Exception:
