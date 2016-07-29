@@ -139,7 +139,6 @@ def cli_list(ctx):
 
 
 @click.command('open', help="Open channel.")
-@click.pass_context
 @click.argument('url', type=click.STRING)
 @click.argument('deposit', type=click.INT)
 @click.argument('expiration', type=click.INT)
@@ -149,6 +148,7 @@ def cli_list(ctx):
               "will be overriden by server configuration if applicable.")
 @click.option('--use-unconfirmed', default=False, is_flag=True,
               help="Use unconfirmed transactions to build deposit transaction.")
+@click.pass_context
 def cli_open(ctx, url, deposit, expiration, fee, zeroconf, use_unconfirmed):
     """Open a payment channel at the specified URL.
 
@@ -184,9 +184,9 @@ def cli_open(ctx, url, deposit, expiration, fee, zeroconf, use_unconfirmed):
 
 
 @click.command('pay', help="Create payment to channel.")
-@click.pass_context
 @click.argument('url', type=click.STRING)
 @click.argument('amount', type=click.INT)
+@click.pass_context
 def cli_pay(ctx, url, amount):
     """Pay to a payment channel.
 
@@ -221,8 +221,8 @@ def cli_pay(ctx, url, amount):
 
 
 @click.command('status', help="Get status of channel.")
-@click.pass_context
 @click.argument('url', type=click.STRING)
+@click.pass_context
 def cli_status(ctx, url):
     """Get status and basic information of a payment channel.
 
@@ -263,8 +263,8 @@ def cli_status(ctx, url):
 
 
 @click.command('info', help="Get details of channel.")
-@click.pass_context
 @click.argument('url', type=click.STRING)
+@click.pass_context
 def cli_info(ctx, url):
     """Get status and detailed information of a payment channel.
 
@@ -329,8 +329,8 @@ def cli_info(ctx, url):
 
 
 @click.command('close', help="Close channel.")
-@click.pass_context
 @click.argument('url', type=click.STRING)
+@click.pass_context
 def cli_close(ctx, url):
     """Close a payment channel.
 
