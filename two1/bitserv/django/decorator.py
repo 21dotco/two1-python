@@ -50,7 +50,7 @@ class Payment:
             def _fn(request, *fn_args, **fn_kwargs):
                 # Calculate resource cost
                 nonlocal price
-                _price = price(request) if callable(price) else price
+                _price = price(request, *fn_args, **fn_kwargs) if callable(price) else price
 
                 # Need better way to pass server url to payment methods (FIXME)
                 if 'server_url' not in kwargs:
