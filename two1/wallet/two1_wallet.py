@@ -600,6 +600,12 @@ class Two1Wallet(BaseWallet):
 
         return rv
 
+    def __hash__(self):
+        return hash(self._master_seed)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def _init_account(self, index,
                       name="", account_state=None, skip_discovery=False):
         # Account keys use hardened deriviation, so make sure the MSB is set
@@ -1933,6 +1939,12 @@ class Wallet(object):
             self.w = Two1Wallet(params_or_file=wallet_path,
                                 data_provider=dp,
                                 passphrase=passphrase)
+
+    def __hash__(self):
+        return hash(self.w)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def _handle_server_error(self, error):
         data = json.loads(error.data)
