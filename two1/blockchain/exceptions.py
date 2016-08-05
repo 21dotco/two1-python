@@ -1,8 +1,7 @@
-"""This is a simple submodule that enumerates the different kinds of exceptions
-that the `two1.blockchain` module raises."""
+import requests
 
 
-class DataProviderUnavailableError(Exception):
+class DataProviderUnavailableError(requests.ConnectionError):
     """Raised when a data provider server cannot be reached."""
     pass
 
