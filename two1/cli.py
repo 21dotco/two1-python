@@ -6,10 +6,12 @@ easier for use at the command line; the latter name (two1) begins with
 a letter and is thus preferred within Python or any context where 21
 is imported as library.
 """
-import platform
-import locale
 import click
+import locale
 import logging
+import platform
+import requests
+import sys
 
 import two1
 import two1.commands.util.logger
@@ -134,13 +136,23 @@ For full documentation, visit 21.co/learn.
     if uuid:
         two1.TWO1_DEVICE_ID = uuid
 
-    ctx.obj = parse_config(
-        config_file=config_file,
-        config_dict=dict(config_pairs),
-        need_wallet_and_account=need_wallet_and_account,
-        debug=debug,
-    )
-
+    try:
+        ctx.obj = parse_config(
+            config_file=config_file,
+            config_dict=dict(config_pairs),
+            need_wallet_and_account=need_wallet_and_account,
+            debug=debug,
+        )
+    except requests.ConnectionError:
+        # If a user is not connected to the internet, this should be
+        # the first place we encounter an error
+        logger.error(
+            'A connection error has occurred. Please check your internet connection',
+            fg='red')
+        if debug:
+            raise
+        else:
+            sys.exit(1)
 
 main.add_command(buy)
 main.add_command(buybitcoin)

@@ -1,16 +1,14 @@
 """ All two1 command line related decorators """
-# standard python imports
-import json as jsonlib
 import functools
-import platform
-import traceback
+import json as jsonlib
 import logging
+import platform
+import sys
+import traceback
 
-# 3rd party imports
 import requests
 import click
 
-# two1 imports
 import two1
 import two1.commands.util.uxstring as uxstring
 import two1.commands.util.exceptions as exceptions
@@ -241,10 +239,11 @@ def catch_all(func):
             logger.error(uxstring.UxString.Error.server_err)
 
             # only dump the stack traces if the debug flag is set
-            if ctx.obj['debug']:
+            if kwargs.get('debug') or ctx.obj['debug']:
                 logger.error("\nFunction: {}.{}".format(func.__module__, func.__name__), fg="red")
                 logger.error("Args: {}".format(args), fg="red")
                 logger.error("Kwargs: {}".format(kwargs), fg="red")
                 logger.error("{}".format(traceback.format_exc()), fg="red")
+        sys.exit(1)
 
     return functools.update_wrapper(_catch_all, func)
