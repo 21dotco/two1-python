@@ -628,6 +628,10 @@ Network:
         )),
         fg="yellow")
 
+    # deprecation error messages
+    deprecated_21_buy_url = click.style("21 buy url RESOURCE", bold=True) + \
+        " syntax is deprecated. Use " + click.style("21 buy RESOURCE", bold=True) + " instead."
+
     class Error:
         """ Put all Error type uxstrings here """
         # network errors

@@ -23,8 +23,15 @@ import two1.channels.statemachine as statemachine
 logger = logging.getLogger(__name__)
 
 
+def check_url_deprecation(self, arg, value):
+    if value == 'url':
+        raise click.ClickException(uxstring.UxString.deprecated_21_buy_url)
+
+    return value
+
+
 @click.command()
-@click.argument('resource', nargs=1)
+@click.argument('resource', nargs=1, callback=check_url_deprecation)
 @click.option(
     '-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information."
 )
