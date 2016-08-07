@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.argument('resource', nargs=2)
+@click.argument('resource', nargs=1)
 @click.option(
     '-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information."
 )
@@ -53,14 +53,10 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
 
 """
     # Get requested URL resource for `21 buy <URL>` syntax
-    buy_url = resource[0]
+    buy_url = resource
     if buy_url is None or buy_url is "":
         logger.info(ctx.command.get_help(ctx))
         sys.exit()
-
-    # Backwards compatibility for `21 buy url <URL>` syntax
-    if resource[0] == 'url':
-        buy_url = resource[1]
 
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
