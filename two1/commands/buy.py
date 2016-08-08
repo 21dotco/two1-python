@@ -59,7 +59,6 @@ Get state, city, latitude, longitude, and estimated population for a given zip c
 $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109" --maxprice 2750
 
 """
-    # Get requested URL resource for `21 buy <URL>` syntax
     buy_url = resource
     if buy_url is None or buy_url is "":
         logger.info(ctx.command.get_help(ctx))
