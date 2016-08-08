@@ -64,6 +64,7 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
         logger.info(ctx.command.get_help(ctx))
         sys.exit()
 
+    options['no_transactions'] = ctx.parent.params['no_transactions']
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
 
@@ -104,7 +105,7 @@ def parse_resource(resource):
 
 
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(),
-         method='GET', output_file=None, data=None, data_file=None, maxprice=10000):
+         method='GET', output_file=None, data=None, data_file=None, maxprice=10000, no_transactions=False):
     """Purchase a 402-enabled resource via CLI.
 
     This function attempts to purchase the requested resource using the
@@ -172,7 +173,12 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
 
     # Make the paid request for the resource
     try:
-        kwargs = {'max_price': maxprice, 'data': data, 'headers': headers}
+        kwargs = {
+            'max_price': maxprice,
+            'data': data,
+            'headers': headers,
+            'no_transactions': no_transactions,
+        }
         if data_file:
             kwargs['files'] = {'file': data_file}
         response = requests.request(

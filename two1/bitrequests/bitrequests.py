@@ -124,6 +124,12 @@ class BitRequests(object):
             response (requests.response):
                 response from paying for the requested resource.
         """
+        if 'no_transactions' in kwargs and kwargs['no_transactions']:
+            fake_response = requests.models.Response()
+            fake_response.status_code = 200
+            fake_response._content = b''
+            return fake_response
+
         # Make the initial request for the resource
         response = requests.request(method, url, **kwargs)
 
