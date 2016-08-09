@@ -38,7 +38,7 @@ setup(
     url='https://21.co',
     author='21',
     author_email='support@21.co',
-    license='MIT',
+    license='FreeBSD',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
