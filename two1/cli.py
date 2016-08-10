@@ -118,10 +118,14 @@ def parse_config(
               is_flag=True,
               envvar='TWO1_DEBUG',
               help='Display stack traces for errors.')
+@click.option('--mock-requests',  # in click 7.0 we can hide this from the help text
+              is_flag=True,
+              envvar='TWO1_MOCK_REQUESTS',
+              help='Prevent 402 requests for 21 buy.')
 @click.version_option(two1.TWO1_VERSION, message=two1.TWO1_VERSION_MESSAGE)
 @click.pass_context
 @decorators.catch_all
-def main(ctx, config_file, config_pairs, debug):
+def main(ctx, config_file, config_pairs, debug, mock_requests):
     """Buy and sell anything on the internet for bitcoin.
 
 \b
