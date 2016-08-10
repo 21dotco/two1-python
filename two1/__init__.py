@@ -3,7 +3,7 @@ import os
 import os.path
 
 
-VERSION = (3, 6, 0)
+VERSION = (3, 7, 0)
 
 __version__ = '.'.join(map(str, VERSION))
 
