@@ -23,8 +23,15 @@ import two1.channels.statemachine as statemachine
 logger = logging.getLogger(__name__)
 
 
+def check_url_deprecation(self, arg, value):
+    if value == 'url':
+        raise click.ClickException(uxstring.UxString.deprecated_21_buy_url)
+
+    return value
+
+
 @click.command()
-@click.argument('resource', nargs=2)
+@click.argument('resource', nargs=1, callback=check_url_deprecation)
 @click.option(
     '-i', '--info', 'info_only', default=False, is_flag=True, help="Retrieve initial 402 payment information."
 )
@@ -52,15 +59,10 @@ Get state, city, latitude, longitude, and estimated population for a given zip c
 $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109" --maxprice 2750
 
 """
-    # Get requested URL resource for `21 buy <URL>` syntax
-    buy_url = resource[0]
+    buy_url = resource
     if buy_url is None or buy_url is "":
         logger.info(ctx.command.get_help(ctx))
         sys.exit()
-
-    # Backwards compatibility for `21 buy url <URL>` syntax
-    if resource[0] == 'url':
-        buy_url = resource[1]
 
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
