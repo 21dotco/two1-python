@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import MagicMock
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
-from two1.blockchain.insight_provider import InsightProvider
 from two1.blockchain.twentyone_provider import TwentyOneProvider
 from two1.blockchain.exceptions import DataProviderError
 
@@ -11,13 +10,13 @@ acct_pub_key = HDPublicKey.from_b58check(
     "xpub68YdQASJ3w2RYS7XNT8HkLVjWqKeMD5uAxJR2vqXAh65j7izto1cVSwCNm7awAjjeYExqneCAZzt5xGETXZz1EXa9HntM5HzwdQ9551UErA")
 
 twentyone_provider = TwentyOneProvider()
-insight_provider = InsightProvider("http://blockchain.21-stage.co:3001", insight_api_path="insight-api")
+stage_twentyone_provider = TwentyOneProvider("http://blockchain.21-stage.co")
 
 
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (insight_provider, False),
+                             (stage_twentyone_provider, False),
                          ])
 def test_get_transactions(provider, testnet):
     cp = provider
@@ -38,7 +37,7 @@ def test_get_transactions(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (insight_provider, False),
+                             (stage_twentyone_provider, False),
                          ])
 def test_get_transactions_by_id(provider, testnet):
     cp = provider
@@ -61,7 +60,7 @@ def test_get_transactions_by_id(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (insight_provider, False),
+                             (stage_twentyone_provider, False),
                          ])
 def test_provider_json_error(provider, testnet):
     cp = provider
@@ -84,7 +83,7 @@ def test_provider_json_error(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
-                             (insight_provider, False),
+                             (stage_twentyone_provider, False),
                          ])
 def test_transaction_send(provider, testnet):
     cp = provider
