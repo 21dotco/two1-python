@@ -106,7 +106,7 @@ class BitRequests(object):
             if hasattr(f, 'seek'):
                 f.seek(0)
 
-    def request(self, method, url, max_price=None, **kwargs):
+    def request(self, method, url, max_price=None, mock_requests=False, **kwargs):
         """Make a 402 request for a resource.
 
         This is the BitRequests public method that should be used to complete a
@@ -124,7 +124,7 @@ class BitRequests(object):
             response (requests.response):
                 response from paying for the requested resource.
         """
-        if 'no_transactions' in kwargs and kwargs['no_transactions']:
+        if mock_requests:
             fake_response = requests.models.Response()
             fake_response.status_code = 200
             fake_response._content = b''

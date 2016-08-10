@@ -64,7 +64,7 @@ $ 21 buy "https://mkt.21.co/21dotco/zip_code_data/zipdata/collect?zip_code=94109
         logger.info(ctx.command.get_help(ctx))
         sys.exit()
 
-    options['no_transactions'] = ctx.parent.params['no_transactions']
+    options['mock_requests'] = ctx.parent.params['mock_requests']
     _buy(ctx.obj['config'], ctx.obj['client'], ctx.obj['machine_auth'], buy_url, **options)
 
 
@@ -105,7 +105,7 @@ def parse_resource(resource):
 
 
 def _buy(config, client, machine_auth, resource, info_only=False, payment_method='offchain', header=(),
-         method='GET', output_file=None, data=None, data_file=None, maxprice=10000, no_transactions=False):
+         method='GET', output_file=None, data=None, data_file=None, maxprice=10000, mock_requests=False):
     """Purchase a 402-enabled resource via CLI.
 
     This function attempts to purchase the requested resource using the
@@ -132,6 +132,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
             attempt to deserialize the data and determine its encoding type.
         data_file (str): name of the data file to send in HTTP body.
         maxprice (int): allowed maximum price (in satoshis) of the resource.
+        mock_requests (bool): skip 402 request and return an empty 200 response,
+            intended for developer testing.
 
     Raises:
         click.ClickException: if some set of parameters or behavior cause the
@@ -173,16 +175,11 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
 
     # Make the paid request for the resource
     try:
-        kwargs = {
-            'max_price': maxprice,
-            'data': data,
-            'headers': headers,
-            'no_transactions': no_transactions,
-        }
+        kwargs = {'max_price': maxprice, 'data': data, 'headers': headers}
         if data_file:
             kwargs['files'] = {'file': data_file}
         response = requests.request(
-            method.lower(), resource, **kwargs
+            method.lower(), resource, mock_requests=mock_requests, **kwargs
         )
     except bitrequests.ResourcePriceGreaterThanMaxPriceError as e:
         raise click.ClickException(uxstring.UxString.Error.resource_price_greater_than_max_price.format(e))
