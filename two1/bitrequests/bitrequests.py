@@ -321,7 +321,7 @@ class OnChainRequests(BitRequests):
         return {
             'Bitcoin-Transaction': onchain_payment,
             'Return-Wallet-Address': return_address,
-            OnChainRequests.HTTP_BITCOIN_PRICE: price,
+            OnChainRequests.HTTP_BITCOIN_PRICE: str(price),
             OnChainRequests.HTTP_PAYER_21USERNAME: urllib.parse.quote(self.username) if self.username else None
         }
 
