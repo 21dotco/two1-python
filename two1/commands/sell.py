@@ -14,6 +14,7 @@ from two1.sell.machine import Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.manager import get_manager
 from two1.sell.installer import Two1SellInstaller
+from two1.sell.installer import InstallerMac
 from two1.sell.util.client_helpers import get_platform
 from two1.sell.util import cli_helpers as cli_helpers
 from two1.sell.exceptions.exceptions_sell import Two1SellNotSupportedException
@@ -104,10 +105,12 @@ $ 21 sell stop --help
 @click.option('-w', '--wait-time',
               type=int, default=10)
 @click.option('--no-vm', is_flag=True, default=False)
+@click.option('--no-zt-dep', is_flag=True, default=False)
+@click.option('--publishing-ip', type=str)
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def start(ctx, services, all, wait_time, no_vm):
+def start(ctx, services, all, wait_time, no_vm, no_zt_dep, publishing_ip):
     """
 Start selling a containerized service.
 
@@ -119,7 +122,6 @@ $ 21 sell start <service_name>
 Start selling all available services.
 $ 21 sell start --all
 """
-
     # display help command if no args
     if len(services) == 0 and all is False:
         logger.info(ctx.command.get_help(ctx))
@@ -134,8 +136,21 @@ $ 21 sell start --all
     manager = ctx.obj['manager']
     installer = ctx.obj['installer']
 
+    if no_zt_dep:
+        if isinstance(installer.installer, InstallerMac):
+            logger.info(click.style("ZeroTier required to run 21 sell on Mac.",
+                                    fg=cli_helpers.PROMPT_COLOR))
+            sys.exit()
+        if publishing_ip is None:
+            logger.info(click.style("--no-zt-dep must be used in "
+                                    "conjunction with --publishing-ip <IP_TO_PUBLISH>.",
+                                    fg=cli_helpers.PROMPT_COLOR))
+            sys.exit()
+
     logger.info(click.style("Checking dependencies.", fg=cli_helpers.TITLE_COLOR))
     deps_list = installer.check_dependencies()
+    if no_zt_dep:
+        del deps_list[[name for name, installed in deps_list].index("Zerotier")]
     all_deps_installed = cli_helpers.package_check(deps_list, True)
 
     # install virtualbox, docker, and zerotier deps
@@ -342,7 +357,7 @@ $ 21 sell start --all
         logger.info("Unable to fetch running services.", fg="magenta")
         sys.exit()
 
-    published_stats = cli_helpers.prompt_to_publish(started_services, manager)
+    published_stats = cli_helpers.prompt_to_publish(started_services, manager, publishing_ip)
     for stat in published_stats:
         cli_helpers.print_str(stat[0],
                               stat[2],
