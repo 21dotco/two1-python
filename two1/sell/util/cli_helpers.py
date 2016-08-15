@@ -592,15 +592,16 @@ def get_published_apps():
     return published_app_urls
 
 
-def prompt_to_publish(started_services, manager):
+def prompt_to_publish(started_services, manager, publishing_ip):
     """ Prompt user to publish services if not published.
     """
 
-    zt_ip = manager.get_market_address()
+    if publishing_ip is None:
+        publishing_ip = manager.get_market_address()
     port = manager.get_server_port()
 
     published_apps = get_published_apps()
-    started_apps = ["%s:%s/%s" % (zt_ip, port, service) for service in started_services]
+    started_apps = ["%s:%s/%s" % (publishing_ip, port, service) for service in started_services]
     not_published = [i for i in started_apps if i not in published_apps]
     not_published_names = [i.split("/")[1] for i in not_published]
 
@@ -611,7 +612,7 @@ def prompt_to_publish(started_services, manager):
         published = start_long_running("Publishing services",
                                        publish_started,
                                        not_published_names,
-                                       zt_ip,
+                                       publishing_ip,
                                        port,
                                        manager)
         return published
@@ -620,7 +621,7 @@ def prompt_to_publish(started_services, manager):
         return []
 
 
-def publish_started(not_published, zt_ip, port, manager):
+def publish_started(not_published, publishing_ip, port, manager):
     """ Publish started services.
     """
 
@@ -642,7 +643,7 @@ def publish_started(not_published, zt_ip, port, manager):
         def publish_timedout_hook(sname):
             publish_stats.append((sname, False, ["Publishing timed out"]))
 
-        manager.publish_service(service_name, zt_ip, port,
+        manager.publish_service(service_name, publishing_ip, port,
                                 published_hook, already_published_hook, failed_to_publish_hook,
                                 unknown_publish_error_hook, publish_timedout_hook)
 
