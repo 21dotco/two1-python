@@ -101,7 +101,6 @@ def get_passphrase():
     return getpass.getpass("Passphrase to unlock wallet: ")
 
 
-@click.pass_context
 def validate_data_provider(ctx, param, value):
     """ Validates the data provider sent in via the CLI.
 
