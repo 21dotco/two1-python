@@ -171,7 +171,9 @@ $ 21 sell start --all
 
     # connect to zerotier virtual network
     if not manager.status_networking():
-        if click.confirm(click.style(
+        if no_zt_dep:
+            pass
+        elif click.confirm(click.style(
                 "ZeroTier One virtual network service is not running. Would you like to start "
                 "the service?", fg=cli_helpers.PROMPT_COLOR)):
             try:
@@ -196,7 +198,9 @@ $ 21 sell start --all
 
     # join the 21market network
     if manager.get_market_address() == "":
-        if click.confirm(click.style(
+        if no_zt_dep:
+            pass
+        elif click.confirm(click.style(
                 "21market network not connected. Would you like to join 21market?", fg=cli_helpers.PROMPT_COLOR)):
             logger.info("You might need to enter your superuser password.")
             manager.connect_market(ctx.obj['client'])
