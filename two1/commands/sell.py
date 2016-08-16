@@ -570,13 +570,8 @@ $ 21 sell status
                                             log_not_running=True):
             sys.exit()
 
-    if not cli_helpers.zerotier_service_check(manager.status_networking(),
-                                              log_not_running=True):
-        sys.exit()
-
-    if not cli_helpers.market_connected_check(manager.machine.host,
-                                              log_not_running=True):
-        sys.exit()
+    cli_helpers.zerotier_service_check(manager.status_networking(), log_not_running=True)
+    cli_helpers.market_connected_check(manager.machine.host, log_not_running=True)
 
     logger.info(click.style("SERVICES", fg=cli_helpers.TITLE_COLOR))
     try:
