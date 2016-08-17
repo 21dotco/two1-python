@@ -541,14 +541,14 @@ def balance(ctx, account):
               is_flag=True,
               default=False,
               help="List non-zero balances for each address")
-@click.option('--byutxos',
+@click.option('--byutxo',
               is_flag=True,
               default=False,
               help="List non-zero balances for each utxo")
 @click.pass_context
 @handle_exceptions
 @log_usage
-def list_balances(ctx, byaddress, byutxos):
+def list_balances(ctx, byaddress, byutxo):
     """ Prints the current balances of each account.
     """
     w = ctx.obj['wallet']
@@ -571,7 +571,7 @@ def list_balances(ctx, byaddress, byutxos):
                     ))
             click.echo("")
 
-        if byutxos:
+        if byutxo:
             by_utxo = w.get_utxos(include_unconfirmed=True)
             if by_utxo:
                 click.echo("")
