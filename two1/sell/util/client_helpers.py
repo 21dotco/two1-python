@@ -56,6 +56,12 @@ def get_platform():
                                        is_supported=True,
                                        help_message="",
                                        label="centos")
+        elif 'fedora-24' in detected_distro.lower():
+            return PlatformDescription(detected_os=detected_os,
+                                       detected_distro=detected_distro,
+                                       is_supported=True,
+                                       help_message="",
+                                       label="fedora")
     return PlatformDescription(detected_os=detected_os,
                                detected_distro=detected_distro,
                                is_supported=False,
