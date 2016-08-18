@@ -3,7 +3,6 @@ information about a blockchain by contacting a server."""
 from calendar import timegm
 from collections import defaultdict
 import arrow
-import json
 import os
 
 from urllib.parse import urljoin
@@ -181,7 +180,7 @@ class TwentyOneProvider(BaseProvider):
                 try:
                     data = result.json()
                     raise exceptions.DataProviderError(data.get('message', str(data)))
-                except json.JSONDecodeError:
+                except ValueError:
                     raise exceptions.DataProviderError(result.reason)
 
             return result
