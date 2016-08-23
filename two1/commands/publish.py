@@ -271,8 +271,8 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     """
     try:
         manifest_json = check_app_manifest(manifest_path, overrides, marketplace)
-        app_url = urlparse(manifest_json["host"])
-        app_ip = app_url.path.split(":")[0]
+        app_url = "{}://{}".format(manifest_json["schemes"][0], manifest_json["host"])
+        app_ip = urlparse(app_url).hostname
 
         if not skip:
             address = get_zerotier_address(marketplace)
