@@ -271,8 +271,8 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     """
     try:
         manifest_json = check_app_manifest(manifest_path, overrides, marketplace)
-        app_url = urlparse(manifest_json["host"])
-        app_ip = app_url.path.split(":")[0]
+        app_url = "{}://{}".format(manifest_json["schemes"][0], manifest_json["host"])
+        app_ip = urlparse(app_url).hostname
 
         if not skip:
             address = get_zerotier_address(marketplace)
@@ -541,6 +541,8 @@ def override_manifest(manifest_json, overrides, marketplace):
         host = overrides["host"]
         if host == "AUTO":
             host = get_zerotier_address(marketplace)
+            if "." not in host:
+                host = "[{}]".format(host)
         manifest_json["host"] = host
     if "port" in overrides:
         host = manifest_json["host"]
