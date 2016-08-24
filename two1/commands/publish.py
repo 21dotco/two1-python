@@ -541,6 +541,8 @@ def override_manifest(manifest_json, overrides, marketplace):
         host = overrides["host"]
         if host == "AUTO":
             host = get_zerotier_address(marketplace)
+            if "." not in host:
+                host = "[{}]".format(host)
         manifest_json["host"] = host
     if "port" in overrides:
         host = manifest_json["host"]
