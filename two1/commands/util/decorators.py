@@ -225,18 +225,14 @@ def catch_all(func):
         except click.Abort:
             # on SIGINT click.prompt raise click.Abort
             logger.error('')  # just to get a newline
-        # raise all click exceptions because they are used to bail and print a message
+
         except click.ClickException:
-            # dont raise exception if --json was given so no error messages are printed
-            # errors are printed in a json format in the json_decorator above
-            if "json" in ctx.params and ctx.params['json']:
-                return
-            else:
-                raise
+            raise  # Let click deal with it
 
         except Exception:
             # generic error string
-            logger.error(uxstring.UxString.Error.server_err)
+            logger.error(click.style(
+                'You have experienced a client-side technical error.', fg='red'))
 
             # only dump the stack traces if the debug flag is set
             if kwargs.get('debug') or ctx.obj['debug']:
@@ -244,6 +240,10 @@ def catch_all(func):
                 logger.error("Args: {}".format(args), fg="red")
                 logger.error("Kwargs: {}".format(kwargs), fg="red")
                 logger.error("{}".format(traceback.format_exc()), fg="red")
+            else:
+                logger.error(click.style(
+                    'For more detail, run your command with the debug flag: '
+                    '`21 --debug <command>.`', fg='red'))
         sys.exit(1)
 
     return functools.update_wrapper(_catch_all, func)

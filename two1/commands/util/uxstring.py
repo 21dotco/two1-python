@@ -641,7 +641,7 @@ Network:
         request = click.style("Error: Server request error occurred", fg="red")
 
         # 500 unknown error
-        server_err = click.style("You have experienced a technical error. "
+        server_err = click.style("You have experienced a server-side technical error. "
                                  "We are working to correct this issue.",
                                  fg="red")
         non_existing_user = "Error: Username %s does not exist."
