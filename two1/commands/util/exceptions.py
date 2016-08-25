@@ -1,6 +1,7 @@
 """ All command line related exceptions """
 # standart python imports
 import logging
+import sys
 
 # 3rd party imports
 import click
@@ -15,20 +16,22 @@ class Two1Error(click.ClickException):
 
     def __init__(self, msg="", json=None):
         self._msg = msg
-        self._json = json if json else None
+        self._json = json if json else {}
         super(Two1Error, self).__init__(self._msg)
 
     def __str__(self):
         return self._msg
 
     def show(self, file=None):
-        """ Prints the error message to standard out or to a file
+        """ Prints the error message to standard error or to a file
 
             Two1Error overwrites the show function because ClickException.show
             prefixes "Error:" to the error message which causes some undesireable
             UX effects.
         """
-        logger.info(str(self.format_message()), file=file)
+        if file is None:
+            file = sys.stderr
+        click.echo(str(self.format_message()), file=file)
 
 
 class UnloggedException(Two1Error):
