@@ -33,7 +33,7 @@ def test_json_ouput(patch_click, json_flag, output, return_value, side_effect):
         logger.info(output)
 
         if side_effect:
-            raise side_effect(json=return_value)
+            raise side_effect(message='', json=return_value)
 
         return return_value
 
@@ -42,7 +42,7 @@ def test_json_ouput(patch_click, json_flag, output, return_value, side_effect):
         with pytest.raises(side_effect) as ex:
             _fake_command(object(), json=json_flag)
 
-        assert ex.value._json == return_value
+        assert ex.value.json == return_value
     else:
         assert _fake_command(object(), json=json_flag) == return_value
 

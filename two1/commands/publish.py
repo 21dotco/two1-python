@@ -285,7 +285,7 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     except exceptions.ValidationError as ex:
         # catches and re-raises the same exception to enhance the error message
         raise exceptions.ValidationError(uxstring.UxString.bad_manifest.format(manifest_path, ex.args[0]),
-                                         json=ex._json)
+                                         json=ex.json)
 
     app_name = manifest_json["info"]["title"]
     app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
