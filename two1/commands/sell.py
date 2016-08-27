@@ -413,8 +413,8 @@ $ 21 sell stop --all
     try:
         dollars_per_sat = cli_helpers.get_rest_client().quote_bitcoin_price(1).json()["price"]
     except Exception:
-        logger.info("Unable to fetch latest quote.", fg="magenta")
-        sys.exit()
+        logger.info("Unable to fetch latest bitcoin price quote.", fg="magenta")
+        raise
 
     def service_found_stopped_and_removed_hook(service_name):
         cli_helpers.print_str(service_name, ["Stopped and removed"], "TRUE", True)
