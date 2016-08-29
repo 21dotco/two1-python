@@ -25,13 +25,22 @@ def test_init():
                   CacheManager())
 
 
+'''
+The MockProvider is designed in a strange way that explains how the parameters
+are chosen for test_all: the get_transactions side effects are set so that for
+each DISCOVERY_INCREMENT block of addresses, a single transaction is returned
+worth a fixed amount of satoshis (10k).
+'''
+increment = HDAccount.DISCOVERY_INCREMENT
+
+
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
                          [(0, 0, {'confirmed': 0, 'total': 0}),
                           (1, 0, {'confirmed': 0, 'total': 10000}),
                           (1, 2, {'confirmed': 10000, 'total': 20000}),
-                          (41, 2, {'confirmed': 10000, 'total': 40000}),
-                          (41, 21, {'confirmed': 20000, 'total': 50000}),
-                          (55, 60, {'confirmed': 30000, 'total': 60000})])
+                          (2*increment + 1, 2, {'confirmed': 10000, 'total': 40000}),
+                          (2*increment + 1, increment + 1, {'confirmed': 20000, 'total': 50000}),
+                          (2*increment + increment//2, 3 * increment, {'confirmed': 30000, 'total': 60000})])
 def test_all(num_used_payout_addresses, num_used_change_addresses, expected_balance):
     m = mock_provider
     m.reset_mocks()
