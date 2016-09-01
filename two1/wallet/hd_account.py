@@ -34,7 +34,7 @@ class HDAccount(object):
     PAYOUT_CHAIN = 0
     CHANGE_CHAIN = 1
     GAP_LIMIT = 20
-    DISCOVERY_INCREMENT = GAP_LIMIT
+    DISCOVERY_INCREMENT = 100
     MAX_UPDATE_THRESHOLD = 30  # seconds
 
     def __init__(self, hd_key, name, index, data_provider, cache_manager,
