@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from two1.bitcoin.crypto import HDPublicKey
 from two1.bitcoin.txn import Transaction
 from two1.blockchain.twentyone_provider import TwentyOneProvider
@@ -55,29 +54,6 @@ def test_get_transactions_by_id(provider, testnet):
     for txid, txn in data.items():
         assert txid in txids
         assert isinstance(txn['transaction'], Transaction)
-
-
-@pytest.mark.parametrize("provider, testnet",
-                         [
-                             (twentyone_provider, False),
-                             (stage_twentyone_provider, False),
-                         ])
-def test_provider_json_error(provider, testnet):
-    cp = provider
-
-    cp._session.request = MagicMock(
-        return_value=type('obj', (object,), {'status_code': 400,
-                                             "json": lambda: "Not Json",
-                                             'text': "Error"})
-    )
-    if testnet:
-        txids = ["f19b101e3ede105b47c98dc54953f4dff195efb6654a168a22659585f92858b4"]
-    else:
-        txids = ["6fd3c96d466cd465b40e59be14d023c27f1d0ca13075119d3d6baeebfc587b8c",
-                 "d24f3b9f0aa7b6484bcea563f4c254bd24e8163906cbffc727c2b2dad43af61e"]
-    cp.testnet = testnet
-    with pytest.raises(DataProviderError):
-        cp.get_transactions_by_id(txids)
 
 
 @pytest.mark.parametrize("provider, testnet",

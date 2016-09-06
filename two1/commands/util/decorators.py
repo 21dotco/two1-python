@@ -58,8 +58,8 @@ def json_output(f):
             # sets the level back to original
             logging.disable(original_level)
 
-            err_json = ex._json or {}
-            err_json["error"] = ex._msg
+            err_json = ex.json or {}
+            err_json["error"] = ex.message
 
             # dumps the json error
             logger.info(jsonlib.dumps(err_json, indent=4, separators=(',', ': ')))
@@ -195,8 +195,8 @@ def capture_usage(func):
 
             # add json data and message from a Two1Error to the data payload
             if isinstance(ex, exceptions.Two1Error) and hasattr(ex, "_json"):
-                data['json'] = ex._json
-                data['message'] = ex._msg
+                data['json'] = ex.json
+                data['message'] = ex.message
 
             # send usage payload to the logging server
             _send_to_logger(data)

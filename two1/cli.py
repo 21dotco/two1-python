@@ -15,6 +15,7 @@ import sys
 
 import two1
 import two1.commands.util.logger
+import two1.blockchain.exceptions as blockchain_exceptions
 
 from two1.commands.util import bitcoin_computer
 from two1.server import rest_client
@@ -86,7 +87,11 @@ def parse_config(
 
     wallet, machine_auth, username, client = None, None, None, None
     if need_wallet_and_account:
-        wallet = wallet_utils.get_or_create_wallet(config.wallet_path)
+        try:
+            wallet = wallet_utils.get_or_create_wallet(config.wallet_path)
+        except blockchain_exceptions.DataProviderError as err:
+            raise exceptions.Two1Error(
+                'You have experienced a data provider error: %s ' % err.args)
         machine_auth = machine_auth_wallet.MachineAuthWallet(wallet)
         username = account_utils.get_or_create_username(config, machine_auth)
         client = rest_client.TwentyOneRestClient(two1.TWO1_HOST, machine_auth, config.username)

@@ -12,26 +12,24 @@ logger = logging.getLogger(__name__)
 
 
 class Two1Error(click.ClickException):
-    """ A generic Two1Error """
+    """
+    A ClickException with customized formatting.
+    """
 
-    def __init__(self, msg="", json=None):
-        self._msg = msg
-        self._json = json if json else {}
-        super(Two1Error, self).__init__(self._msg)
+    def __init__(self, message, json=None):
+        self.json = json if json else {}
+        super(Two1Error, self).__init__(message)
 
-    def __str__(self):
-        return self._msg
+    def format_message(self):
+        return click.style(str(self.message), fg='red')
 
     def show(self, file=None):
-        """ Prints the error message to standard error or to a file
-
-            Two1Error overwrites the show function because ClickException.show
-            prefixes "Error:" to the error message which causes some undesireable
-            UX effects.
+        """
+        Same as base method but without printing "Error: "
         """
         if file is None:
             file = sys.stderr
-        click.echo(str(self.format_message()), file=file)
+        click.echo(self.format_message(), file=file)
 
 
 class UnloggedException(Two1Error):

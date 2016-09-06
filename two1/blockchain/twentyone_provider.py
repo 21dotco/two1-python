@@ -199,8 +199,6 @@ class TwentyOneProvider(BaseProvider):
                 raise exceptions.DataProviderError(result.text)
             else:
                 raise
-        except Exception as e:
-            raise exceptions.DataProviderError(e)
 
     def get_transactions(self, address_list, limit=100, min_block=None):
         """ Provides transactions associated with each address in address_list.
