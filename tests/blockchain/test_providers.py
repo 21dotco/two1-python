@@ -15,6 +15,7 @@ stage_twentyone_provider = TwentyOneProvider("http://blockchain.21-stage.co")
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
+                             (twentyone_provider, True),
                              (stage_twentyone_provider, False),
                          ])
 def test_get_transactions(provider, testnet):
@@ -59,6 +60,7 @@ def test_get_transactions_by_id(provider, testnet):
 @pytest.mark.parametrize("provider, testnet",
                          [
                              (twentyone_provider, False),
+                             (twentyone_provider, True),
                              (stage_twentyone_provider, False),
                          ])
 def test_transaction_send(provider, testnet):
