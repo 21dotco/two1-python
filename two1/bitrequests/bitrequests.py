@@ -431,7 +431,7 @@ class ChannelRequests(BitRequests):
 
         return {
             ChannelRequests.HTTP_BITCOIN_PAYMENT_CHANNEL_TOKEN: token,
-            ChannelRequests.HTTP_BITCOIN_PRICE: price,
+            ChannelRequests.HTTP_BITCOIN_PRICE: str(price),
             ChannelRequests.HTTP_PAYER_21USERNAME: urllib.parse.quote(self.username) if self.username else None,
         }
 
