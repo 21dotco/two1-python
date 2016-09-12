@@ -6,7 +6,6 @@ import threading
 
 import two1
 from two1.bitcoin.txn import Transaction
-from two1.blockchain.twentyone_provider import TwentyOneProvider
 from .models import OnChainSQLite3
 
 logger = logging.getLogger('bitserv')
@@ -117,7 +116,7 @@ class OnChain(PaymentBase):
         """Initialize payment handling for on-chain payments."""
         self.db = db or OnChainSQLite3(db_dir=db_dir)
         self.address = wallet.get_payout_address()
-        self.provider = TwentyOneProvider(two1.TWO1_PROVIDER_HOST)
+        self.provider = wallet.data_provider
 
     @property
     def payment_headers(self):
