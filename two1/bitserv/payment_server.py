@@ -94,8 +94,8 @@ class PaymentServer:
     lock = Lock()
     """Thread and process lock for database access."""
 
-    def __init__(self, wallet, db=None, account='default', testnet=False,
-                 blockchain=None, zeroconf=False, sync_period=600, db_dir=None):
+    def __init__(self, wallet, db=None, account='default', blockchain=None,
+                 zeroconf=False, sync_period=600, db_dir=None):
         """Initalize the payment server.
 
         Args:
@@ -106,8 +106,6 @@ class PaymentServer:
                 data.
             account (string): which account within the wallet to use (e.g.
                 'merchant', 'customer', 'default', etc).
-            testnet (boolean): whether or not the server should broadcast and
-                verify transactions against the bitcoin testnet blockchain.
             blockchain (two1.blockchain.provider): a blockchain data
                 provider capable of broadcasting raw transactions.
             zeroconf (boolean): whether or not to use a payment channel before
