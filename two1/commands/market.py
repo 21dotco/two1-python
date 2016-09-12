@@ -2,6 +2,7 @@
 # standard python imports
 import logging
 import subprocess
+import platform
 
 # 3rd party imports
 import click
@@ -78,6 +79,10 @@ def leave(ctx, network):
 
 
 def join_wrapper(client, network):
+    if not _check_platform():
+        logger.error(uxstring.UxString.join_unsupported_platform)
+        return
+
     logger.info(uxstring.UxString.join_network_beta_warning)
     response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
     if response == "y":
@@ -150,6 +155,22 @@ def _leave(client, network):
     except subprocess.CalledProcessError as e:
         logger.info(str(e))
         return {'left': False, 'reason': str(e)}
+
+
+def _check_platform():
+    """Check whether join is supported on the current platform.
+
+    Due to security reasons, 21 join should only be allowed on Bitcoin Computers, Docker VMs,
+    and EC2 machines.
+
+    Returns:
+        boolean: True if the os/platform is supported.
+    """
+    os = platform.system()
+    distro = platform.platform()
+    return os == "Linux" and (os.path.isfile('/proc/device-tree/hat/uuid') or
+                              'boot2docker' in distro.lower() or
+                              os.path.isfile('/sys/hypervisor/uuid'))
 
 
 def show_network_status():

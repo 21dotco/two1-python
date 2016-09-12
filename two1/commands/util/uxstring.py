@@ -415,6 +415,10 @@ class UxString:
         fg='red'
     )
 
+    join_unsupported_platform = click.style(
+        "Joining the 21 Marketplace is not supported on this platform.\nSupported platforms: "
+        "\n    - 21 Bitcoin Computer\n    - Amazon EC2\n    - Docker virtual machines",
+        fg="red")
     join_network_beta_warning = """
 WARNING
 -------
