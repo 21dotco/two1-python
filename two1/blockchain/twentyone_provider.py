@@ -44,8 +44,6 @@ class TwentyOneProvider(BaseProvider):
     @testnet.setter
     def testnet(self, v):
         self._testnet = bool(v)
-        if self._testnet:
-            raise NotImplementedError('Testnet support is not currently available.') from None
         self.chain = "testnet3" if self._testnet else "bitcoin"
         self._set_url()
 
