@@ -103,7 +103,7 @@ TEST_EXPIRY = 86400
 cust_wallet = MockTwo1Wallet()
 merch_wallet = MockTwo1Wallet()
 BAD_SIGNATURE = codecs.encode(cust_wallet._private_key.sign('fake').to_der(), 'hex_codec')
-channel_server = PaymentServer(merch_wallet, testnet=True)
+channel_server = PaymentServer(merch_wallet)
 channel_server._blockchain = MockBlockchain()
 
 
