@@ -16,8 +16,13 @@ CONFIG_DATA = json.dumps(dict(
     contact='two1@21.co', maxspend=25000, sellprice=11000, stderr='.two1/two1.stderr',
     username='satoshi', mining_auth_pubkey='i_haz_key', stdout='.two1/two1.stdout',
     auto_update=False, verbose=False, sortby='price',
-    collect_analytics=True))
-PARTIAL_CONFIG_DATA = json.dumps(dict(contact='21@21.co'))
+    collect_analytics=True,
+    zt_upgraded=True,  # To prevent user prompts during testing
+))
+PARTIAL_CONFIG_DATA = json.dumps(dict(
+    contact='21@21.co',
+    zt_upgraded=True,   # To prevent user prompts during testing
+))
 
 
 @contextmanager
@@ -165,7 +170,7 @@ def test_no_config_file_exists():
     mock_config.side_effect = [FileNotFoundError(), mock.DEFAULT]
     with mock.patch('two1.commands.util.config.Config.save', return_value=None):
         with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-            config.Config('config_file')
+            config.Config('config_file', config=json.loads(PARTIAL_CONFIG_DATA))
 
     assert mock_config.call_count == 2
     dc = json.loads(mock_config.return_value.write.call_args[0][0])

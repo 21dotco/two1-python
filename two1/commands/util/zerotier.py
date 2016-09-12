@@ -5,8 +5,9 @@ Simple wrapper for zerotier-cli
 import json
 import logging
 import platform
-import subprocess
 import shutil
+import socket
+import subprocess
 import sys
 
 from two1.commands.util import uxstring
@@ -271,3 +272,18 @@ def get_all_addresses():
         result[network["name"]] = address
 
     return result
+
+
+def get_network_id(network_name):
+    return {
+        network['name']: network['nwid'] for network in list_networks()}[network_name]
+
+
+def leave_all():
+    if not is_installed():
+        return
+    logger.info('Leaving all ZeroTier networks.')
+    for network, address in get_all_addresses().items():
+        logger.info('Leaving %s.' % network)
+        nwid = get_network_id(network)
+        leave_network(nwid)
