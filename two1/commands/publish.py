@@ -20,6 +20,7 @@ from two1.commands.util import uxstring
 from two1.commands.util import zerotier
 from two1.commands.util import exceptions
 from two1.commands.search import get_next_page
+from two1.commands.market import check_platform
 
 
 # Creates a ClickLogger
@@ -281,6 +282,12 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
                 if not click.confirm(uxstring.UxString.wrong_ip.format(app_ip, address, app_ip)):
                     logger.info(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
                     return
+
+            # if publishing is happening from the app machine, ensure that the app machine is
+            # supported
+            elif not check_platform():
+                logger.error(uxstring.UxString.join_unsupported_platform)
+                return
 
     except exceptions.ValidationError as ex:
         # catches and re-raises the same exception to enhance the error message

@@ -79,7 +79,7 @@ def leave(ctx, network):
 
 
 def join_wrapper(client, network):
-    if not _check_platform():
+    if not check_platform():
         logger.error(uxstring.UxString.join_unsupported_platform)
         return
 
@@ -157,7 +157,7 @@ def _leave(client, network):
         return {'left': False, 'reason': str(e)}
 
 
-def _check_platform():
+def check_platform():
     """Check whether join is supported on the current platform.
 
     Due to security reasons, 21 join should only be allowed on Bitcoin Computers, Docker VMs,
