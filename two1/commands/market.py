@@ -2,6 +2,7 @@
 # standard python imports
 import logging
 import subprocess
+import platform
 
 # 3rd party imports
 import click
@@ -54,7 +55,7 @@ def status(ctx):
 
 
 @market.command()
-@click.argument("network", default="21market")
+@click.argument("network", default="21mkt")
 @click.pass_context
 @decorators.catch_all
 @decorators.json_output
@@ -66,7 +67,7 @@ def join(ctx, network):
 
 
 @market.command()
-@click.argument("network", default="21market")
+@click.argument("network", default="21mkt")
 @click.pass_context
 @decorators.catch_all
 @decorators.json_output
@@ -78,6 +79,10 @@ def leave(ctx, network):
 
 
 def join_wrapper(client, network):
+    if not check_platform():
+        logger.error(uxstring.UxString.join_unsupported_platform)
+        return
+
     logger.info(uxstring.UxString.join_network_beta_warning)
     response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
     if response == "y":
@@ -96,7 +101,7 @@ def _join(client, network):
             for sending authenticated requests to the TwentyOne
             backend
         network (str): the name of the network being joined. Defaults
-        to 21market
+        to 21mkt
 
     Raises:
         ServerRequestError: if server returns an error code other than 401
@@ -130,7 +135,7 @@ def _leave(client, network):
             for sending authenticated requests to the TwentyOne
             backend
         network (str): the name of the network being joined. Defaults
-        to 21market
+        to 21mkt
     """
     # ensures the zerotier daemon is running
     zerotier.start_daemon()
@@ -146,6 +151,22 @@ def _leave(client, network):
     except subprocess.CalledProcessError as e:
         logger.info(str(e))
         return {'left': False, 'reason': str(e)}
+
+
+def check_platform():
+    """Check whether join is supported on the current platform.
+
+    Due to security reasons, 21 join should only be allowed on Bitcoin Computers, Docker VMs,
+    and EC2 machines.
+
+    Returns:
+        boolean: True if the os/platform is supported.
+    """
+    os = platform.system()
+    distro = platform.platform()
+    return os == "Linux" and (os.path.isfile('/proc/device-tree/hat/uuid') or
+                              'boot2docker' in distro.lower() or
+                              os.path.isfile('/sys/hypervisor/uuid'))
 
 
 def show_network_status():

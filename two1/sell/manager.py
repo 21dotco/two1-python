@@ -66,7 +66,7 @@ class Two1Manager:
         """
         return self.machine.port
 
-    def connect_market(self, client, network="21market"):
+    def connect_market(self, client, network="21mkt"):
         """ Connect to 21market network.
 
         Args:

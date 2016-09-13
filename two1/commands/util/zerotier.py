@@ -264,7 +264,14 @@ def get_all_addresses():
 
     for network in networks:
         if len(network["assignedAddresses"]) > 0:
-            address = network["assignedAddresses"][0].split("/")[0]
+            for ip_address in network["assignedAddresses"]:
+                # Remove the address range (e.g. the "/24" in "1.2.3.4/24")
+                address = ip_address.split("/")[0]
+                # Preferentially return first IPv6 address (indicated
+                # by its containing a colon).  If there are no IPv6
+                # addresses found, the last IPv4 address will be returned
+                if ":" in address:
+                    break
         else:
             address = ""
 

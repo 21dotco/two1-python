@@ -9,7 +9,7 @@ from two1.commands.market import show_network_status
 
 
 @click.command()
-@click.argument("network", default="21market")
+@click.argument("network", default="21mkt")
 @click.option('--status', is_flag=True, default=False,
               help="Print network status.")
 @click.pass_context
