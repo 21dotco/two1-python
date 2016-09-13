@@ -110,7 +110,7 @@ $ 21 publish list
 
 @publish.command()
 @click.argument('manifest_path', type=click.Path(exists=False))
-@click.option('-m', '--marketplace', default='21market',
+@click.option('-m', '--marketplace', default='21mkt',
               help="Selects the marketplace for publishing.")
 @click.option('-s', '--skip', is_flag=True, default=False,
               help='Skips the strict checking of the manifest against your current ip.')

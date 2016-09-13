@@ -55,7 +55,7 @@ def status(ctx):
 
 
 @market.command()
-@click.argument("network", default="21market")
+@click.argument("network", default="21mkt")
 @click.pass_context
 @decorators.catch_all
 @decorators.json_output
@@ -67,7 +67,7 @@ def join(ctx, network):
 
 
 @market.command()
-@click.argument("network", default="21market")
+@click.argument("network", default="21mkt")
 @click.pass_context
 @decorators.catch_all
 @decorators.json_output
@@ -101,7 +101,7 @@ def _join(client, network):
             for sending authenticated requests to the TwentyOne
             backend
         network (str): the name of the network being joined. Defaults
-        to 21market
+        to 21mkt
 
     Raises:
         ServerRequestError: if server returns an error code other than 401
@@ -135,7 +135,7 @@ def _leave(client, network):
             for sending authenticated requests to the TwentyOne
             backend
         network (str): the name of the network being joined. Defaults
-        to 21market
+        to 21mkt
     """
     # ensures the zerotier daemon is running
     zerotier.start_daemon()
