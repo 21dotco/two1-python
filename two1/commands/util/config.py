@@ -6,11 +6,12 @@ import time
 import logging
 
 # two1 imports
+from two1.commands.util import zerotier
 import two1
-import two1.wallet as wallet
 import two1.commands.util.exceptions as exceptions
-import two1.commands.util.version as version
 import two1.commands.util.uxstring as uxstring
+import two1.commands.util.version as version
+import two1.wallet as wallet
 
 
 # Creates a ClickLogger
@@ -53,11 +54,14 @@ class Config:
         if config:
             self.load_dict_config(config)
 
-        # check for any updates to 21
         self.check_update()
 
+        self.leave_zerotier()
+
     def check_update(self):
-        """Check for any new updates to 21"""
+        """
+        Check for any new updates to 21
+        """
         do_update_check = False
         try:
             if 'last_update_check' not in self.state:
@@ -72,6 +76,14 @@ class Config:
             self.set('last_update_check', time.time(), should_save=True)
             if not version.is_version_gte(actual_version, latest_version):
                 logger.warning(uxstring.UxString.update_required)
+
+    def leave_zerotier(self):
+        """
+        Leave ZeroTier networks to migrate users to new market.
+        """
+        if not self.state.get('zt_upgraded'):
+            zerotier.leave_all()
+        self.set('zt_upgraded', True, should_save=True)
 
     def load_file_config(self, config_file):
         """Set config properties based on a file."""

@@ -134,13 +134,9 @@ def _leave(client, network):
     """
     # ensures the zerotier daemon is running
     zerotier.start_daemon()
-    is_in_network = False
-    for ntwk in zerotier.list_networks():
-        if ntwk['name'] == network:
-            is_in_network = True
-            nwid = ntwk['nwid']
-            break
-    if not is_in_network:
+    try:
+        nwid = zerotier.get_network_id(network)
+    except KeyError:
         logger.info('not in network')
         return {'left': False, 'reason': 'not in network'}
     try:

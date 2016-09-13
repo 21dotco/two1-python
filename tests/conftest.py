@@ -70,7 +70,13 @@ def config(tmpdir):
     """
     config_file = str(tmpdir.join("two1.json"))
     wallet_path = str(tmpdir.mkdir("wallet").join("wallet.json"))
-    return Config(config_file=config_file, config=dict(wallet_path=wallet_path))
+    Config(
+        config_file=config_file,
+        config={
+            'wallet_path': wallet_path,
+            'zt_upgraded': True,  # To prevent user prompts during testing
+        }
+    )
 
 
 @pytest.fixture(scope="session")
