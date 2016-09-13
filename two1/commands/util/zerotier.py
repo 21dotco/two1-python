@@ -6,7 +6,6 @@ import json
 import logging
 import platform
 import shutil
-import socket
 import subprocess
 import sys
 
