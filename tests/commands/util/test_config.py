@@ -130,10 +130,10 @@ def test_needs_update_legacy_last_update_check():
     with mock.patch('two1.commands.util.config.open', mock_config, create=True):
         c = config.Config('config_file')
         c.set('last_update_check', "", should_save=True)
-    try:
-        c.check_update()
-    except ValueError:
-        pytest.fail("Error dealing with legacy timestamp")
+        try:
+            c.check_update()
+        except ValueError:
+            pytest.fail("Error dealing with legacy timestamp")
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
@@ -151,6 +151,7 @@ def test_last_update_check_set():
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
+@mock.patch('two1.commands.util.config.open', mock.mock_open(read_data=CONFIG_DATA), create=True)
 def test_needs_old_last_update_check_with_new_version():
     """Test for a last_update_check more than 3600 seconds ago, but version is new
     and that it does not suggest an update"""
