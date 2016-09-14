@@ -484,6 +484,7 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         # ensure the manifest is valid
         validate_manifest(manifest_dict)
 
+        manifest_dict = check_host_urls(manifest_dict)
         # write back the manifest in case some clean up or overriding has happend
         if overrides is not None:
             with open(api_docs_path, "w") as f:
@@ -492,6 +493,39 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         return manifest_dict
     except (YAMLError, ValueError):
         raise exceptions.ValidationError(uxstring.UxString.malformed_yaml.format(api_docs_path))
+
+
+def check_host_urls(manifest_json):
+    """ Searches the manifest for any occurrences of the host url that does not match the actual
+    host in the manifest and prompts the user for fixing them.
+
+    Args:
+        manifest_json (dict): a dictionary containing manifest json that is going to be submitted
+
+    Returns:
+        dict: a dictionary containing the manifest json with the fields fixed if they user responded
+        yes to the prompts.
+    """
+
+    # for now just check the x-21-quick-buy
+    host = manifest_json["host"]
+    scheme = "http" if len(manifest_json['schemes']) == 0 else manifest_json['schemes'][0]
+    host = "{}://{}".format(scheme, host)
+    section = "x-21-quick-buy"
+    quick_buy = manifest_json["info"].get(section)
+    if quick_buy:
+        matches = re.finditer(r'http[s]{0,1}://[^/\s]+', quick_buy)
+        subs = []
+        for match in matches:
+            if click.confirm(uxstring.UxString.publish_fix_url.format(section, match.group(0), host)):
+                subs.append(match.group(0))
+
+        for sub in subs:
+            quick_buy = re.sub(sub, host, quick_buy)
+
+        manifest_json["info"][section] = quick_buy
+
+    return manifest_json
 
 
 def clean_manifest(manifest_json):
