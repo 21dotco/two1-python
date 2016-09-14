@@ -311,7 +311,11 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
             raise e
 
     if response.status_code == 201:
-        logger.info(uxstring.UxString.publish_success.format(app_name, marketplace))
+        response_data = response.json()
+        mkt_url = response_data['mkt_url']
+        listing_name = response_data['listing_name']
+        logger.info(
+            uxstring.UxString.publish_success.format(app_name, marketplace, mkt_url, listing_name))
 
 
 def get_search_results(config, client, page):

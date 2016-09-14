@@ -494,7 +494,9 @@ Network:
 
     publish_success = click.style(
         "{} successfully published to {}. It may take a couple of minutes for your app "
-        "to show up in the marketplace.\nYou can view your app at https://21.co/mkt.", fg="magenta")
+        "to show up in the marketplace.\n\nYour app will be accessible through {}."
+        "\nAdditionally, You can view information about your app at https://21.co/mkt/{}.",
+        fg="magenta")
 
     app_url_claimed = "The endpoint {} specified in your manifest has already been registered in " \
                       "the marketplace by another user.\nPlease check your manifest file and make " \
