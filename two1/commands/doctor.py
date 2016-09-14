@@ -11,12 +11,13 @@ import logging
 import click
 import requests
 
-import two1
-import two1.commands.util.version as version
-from two1.commands.util import uxstring
+from two1.commands import market
+from two1.commands.util import bitcoin_computer
 from two1.commands.util import decorators
 from two1.commands.util import exceptions
-from two1.commands.util import bitcoin_computer
+from two1.commands.util import uxstring
+import two1
+import two1.commands.util.version as version
 
 # Creates a ClickLogger
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class Check(object):
         """ Enum used to indicate result of a Doctor check """
         PASS = "green"
         FAIL = "red"
-        SKIP = "purple"
+        SKIP = "magenta"
         WARN = "yellow"
 
     # change this to adjust the first column width in the doctor report
@@ -355,6 +356,8 @@ class Doctor(object):
                                     Path to the zerotier-cli binary
         """
         check_str = "Zerotier CLI"
+        if not market.check_platform():
+            return Check.Result.SKIP, check_str, "zerotier-cli not applicable"
 
         zt_cli = shutil.which("zerotier-cli")
         if zt_cli:
