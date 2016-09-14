@@ -486,9 +486,8 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
 
         manifest_dict = check_host_urls(manifest_dict)
         # write back the manifest in case some clean up or overriding has happend
-        if overrides is not None:
-            with open(api_docs_path, "w") as f:
-                yaml.dump(manifest_dict, f)
+        with open(api_docs_path, "w") as f:
+            yaml.dump(manifest_dict, f)
 
         return manifest_dict
     except (YAMLError, ValueError):
@@ -517,11 +516,14 @@ def check_host_urls(manifest_json):
         matches = re.finditer(r'http[s]{0,1}://[^/\s]+', quick_buy)
         subs = []
         for match in matches:
+            if match.group(0) == host:
+                continue
+
             if click.confirm(uxstring.UxString.publish_fix_url.format(section, match.group(0), host)):
                 subs.append(match.group(0))
 
         for sub in subs:
-            quick_buy = re.sub(sub, host, quick_buy)
+            quick_buy = quick_buy.replace(sub, host)
 
         manifest_json["info"][section] = quick_buy
 
