@@ -554,7 +554,7 @@ class Two1ComposerContainers(Two1Composer):
         try:
             with open(os.path.join(Two1Composer.SITES_AVAILABLE_PATH, service), 'w') as f:
                 f.write("location /" + service + " {\n"
-                        "    rewrite ^/" + service + "(.*) $1 break;\n"
+                        "    rewrite ^/" + service + "(.*) /$1 break;\n"
                         "    proxy_pass http://" + service + ":" + str(5000) + ";\n"
                         "    proxy_set_header Host $host;\n"
                         "    proxy_set_header X-Real-IP $remote_addr;\n"

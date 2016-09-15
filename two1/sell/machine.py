@@ -3,7 +3,6 @@ import os
 import re
 import json
 import time
-import shutil
 import subprocess
 import logging
 from enum import Enum
@@ -259,7 +258,7 @@ class Two1MachineNative(Two1Machine):
                 network_id = response.json().get("networkid")
                 zerotier.join_network(network_id)
                 if self.wait_for_zt_confirmation():
-                    self.lock_down_hub()
+                    pass
         except exceptions.ServerRequestError as e:
             if e.status_code == 400:
                 logger.info(uxstring.UxString.invalid_network)
@@ -283,101 +282,6 @@ class Two1MachineNative(Two1Machine):
                 pass
         return False
 
-    def lock_down_hub(self):
-        networks = json.loads(subprocess.check_output(["sudo", "zerotier-cli", "listnetworks", "-j"]).decode())
-        for network in networks:
-            if network["name"] == "21mkt":
-                zt_interface = network["portDeviceName"]
-
-        util_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "util")
-        with open(os.path.join(util_dir, "iptables_hub_template.sh"), "r") as f:
-            ip_template = f.read()
-        ip_tables = re.sub(r'''\${ZT_INTERFACE}''', zt_interface, ip_template)
-
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_tables = re.sub(r'''\${IPTABLES_PATH}''', ip_cmd_path, ip_tables)
-        ip_tables = re.sub(r'''\${IP6TABLES_PATH}''', ip6_cmd_path, ip_tables)
-
-        ip_conf_file = os.path.join(os.path.dirname(Two1Machine.MACHINE_CONFIG_FILE), "iptables_hub.sh")
-        with open(ip_conf_file, "w") as f:
-            f.write(ip_tables)
-
-        self.back_up_iptables()
-        self.reset_iptables()
-        self.restore_ip_tables()
-
-        subprocess.check_output(["sudo", "chmod", "755", ip_conf_file])
-        subprocess.check_output(["sudo", ip_conf_file])
-
-    def get_cmd_path(self):
-        ip_cmd_path = subprocess.check_output(["which", "iptables"])
-        if type(ip_cmd_path) == bytes:
-            ip_cmd_path = ip_cmd_path.decode()
-        ip_cmd_path = ip_cmd_path.rstrip("/iptables\n")
-
-        ip6_cmd_path = subprocess.check_output(["which", "ip6tables"])
-        if type(ip6_cmd_path) == bytes:
-            ip6_cmd_path = ip6_cmd_path.decode()
-        ip6_cmd_path = ip6_cmd_path.rstrip("/ip6tables\n")
-
-        return ip_cmd_path, ip6_cmd_path
-
-    def get_iptables(self):
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_back = subprocess.check_output(["sudo", "%s/iptables-save" % ip_cmd_path])
-        if type(ip_back) == bytes:
-            ip_back = ip_back.decode()
-        ip_back = ip_back.split("\n")
-
-        ip6_back = subprocess.check_output(["sudo", "%s/ip6tables-save" % ip6_cmd_path])
-        if type(ip6_back) == bytes:
-            ip6_back = ip6_back.decode()
-        ip6_back = ip6_back.split("\n")
-
-        return ip_back, ip6_back
-
-    def back_up_iptables(self):
-        iptables, ip6tables = self.get_iptables()
-
-        ip_back_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.back")
-        with open(ip_back_file, "w") as f:
-            f.write("\n".join(iptables))
-        ip6_back_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.back")
-        with open(ip6_back_file, "w") as f:
-            f.write("\n".join(ip6tables))
-
-    def reset_iptables(self):
-        iptables, ip6tables = self.get_iptables()
-
-        ip_reset = []
-        for row in iptables:
-            if row.find("21_INPUT") == -1:
-                ip_reset.append(row)
-        ip6_reset = []
-        for row in ip6tables:
-            if row.find("21_INPUT") == -1:
-                ip6_reset.append(row)
-
-        ip_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.reset")
-        with open(ip_reset_file, "w") as f:
-            f.write("\n".join(ip_reset))
-        ip6_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.reset")
-        with open(ip6_reset_file, "w") as f:
-            f.write("\n".join(ip6_reset))
-
-    def restore_ip_tables(self):
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.reset")
-        with open(ip_reset_file, "r") as f:
-            subprocess.check_output(["sudo", "%s/iptables-restore" % ip_cmd_path], stdin=f)
-
-        ip6_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.reset")
-        with open(ip6_reset_file, "r") as f:
-            subprocess.check_output(["sudo", "%s/ip6tables-restore" % ip6_cmd_path], stdin=f)
-
     def _get_market_address(self):
         """ Get status of 21mkt network connection.
 
@@ -385,7 +289,7 @@ class Two1MachineNative(Two1Machine):
             zt_ip (str): ZeroTier IP address.
         """
         try:
-            zt_conf = subprocess.check_output(["sudo", "zerotier-cli", "listnetwork", "-j"])
+            zt_conf = subprocess.check_output(["sudo", "zerotier-cli", "listnetworks", "-j"])
             if type(zt_conf) == bytes:
                 zt_conf = zt_conf.decode()
             zt_conf_json = json.loads(zt_conf)
@@ -545,7 +449,7 @@ class Two1MachineVirtual(Two1Machine):
                 network_id = response.json().get("networkid")
                 self.docker_ssh("sudo ./zerotier-cli join %s" % network_id, stderr=subprocess.DEVNULL)
                 if self.wait_for_zt_confirmation():
-                    self.lock_down_hub()
+                    pass
         except exceptions.ServerRequestError as e:
             if e.status_code == 400:
                 logger.info(uxstring.UxString.invalid_network)
@@ -570,96 +474,6 @@ class Two1MachineVirtual(Two1Machine):
             except ValueError:
                 pass
         return False
-
-    def lock_down_hub(self):
-        networks = json.loads(self.docker_ssh("sudo ./zerotier-cli listnetworks -j",
-                                              stderr=subprocess.DEVNULL).decode())
-        for network in networks:
-            if network["name"] == "21mkt":
-                zt_interface = network["portDeviceName"]
-
-        util_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "util")
-        with open(os.path.join(util_dir, "iptables_hub_template.sh"), "r") as f:
-            ip_template = f.read()
-        ip_tables = re.sub(r'''\${ZT_INTERFACE}''', zt_interface, ip_template)
-
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_tables = re.sub(r'''\${IPTABLES_PATH}''', ip_cmd_path, ip_tables)
-        ip_tables = re.sub(r'''\${IP6TABLES_PATH}''', ip6_cmd_path, ip_tables)
-
-        ip_conf_file = os.path.join(os.path.dirname(Two1Machine.MACHINE_CONFIG_FILE), "iptables_hub.sh")
-        with open(ip_conf_file, "w") as f:
-            f.write(ip_tables)
-
-        self.back_up_iptables()
-        self.reset_iptables()
-        self.restore_ip_tables()
-
-        subprocess.check_output(["docker-machine",
-                                 "scp",
-                                 ip_conf_file,
-                                 "21:~/iptables_hub.sh"])
-        self.docker_ssh("chmod 700 iptables_hub.sh", stderr=subprocess.DEVNULL)
-        self.docker_ssh("sudo ./iptables_hub.sh", stderr=subprocess.DEVNULL)
-
-    def get_cmd_path(self):
-        return "/usr/local/sbin", "/usr/local/sbin"
-
-    def get_iptables(self):
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_back = self.docker_ssh("sudo %s/iptables-save" % ip_cmd_path, stderr=subprocess.DEVNULL)
-        if type(ip_back) == bytes:
-            ip_back = ip_back.decode()
-        ip_back = ip_back.split("\n")
-
-        ip6_back = self.docker_ssh("sudo %s/ip6tables-save" % ip6_cmd_path, stderr=subprocess.DEVNULL)
-        if type(ip6_back) == bytes:
-            ip6_back = ip6_back.decode()
-        ip6_back = ip6_back.split("\n")
-
-        return ip_back, ip6_back
-
-    def back_up_iptables(self):
-        iptables, ip6tables = self.get_iptables()
-
-        ip_back_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.back")
-        with open(ip_back_file, "w") as f:
-            f.write("\n".join(iptables))
-        ip6_back_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.back")
-        with open(ip6_back_file, "w") as f:
-            f.write("\n".join(ip6tables))
-
-    def reset_iptables(self):
-        iptables, ip6tables = self.get_iptables()
-
-        ip_reset = []
-        for row in iptables:
-            if row.find("21_INPUT") == -1:
-                ip_reset.append(row)
-        ip6_reset = []
-        for row in ip6tables:
-            if row.find("21_INPUT") == -1:
-                ip6_reset.append(row)
-
-        ip_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.reset")
-        with open(ip_reset_file, "w") as f:
-            f.write("\n".join(ip_reset))
-        ip6_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.reset")
-        with open(ip6_reset_file, "w") as f:
-            f.write("\n".join(ip6_reset))
-
-    def restore_ip_tables(self):
-        ip_cmd_path, ip6_cmd_path = self.get_cmd_path()
-
-        ip_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "iptables.reset")
-        with open(ip_reset_file, "r") as f:
-            self.docker_ssh("sudo %s/iptables-restore" % ip_cmd_path, stdin=f, stderr=subprocess.DEVNULL)
-
-        ip6_reset_file = os.path.join(Two1Machine.MACHINE_CONFIG_DIR, "ip6tables.reset")
-        with open(ip6_reset_file, "r") as f:
-            self.docker_ssh("sudo %s/ip6tables-restore" % ip6_cmd_path, stdin=f, stderr=subprocess.DEVNULL)
 
     def _get_market_address(self):
         """ Get status of 21mkt network connection.

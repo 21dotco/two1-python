@@ -2,7 +2,6 @@
 """
 # standard python imports
 import sys
-import time
 import logging
 
 # 3rd party imports
@@ -15,7 +14,6 @@ from two1.sell.machine import Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.manager import get_manager
 from two1.sell.installer import Two1SellInstaller
-from two1.sell.installer import InstallerMac
 from two1.sell.util.client_helpers import get_platform
 from two1.sell.util import cli_helpers as cli_helpers
 from two1.sell.exceptions.exceptions_sell import Two1SellNotSupportedException
@@ -137,14 +135,10 @@ $ 21 sell start --all
     installer = ctx.obj['installer']
 
     if cli_helpers.running_old_sell(manager, installer):
-        if click.confirm(click.style(("It appears that you are running an old version of 21 sell.\n",
-                                      "In order to continue using 21 sell, you must update the 21 VM.\n"
-                                      "Would you like to delete the existing VM and create a new one?"),
+        if click.confirm(click.style("It appears that you are running an old version of 21 sell.\n"
+                                     "In order to continue using 21 sell, you must update the 21 VM.\n"
+                                     "Would you like to delete the existing VM and create a new one?",
                                      fg=cli_helpers.WARNING_COLOR)):
-            logger.info(click.style("Your ", fg=cli_helpers.TITLE_COLOR) +
-                        click.style("`21 sell`", bold=True, fg=cli_helpers.TITLE_COLOR) +
-                        click.style(" system will now restart. This can take up to 10 minutes.",
-                                    fg=cli_helpers.TITLE_COLOR))
             upgrade_21_sell(ctx, services, all, wait_time, no_vm)
             sys.exit()
         else:
@@ -581,7 +575,7 @@ $ 21 sell status
 
     logger.info(click.style("EXAMPLE USAGE", fg=cli_helpers.TITLE_COLOR))
     cli_helpers.print_example_usage(available_services,
-                                    manager.get_market_address(),
+                                    'http://' + manager.get_market_address(),
                                     manager.get_server_port())
 
     # help tip message
@@ -692,125 +686,9 @@ def upgrade_21_sell(ctx, services, all, wait_time, no_vm):
     cli_helpers.start_long_running("Resetting system",
                                    resetting_system)
 
-    if isinstance(manager.machine, Two1MachineVirtual):
-        machine_config = manager.read_machine_config()
-        if machine_config == {}:
-            logger.info(click.style("Your ", fg=cli_helpers.WARNING_COLOR) +
-                        click.style("`21 sell`", bold=True, fg=cli_helpers.WARNING_COLOR) +
-                        click.style(" system is misconfigured. Please contact support@21.co",
-                                    fg=cli_helpers.WARNING_COLOR))
-            sys.exit()
-        try:
-            cli_helpers.start_long_running("Recreating 21 virtual machine",
-                                           manager.create_machine,
-                                           "21",
-                                           machine_config["disk_size"],
-                                           machine_config["vm_memory"],
-                                           machine_config["server_port"])
-            cli_helpers.print_str("21 virtual machine", ["Recreated"], "TRUE", True)
-            manager.write_machine_config(machine_config)
-
-        except Two1MachineCreateException:
-            cli_helpers.print_str("21 virtual machine", ["Not recreated"], "FALSE", False)
-            logger.info(click.style("Please try running this command again or contact support@21.co",
-                                    fg=cli_helpers.TITLE_COLOR))
-            sys.exit()
-
-        try:
-            cli_helpers.start_long_running("Restarting 21 virtual machine",
-                                           manager.start_machine)
-            cli_helpers.print_str("21 virtual machine", ["Restarted"], "TRUE", True)
-
-        except Two1MachineStartException:
-            cli_helpers.print_str("21 virtual machine", ["Not restarted"], "FALSE", False)
-            logger.info(click.style("Please try running this command again or contact support@21.co",
-                                    fg=cli_helpers.TITLE_COLOR))
-            sys.exit()
-
-    try:
-        cli_helpers.start_long_running("Restarting ZeroTier One", manager.start_networking)
-        cli_helpers.print_str("ZeroTier One", ["Restarted"], "True", True)
-
-    except Two1MachineNetworkStartException:
-        cli_helpers.print_str("ZeroTier One", ["Not restarted"], "FALSE", False)
-        logger.info(click.style("Please try running this command again or contact support@21.co",
-                                fg=cli_helpers.TITLE_COLOR))
-        sys.exit()
-
-    cli_helpers.start_long_running("Reconnecting to 21mkt", manager.connect_market, ctx.obj["client"])
-    if manager.get_market_address() != "":
-        cli_helpers.print_str("21mkt", ["Rejoined"], "True", True)
-    else:
-        cli_helpers.print_str("21mkt", ["Not rejoined"], "False", False)
-        logger.info(click.style("Please try running this command again or contact support@21.co",
-                                fg=cli_helpers.TITLE_COLOR))
-        sys.exit()
-
-    if manager.status_docker() is False:
-        try:
-            cli_helpers.start_long_running("Restarting Docker service", manager.start_docker)
-            cli_helpers.print_str("Docker", ["Restarted"], "TRUE", True)
-        except Two1MachineNetworkStartException:
-            cli_helpers.print_str("Docker", ["Not restarted"], "False", True)
-            logger.info(click.style("Please try running this command again or contact support@21.co",
-                                    fg=cli_helpers.TITLE_COLOR))
-            sys.exit()
-
-    two1_services = manager.list_available_services()
-    if all:
-        valid_services = two1_services
-    else:
-        valid_services = []
-        for serv in services:
-            if serv in two1_services:
-                valid_services.append(serv)
-
-    if len(valid_services) <= 0:
-        logger.info(click.style("No valid server found. Please try running this command again or contact support@21.co",
-                                fg=cli_helpers.TITLE_COLOR))
-        sys.exit()
-
-    logger.info(click.style("Pulling latest images.", fg=cli_helpers.TITLE_COLOR))
-    selected_services = list(set(['service-' + name for name in valid_services]).union(
-            set(Two1Composer.BASE_SERVICES)))
-    try:
-        manager.pull_latest_images(selected_services)
-    except Exception:
-        logger.info("Unable to pull latest images.", fg="magenta")
-        sys.exit()
-
-    logger.info(click.style("Restarting services.", fg=cli_helpers.TITLE_COLOR))
-    try:
-        manager.start_services(valid_services,
-                               cli_helpers.failed_to_start_hook,
-                               cli_helpers.started_hook,
-                               cli_helpers.failed_to_restart_hook,
-                               cli_helpers.restarted_hook,
-                               cli_helpers.failed_to_up_hook,
-                               cli_helpers.up_hook)
-
-    except Exception as e:
-        print(e)
-        logger.info("Unable to start services.", fg="magenta")
-        sys.exit()
-
-    try:
-        started_services = manager.get_running_services()
-    except Exception:
-        logger.info("Unable to fetch running services.", fg="magenta")
-        sys.exit()
-
-    published_stats = cli_helpers.prompt_to_publish(started_services, manager, True)
-    for stat in published_stats:
-        cli_helpers.print_str(stat[0],
-                              stat[2],
-                              "TRUE" if stat[1] else "FALSE",
-                              stat[1])
-
-    # help tip message
-    logger.info(click.style("\nTip: (1) run ", fg=cli_helpers.PROMPT_COLOR) +
-                click.style("`21 publish list`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
-                click.style(" to see your published services.\n", fg=cli_helpers.PROMPT_COLOR) +
-                click.style("     (2) run ", fg=cli_helpers.PROMPT_COLOR) +
-                click.style("`21 sell status --detail`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
-                click.style(" to see your microservice balances.", fg=cli_helpers.PROMPT_COLOR))
+    logger.info(click.style("Your 21 VM has been deleted. Please run ",
+                            fg=cli_helpers.TITLE_COLOR) +
+                click.style("21 sell start --all ", fg=cli_helpers.PROMPT_COLOR) +
+                click.style("to upgrade your 21 VM and start your "
+                            "bitcoin-payable microservices.", fg=cli_helpers.TITLE_COLOR))
+    return

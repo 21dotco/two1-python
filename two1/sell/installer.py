@@ -235,8 +235,7 @@ class InstallerDebian(InstallerBase):
     """
 
     # zerotier
-    ZEROTIER_PKG_URL = "https://download.zerotier.com/dist/"
-    ZEROTIER_PKG = "zerotier-one_1.1.4_amd64.deb"
+    ZEROTIER_INSTALLER_URL = "https://install.zerotier.com/"
 
     def __init__(self):
         """ Init Debian/Ubuntu Installer. """
@@ -295,6 +294,11 @@ class InstallerDebian(InstallerBase):
         except:
             installed.append(False)
         else:
+            # zt_num = [int(x) for x in zt_ver.decode().strip().split('.')]
+            # zt_sum = zt_num[0]*100 + zt_num[1]*10 + zt_num[2]
+            # if zt_sum < 124:
+            #     installed.append(False)
+            # else:
             installed.append(True)
 
         return list(zip(packages, installed))
@@ -315,13 +319,12 @@ class InstallerDebian(InstallerBase):
         Sources:
             https://www.zerotier.com/product-one.shtml
         """
-        zt_in = "URL='{}{}'; FILE=`mktemp`; wget \"$URL\" -qO $FILE && sudo dpkg -i $FILE; rm $FILE"
-        if not self.program_installed("zerotier-cli"):
-            try:
-                subprocess.check_output(zt_in.format(
-                    self.ZEROTIER_PKG_URL, self.ZEROTIER_PKG), shell=True, stderr=subprocess.DEVNULL)
-            except subprocess.CalledProcessError as e:
-                return e.returncode
+        zt_in = "wget -q -O - {} | sudo bash > /dev/null 2>&1"
+        try:
+            subprocess.check_output(zt_in.format(self.ZEROTIER_INSTALLER_URL),
+                                    shell=True, stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError as e:
+            return e.returncode
         return 0
 
     def install_docker_tools(self):

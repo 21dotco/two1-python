@@ -753,13 +753,7 @@ def running_old_sell(manager, installer):
         except subprocess.CalledProcessError:
             return False
     else:
-        ip6_rules = subprocess.check_output(["sudo", "ip6tables-save"])
-        if type(ip6_rules) is bytes:
-            ip6_rules = ip6_rules.decode()
-        if "21_INPUT" in ip6_rules:
-            return False
-        else:
-            return True
+        return False
 
 
 def failed_to_build_hook(service_name):
