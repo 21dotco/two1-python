@@ -452,6 +452,10 @@ Network:
     publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
     publish_instructions = "For instructions on publishing your app, please refer to {}".format(publish_docs_url)
 
+    publish_fix_url = "The following url was found in the " + click.style("{} ", bold=True) + \
+                      "section of your manifest: " + click.style("{}", bold=True) + click.style(
+        " \nDo you want to replace it with your host url: ") + click.style("{}", bold=True) + " ?"
+
     manifest_missing = click.style("Could not find the manifest file at {}.", fg="red")
 
     bad_manifest = "{}{}".format("The following error occurred while reading your manifest file at {}:\n{}\n\n",
@@ -490,7 +494,9 @@ Network:
 
     publish_success = click.style(
         "{} successfully published to {}. It may take a couple of minutes for your app "
-        "to show up in the marketplace.\nYou can view your app at https://21.co/mkt.", fg="magenta")
+        "to show up in the marketplace.\n\nYour app will be accessible through {}."
+        "\nAdditionally, You can view information about your app at https://21.co/mkt/{}.",
+        fg="magenta")
 
     app_url_claimed = "The endpoint {} specified in your manifest has already been registered in " \
                       "the marketplace by another user.\nPlease check your manifest file and make " \
