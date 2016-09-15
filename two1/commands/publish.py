@@ -411,8 +411,10 @@ def display_app_info(config, client, app_id):
         availability = click.style("Availability    : ", fg="blue") + click.style(
             "{:.2f}%".format(app_info["average_uptime"] * 100))
 
-        app_url = click.style("App URL         : ", fg="blue") + click.style(
+        app_url = click.style("Public App URL  : ", fg="blue") + click.style(
             "{}".format(app_info["app_url"]))
+        original_url = click.style("Private App URL : ", fg="blue") + click.style(
+            "{}".format(app_info["original_url"]))
         category = click.style("Category        : ", fg="blue") + click.style(
             "{}".format(app_info["category"]))
 
@@ -437,7 +439,7 @@ def display_app_info(config, client, app_id):
         page_components = [title, "\n",
                            rating_row, up_status, availability, last_crawl, last_update, version,
                            "\n",
-                           desc, app_url, doc_url, manifest_url, "\n",
+                           desc, app_url, original_url, doc_url, manifest_url, "\n",
                            category, price, "\n", quick_start, "\n"]
         if usage_docs:
             page_components.append(usage_docs + "\n")
