@@ -313,9 +313,17 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
     if response.status_code == 201:
         response_data = response.json()
         mkt_url = response_data['mkt_url']
-        listing_name = response_data['listing_name']
+        permalink = response_data['permalink']
         logger.info(
-            uxstring.UxString.publish_success.format(app_name, marketplace, mkt_url, listing_name))
+            click.style(
+                "{} successfully published to {}. It may take a couple of minutes for your app "
+                "to show up in the marketplace.\n"
+                "\n"
+                "Your app will be accessible through {}.\n"
+                "Additionally, You can view information about your app at {}.",
+                fg="magenta")
+            .format(app_name, marketplace, mkt_url, permalink)
+        )
 
 
 def get_search_results(config, client, page):
