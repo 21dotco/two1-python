@@ -184,9 +184,11 @@ class Channel(views.MethodView):
         Response (json) 2xx:
             deposit_txid (string): deposit transaction id.
         """
+        params = request.get_json(force=True, silent=True)
+        if params is None:
+            params = request.values.to_dict()
         try:
             # Validate parameters
-            params = request.values.to_dict()
             if 'deposit_tx' not in params:
                 raise BadParametersError('No deposit provided.')
             elif 'redeem_script' not in params:
@@ -209,9 +211,11 @@ class Channel(views.MethodView):
         Params (json):
             payment_tx (string): half-signed serialized payment transaction.
         """
+        params = request.get_json(force=True, silent=True)
+        if params is None:
+            params = request.values.to_dict()
         try:
             # Validate parameters
-            params = request.values.to_dict()
             if 'payment_tx' not in params:
                 raise BadParametersError('No payment provided.')
 
@@ -237,9 +241,11 @@ class Channel(views.MethodView):
         Response (json) 2xx:
             payment_txid (string): final payment channel transaction id.
         """
+        params = request.get_json(force=True, silent=True)
+        if params is None:
+            params = request.values.to_dict()
         try:
             # Validate parameters
-            params = request.values.to_dict()
             if 'signature' not in params:
                 raise BadParametersError('No signature provided.')
 
