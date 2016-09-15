@@ -242,7 +242,7 @@ class BitTransfer(PaymentBase):
     def get_402_headers(self, price, **kwargs):
         """Dict of headers to return in the initial 402 response."""
         return {BitTransfer.http_402_price: price,
-                BitTransfer.http_402_address: self.address,
+                BitTransfer.http_402_address: kwargs.get('address', self.address),
                 BitTransfer.http_402_username: self.seller_username}
 
     def redeem_payment(self, price, request_headers, **kwargs):
