@@ -184,9 +184,8 @@ class Channel(views.MethodView):
         Response (json) 2xx:
             deposit_txid (string): deposit transaction id.
         """
-        if request.json is not None:
-            params = request.json
-        else:
+        params = request.get_json(force=True, silent=True)
+        if params is None:
             params = request.values.to_dict()
         try:
             # Validate parameters
@@ -212,9 +211,8 @@ class Channel(views.MethodView):
         Params (json):
             payment_tx (string): half-signed serialized payment transaction.
         """
-        if request.json is not None:
-            params = request.json
-        else:
+        params = request.get_json(force=True, silent=True)
+        if params is None:
             params = request.values.to_dict()
         try:
             # Validate parameters
@@ -243,9 +241,8 @@ class Channel(views.MethodView):
         Response (json) 2xx:
             payment_txid (string): final payment channel transaction id.
         """
-        if request.json is not None:
-            params = request.json
-        else:
+        params = request.get_json(force=True, silent=True)
+        if params is None:
             params = request.values.to_dict()
         try:
             # Validate parameters
