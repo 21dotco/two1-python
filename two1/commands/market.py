@@ -56,14 +56,16 @@ def status(ctx):
 
 @market.command()
 @click.argument("network", default="21mkt")
+@click.option('-f', '--force', is_flag=True, default=False,
+              help='Ignores the security warnings and force joins the network')
 @click.pass_context
 @decorators.catch_all
 @decorators.json_output
 @decorators.capture_usage
 @decorators.check_notifications
-def join(ctx, network):
+def join(ctx, network, force):
     """Join 21's p2p network."""
-    return join_wrapper(ctx.obj['client'], network)
+    return join_wrapper(ctx.obj['client'], network, force)
 
 
 @market.command()
@@ -78,8 +80,8 @@ def leave(ctx, network):
     return _leave(ctx.obj['client'], network)
 
 
-def join_wrapper(client, network):
-    if not check_platform():
+def join_wrapper(client, network, force):
+    if not force and not check_platform():
         logger.error(uxstring.UxString.join_unsupported_platform)
         return
 

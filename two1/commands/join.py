@@ -12,11 +12,13 @@ from two1.commands.market import show_network_status
 @click.argument("network", default="21mkt")
 @click.option('--status', is_flag=True, default=False,
               help="Print network status.")
+@click.option('-f', '--force', is_flag=True, default=False,
+              help='Ignores the security warnings and force joins the network')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
-def join(ctx, network, status):
+def join(ctx, network, status, force):
     """Join a p2p network to buy/sell for BTC.
 
 \b
@@ -28,4 +30,4 @@ Usage
     if status:
         show_network_status()
     else:
-        join_wrapper(ctx.obj['client'], network)
+        join_wrapper(ctx.obj['client'], network, force)
