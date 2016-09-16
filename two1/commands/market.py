@@ -1,8 +1,9 @@
 """ Two1 command to join various zerotier networks """
 # standard python imports
 import logging
-import subprocess
+import os
 import platform
+import subprocess
 
 # 3rd party imports
 import click
@@ -164,11 +165,11 @@ def check_platform():
     Returns:
         boolean: True if the os/platform is supported.
     """
-    os = platform.system()
+    system = platform.system()
     distro = platform.platform()
-    return os == "Linux" and (os.path.isfile('/proc/device-tree/hat/uuid') or
-                              'boot2docker' in distro.lower() or
-                              os.path.isfile('/sys/hypervisor/uuid'))
+    return system == "Linux" and (os.path.isfile('/proc/device-tree/hat/uuid') or
+                                  'boot2docker' in distro.lower() or
+                                  os.path.isfile('/sys/hypervisor/uuid'))
 
 
 def show_network_status():
