@@ -8,6 +8,8 @@ import subprocess
 from enum import Enum
 from abc import ABCMeta
 from abc import abstractmethod
+import tarfile
+import yaml
 
 # 3rd party imports
 import requests
@@ -15,10 +17,13 @@ from docker import Client
 from docker.utils import kwargs_from_env as docker_env
 
 # two1 imports
+from io import BytesIO
+
 from two1.wallet import Two1Wallet
 from two1.blockchain import TwentyOneProvider
 from two1.sell.exceptions import exceptions_composer as exceptions
 from two1.sell.util.context import YamlDataContext
+from two1.commands.util.exceptions import ServerRequestError
 
 
 class ComposerState(Enum):
@@ -177,6 +182,11 @@ class Two1Composer(metaclass=ABCMeta):
     @abstractmethod
     def connect(self, *args, **kwargs):
         """ Connect to the docker client
+        """
+
+    @abstractmethod
+    def read_server_config(self):
+        """Read configuration of server.
         """
 
 
@@ -423,6 +433,11 @@ class Two1ComposerContainers(Two1Composer):
                     else:  # container
                         service_found_stopped_and_removed_hook(running_service_name)
 
+    def silently_force_stop_all_services(self):
+        running_container_names = self.docker_client.containers(filters={"status": "running"})
+        for container_name in running_container_names:
+            self.docker_client.remove_container(container_name, force=True)
+
     @staticmethod
     def names_from_containers(containers):
         """ Return names from containers.
@@ -539,7 +554,7 @@ class Two1ComposerContainers(Two1Composer):
         try:
             with open(os.path.join(Two1Composer.SITES_AVAILABLE_PATH, service), 'w') as f:
                 f.write("location /" + service + " {\n"
-                        "    rewrite ^/" + service + "(.*) $1 break;\n"
+                        "    rewrite ^/" + service + "(.*) /$1 break;\n"
                         "    proxy_pass http://" + service + ":" + str(5000) + ";\n"
                         "    proxy_set_header Host $host;\n"
                         "    proxy_set_header X-Real-IP $remote_addr;\n"
@@ -565,34 +580,36 @@ class Two1ComposerContainers(Two1Composer):
         except Exception:
             raise exceptions.Two1ComposerRouteException()
 
-    def publish_service(self, service_name, zt_ip, port,
-                        published_hook, already_published_hook, failed_to_publish_hook,
-                        unknown_publish_error_hook, publish_timedout_hook,
-                        timeout=Two1Composer.SERVICE_PUBLISH_TIMEOUT):
-        start = time.clock()
-        running = True
+    def publish_service(self, service_name, rest_client, published_hook, already_published_hook, failed_to_publish_hook,
+                        unknown_publish_error_hook):
+        strm, stat = self.docker_client.get_archive('sell_%s' % service_name, '/usr/src/app/manifest.yaml')
 
-        exec_resp = self.docker_client.exec_create('sell_%s' % service_name,
-                                                   'python3 /usr/src/app/utils/publish.py ' +
-                                                   service_name + " " + str(zt_ip) + " " + str(port))
-        exec_id = exec_resp['Id']
-        self.docker_client.exec_start(exec_id)
+        with tarfile.open(fileobj=BytesIO(strm.read()), mode='r') as tf:
+            manifest = yaml.load(tf.extractfile(stat[u'name']).read().decode())
 
-        while time.clock() - start < timeout and running is True:
-            running = self.docker_client.exec_inspect(exec_id)['Running']
-
-        if running is True:
-            publish_timedout_hook(service_name)
-        else:
-            code = self.docker_client.exec_inspect(exec_id)['ExitCode']
-            if code == 100:
-                published_hook(service_name)
-            elif code == 101:
+        try:
+            resp = rest_client.publish({"manifest": manifest,
+                                        "marketplace": "21mkt"})
+        except ServerRequestError as e:
+            if e.status_code == 403 and e.data.get("error") == "TO600":
                 already_published_hook(service_name)
-            elif code == 102:
+            else:
                 failed_to_publish_hook(service_name)
-            else:  # includes code == 99
-                unknown_publish_error_hook(service_name)
+        except:
+            unknown_publish_error_hook(service_name)
+        else:
+            if resp.status_code == 201:
+                published_hook(service_name)
+            else:
+                failed_to_publish_hook(service_name)
+
+    def read_server_config(self):
+        try:
+            with open(Two1Composer.COMPOSE_FILE) as f:
+                return yaml.load(f)
+
+        except FileNotFoundError:
+            return {}
 
     def get_services_mnemonic(self):
         if os.path.isfile(Two1Composer.COMPOSE_FILE):

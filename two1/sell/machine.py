@@ -3,7 +3,6 @@ import os
 import re
 import json
 import time
-import shutil
 import subprocess
 import logging
 from enum import Enum
@@ -41,13 +40,12 @@ class Two1Machine:
     __metaclass__ = ABCMeta
 
     DEFAULT_ZEROTIER_INTERFACE = "zt0"
-    DEFAULT_MARKET_NETWORK = "10.244"
     DEFAULT_SERVICE_PORT = 8080
 
-    ZEROTIER_IP_PATTERN = re.compile(r"zt\d+(.+\n)+?\s+inet (addr:)?(?P<ip>%s\.\d{1,3}\.\d{1,3})" %
-                                     re.escape(DEFAULT_MARKET_NETWORK))
+    ZEROTIER_CLI_IPV6_PATTERN = re.compile(r"""(\w{4}:){7}\w{4}""")
     MACHINE_ENV_PATTERN = re.compile(r'''^export(\s*)(?P<env_key>\w*)(\s*)=(\s*)"(?P<env_value>.*)"''')
     MACHINE_CONFIG_FILE = os.path.expanduser("~/.two1/services/config/machine_config.json")
+    MACHINE_CONFIG_DIR = os.path.dirname(MACHINE_CONFIG_FILE)
 
     @property
     def host(self):
@@ -101,46 +99,65 @@ class Two1Machine:
         """ Compute machine state label.
         """
 
+    @abstractmethod
     def connect_market(self, client, network):
-        """ Connect to the 21market network.
+        """ Connect to the 21mkt network.
 
         Args:
             client: Client to join network
             network: Network to join
         """
-        try:
-            zt_device_address = zerotier.device_address()
-            response = client.join(network, zt_device_address)
-            if response.ok:
-                network_id = response.json().get("networkid")
-                zerotier.join_network(network_id)
-        except exceptions.ServerRequestError as e:
-            if e.status_code == 400:
-                logger.info(uxstring.UxString.invalid_network)
-            else:
-                raise e
-        except subprocess.CalledProcessError as e:
-            logger.info(str(e))
 
+    @abstractmethod
     def _get_market_address(self):
-        """ Get status of 21market network connection.
+        """ Get status of 21mkt network connection.
 
         Returns:
             zt_ip (str): ZeroTier IP address.
         """
-        try:
-            if not shutil.which('ifconfig'):
-                os.environ['PATH'] += ':/sbin'
-            r = subprocess.check_output(["ifconfig"]).decode()
-            zt_ip = Two1Machine.ZEROTIER_IP_PATTERN.search(r).group("ip")
-        except Exception:
-            return ""
-        return zt_ip
+
+    def create_machine(self, vm_name, vdisk_size, vm_memory, service_port):
+        """ Driver to create custom VM.
+
+        Args:
+            vm_name: Name of the VM to create.
+            vdisk_size: Size of disk for the VM in MB.
+            vm_memory: Size of memory for the VM in MB
+            service_port: Port on which the router container will listen.
+        """
+        pass
+
+    def delete_machine(self):
+        """ Delete the virtual machine.
+        """
+        pass
+
+    def start_machine(self):
+        """ Start the virtual machine.
+        """
+        pass
+
+    def stop_machine(self):
+        """ Stop the virtual machine.
+        """
+        pass
+
+    def status_machine(self):
+        """ Get the virtual machine status.
+        """
+        pass
 
     def write_machine_config(self, server_port):
         os.makedirs(os.path.dirname(self.MACHINE_CONFIG_FILE), exist_ok=True)
         with open(self.MACHINE_CONFIG_FILE, "w") as f:
             json.dump(server_port, f)
+
+    def read_machine_config(self):
+        try:
+            with open(self.MACHINE_CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
 
 
 class Two1MachineNative(Two1Machine):
@@ -202,7 +219,7 @@ class Two1MachineNative(Two1Machine):
             else:
                 now = time.time()
 
-                while time.time() <= now + 10:
+                while time.time() <= now + 60:
                     if self.status_networking():
                         return 0
 
@@ -227,6 +244,70 @@ class Two1MachineNative(Two1Machine):
             rv = True
         return rv
 
+    def connect_market(self, client, network):
+        """ Connect to the 21market network.
+
+        Args:
+            client: Client to join network
+            network: Network to join
+        """
+        try:
+            zt_device_address = zerotier.device_address()
+            response = client.join(network, zt_device_address)
+            if response.ok:
+                network_id = response.json().get("networkid")
+                zerotier.join_network(network_id)
+                if self.wait_for_zt_confirmation():
+                    pass
+        except exceptions.ServerRequestError as e:
+            if e.status_code == 400:
+                logger.info(uxstring.UxString.invalid_network)
+            else:
+                raise e
+        except subprocess.CalledProcessError as e:
+            logger.info(str(e))
+        time.sleep(10)  # wait for interface to come up
+
+    def wait_for_zt_confirmation(self):
+        now = time.time()
+        while time.time() <= now + 10:
+            try:
+                networks = json.loads(subprocess.check_output(["sudo", "zerotier-cli", "listnetworks", "-j"]).decode())
+                for network in networks:
+                    if network["name"] == "21mkt" and network["status"] == "OK":
+                        return True
+            except subprocess.CalledProcessError:
+                pass
+            except ValueError:
+                pass
+        return False
+
+    def _get_market_address(self):
+        """ Get status of 21mkt network connection.
+
+        Returns:
+            zt_ip (str): ZeroTier IP address.
+        """
+        try:
+            zt_conf = subprocess.check_output(["sudo", "zerotier-cli", "listnetworks", "-j"])
+            if type(zt_conf) == bytes:
+                zt_conf = zt_conf.decode()
+            zt_conf_json = json.loads(zt_conf)
+            for net in zt_conf_json:
+                if net["name"] == "21mkt":
+                    if net["status"] == "OK":
+                        ip_addrs = net["assignedAddresses"]
+                        for addr in ip_addrs:
+                            potential_match = Two1Machine.ZEROTIER_CLI_IPV6_PATTERN.search(addr)
+                            if potential_match is not None:
+                                return "[%s]" % potential_match.group(0)
+                        return ""
+                    else:
+                        return ""
+            return ""
+        except Exception:
+            return ""
+
 
 class Two1MachineVirtual(Two1Machine):
 
@@ -248,7 +329,7 @@ class Two1MachineVirtual(Two1Machine):
         self._state = self._compute_state()
 
     def _compute_state(self):
-        if self.status_networking() and self.status_machine() == VmState.RUNNING:
+        if self.status_machine() == VmState.RUNNING and self.status_networking():
             return MachineState.READY
         else:
             return MachineState.NOREADY
@@ -267,36 +348,160 @@ class Two1MachineVirtual(Two1Machine):
         """ Start ZeroTier One service.
         """
         if not self.status_networking():
+            restored_config = False
+            if "zerotier_conf" in os.listdir(os.path.expanduser("~/.two1/services")):
+                subprocess.check_output(["docker-machine",
+                                         "scp",
+                                         "-r",
+                                         os.path.expanduser("~/.two1/services/zerotier_conf"),
+                                         "21:~/zerotier_conf"])
+                self.docker_ssh(("sudo chmod 755 zerotier_conf; "
+                                 "sudo chmod 600 zerotier_conf/authtoken.secret zerotier_conf/identity.secret; "
+                                 "sudo chmod 644 zerotier_conf/identity.public "
+                                 "zerotier_conf/zerotier-one.pid zerotier_conf/zerotier-one.port"),
+                                stderr=subprocess.DEVNULL)
+                if "zerotier-one" in self.docker_ssh("ls /var/lib", stderr=subprocess.DEVNULL).decode().split("\n"):
+                    self.docker_ssh("sudo rm -rf /var/lib/zerotier-one", stderr=subprocess.DEVNULL)
+                self.docker_ssh("sudo mv zerotier_conf /var/lib/zerotier-one", stderr=subprocess.DEVNULL)
+                restored_config = True
+
             try:
-                subprocess.check_output(["sudo", "launchctl", "load",
-                                        "/Library/LaunchDaemons/com.zerotier.one.plist"],
+                subprocess.check_output(["docker-machine", "scp",
+                                         os.path.join(
+                                             os.path.dirname(os.path.abspath(__file__)),
+                                             "util",
+                                             "scripts",
+                                             "zerotier_installer.sh"),
+                                         "21:~/zerotier_installer.sh"],
                                         stderr=subprocess.DEVNULL)
-                exit_code = 0
+                self.docker_ssh("chmod a+x zerotier_installer.sh", stderr=subprocess.DEVNULL)
+                self.docker_ssh("sudo ./zerotier_installer.sh",
+                                api=subprocess.Popen,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
             except:
-                exit_code = 1
+                return 1
+            else:
+                now = time.time()
+                found_nets = False
+
+                while time.time() <= now + 60:
+                    if self.status_networking():
+                        found_nets = True
+                        break
+
+                if found_nets:
+                    if restored_config is False:
+                        try:
+                            self.docker_ssh("sudo cp -r /var/lib/zerotier-one ~/zerotier_conf",
+                                            stderr=subprocess.DEVNULL)
+                            self.docker_ssh("sudo chmod -R 770 ~/zerotier_conf", stderr=subprocess.DEVNULL)
+                            subprocess.check_output(["docker-machine",
+                                                     "scp",
+                                                     "-r",
+                                                     "21:~/zerotier_conf",
+                                                     os.path.expanduser("~/.two1/services/zerotier_conf")])
+                        except:
+                            return 1
+                        else:
+                            return 0
+                    else:
+                        return 0
+                else:
+                    return 1
+
         else:
-            exit_code = 0
-        return exit_code
+            return 0
 
     def stop_networking(self):
         """ Stop ZeroTier One service.
         """
-        try:
-            subprocess.check_output(["sudo", "launchctl", "unload", "/Library/LaunchDaemons/com.zerotier.one.plist"])
-        except Exception as e:
-            print(e)
+        pass
 
     def status_networking(self):
         """ Get status of ZeroTier One service.
         """
         try:
-            subprocess.check_output(['launchctl', 'print', 'system/com.zerotier.one'], stderr=subprocess.DEVNULL)
-        except Exception:
+            if "ps_zerotier.sh" not in self.docker_ssh("ls", stderr=subprocess.DEVNULL).decode().split("\n"):
+                subprocess.check_output(["docker-machine",
+                                         "scp",
+                                         os.path.join(
+                                             os.path.dirname(os.path.abspath(__file__)),
+                                             "util",
+                                             "scripts",
+                                             "ps_zerotier.sh"),
+                                         "21:~/ps_zerotier.sh"])
+            self.docker_ssh("chmod a+x ~/ps_zerotier.sh", stderr=subprocess.DEVNULL)
+            processes = self.docker_ssh("./ps_zerotier.sh", stderr=subprocess.DEVNULL).decode().split("\n")
+            for process in processes:
+                if process.find("zerotier-one -d") != -1:
+                    return True
             return False
-        else:
-            return True
+        except subprocess.CalledProcessError:
+            return False
 
-    def create_machine(self, vm_name, vdisk_size, vm_memory, service_port, zt_interface):
+    def connect_market(self, client, market):
+        try:
+            zt_device_address = json.loads(self.docker_ssh("sudo ./zerotier-cli info -j",
+                                                           stderr=subprocess.DEVNULL).decode())["address"]
+            response = client.join(market, zt_device_address)
+            if response.ok:
+                network_id = response.json().get("networkid")
+                self.docker_ssh("sudo ./zerotier-cli join %s" % network_id, stderr=subprocess.DEVNULL)
+                if self.wait_for_zt_confirmation():
+                    pass
+        except exceptions.ServerRequestError as e:
+            if e.status_code == 400:
+                logger.info(uxstring.UxString.invalid_network)
+            else:
+                raise e
+        except subprocess.CalledProcessError as e:
+            logger.info(str(e))
+        time.sleep(10)  # wait for interface to come up
+        return
+
+    def wait_for_zt_confirmation(self):
+        now = time.time()
+        while time.time() <= now + 10:
+            try:
+                networks = json.loads(self.docker_ssh("sudo ./zerotier-cli listnetworks -j",
+                                                      stderr=subprocess.DEVNULL).decode())
+                for network in networks:
+                    if network["name"] == "21mkt" and network["status"] == "OK":
+                        return True
+            except subprocess.CalledProcessError:
+                pass
+            except ValueError:
+                pass
+        return False
+
+    def _get_market_address(self):
+        """ Get status of 21mkt network connection.
+
+        Returns:
+            zt_ip (str): ZeroTier IP address.
+        """
+        try:
+            zt_conf = self.docker_ssh("sudo ./zerotier-cli listnetworks -j", stderr=subprocess.DEVNULL)
+            if type(zt_conf) == bytes:
+                zt_conf = zt_conf.decode()
+            zt_conf_json = json.loads(zt_conf)
+            for net in zt_conf_json:
+                if net["name"] == "21mkt":
+                    if net["status"] == "OK":
+                        ip_addrs = net["assignedAddresses"]
+                        for addr in ip_addrs:
+                            potential_match = Two1Machine.ZEROTIER_CLI_IPV6_PATTERN.search(addr)
+                            if potential_match is not None:
+                                return "[%s]" % potential_match.group(0)
+                        return ""
+                    else:
+                        return ""
+            return ""
+        except Exception:
+            return ""
+
+    def create_machine(self, vm_name, vdisk_size, vm_memory, service_port):
         """ Driver to create custom VM.
 
         Args:
@@ -304,7 +509,6 @@ class Two1MachineVirtual(Two1Machine):
             vdisk_size: Size of disk for the VM in MB.
             vm_memory: Size of memory for the VM in MB
             service_port: Port on which the router container will listen.
-            zt_interface: ZeroTier interface to be bridged in the VM.
         """
         try:
             subprocess.check_output(["docker-machine", "create",
@@ -316,16 +520,12 @@ class Two1MachineVirtual(Two1Machine):
                                      "tcp-21-sell,tcp,," + str(service_port) +
                                      ",," + str(service_port)])
             subprocess.check_output(["docker-machine", "stop", vm_name])
-            subprocess.check_output(["VBoxManage", "modifyvm", vm_name,
-                                     "--nic3", "bridged", "--nicpromisc3", "allow-all",
-                                     "--bridgeadapter3", zt_interface, "--nictype3", "82540EM"])
             os.makedirs(os.path.dirname(Two1Machine.MACHINE_CONFIG_FILE), exist_ok=True)
             with open(Two1Machine.MACHINE_CONFIG_FILE, "w") as f:
                 json.dump({
                     "disk_size": vdisk_size,
                     "vm_memory": vm_memory,
-                    "server_port": service_port,
-                    "network_interface": zt_interface
+                    "server_port": service_port
                 }, f)
             return 0
         except:
@@ -399,3 +599,9 @@ class Two1MachineVirtual(Two1Machine):
             return environ
         except:
             raise exceptions_machine.Two1MachineException()
+
+    def docker_ssh(self, cmd, api=subprocess.check_output, **kwargs):
+        try:
+            return api(["docker-machine", "ssh", "21", cmd], **kwargs)
+        except Exception as e:
+            raise e
