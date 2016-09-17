@@ -94,6 +94,8 @@ setup(
     # have to be included in MANIFEST.in as well.
     package_data={
         'two1': ['two1-config.json',
+                 'sell/util/scripts/ps_zerotier.sh',
+                 'sell/util/scripts/zerotier_installer.sh',
                  'sell/blueprints/base/Dockerfile',
                  'sell/blueprints/router/Dockerfile',
                  'sell/blueprints/router/files/nginx.conf',
