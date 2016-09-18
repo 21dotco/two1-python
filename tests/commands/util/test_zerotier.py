@@ -252,12 +252,12 @@ def test_leave_network(mock_cli, network_id, outcome):
 
 @pytest.mark.parametrize("which_side_effect, system_return_value, cmd, outcome", [
     ((None, None), "Windows", (), EnvironmentError),
-    (("yep", None), "Linux", ('sudo', 'systemctl', 'start', 'zerotier-one.service'), "passed"),
-    ((None, "yep"), "Linux", ('sudo', 'service', 'zerotier-one', 'start'), "passed"),
+    (("yep", None), "Linux", ('sudo', 'systemctl', 'start', 'zerotier-one.service'), 0),
+    ((None, "yep"), "Linux", ('sudo', 'service', 'zerotier-one', 'start'), 0),
     ((None, None), "Linux", (), EnvironmentError),
     ((None, None), "Darwin", (), ""),
     ])
-@mock.patch('two1.commands.util.zerotier.subprocess.check_output')
+@mock.patch('two1.commands.util.zerotier.subprocess.call')
 @mock.patch('two1.commands.util.zerotier.platform.system')
 @mock.patch('two1.commands.util.zerotier.shutil.which')
 @mock.patch('two1.commands.util.zerotier.is_installed')
@@ -269,7 +269,7 @@ def test_start_daemon(
     system_mock.return_value = system_return_value
     is_installed_mock.return_value = True
 
-    if isinstance(outcome, str):
+    if isinstance(outcome, (str, int)):
         check_output_mock.return_value = outcome
         assert zerotier.start_daemon() == outcome
         if outcome:

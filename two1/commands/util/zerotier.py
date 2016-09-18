@@ -209,7 +209,7 @@ def start_daemon():
     else:
         raise EnvironmentError("Do not know how to start zerotier deamon on your system")
 
-    return subprocess.check_output(cmd)
+    return subprocess.call(cmd)  # Command errors if already started
 
 
 def get_address(network_name):
