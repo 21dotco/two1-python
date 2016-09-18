@@ -167,9 +167,12 @@ def check_platform():
     """
     system = platform.system()
     distro = platform.platform()
-    return system == "Linux" and (os.path.isfile('/proc/device-tree/hat/uuid') or
-                                  'boot2docker' in distro.lower() or
-                                  os.path.isfile('/sys/hypervisor/uuid'))
+    return system == "Linux" and (
+        os.path.isfile('/proc/device-tree/hat/uuid') or
+        'boot2docker' in distro.lower() or
+        os.path.isfile('/sys/hypervisor/uuid') or
+        os.path.isdir('/var/lib/digitalocean')
+    )
 
 
 def show_network_status():
