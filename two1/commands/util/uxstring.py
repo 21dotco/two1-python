@@ -444,7 +444,7 @@ laptop that doesn't provide any shared resources, or a small standalone
 machine such as a 21 Bitcoin Computer (21.co/buy) or DIY Bitcoin Computer
 (21.co/diy).
 
-Network:
+Network: %s
 """
     join_network_beta_exit = "OK, understood. Check out 21.co/buy or 21.co/diy to set up a standalone machine."
 
