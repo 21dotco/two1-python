@@ -319,7 +319,7 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
                 "{} successfully published to {}. It may take a couple of minutes for your app "
                 "to show up in the marketplace.\n"
                 "\n"
-                "Your app will be accessible through {}.\n"
+                "Your app will be accessible at {}.\n"
                 "Additionally, You can view information about your app at {}.",
                 fg="magenta")
             .format(app_name, marketplace, mkt_url, permalink)

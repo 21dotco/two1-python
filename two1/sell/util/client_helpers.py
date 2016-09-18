@@ -42,7 +42,7 @@ def get_platform():
                                        help_message="The `21 sell` service manager is not "
                                        "yet supported within another boot2docker VM.",
                                        label="boot2docker")
-        elif os.path.isfile('/sys/hypervisor/uuid') and (
+        elif (os.path.isfile('/sys/hypervisor/uuid') or os.path.isdir('/var/lib/digitalocean')) and (
                 'debian-8.' in detected_distro.lower() or
                 'ubuntu-14.04' in detected_distro.lower() or
                 'ubuntu-16.04' in detected_distro.lower()):
