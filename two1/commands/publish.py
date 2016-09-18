@@ -1,5 +1,6 @@
 """ Two1 command to publish an app to the 21 Marketplace """
 # standard python imports
+import copy
 import json
 import re
 import os
@@ -485,20 +486,10 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
 
     try:
         with open(api_docs_path, "r") as f:
-            manifest_dict = yaml.load(f.read())
+            original_manifest_dict = yaml.load(f.read())
 
-        # empty yaml files do not raise an error, so do it here
-        if not manifest_dict:
-            raise YAMLError
+        manifest_dict = transform_manifest(original_manifest_dict, overrides, marketplace)
 
-        manifest_dict = clean_manifest(manifest_dict)
-        if overrides is not None:
-            manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
-
-        # ensure the manifest is valid
-        validate_manifest(manifest_dict)
-
-        manifest_dict = check_host_urls(manifest_dict)
         # write back the manifest in case some clean up or overriding has happend
         with open(api_docs_path, "w") as f:
             yaml.dump(manifest_dict, f)
@@ -506,6 +497,25 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         return manifest_dict
     except (YAMLError, ValueError):
         raise exceptions.ValidationError(uxstring.UxString.malformed_yaml.format(api_docs_path))
+
+
+def transform_manifest(manifest_dict, overrides, marketplace):
+    # empty yaml files do not raise an error, so do it here
+    if not manifest_dict:
+        raise YAMLError
+
+    manifest_dict = copy.deepcopy(manifest_dict)
+
+    manifest_dict = clean_manifest(manifest_dict)
+    if overrides is not None:
+        manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
+
+    # ensure the manifest is valid
+    validate_manifest(manifest_dict)
+
+    manifest_dict = check_host_urls(manifest_dict)
+
+    return manifest_dict
 
 
 def check_host_urls(manifest_json):
@@ -519,6 +529,7 @@ def check_host_urls(manifest_json):
         dict: a dictionary containing the manifest json with the fields fixed if they user responded
         yes to the prompts.
     """
+    manifest_json = copy.deepcopy(manifest_json)
 
     # for now just check the x-21-quick-buy
     host = manifest_json["host"]
@@ -553,6 +564,7 @@ def clean_manifest(manifest_json):
     Returns:
         dict: The user manifest with its possible errors fixed.
     """
+    manifest_json = copy.deepcopy(manifest_json)
     host = manifest_json["host"]
     host = host.strip("/").lstrip("http://").lstrip("https://")
     manifest_json["host"] = host
@@ -574,6 +586,7 @@ def override_manifest(manifest_json, overrides, marketplace):
     Returns:
         dict: a json dict of the manifest with fields overridden.
     """
+    manifest_json = copy.deepcopy(manifest_json)
 
     old_host = manifest_json["host"].strip("/")
 
@@ -651,6 +664,7 @@ def validate_manifest(manifest_json):
     Raises:
         ValueError: if a required field is not valid or present in the manifest
     """
+    manifest_json = copy.deepcopy(manifest_json)
     for field in uxstring.UxString.valid_top_level_manifest_fields:
         if field not in manifest_json:
             raise exceptions.ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field),
