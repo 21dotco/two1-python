@@ -506,18 +506,17 @@ def transform_manifest(manifest_dict, overrides, marketplace):
     manifest_dict = copy.deepcopy(manifest_dict)
 
     manifest_dict = clean_manifest(manifest_dict)
-    if overrides is not None:
-        manifest_dict = override_manifest(manifest_dict, overrides, marketplace)
 
-    # ensure the manifest is valid
+    manifest_dict = apply_overrides(manifest_dict, overrides, marketplace)
+
+    manifest_dict = replace_host_urls(manifest_dict)
+
     validate_manifest(manifest_dict)
-
-    manifest_dict = check_host_urls(manifest_dict)
 
     return manifest_dict
 
 
-def check_host_urls(manifest_json):
+def replace_host_urls(manifest_json):
     """ Searches the manifest for any occurrences of the host url that does not match the actual
     host in the manifest and prompts the user for fixing them.
 
@@ -570,7 +569,7 @@ def clean_manifest(manifest_json):
     return manifest_json
 
 
-def override_manifest(manifest_json, overrides, marketplace):
+def apply_overrides(manifest_json, overrides, marketplace):
     """ Overrides fields in the manifest file.
 
     Args:
@@ -586,6 +585,8 @@ def override_manifest(manifest_json, overrides, marketplace):
         dict: a json dict of the manifest with fields overridden.
     """
     manifest_json = copy.deepcopy(manifest_json)
+    if overrides is None:
+        return manifest_json
 
     if "title" in overrides:
         manifest_json["info"]["title"] = overrides["title"]
