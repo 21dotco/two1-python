@@ -1,7 +1,6 @@
 """ Two1 command to publish an app to the 21 Marketplace """
 # standard python imports
 import copy
-import json
 import re
 import os
 from urllib.parse import urlparse
@@ -588,8 +587,6 @@ def override_manifest(manifest_json, overrides, marketplace):
     """
     manifest_json = copy.deepcopy(manifest_json)
 
-    old_host = manifest_json["host"].strip("/")
-
     if "title" in overrides:
         manifest_json["info"]["title"] = overrides["title"]
     if "description" in overrides:
@@ -629,27 +626,6 @@ def override_manifest(manifest_json, overrides, marketplace):
     if "basePath" in overrides:
         manifest_json["basePath"] = overrides["basePath"]
 
-    new_host = manifest_json["host"]
-    if new_host != old_host:
-        manifest_json = replace_host_in_docs(manifest_json, new_host, old_host)
-    return manifest_json
-
-
-def replace_host_in_docs(manifest_json, new_host, old_host):
-    """Replaces all the occurrences of the old_host in manifest_json with new_host.
-    Args:
-        manifest_json (dict): dict representation of the manifest.
-        new_host (str): The new host that should appear in the manifest.
-        old_host (str): The old host that currently appears in the manifest.
-
-    Returns:
-        dict: a new representation of the manifest with all occurrences of old_host replaced by
-        new_host.
-    """
-
-    manifest_str = json.dumps(manifest_json)
-    manifest_str = manifest_str.replace(old_host, new_host)
-    manifest_json = json.loads(manifest_str)
     return manifest_json
 
 
