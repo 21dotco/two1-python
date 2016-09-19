@@ -316,13 +316,12 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
         permalink = response_data['permalink']
         logger.info(
             click.style(
-                "{} successfully published to {}. It may take a couple of minutes for your app "
-                "to show up in the marketplace.\n"
                 "\n"
-                "Your app will be accessible at {}.\n"
-                "Additionally, You can view information about your app at {}.",
+                "You have successfully published {} to {}. "
+                "You should be able to view the listing within a few minutes at {}.\n\n"
+                "Users will be able to purchase it, using 21 buy, at {}. ",
                 fg="magenta")
-            .format(app_name, marketplace, mkt_url, permalink)
+            .format(app_name, marketplace, permalink, mkt_url)
         )
 
 
@@ -509,48 +508,9 @@ def transform_manifest(manifest_dict, overrides, marketplace):
 
     manifest_dict = apply_overrides(manifest_dict, overrides, marketplace)
 
-    manifest_dict = replace_host_urls(manifest_dict)
-
     validate_manifest(manifest_dict)
 
     return manifest_dict
-
-
-def replace_host_urls(manifest_json):
-    """ Searches the manifest for any occurrences of the host url that does not match the actual
-    host in the manifest and prompts the user for fixing them.
-
-    Args:
-        manifest_json (dict): a dictionary containing manifest json that is going to be submitted
-
-    Returns:
-        dict: a dictionary containing the manifest json with the fields fixed if they user responded
-        yes to the prompts.
-    """
-    manifest_json = copy.deepcopy(manifest_json)
-
-    # for now just check the x-21-quick-buy
-    host = manifest_json["host"]
-    scheme = "http" if len(manifest_json['schemes']) == 0 else manifest_json['schemes'][0]
-    host = "{}://{}".format(scheme, host)
-    section = "x-21-quick-buy"
-    quick_buy = manifest_json["info"].get(section)
-    if quick_buy:
-        matches = re.finditer(r'http[s]{0,1}://[^/\s]+', quick_buy)
-        subs = []
-        for match in matches:
-            if match.group(0) == host:
-                continue
-
-            if click.confirm(uxstring.UxString.publish_fix_url.format(section, match.group(0), host)):
-                subs.append(match.group(0))
-
-        for sub in subs:
-            quick_buy = quick_buy.replace(sub, host)
-
-        manifest_json["info"][section] = quick_buy
-
-    return manifest_json
 
 
 def clean_manifest(manifest_json):
