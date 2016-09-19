@@ -4,7 +4,7 @@ import platform
 from collections import namedtuple
 
 SUPPORTED_SYSTEMS = """`21 sell` is currently only available on
-Mac OS X and Ubuntu 14.04/16.04, CentOS-7, and Fedora 24 on AWS. """
+Mac OS X and Amazon Web Services (Supported Distributions: Ubuntu 14.04/16.04, CentOS 7 and Fedora 24)."""
 PING21_LEARN_URL = "https://21.co/learn/ping21-earn-bitcoin-by-monitoring-uptime-and-latency"
 PlatformDescription = namedtuple('PlatformDescription', ['detected_os',
                                                          'detected_distro',
