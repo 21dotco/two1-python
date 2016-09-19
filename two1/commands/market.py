@@ -86,7 +86,7 @@ def join_wrapper(client, network, force):
         logger.error(uxstring.UxString.join_unsupported_platform)
         return
 
-    logger.info(uxstring.UxString.join_network_beta_warning)
+    logger.info(uxstring.UxString.join_network_beta_warning % network)
     response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
     if response == "y":
         logger.info(uxstring.UxString.superuser_password)
