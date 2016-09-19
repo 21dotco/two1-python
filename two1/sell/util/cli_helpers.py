@@ -426,7 +426,7 @@ def get_example_usage(services, host, port):
     example_usages = {}
     for service in services:
         if service.lower() == 'ping':
-            example_usages[service] = "21 buy '{}:{}/ping/?uri=21.co'".format(host, port)
+            example_usages[service] = "21 buy '{}:{}/ping?uri=21.co'".format(host, port)
     return example_usages
 
 
