@@ -151,7 +151,10 @@ port        : The port on which the app is running.
         try:
             parameters = _parse_parameters(parameters)
         except:
-            logger.error(uxstring.UxString.invalid_parameter, fg="red")
+            logger.error(
+                "Manifest parameter overrides should be in the form 'key1=\"value1\" "
+                "key2=\"value2\".",
+                fg="red")
             return
 
     _publish(ctx.obj['client'], manifest_path, marketplace, skip, parameters)
@@ -207,7 +210,7 @@ def _list_apps(config, client):
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
     """
-    logger.info(uxstring.UxString.my_apps.format(config.username), fg="green")
+    logger.info("Listing all the published apps by {}: ".format(config.username), fg="green")
     current_page = 0
     total_pages = get_search_results(config, client, current_page)
     if total_pages < 1:
@@ -242,17 +245,19 @@ def _delete_app(config, client, app_id):
             sending authenticated requests to the TwentyOne backend.
         app_id (str): a unique string that identifies the application.
     """
-    if click.confirm(uxstring.UxString.delete_confirmation.format(app_id)):
+    if click.confirm("Are you sure that you want to delete the app with id '{}'?".format(app_id)):
         try:
             resp = client.delete_app(config.username, app_id)
             resp_json = resp.json()
             deleted_title = resp_json["deleted_title"]
-            logger.info(uxstring.UxString.delete_success.format(app_id, deleted_title))
+            logger.info("App {} ({}) was successfully removed from the marketplace.".format(app_id, deleted_title))
         except ServerRequestError as e:
             if e.status_code == 404:
-                logger.info(uxstring.UxString.delete_app_not_exist.format(app_id), fg="red")
+                logger.info("The app with id '{}' does not exist in the marketplace.".format(app_id), fg="red")
             elif e.status_code == 403:
-                logger.info(uxstring.UxString.delete_app_no_permissions.format(app_id), fg="red")
+                logger.info(
+                    "You don't have permission to delete the app with id '{}'. You "
+                    "can only delete apps that you have published.".format(app_id), fg="red")
 
 
 def _publish(client, manifest_path, marketplace, skip, overrides):
@@ -279,8 +284,21 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
             address = get_zerotier_address(marketplace)
 
             if address != app_ip:
-                if not click.confirm(uxstring.UxString.wrong_ip.format(app_ip, address, app_ip)):
-                    logger.info(uxstring.UxString.switch_host.format(manifest_path, app_ip, address))
+                wrong_ip = click.style("It seems that the IP address that you put in your manifest file (") +\
+                           click.style("{}", bold=True) +\
+                           click.style(") is different than your current 21market IP (") +\
+                           click.style("{}", bold=True) +\
+                           click.style(")\nAre you sure you want to continue publishing with ") +\
+                           click.style("{}", bold=True) +\
+                           click.style("?")
+                if not click.confirm(wrong_ip.format(app_ip, address, app_ip)):
+                    switch_host = click.style("Please edit ") +\
+                                  click.style("{}", bold=True) +\
+                                  click.style(" and replace ") +\
+                                  click.style("{}", bold=True) +\
+                                  click.style(" with ") +\
+                                  click.style("{}.", bold=True)
+                    logger.info(switch_host.format(manifest_path, app_ip, address))
                     return
 
             # if publishing is happening from the app machine, ensure that the app machine is
@@ -291,21 +309,31 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
 
     except exceptions.ValidationError as ex:
         # catches and re-raises the same exception to enhance the error message
-        raise exceptions.ValidationError(uxstring.UxString.bad_manifest.format(manifest_path, ex.args[0]),
-                                         json=ex.json)
+        publish_docs_url = click.style("https://21.co/learn/21-publish/", bold=True)
+        publish_instructions = "For instructions on publishing your app, please refer to {}".format(publish_docs_url)
+        raise exceptions.ValidationError(
+            "The following error occurred while reading your manifest file at {}:\n{}\n\n{}"
+            .format(manifest_path, ex.args[0], publish_instructions),
+            json=ex.json)
 
     app_name = manifest_json["info"]["title"]
     app_endpoint = "{}://{}{}".format(manifest_json["schemes"][0],
                                       manifest_json["host"],
                                       manifest_json["basePath"])
 
-    logger.info(uxstring.UxString.publish_start.format(app_name, app_endpoint, marketplace))
+    logger.info(
+        (click.style("Publishing {} at ") + click.style("{}", bold=True) + click.style(" to {}."))
+        .format(app_name, app_endpoint, marketplace))
     payload = {"manifest": manifest_json, "marketplace": marketplace}
     try:
         response = client.publish(payload)
     except ServerRequestError as e:
         if e.status_code == 403 and e.data.get("error") == "TO600":
-            logger.info(uxstring.UxString.app_url_claimed.format(app_endpoint), fg="red")
+            logger.info(
+                "The endpoint {} specified in your manifest has already been registered in "
+                "the marketplace by another user.\nPlease check your manifest file and make "
+                "sure your 'host' field is correct.\nIf the problem persists please contact "
+                "support@21.co.".format(app_endpoint), fg="red")
             return
         else:
             raise e
@@ -340,7 +368,10 @@ def get_search_results(config, client, page):
     resp_json = resp.json()
     search_results = resp_json["results"]
     if search_results is None or len(search_results) == 0:
-        logger.info(uxstring.UxString.no_published_apps, fg="blue")
+        logger.info(
+            click.style("You haven't published any apps to the marketplace yet. Use ", fg="blue") +
+            click.style("21 publish submit {PATH_TO_MANIFEST_FILE}", bold=True, fg="blue") +
+            click.style(" to publish your apps to the marketplace.", fg="blue"), fg="blue")
         return 0
 
     total_pages = resp_json["total_pages"]
@@ -455,7 +486,9 @@ def display_app_info(config, client, app_id):
 
     except ServerRequestError as e:
         if e.status_code == 404:
-            logger.info(uxstring.UxString.app_does_not_exist.format(app_id))
+            logger.info(
+                "The specified id for the app ({}) does not match any apps in the "
+                "marketplace.".format(app_id))
         else:
             raise e
 
@@ -473,14 +506,19 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
         ValidationError: If manifest is not valid, bad, missing, is a directory, or too large
     """
     if not os.path.exists(api_docs_path):
-        raise exceptions.ValidationError(uxstring.UxString.manifest_missing.format(api_docs_path))
+        raise exceptions.ValidationError(
+            click.style("Could not find the manifest file at {}.", fg="red").format(api_docs_path))
 
     if os.path.isdir(api_docs_path):
-        raise exceptions.ValidationError(uxstring.UxString.manifest_is_directory.format(api_docs_path))
+        raise exceptions.ValidationError(
+            click.style("{} is a directory. Please enter the direct path to the manifest file.",
+                        fg="red").format(api_docs_path))
 
     file_size = os.path.getsize(api_docs_path) / 1e6
     if file_size > 2:
-        raise exceptions.ValidationError(uxstring.UxString.large_manifest.format(api_docs_path))
+        raise exceptions.ValidationError(
+            click.style("The size of the manifest file at {} exceeds the maximum limit of 2MB.", fg="red")
+            .format(api_docs_path))
 
     try:
         with open(api_docs_path, "r") as f:
@@ -494,7 +532,9 @@ def check_app_manifest(api_docs_path, overrides, marketplace):
 
         return manifest_dict
     except (YAMLError, ValueError):
-        raise exceptions.ValidationError(uxstring.UxString.malformed_yaml.format(api_docs_path))
+        raise exceptions.ValidationError(
+            click.style("Your manifest file at {} is not valid YAML.", fg="red")
+            .format(api_docs_path))
 
 
 def transform_manifest(manifest_dict, overrides, marketplace):
@@ -553,14 +593,15 @@ def apply_overrides(manifest_json, overrides, marketplace):
     if "description" in overrides:
         manifest_json["info"]["description"] = overrides["description"]
     if "price" in overrides:
+        invalid_price_format = "Price should be a non-negative integer."
         try:
             price = int(overrides["price"])
             manifest_json["info"]["x-21-total-price"]["min"] = price
             manifest_json["info"]["x-21-total-price"]["max"] = price
             if price < 0:
-                raise exceptions.ValidationError(uxstring.UxString.invalid_price_format)
+                raise exceptions.ValidationError(invalid_price_format)
         except ValueError:
-            raise exceptions.ValidationError(uxstring.UxString.invalid_price_format)
+            raise exceptions.ValidationError(invalid_price_format)
     if "name" in overrides:
         manifest_json["info"]["contact"]["name"] = overrides["name"]
     if "email" in overrides:
@@ -576,12 +617,13 @@ def apply_overrides(manifest_json, overrides, marketplace):
         host = manifest_json["host"]
         # if the host is in the form of https://x.com/ remove the trailing slash
         host = host.strip("/")
+        invalid_port_format = "Port should be an integer between 0 and 65536."
         try:
             port = int(overrides["port"])
             if port <= 0 or port > 65536:
-                raise exceptions.ValidationError(uxstring.UxString.invalid_port_format)
+                raise exceptions.ValidationError(invalid_port_format)
         except ValueError:
-            raise exceptions.ValidationError(uxstring.UxString.invalid_port_format)
+            raise exceptions.ValidationError(invalid_port_format)
         host += ":{}".format(port)
         manifest_json["host"] = host
     if "basePath" in overrides:
@@ -602,34 +644,52 @@ def validate_manifest(manifest_json):
         ValueError: if a required field is not valid or present in the manifest
     """
     manifest_json = copy.deepcopy(manifest_json)
-    for field in uxstring.UxString.valid_top_level_manifest_fields:
+    for field in ["schemes", "host", "basePath", "x-21-manifest-path", "info"]:
         if field not in manifest_json:
-            raise exceptions.ValidationError(uxstring.UxString.top_level_manifest_field_missing.format(field),
-                                             json=manifest_json)
+            raise exceptions.ValidationError(
+                click.style("Field '{}' is missing from the manifest file.", fg="red").format(field),
+                json=manifest_json)
 
-    for field in uxstring.UxString.manifest_info_fields:
+    for field in ["contact", "title", "description", "x-21-total-price", "x-21-quick-buy", "x-21-category"]:
         if field not in manifest_json["info"]:
-            raise exceptions.ValidationError(uxstring.UxString.manifest_info_field_missing.format(field),
-                                             json=manifest_json)
+            raise exceptions.ValidationError(
+                click.style(
+                    "Field '{}' is missing from the manifest file under the 'info' section.",
+                    fg="red").format(field),
+                json=manifest_json)
 
-    for field in uxstring.UxString.manifest_contact_fields:
+    for field in {"name", "email"}:
         if field not in manifest_json["info"]["contact"]:
-            raise exceptions.ValidationError(uxstring.UxString.manifest_contact_field_missing.format(field),
-                                             json=manifest_json)
+            raise exceptions.ValidationError(
+                click.style(
+                    "Field '{}' is missing from the manifest file under the 'contact' section.", fg="red")
+                .format(field),
+                json=manifest_json)
 
-    for field in uxstring.UxString.price_fields:
+    for field in ["min", "max"]:
         if field not in manifest_json["info"]["x-21-total-price"]:
-            raise exceptions.ValidationError(uxstring.UxString.price_fields_missing.format(field),
-                                             json=manifest_json)
+            raise exceptions.ValidationError(
+                click.style("Field '{}' is missing from the manifest file under the "
+                            "'x-21-total-price' section.",
+                            fg="red"),
+                json=manifest_json)
 
     if len(manifest_json["schemes"]) == 0:
-        raise exceptions.ValidationError(uxstring.UxString.scheme_missing, json=manifest_json)
+        raise exceptions.ValidationError(
+            click.style(
+                "You have to specify either HTTP or HTTPS for your endpoint under the "
+                "`schemes` section.",
+                fg="red"),
+            json=manifest_json)
 
-    if manifest_json["info"]["x-21-category"].lower() not in uxstring.UxString.valid_app_categories:
-        valid_categories = ", ".join(uxstring.UxString.valid_app_categories)
-        raise exceptions.ValidationError(uxstring.UxString.invalid_category.format(
-            manifest_json["info"]["x-21-category"], valid_categories),
-                                         json=manifest_json)
+    valid_app_categories = {'blockchain', 'entertainment', 'social', 'markets', 'utilities', 'iot'}
+    if manifest_json["info"]["x-21-category"].lower() not in valid_app_categories:
+        valid_categories = ", ".join(valid_app_categories)
+        raise exceptions.ValidationError(
+            click.style("'{}' is not a valid category for the 21 marketplace. Valid categories are {}.",
+                        fg="red").format(
+                            manifest_json["info"]["x-21-category"], valid_categories),
+            json=manifest_json)
 
 
 def get_zerotier_address(marketplace):
@@ -644,9 +704,13 @@ def get_zerotier_address(marketplace):
     Raises:
         UnloggedException: if the zt network doesn't exist
     """
-    logger.info(uxstring.UxString.superuser_password)
+    logger.info("You might need to enter your superuser password.")
     address = zerotier.get_address(marketplace)
     if not address:
-        raise UnloggedException(uxstring.UxString.no_zt_network.format(marketplace))
+        join_cmd = click.style("21 join", bold=True, reset=False)
+        no_zt_network = click.style(
+            "You are not part of the {}. Use {} to join the market.",
+            fg="red")
+        raise UnloggedException(no_zt_network.format(marketplace, join_cmd))
 
     return address
