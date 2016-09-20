@@ -94,7 +94,7 @@ class UxString:
         click.style("\nFlushing to Blockchain\n", fg='magenta') +
         "Your satoshis will be sent to you on the Blockchain in the next payout cycle.\n"
         "Estimated time of payout: ~20 minutes.\n"
-        "To check progress:  https://blockexplorer.com/address/{}\n"
+        "To check progress:  https://blockchain.info/address/{}\n"
     )
 
     # username
@@ -509,9 +509,9 @@ Network: %s
 
     # send
     send_success = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\n"
-                    "To see on the blockchain: https://blockexplorer.com/tx/{2}")
+                    "To see on the blockchain: https://blockchain.info/tx/{2}")
     send_success_verbose = ("Successfully sent {0} satoshis to {1}.\ntxid: {2}\ntxn: {3}\n"
-                            "To see on the blockchain: https://blockexplorer.com/tx/{2}")
+                            "To see on the blockchain: https://blockchain.info/tx/{2}")
     send_insufficient_confirmed = ("Insufficient confirmed balance. However, you can use unconfirmed"
                                    " transactions with --use-unconfirmed. ")
     send_insufficient_blockchain_21bc = (
