@@ -416,9 +416,12 @@ class UxString:
     )
 
     join_unsupported_platform = click.style(
-        "Joining or publishing to the 21 Marketplace is not supported on this platform."
-        "\nSupported platforms: "
-        "\n    - 21 Bitcoin Computer\n    - Amazon EC2\n    - Docker virtual machines",
+        "Joining or publishing to the 21 Marketplace is not supported on this platform.\n"
+        "Supported platforms:\n"
+        "\t- 21 Bitcoin Computer\n"
+        "\t- Amazon EC2\n"
+        "\t- Docker virtual machine\n"
+        "\t- Raspberry Pi\n",
         fg="red")
     join_network_beta_warning = """
 WARNING
