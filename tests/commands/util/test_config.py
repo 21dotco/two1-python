@@ -115,7 +115,8 @@ def test_prompts_update_needed():
     mock_config = mock.mock_open(read_data=json.dumps(tmp_config_data))
     with mock.patch('two1.commands.util.config.Config.save', return_value=None):
         with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-            with capture_stdout(config.Config, 'config_file') as output:
+            with capture_stdout(
+                    config.Config, 'config_file', check_update=True) as output:
                 output = output.strip()
                 assert(len(output) > 0)
                 assert(output in uxstring.UxString.update_required)
@@ -142,7 +143,7 @@ def test_last_update_check_set():
     mock_config = mock.mock_open(read_data=CONFIG_DATA)
     assert 'last_update_check' not in CONFIG_DATA
     with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-        conf = config.Config('config_file')
+        conf = config.Config('config_file', check_update=True)
         # last_update_check should now be set after
         # initalizing the config object.
         assert hasattr(conf, 'last_update_check')
@@ -157,10 +158,10 @@ def test_needs_old_last_update_check_with_new_version():
     and that it does not suggest an update"""
     mock_config = mock.mock_open(read_data=CONFIG_DATA)
     with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-        c = config.Config('config_file')
+        c = config.Config('config_file', check_update=True)
         c.set('last_update_check', 000000.000, should_save=True)
 
-    with capture_stdout(config.Config, 'config_file') as output:
+    with capture_stdout(config.Config, 'config_file', check_update=True) as output:
         assert len(output.strip()) == 0
 
 

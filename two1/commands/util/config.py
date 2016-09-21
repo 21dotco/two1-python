@@ -35,7 +35,8 @@ class Config:
                     collect_analytics=True,
                     update_check_interval=3600)
 
-    def __init__(self, config_file=two1.TWO1_CONFIG_FILE, config=None):
+    def __init__(
+            self, config_file=two1.TWO1_CONFIG_FILE, config=None, check_update=False):
         """Return a new Config object with defaults plus custom properties.
            the `config_file` is used to load any config variables found on the
            system, and then the `config` input dictionary is used as the final
@@ -54,7 +55,8 @@ class Config:
         if config:
             self.load_dict_config(config)
 
-        self.check_update()
+        if check_update:
+            self.check_update()
 
         self.leave_zerotier()
 

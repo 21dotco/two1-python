@@ -61,6 +61,7 @@ def parse_config(
         config_file=two1.TWO1_CONFIG_FILE,
         config_dict=None,
         need_wallet_and_account=True,
+        check_update=False,
         debug=False,
 ):
     """Get configuration information that is used to drive all 21 commands.
@@ -81,7 +82,8 @@ def parse_config(
     wallet, username, and other variables.
     """
     try:
-        config = two1_config.Config(config_file, config_dict)
+        config = two1_config.Config(
+            config_file, config_dict, check_update=check_update)
     except exceptions.FileDecodeError as e:
         raise click.ClickException(uxstring.UxString.Error.file_decode.format((str(e))))
 
@@ -139,6 +141,7 @@ For full documentation, visit 21.co/learn.
 """
     need_wallet_and_account = ctx.invoked_subcommand not in (
         'help', 'update', 'login', 'doctor', 'uninstall')
+    check_update = ctx.invoked_subcommand not in ('update')
 
     # Set UUID if available
     uuid = bitcoin_computer.get_device_uuid()
@@ -150,6 +153,7 @@ For full documentation, visit 21.co/learn.
             config_file=config_file,
             config_dict=dict(config_pairs),
             need_wallet_and_account=need_wallet_and_account,
+            check_update=check_update,
             debug=debug,
         )
     except requests.ConnectionError:
