@@ -82,7 +82,7 @@ class TwentyOneRestClient(object):
             raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
 
         if response.status_code == 403:
-            ex = exceptions.ServerRequestError(msg=uxstring.UxString.Error.server_403, response=response)
+            ex = exceptions.ServerRequestError(message=uxstring.UxString.Error.server_403, response=response)
             if "detail" in ex.data and "TO100" in ex.data["detail"]:
                 raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed,
                                                             response=response)
@@ -90,7 +90,7 @@ class TwentyOneRestClient(object):
                 raise ex
 
         if response.status_code >= 300:
-            raise exceptions.ServerRequestError(msg=uxstring.UxString.Error.server_err, response=response)
+            raise exceptions.ServerRequestError(message=uxstring.UxString.Error.server_err, response=response)
 
         return response
 
