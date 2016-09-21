@@ -51,8 +51,8 @@ class FileDecodeError(Exception):
 class ServerRequestError(Two1Error):
     """ Error during a request to a server """
 
-    def __init__(self, msg="", response=None, status_code=None, data=None):
-        super(ServerRequestError, self).__init__(msg)
+    def __init__(self, message="", response=None, status_code=None, data=None):
+        super(ServerRequestError, self).__init__(message)
         if response is not None:
             self.status_code = response.status_code
             try:
@@ -67,8 +67,8 @@ class ServerRequestError(Two1Error):
 class ServerConnectionError(Two1Error):
     """Error during a connection to a server"""
 
-    def __init__(self, msg=""):
-        super(ServerConnectionError, self).__init__(msg)
+    def __init__(self, message=""):
+        super(ServerConnectionError, self).__init__(message)
 
 
 class BitcoinComputerNeededError(ServerRequestError):
