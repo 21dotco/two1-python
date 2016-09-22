@@ -657,7 +657,7 @@ def validate_manifest(manifest_json):
         ValueError: if a required field is not valid or present in the manifest
     """
     manifest_json = copy.deepcopy(manifest_json)
-    for field in ["schemes", "host", "basePath", "x-21-manifest-path", "info"]:
+    for field in ["schemes", "host", "basePath", "info"]:
         if field not in manifest_json:
             raise exceptions.ValidationError(
                 click.style("Field '{}' is missing from the manifest file.", fg="red").format(field),
