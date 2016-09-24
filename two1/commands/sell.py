@@ -96,6 +96,92 @@ $ 21 sell stop --help
 
 
 @sell.command()
+@click.argument('repository')
+@click.option('-t', '--tag', 'tags', multiple=True, default=['latest'])
+@click.pass_context
+@decorators.catch_all
+@decorators.capture_usage
+def add(ctx, repository, tags):
+    """
+Make Docker Hub images available to 21 sell
+
+\b
+Adding the :latest tag of a repository
+$ 21 sell add <repository>
+
+\b
+Adding specific tags of a repository
+$ 21 sell add <repository> [-t <tag>]...
+"""
+    manager = ctx.obj['manager']
+    logger.info(click.style("Adding tags.", fg=cli_helpers.TITLE_COLOR))
+
+    def tag_successfully_added_hook(tag):
+        cli_helpers.print_str(tag, ["Added"], "TRUE", True)
+
+    def tag_already_exists_hook(tag):
+        cli_helpers.print_str(tag, ["Already exists"], "FALSE", False)
+
+    def tag_failed_to_add_hook(tag):
+        cli_helpers.print_str(tag, ["Failed to add"], "FALSE", False)
+
+    full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
+
+    for full_tag_repr in full_tag_reprs:
+        manager.add_user_tag(full_tag_repr,
+                             tag_successfully_added_hook, tag_already_exists_hook, tag_failed_to_add_hook)
+
+
+@sell.command()
+@click.argument('repository', required=False)
+@click.option('-t', '--tag', 'tags', multiple=True, default=['latest'])
+@click.option('-a', '--all', 'is_all', is_flag=True)
+@click.pass_context
+@decorators.catch_all
+@decorators.capture_usage
+def remove(ctx, repository, tags, is_all):
+    """
+Make Docker Hub images unavailable to 21 sell
+
+\b
+Removing the :latest tag of a repository
+$ 21 sell remove <repository>
+
+\b
+Removing specific tags of a repository
+$ 21 sell remove <repository> [-t <tag>]...
+
+\b
+Removing all tags from 21 sell
+$ 21 sell remove --all
+"""
+    if repository is None and is_all is False:
+        logger.info(ctx.command.get_help(ctx))
+        sys.exit()
+
+    manager = ctx.obj['manager']
+    logger.info(click.style("Removing tags.", fg=cli_helpers.TITLE_COLOR))
+
+    def tag_successfully_removed_hook(tag):
+        cli_helpers.print_str(tag, ["Removed"], "TRUE", True)
+
+    def tag_does_not_exists_hook(tag):
+        cli_helpers.print_str(tag, ["Doesn't exist"], "FALSE", False)
+
+    def tag_failed_to_remove_hook(tag):
+        cli_helpers.print_str(tag, ["Failed to remove"], "FALSE", False)
+
+    if is_all:
+        full_tag_reprs = manager.get_user_tags()
+    else:
+        full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
+
+    for full_tag_repr in full_tag_reprs:
+        manager.remove_user_tag(full_tag_repr,
+                                tag_successfully_removed_hook, tag_does_not_exists_hook, tag_failed_to_remove_hook)
+
+
+@sell.command()
 @click.argument('services',
                 required=False,
                 nargs=-1)
@@ -604,17 +690,45 @@ $ 21 sell list
     logger.info(click.style(85*"-", fg=cli_helpers.MENU_COLOR))
     logger.info(click.style("AVAILABLE 21 MICROSERVICES", fg=cli_helpers.MENU_COLOR))
     logger.info(click.style(85*"-", fg=cli_helpers.MENU_COLOR))
-    available_services = manager.list_available_services()
-    if len(available_services) != 0:
-        for service in available_services:
-            cli_helpers.print_str(service, ["Available"], "TRUE", True)
-        # help tip message
-        logger.info(click.style("\nTip: run ", fg=cli_helpers.PROMPT_COLOR) +
+
+    available_official_services = manager.list_available_services()
+    available_user_services = manager.get_user_tags()
+
+    tips = []
+
+    if len(available_official_services) > 0 or len(available_user_services) > 0:
+        if len(available_official_services) > 0:
+            logger.info(click.style("Official microservices", fg=cli_helpers.TITLE_COLOR))
+            for service in available_official_services:
+                cli_helpers.print_str(service, ["Available"], "TRUE", True)
+        else:
+            logger.info(click.style("There are no official services available at this time.", fg="magenta"))
+
+        if len(available_user_services) > 0:
+            logger.info(click.style("User microservices", fg=cli_helpers.TITLE_COLOR))
+            for service in available_user_services:
+                cli_helpers.print_str(service, ["Available"], "TRUE", True)
+        else:
+            logger.info(click.style("There are no user services available at this time.", fg="magenta"))
+            tips.append(click.style("run ", fg=cli_helpers.PROMPT_COLOR) +
+                        click.style("`21 sell add <dockerhub-repo> [-t <tag>]`",
+                                    bold=True, fg=cli_helpers.PROMPT_COLOR) +
+                        click.style(" to make your microservices available to sell.", fg=cli_helpers.PROMPT_COLOR))
+        tips.append(click.style("run ", fg=cli_helpers.PROMPT_COLOR) +
                     click.style("`21 sell start <services>`", bold=True, fg=cli_helpers.PROMPT_COLOR) +
-                    click.style(" to start selling a microservice.", fg=cli_helpers.PROMPT_COLOR))
+                    click.style(" to start selling an available microservice.", fg=cli_helpers.PROMPT_COLOR))
     else:
-        logger.info(click.style("There are no services available at this time.",
-                                fg="magenta"))
+        logger.info(click.style("There are no services available at this time.", fg="magenta"))
+
+    if len(tips) > 0:
+        if len(tips) == 1:
+            logger.info(click.style("\nTip: ", fg=cli_helpers.PROMPT_COLOR) + tips[0])
+        else:
+            for idx, tip in enumerate(tips):
+                if idx == 0:
+                    logger.info(click.style("\nTips: (%s) " % (idx + 1), fg=cli_helpers.PROMPT_COLOR) + tip)
+                else:
+                    logger.info(click.style("      (%s) " % (idx + 1), fg=cli_helpers.PROMPT_COLOR) + tip)
 
 
 @sell.command()

@@ -218,3 +218,12 @@ class Two1Manager:
 
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)
+
+    def add_user_tag(self, *args, **kwargs):
+        return self.composer.add_user_tag(*args, **kwargs)
+
+    def get_user_tags(self, *args, **kwargs):
+        return self.composer.get_user_tags(*args, **kwargs)
+
+    def remove_user_tag(self, *args, **kwargs):
+        return self.composer.remove_user_tag(*args, **kwargs)

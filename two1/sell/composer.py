@@ -51,10 +51,54 @@ class Two1Composer(metaclass=ABCMeta):
 
     COMPOSE_FILE = os.path.join(BASE_DIR, "21-compose.yaml")
 
+    USER_TAGS_FILE = os.path.join(BASE_DIR, "user-tags")
+
     BASE_SERVICES = ["router", "payments", "base"]
 
     SERVICE_START_TIMEOUT = 10
     SERVICE_PUBLISH_TIMEOUT = 15
+
+    def tags2file(self, tags, filepath):
+        try:
+            with open(filepath, 'w') as file:
+                for tag in tags:
+                    file.write(tag + '\n')
+        except:
+            return False
+        else:
+            return True
+
+    def file2tags(self, filepath):
+        try:
+            with open(filepath, 'r') as file:
+                return {line.strip() for line in file.readlines() if line.strip()}
+        except:
+            return set()
+
+    def get_user_tags(self):
+        return self.file2tags(Two1Composer.USER_TAGS_FILE)
+
+    def add_user_tag(self, tag, tag_successfully_added_hook, tag_already_exists_hook, tag_failed_to_add_hook):
+        existing_tags = self.get_user_tags()
+
+        if tag in existing_tags:
+            tag_already_exists_hook(tag)
+        else:
+            if self.tags2file(existing_tags | {tag}, Two1Composer.USER_TAGS_FILE):
+                tag_successfully_added_hook(tag)
+            else:
+                tag_failed_to_add_hook(tag)
+
+    def remove_user_tag(self, tag, tag_successfully_removed_hook, tag_does_not_exists_hook, tag_failed_to_remove_hook):
+        existing_tags = self.get_user_tags()
+
+        if tag in existing_tags:
+            if self.tags2file(existing_tags - {tag}, Two1Composer.USER_TAGS_FILE):
+                tag_successfully_removed_hook(tag)
+            else:
+                tag_failed_to_remove_hook(tag)
+        else:
+            return tag_does_not_exists_hook(tag)
 
     class ComposerYAMLContext(YamlDataContext):
         """ Context manager for composer YAML service file.
