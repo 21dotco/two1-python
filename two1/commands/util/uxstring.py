@@ -421,6 +421,7 @@ class UxString:
         "\t- 21 Bitcoin Computer\n"
         "\t- Amazon EC2\n"
         "\t- Docker virtual machine\n"
+        "\t- ODROID\n"
         "\t- Raspberry Pi\n",
         fg="red")
     join_network_beta_warning = """
