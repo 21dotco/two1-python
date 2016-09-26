@@ -177,7 +177,7 @@ def check_platform():
         # bcm2708: Raspberry Pi 1
         # bcm2709: Raspberry Pi 2
         # bcm2710: Raspberry Pi 3
-        is_raspberry_pi = 'BCM27' in info
+        is_raspberry_pi = 'BCM27' in info or 'ODROID' in info
 
     return system == "Linux" and (
         os.path.isfile('/proc/device-tree/hat/uuid') or
