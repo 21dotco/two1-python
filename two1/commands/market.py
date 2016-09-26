@@ -4,6 +4,7 @@ import logging
 import os
 import platform
 import subprocess
+import sys
 
 # 3rd party imports
 import click
@@ -84,7 +85,7 @@ def leave(ctx, network):
 def join_wrapper(client, network, force):
     if not force and not check_platform():
         logger.error(uxstring.UxString.join_unsupported_platform)
-        return
+        sys.exit(1)
 
     logger.info(uxstring.UxString.join_network_beta_warning % network)
     response = getinput("I understand and wish to continue [y/n]: ", ["y", "n"])
@@ -167,9 +168,21 @@ def check_platform():
     """
     system = platform.system()
     distro = platform.platform()
+    is_raspberry_pi = False
+    try:
+        info = open("/proc/cpuinfo").read()
+    except FileNotFoundError:
+        is_raspberry_pi = False
+    else:
+        # bcm2708: Raspberry Pi 1
+        # bcm2709: Raspberry Pi 2
+        # bcm2710: Raspberry Pi 3
+        is_raspberry_pi = 'BCM27' in info or 'ODROID' in info
+
     return system == "Linux" and (
         os.path.isfile('/proc/device-tree/hat/uuid') or
         'boot2docker' in distro.lower() or
+        is_raspberry_pi or
         os.path.isfile('/sys/hypervisor/uuid') or
         os.path.isdir('/var/lib/digitalocean')
     )
