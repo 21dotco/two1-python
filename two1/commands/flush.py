@@ -110,6 +110,8 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silen
             logger.info(uxstring.UxString.flush_insufficient_earnings)
         elif ex.status_code == 400 and ex.data.get("detail") == "TO500":
             logger.info(uxstring.UxString.flush_not_enough_earnings.format(amount), fg="red")
+        elif ex.status_code == 403 and ex.data.get("detail") == "TO507":
+            logger.info(uxstring.UxString.flush_social_integration_required, fg="red")
         else:
             raise ex
 
