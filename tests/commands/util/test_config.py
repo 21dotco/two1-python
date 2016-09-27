@@ -6,6 +6,7 @@ import unittest.mock as mock
 from io import TextIOWrapper, BytesIO
 from contextlib import contextmanager
 
+import two1
 import two1.wallet as wallet
 import two1.commands.util.config as config
 import two1.commands.util.exceptions as exceptions
@@ -107,6 +108,7 @@ def test_save_config():
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
 @mock.patch('two1.TWO1_VERSION', '0.0.0')
+@mock.patch('two1.commands.util.config.version.get_latest_two1_version_pypi', mock.Mock(return_value='3.0.0'))
 def test_prompts_update_needed():
     """Test Config object will suggest update if needed."""
     tmp_config_data = json.loads(CONFIG_DATA)
@@ -124,6 +126,7 @@ def test_prompts_update_needed():
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
 @mock.patch('two1.TWO1_VERSION', '0.0.0')
+@mock.patch('two1.commands.util.config.version.get_latest_two1_version_pypi', mock.Mock(return_value='3.0.0'))
 def test_needs_update_legacy_last_update_check():
     """Test for a legacy two1.json with an older last_update_check, and that
     it does not throw an error"""
@@ -138,6 +141,7 @@ def test_needs_update_legacy_last_update_check():
 
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
+@mock.patch('two1.commands.util.config.version.get_latest_two1_version_pypi', mock.Mock(return_value='3.0.0'))
 def test_last_update_check_set():
     """Asert last_update_check is set in a config with none."""
     mock_config = mock.mock_open(read_data=CONFIG_DATA)
@@ -153,6 +157,7 @@ def test_last_update_check_set():
 
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
 @mock.patch('two1.commands.util.config.open', mock.mock_open(read_data=CONFIG_DATA), create=True)
+@mock.patch('two1.commands.util.config.version.get_latest_two1_version_pypi', mock.Mock(return_value=two1.TWO1_VERSION))
 def test_needs_old_last_update_check_with_new_version():
     """Test for a last_update_check more than 3600 seconds ago, but version is new
     and that it does not suggest an update"""
