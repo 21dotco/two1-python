@@ -1969,7 +1969,7 @@ class Wallet(object):
                 # If it's the proxy object we need to be a bit more
                 # creative: we should look up whether this is a
                 # property and if it is actually call the function.
-                if isinstance(getattr(Two1Wallet, method_name), property):
+                if isinstance(getattr(Two1Wallet, method_name, None), property):
                     try:
                         rv = attr()
                     except ReceivedErrorResponse as e:
