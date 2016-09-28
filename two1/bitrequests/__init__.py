@@ -9,6 +9,7 @@ from .bitrequests import ChannelRequests
 
 from .bitrequests import BitRequestsError  # noqa
 from .bitrequests import UnsupportedPaymentMethodError  # noqa
+from .bitrequests import InsufficientBalanceError  # noqa
 from .bitrequests import ResourcePriceGreaterThanMaxPriceError  # noqa
 
 OFF_CHAIN = 'offchain'
