@@ -358,10 +358,6 @@ class UxString:
                                "'21 wallet info' to get more information."
 
     flush_confirmation = "Are you sure you want to continue ?"
-
-    flush_social_integration_required = "You must connect a social account with your 21.co account " \
-                                        "before you can flush. You can do so at https://21.co"
-
     # ad
     buy_ad = click.style("Get a 21 Bitcoin Computer at https://21.co/buy", fg="magenta")
 
