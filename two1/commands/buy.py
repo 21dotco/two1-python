@@ -185,6 +185,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(uxstring.UxString.Error.resource_price_greater_than_max_price.format(e))
     except wallet_exceptions.DustLimitError as e:
         raise click.ClickException(e)
+    except bitrequests.InsufficientBalanceError as e:
+        raise click.ClickException(e)
 
     # Write response text to stdout or a filename if provided
     if not output_file:
