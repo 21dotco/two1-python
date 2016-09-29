@@ -339,8 +339,8 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
             click.style(
                 "\n"
                 "You have successfully published {} to {}. "
-                "You should be able to view the listing within a few minutes at {}.\n\n"
-                "Users will be able to purchase it, using 21 buy, at {}. ",
+                "You should be able to view the listing within a few minutes at {}\n\n"
+                "Users will be able to purchase it, using 21 buy, at {} ",
                 fg="magenta")
             .format(app_name, marketplace, permalink, mkt_url)
         )
