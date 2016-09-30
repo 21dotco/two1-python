@@ -78,7 +78,6 @@ class UxString:
         "Press any key ..."
     )
 
-    wallet_daemon_started = "Started wallet daemon. To stop it, type 'wallet stopdaemon'."
     payout_address = "Setting default payout address to: {}"
     get_started = "Check out our introductory guide to learn the basics of 21: https://21.co/learn/intro-to-21/"
     analytics_optin = "\nWould you like to help 21.co collect usage analytics?\n"\
