@@ -129,7 +129,6 @@ setup(
             'wallet=two1.wallet.cli:main',
             '21=two1.cli:main',
             'twentyone=two1.cli:main',
-            'walletd=two1.wallet.daemon:main',
             'channels=two1.channels.cli:main',
         ],
     },
