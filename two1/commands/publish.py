@@ -1,25 +1,24 @@
 """ Two1 command to publish an app to the 21 Marketplace """
-# standard python imports
-import copy
-import re
-import os
 from urllib.parse import urlparse
+import copy
+import functools
 import logging
+import os
+import re
 
-# 3rd partyimports
+from tabulate import tabulate
+from yaml.error import YAMLError
 import click
 import yaml
-from yaml.error import YAMLError
-from tabulate import tabulate
 
-# two1 imports
 from two1 import util
+from two1.commands.search import get_next_page
 from two1.commands.util import decorators
-from two1.commands.util.exceptions import UnloggedException, ServerRequestError
+from two1.commands.util import exceptions
 from two1.commands.util import uxstring
 from two1.commands.util import zerotier
-from two1.commands.util import exceptions
-from two1.commands.search import get_next_page
+from two1.commands.util.exceptions import ServerRequestError
+from two1.commands.util.exceptions import UnloggedException
 
 
 # Creates a ClickLogger
@@ -541,6 +540,8 @@ def transform_manifest(manifest_dict, overrides, marketplace):
 
     manifest_dict = apply_overrides(manifest_dict, overrides, marketplace)
 
+    manifest_dict = replace_auto(manifest_dict, marketplace)
+
     validate_manifest(manifest_dict)
 
     return manifest_dict
@@ -600,12 +601,7 @@ def apply_overrides(manifest_json, overrides, marketplace):
     if "email" in overrides:
         manifest_json["info"]["contact"]["email"] = overrides["email"]
     if "host" in overrides:
-        host = overrides["host"]
-        if host == "AUTO":
-            host = get_zerotier_address(marketplace)
-            if "." not in host:
-                host = "[{}]".format(host)
-        manifest_json["host"] = host
+        manifest_json["host"] = overrides["host"]
     if "port" in overrides:
         host = manifest_json["host"]
         # if the host is in the form of https://x.com/ remove the trailing slash
@@ -623,6 +619,30 @@ def apply_overrides(manifest_json, overrides, marketplace):
         manifest_json["basePath"] = overrides["basePath"]
 
     return manifest_json
+
+
+def replace_auto(manifest_dict, marketplace):
+    """
+    Replace "AUTO" in the host and quick-buy with the ZeroTier IP.
+
+    The server subsequently replaces, in the displayed quick-buy,
+    instances of the manifest host value with a mkt.21.co address.
+    """
+    manifest_dict = copy.deepcopy(manifest_dict)
+
+    def get_formatted_zerotier_address(marketplace):
+        host = get_zerotier_address(marketplace)
+        if "." not in host:
+            return "[{}]".format(host)
+        else:
+            return host
+    if 'AUTO' in manifest_dict['host']:
+        manifest_dict['host'] = manifest_dict['host'].replace(
+            'AUTO', get_formatted_zerotier_address(marketplace))
+    if 'AUTO' in manifest_dict['info']['x-21-quick-buy']:
+        manifest_dict['info']['x-21-quick-buy'] = manifest_dict['info']['x-21-quick-buy'].replace(
+            'AUTO', get_formatted_zerotier_address(marketplace))
+    return manifest_dict
 
 
 def validate_manifest(manifest_json):
@@ -685,6 +705,7 @@ def validate_manifest(manifest_json):
             json=manifest_json)
 
 
+@functools.lru_cache()
 def get_zerotier_address(marketplace):
     """ Gets the zerotier IP address from the given marketplace name
 
