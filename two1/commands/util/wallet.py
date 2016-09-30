@@ -1,7 +1,6 @@
 """Utility functions for user wallets."""
 # standard python imports
 import json
-import os
 import logging
 
 # 3rd party imports
@@ -10,8 +9,6 @@ import click
 # two1 imports
 import two1
 import two1.wallet as wallet
-import two1.wallet.daemonizer as daemonizer
-import two1.wallet.exceptions as exceptions
 import two1.commands.util.uxstring as uxstring
 import two1.blockchain.twentyone_provider as twentyone_provider
 
@@ -42,20 +39,6 @@ def get_or_create_wallet(wallet_path):
         mnemonic = wallet_config['master_seed']
 
     click.pause(uxstring.UxString.create_wallet_done % click.style(mnemonic, fg='green'))
-
-    # Start the daemon, if:
-    # 1. It's not already started
-    # 2. It's using the default wallet path
-    # 3. We're not in a virtualenv
-    try:
-        d = daemonizer.get_daemonizer()
-
-        if wallet.Two1Wallet.is_configured() and not os.environ.get("VIRTUAL_ENV") and not d.started():
-            d.start()
-            if d.started():
-                logger.info(uxstring.UxString.wallet_daemon_started)
-    except (OSError, exceptions.DaemonizerError):
-        pass
 
     if wallet.Two1Wallet.check_wallet_file(wallet_path):
         return wallet.Wallet(wallet_path=wallet_path, data_provider=data_provider)
