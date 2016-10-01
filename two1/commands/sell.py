@@ -14,6 +14,7 @@ from two1.sell.machine import Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.manager import get_manager
 from two1.sell.installer import Two1SellInstaller
+from two1.sell.installer import InstallerMac
 from two1.sell.util.client_helpers import get_platform
 from two1.sell.util import cli_helpers as cli_helpers
 from two1.sell.exceptions.exceptions_sell import Two1SellNotSupportedException
@@ -185,11 +186,13 @@ $ 21 sell remove --all
 @click.option('-w', '--wait-time',
               type=int, default=10)
 @click.option('--no-vm', is_flag=True, default=False)
+@click.option('--no-zt-dep', is_flag=True, default=False)
+@click.option('--publishing-ip', type=str)
 @click.option('-y', '--yes', '--assume-yes', is_flag=True, default=False)
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def start(ctx, services, all, wait_time, no_vm, assume_yes):
+def start(ctx, services, all, wait_time, no_vm, no_zt_dep, publishing_ip, assume_yes):
     """
 Start selling a containerized service.
 
@@ -213,6 +216,17 @@ $ 21 sell start --all
     manager = ctx.obj['manager']
     installer = ctx.obj['installer']
 
+    if no_zt_dep:
+        if isinstance(installer.installer, InstallerMac):
+            logger.info(click.style("ZeroTier required to run 21 sell on Mac.",
+                                    fg=cli_helpers.PROMPT_COLOR))
+            sys.exit()
+        if publishing_ip is None:
+            logger.info(click.style("--no-zt-dep must be used in "
+                                    "conjunction with --publishing-ip <IP_TO_PUBLISH>.",
+                                    fg=cli_helpers.PROMPT_COLOR))
+            sys.exit()
+
     if cli_helpers.running_old_sell(manager, installer):
         if click.confirm(click.style("It appears that you are running an old version of 21 sell.\n"
                                      "In order to continue using 21 sell, you must update the 21 VM.\n"
@@ -227,6 +241,8 @@ $ 21 sell start --all
 
     logger.info(click.style("Checking dependencies.", fg=cli_helpers.TITLE_COLOR))
     deps_list = installer.check_dependencies()
+    if no_zt_dep:
+        deps_list[[name for name, installed in deps_list].index("Zerotier")]
     all_deps_installed = cli_helpers.package_check(deps_list, True)
 
     # install virtualbox, docker, and zerotier deps
@@ -294,39 +310,48 @@ $ 21 sell start --all
 
     # connect to zerotier virtual network
     if not manager.status_networking():
-        try:
-            if not isinstance(manager.machine, Two1MachineVirtual):
-                if assume_yes or click.confirm(click.style(
-                        "ZeroTier One virtual network service is not running. Would you like to start "
-                        "the service?", fg=cli_helpers.PROMPT_COLOR)):
-                    manager.start_networking()
+        if no_zt_dep:
+            pass
+        else:
+            try:
+                if not isinstance(manager.machine, Two1MachineVirtual):
+                    if assume_yes or click.confirm(click.style(
+                            "ZeroTier One virtual network service is not running. Would you like "
+                            "to start the service?", fg=cli_helpers.PROMPT_COLOR)):
+                        manager.start_networking()
+                    else:
+                        sys.exit()
                 else:
-                    sys.exit()
-            else:
-                cli_helpers.start_long_running("Starting ZeroTier One", manager.start_networking)
+                    cli_helpers.start_long_running("Starting ZeroTier One",
+                                                   manager.start_networking)
 
-            cli_helpers.print_str("ZeroTier One", ["Started"], "TRUE", True)
-        except Two1MachineNetworkStartException:
-            cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
-            sys.exit()
+                cli_helpers.print_str("ZeroTier One", ["Started"], "TRUE", True)
+            except Two1MachineNetworkStartException:
+                cli_helpers.print_str("ZeroTier One", ["Not started"], "FALSE", False)
+                sys.exit()
 
     # join the 21mkt network
     if manager.get_market_address() == "":
-        if not isinstance(manager.machine, Two1MachineVirtual):
-            if assume_yes or click.confirm(click.style(
-               "21mkt network not connected. Would you like to join 21mkt?", fg=cli_helpers.PROMPT_COLOR)):
-                logger.info("You might need to enter your superuser password.")
-                manager.connect_market(ctx.obj["client"])
+        if no_zt_dep:
+            pass
+        else:
+            if not isinstance(manager.machine, Two1MachineVirtual):
+                if assume_yes or click.confirm(click.style(
+                        "21mkt network not connected. Would you like to join 21mkt?", fg=cli_helpers.PROMPT_COLOR)):
+                    logger.info("You might need to enter your superuser password.")
+                    manager.connect_market(ctx.obj["client"])
+                else:
+                    sys.exit()
             else:
-                sys.exit()
-        else:
-            cli_helpers.start_long_running("Connecting to 21mkt", manager.connect_market, ctx.obj["client"])
+                cli_helpers.start_long_running("Connecting to 21mkt",
+                                               manager.connect_market,
+                                               ctx.obj["client"])
 
-        if manager.get_market_address() != "":
-            cli_helpers.print_str("21mkt", ["Joined"], "TRUE", True)
-        else:
-            cli_helpers.print_str("21mkt", ["Unable to join"], "FALSE", False)
-            sys.exit()
+            if manager.get_market_address() != "":
+                cli_helpers.print_str("21mkt", ["Joined"], "TRUE", True)
+            else:
+                cli_helpers.print_str("21mkt", ["Unable to join"], "FALSE", False)
+                sys.exit()
     else:
         cli_helpers.print_str("21mkt", ["Joined"], "TRUE", True)
 
@@ -455,7 +480,7 @@ $ 21 sell start --all
         raise click.ClickException(click.style("Unable to fetch running services.", fg="magenta"))
 
     # prompt to publish services
-    published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes=assume_yes)
+    published_stats = cli_helpers.prompt_to_publish(started_services, manager, publishing_ip, assume_yes=assume_yes)
     for stat in published_stats:
         cli_helpers.print_str(stat[0],
                               stat[2],

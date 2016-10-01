@@ -537,10 +537,13 @@ def get_published_apps():
     return published_app_urls
 
 
-def prompt_to_publish(started_services, manager, assume_yes=False):
+def prompt_to_publish(started_services, manager, publishing_ip, assume_yes=False):
     """ Prompt user to publish services if not published.
     """
-    zt_ip = manager.get_market_address()
+    if publishing_ip is None:
+        zt_ip = manager.get_market_address()
+    else:
+        zt_ip = publishing_ip
     port = manager.get_server_port()
 
     published_apps = get_published_apps()
@@ -557,6 +560,7 @@ def prompt_to_publish(started_services, manager, assume_yes=False):
         published = start_long_running("Publishing services",
                                        publish_started,
                                        not_published_names,
+                                       zt_ip,
                                        manager)
         return published
     else:
@@ -564,7 +568,7 @@ def prompt_to_publish(started_services, manager, assume_yes=False):
         return []
 
 
-def publish_started(not_published, manager):
+def publish_started(not_published, publishing_ip, manager):
     """ Publish started services.
     """
 
@@ -583,8 +587,9 @@ def publish_started(not_published, manager):
         def unknown_publish_error_hook(sname):
             publish_stats.append((sname, False, ["An unknown error occurred"]))
 
-        manager.publish_service(service_name, get_rest_client(), published_hook, already_published_hook,
-                                failed_to_publish_hook, unknown_publish_error_hook)
+        manager.publish_service(service_name, publishing_ip, get_rest_client(), published_hook,
+                                already_published_hook, failed_to_publish_hook,
+                                unknown_publish_error_hook)
 
     return publish_stats
 
