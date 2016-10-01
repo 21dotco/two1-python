@@ -295,7 +295,7 @@ def _publish(client, manifest_path, marketplace, skip, overrides):
                                   click.style(" and replace ") +\
                                   click.style("{}", bold=True) +\
                                   click.style(" with ") +\
-                                  click.style("{}.", bold=True)
+                                  click.style("[{}].", bold=True)
                     logger.info(switch_host.format(manifest_path, app_ip, address))
                     return
 
