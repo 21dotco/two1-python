@@ -6,11 +6,13 @@ import json
 import urllib.parse
 import logging
 from collections import OrderedDict
+from requests.exceptions import RequestException
 
 # 3rd party imports
 import click
 
 # two1 imports
+from two1.commands.util import exceptions
 import two1.channels as channels
 import two1.commands.util.uxstring as uxstring
 import two1.bitrequests as bitrequests
@@ -187,6 +189,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(e)
     except bitrequests.InsufficientBalanceError as e:
         raise click.ClickException(e)
+    except RequestException as e:
+        raise exceptions.Two1Error('Requests exception: %s' % e)
 
     # Write response text to stdout or a filename if provided
     if not output_file:
