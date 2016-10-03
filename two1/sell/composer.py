@@ -328,6 +328,37 @@ class Two1ComposerContainers(Two1Composer):
             self.docker_client.pull(Two1Composer.DOCKERHUB_REPO, image_tag, stream=False)
         return 0
 
+    def pull_user_image(self, repo, tag):
+        self.docker_client.pull(repo, tag, stream=False)
+        return 0
+
+    def parse_custom_service(self, service_str):
+        slashes = re.findall('/', service_str)
+        colons = re.findall(':', service_str)
+        if len(slashes) == 1 and len(colons) == 1 and service_str.find('/') < service_str.find(':'):
+            return (service_str.split('/')[0],) + tuple(service_str.split('/')[1].split(':'))
+        else:
+            raise ValueError()
+
+    def custom_service_tag_2_service_name(self, service_str):
+        return '%s-%s-%s' % self.parse_custom_service(service_str)
+
+    def service_name_2_custom_service_tag(self, service_name):
+        dashes = re.findall('-', service_name)
+        if len(dashes) == 2:
+            return (service_name.split('-')[0],) + tuple(service_name.split('-')[1].split('-'))
+        else:
+            raise ValueError()
+
+    def service_name_2_container_name(self, service_name):
+        return 'sell_%s' % service_name
+
+    def container_name_2_service_name(self, container_name):
+        if container_name.startswith('sell_'):
+            return container_name[len('sell_'):]
+        else:
+            raise ValueError()
+
     def start_services(self, services, failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
                        failed_to_up_hook, up_hook):
         """ Start selected services.
@@ -361,6 +392,12 @@ class Two1ComposerContainers(Two1Composer):
 
         # Attempt to start all market services
         for service_name in services:
+            try:  # custom user image
+                image = service_name
+                service_name = self.custom_service_tag_2_service_name(service_name)
+            except:  # two1 official docker image
+                image = '%s:%s' % (Two1Composer.DOCKERHUB_REPO, 'service-' + service_name)
+
             # create nginx routes for service_name
             self._create_service_route(service_name)
             # add service_name to docker compose file
@@ -369,8 +406,8 @@ class Two1ComposerContainers(Two1Composer):
                 password = docker_compose_yaml['services']['payments']['environment']['TWO1_PASSWORD']
                 mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
                 docker_compose_yaml['services'][service_name] = {
-                    'image': '%s:%s' % (Two1Composer.DOCKERHUB_REPO, 'service-' + service_name),
-                    'container_name': 'sell_%s' % service_name,
+                    'image': image,
+                    'container_name': self.service_name_2_container_name(service_name),
                     'depends_on': ['base'],
                     'restart': 'always',
                     'environment': {
@@ -519,6 +556,11 @@ class Two1ComposerContainers(Two1Composer):
         exited_services = self.names_from_containers(self.docker_client.containers(filters={"status": "exited"}))
 
         for service_name in services:
+            try:
+                service_name = self.custom_service_tag_2_service_name(service_name)
+            except:
+                pass
+
             if service_name in running_services:
                 service_running_hook(service_name)
             elif service_name in exited_services:
@@ -598,7 +640,7 @@ class Two1ComposerContainers(Two1Composer):
         try:
             with open(os.path.join(Two1Composer.SITES_AVAILABLE_PATH, service), 'w') as f:
                 f.write("location /" + service + " {\n"
-                        "    rewrite ^/" + service + "(.*) /$1 break;\n"
+                        "    rewrite ^/" + service + "/?(.*) /$1 break;\n"
                         "    proxy_pass http://" + service + ":" + str(5000) + ";\n"
                         "    proxy_set_header Host $host;\n"
                         "    proxy_set_header X-Real-IP $remote_addr;\n"

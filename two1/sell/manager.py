@@ -227,3 +227,9 @@ class Two1Manager:
 
     def remove_user_tag(self, *args, **kwargs):
         return self.composer.remove_user_tag(*args, **kwargs)
+
+    def pull_user_image(self, *args, **kwargs):
+        return self.composer.pull_user_image(*args, **kwargs)
+
+    def custom_service_tag_2_service_name(self, *args, **kwargs):
+        return self.composer.custom_service_tag_2_service_name(*args, **kwargs)

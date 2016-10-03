@@ -374,36 +374,42 @@ $ 21 sell start --all
 
     # start microservices
     two1_services = manager.list_available_services()
+    user_services = list(manager.get_user_tags())
     if all:
         try:
             valid_services = two1_services
+            valid_user_services = user_services
         except Exception:
             logger.info(click.style("Error: unable to fetch machine images. Please try again or "
                                     "contact support@21.co.", fg="magenta"))
             sys.exit()
     else:
         valid_services = []
+        valid_user_services = []
         for serv in services:
             if serv in two1_services:
                 valid_services.append(serv)
+            elif serv in user_services:
+                valid_user_services.append(serv)
 
-    if len(valid_services) <= 0:
+    if len(valid_services) <= 0 and len(valid_user_services) <= 0:
         logger.info(click.style("No service available to sell. Please try again or "
                                 "contact support@21.co.", fg="magenta"))
         sys.exit()
 
     logger.info(click.style("Pulling latest images.", fg=cli_helpers.TITLE_COLOR))
-    selected_services = list(set(['service-' + name for name in valid_services]).union(
-            set(Two1Composer.BASE_SERVICES)))
+    selected_services = list(set(['service-' + name for name in valid_services]).union(set(Two1Composer.BASE_SERVICES)))
     try:
         manager.pull_latest_images(selected_services)
+        for user_service in valid_user_services:
+            manager.pull_user_image(*user_service.split(':'))
     except Exception:
         logger.info("Unable to pull latest images.", fg="magenta")
         sys.exit()
 
     logger.info(click.style("Starting services.", fg=cli_helpers.TITLE_COLOR))
     try:
-        manager.start_services(valid_services,
+        manager.start_services(valid_services + valid_user_services,
                                cli_helpers.failed_to_start_hook,
                                cli_helpers.started_hook,
                                cli_helpers.failed_to_restart_hook,
@@ -420,7 +426,7 @@ $ 21 sell start --all
         logger.info("Unable to fetch running services.", fg="magenta")
         sys.exit()
 
-    published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes)
+    published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes=assume_yes)
     for stat in published_stats:
         cli_helpers.print_str(stat[0],
                               stat[2],
@@ -495,7 +501,7 @@ $ 21 sell stop --all
                               service_failed_to_be_removed_hook,
                               service_not_found_hook)
 
-    if manager.status_machine() == VmState.NOEXIST:
+    if manager.status_machine() == VmState.NOEXIST:  # docker isn't running under virtual machine
         if isinstance(manager.machine, Two1MachineVirtual):
             cli_helpers.print_str("Virtual machine", ["Does not exist"], "TRUE", True)
             sys.exit()
@@ -522,7 +528,7 @@ $ 21 sell stop --all
         else:
             logger.info(click.style("All services are stopped.", fg="magenta"))
 
-    if manager.status_machine() == VmState.STOPPED:
+    if manager.status_machine() == VmState.STOPPED:  # docker-machine stopped
         if delete_vm:
             if not isinstance(manager.machine, Two1MachineVirtual):
                 logger.info(click.style("There are no VMs to stop or delete: "
@@ -540,7 +546,7 @@ $ 21 sell stop --all
             cli_helpers.print_str("Virtual machine", ["Stopped"], "TRUE", True)
             sys.exit()
 
-    if manager.status_machine() == VmState.RUNNING:
+    if manager.status_machine() == VmState.RUNNING:  # docker is running under virtual machine and is up
         if all:
             try:
                 valid_services = manager.get_running_services()
@@ -647,7 +653,9 @@ $ 21 sell status
     # fetch available services
     try:
         available_services = manager.list_available_services()
-        composer_service_statuser(available_services)
+        available_user_services = [manager.custom_service_tag_2_service_name(user_tag)
+                                   for user_tag in manager.get_user_tags()]
+        composer_service_statuser(available_services + available_user_services)
     except Exception:
         logger.info("Unable to get service status.", fg="magenta")
         sys.exit()
@@ -657,7 +665,7 @@ $ 21 sell status
         cli_helpers.service_balance_check()
 
     logger.info(click.style("TRANSACTION TOTALS", fg=cli_helpers.TITLE_COLOR))
-    cli_helpers.service_earning_check(available_services, detail)
+    cli_helpers.service_earning_check(available_services + available_user_services, detail)
 
     logger.info(click.style("EXAMPLE USAGE", fg=cli_helpers.TITLE_COLOR))
     cli_helpers.print_example_usage(available_services,
