@@ -158,7 +158,7 @@ def test_channel_server_open():
     channel_server._db = DatabaseSQLite3(':memory:', db_dir='')
     test_client = _create_client_txs()
 
-    # Initialize the handshake and ensure that it returns sucessfully
+    # Initialize the handshake and ensure that it returns successfully
     channel_server.open(test_client.deposit_tx, test_client.redeem_script)
 
     # Test for handshake failure when using the same refund twice

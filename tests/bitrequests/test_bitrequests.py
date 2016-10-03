@@ -231,7 +231,7 @@ def test_get_402_info(monkeypatch):
 
 
 def test_post_files():
-    """Tests that bitrequests sucessfully rewinds file streams in POSTs."""
+    """Tests that bitrequests successfully rewinds file streams in POSTs."""
     bit_req = MockBitRequests()
 
     # Test a full request with a `files` dict

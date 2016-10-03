@@ -602,7 +602,7 @@ def prompt_to_publish(started_services, manager, assume_yes=False):
     if len(not_published) == 0:
         return []
 
-    if assume_yes or click.confirm(click.style("\nWould you like to publish the sucessfully started services?",
+    if assume_yes or click.confirm(click.style("\nWould you like to publish the successfully started services?",
                                                fg=PROMPT_COLOR)):
         time.sleep(2)
         published = start_long_running("Publishing services",
