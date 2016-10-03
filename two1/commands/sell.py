@@ -14,7 +14,6 @@ from two1.sell.machine import Two1MachineVirtual
 from two1.sell.composer import Two1Composer
 from two1.sell.manager import get_manager
 from two1.sell.installer import Two1SellInstaller
-from two1.sell.installer import InstallerMac
 from two1.sell.util.client_helpers import get_platform
 from two1.sell.util import cli_helpers as cli_helpers
 from two1.sell.exceptions.exceptions_sell import Two1SellNotSupportedException
@@ -217,10 +216,6 @@ $ 21 sell start --all
     installer = ctx.obj['installer']
 
     if no_zt_dep:
-        if isinstance(installer.installer, InstallerMac):
-            logger.info(click.style("ZeroTier required to run 21 sell on Mac.",
-                                    fg=cli_helpers.PROMPT_COLOR))
-            sys.exit()
         if publishing_ip is None:
             logger.info(click.style("--no-zt-dep must be used in "
                                     "conjunction with --publishing-ip <IP_TO_PUBLISH>.",
