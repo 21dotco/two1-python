@@ -56,23 +56,3 @@ select UTXOs (unspent transaction outputs).
     :members:
     :undoc-members:
     :show-inheritance:
-
-two1.wallet.daemonizer module
----------------------------------
-This submodule provides code for running aspects of the wallet
-in the background as a daemon.
-
-.. automodule:: two1.wallet.daemonizer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-two1.wallet.socket_rpc_server module
-----------------------------------------
-This submodule handles RPC connections to shuttle data to and from
-the wallet daemon.
-
-.. automodule:: two1.wallet.socket_rpc_server
-    :members:
-    :undoc-members:
-    :show-inheritance:

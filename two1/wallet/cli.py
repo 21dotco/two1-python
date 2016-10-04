@@ -25,7 +25,6 @@ from two1.wallet import exceptions
 from two1.commands.util import exceptions as two1exceptions
 from two1.wallet.two1_wallet import Two1Wallet
 from two1.wallet.two1_wallet import Wallet
-from two1.wallet.daemonizer import get_daemonizer
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -218,9 +217,7 @@ def main(ctx, wallet_path, passphrase,
     ctx.obj['wallet_path'] = wallet_path
     ctx.obj['passphrase'] = passphrase
 
-    if ctx.invoked_subcommand not in ['create', 'restore',
-                                      'startdaemon', 'stopdaemon',
-                                      'uninstalldaemon']:
+    if ctx.invoked_subcommand not in ['create', 'restore']:
         # Check that the wallet path exists
         if not Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
             click.echo("ERROR: Wallet file does not exist or is corrupt.")
@@ -249,114 +246,6 @@ def main(ctx, wallet_path, passphrase,
                 pass
 
         ctx.call_on_close(_on_close)
-
-
-@click.command()
-@click.pass_context
-def startdaemon(ctx):
-    """ Starts the daemon
-    """
-    # Check to sere if we're in a venv and don't do anything if we are
-    if os.environ.get("VIRTUAL_ENV"):
-        click.echo("Not starting daemon while inside a virtualenv. It can be manually " +
-                   "started by doing 'walletd' and backgrounding the process.")
-        return
-
-    # Check if the wallet path exists
-    if not Two1Wallet.check_wallet_file(ctx.obj['wallet_path']):
-        click.echo("ERROR: Wallet does not exist! Not starting daemon.")
-        ctx.exit(code=7)
-
-    try:
-        d = get_daemonizer()
-    except OSError as e:
-        logger.debug(str(e))
-        click.echo("Error: %s" % e)
-        return
-
-    if d.started():
-        click.echo("walletd already running.")
-        return
-
-    if not d.installed():
-        if isinstance(ctx.obj['data_provider'], TwentyOneProvider):
-            dpo = dict(provider='twentyone')
-
-        try:
-            d.install(dpo)
-        except exceptions.DaemonizerError as e:
-            logger.debug(str(e))
-            click.echo("Error: %s" % e)
-            return
-
-    msg = ""
-    try:
-        if d.start():
-            msg = "walletd successfully started."
-        else:
-            msg = "walletd not started."
-    except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
-
-    logger.debug(msg)
-    click.echo(msg)
-
-
-@click.command()
-@click.pass_context
-def stopdaemon(ctx):
-    """ Stops the daemon
-    """
-    # Check to sere if we're in a venv and don't do anything if we are
-    if os.environ.get("VIRTUAL_ENV"):
-        click.echo("Not stopping any daemons from within a virtualenv.")
-        return
-
-    try:
-        d = get_daemonizer()
-    except OSError as e:
-        logger.debug(str(e))
-        click.echo("Error: %s" % e)
-        return
-
-    msg = ""
-    try:
-        if d.stop():
-            msg = "walletd successfully stopped."
-        else:
-            msg = "walletd not stopped."
-    except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
-
-    logger.debug(msg)
-    click.echo(msg)
-
-
-@click.command()
-@click.pass_context
-def uninstalldaemon(ctx):
-    """ Uninstalls the daemon from the init system
-    """
-    try:
-        d = get_daemonizer()
-    except OSError as e:
-        logger.debug(str(e))
-        click.echo("Error: %s" % e)
-        return
-
-    try:
-        d.stop()
-        if d.installed():
-            rv = d.uninstall()
-            if rv:
-                msg = "walletd successfully uninstalled from init system."
-        else:
-            msg = "Unable to uninstall walletd!"
-    except exceptions.DaemonizerError as e:
-        msg = "Error: %s" % e
-
-    logger.debug(msg)
-    click.echo(msg)
 
 
 @click.command(name="create")
@@ -430,20 +319,6 @@ def restore(ctx):
     must have your 12 word phrase (mnemonic) that was displayed
     when you created your wallet.
     """
-    # Stop daemon if it's running.
-    d = None
-    try:
-        d = get_daemonizer()
-    except OSError as e:
-        pass
-
-    if d:
-        try:
-            d.stop()
-        except exceptions.DaemonizerError as e:
-            click.echo("ERROR: Couldn't stop daemon: %s" % e)
-            ctx.exit(code=4)
-
     # Check to see if the current wallet path exists
     if os.path.exists(ctx.obj['wallet_path']):
         if click.confirm("Wallet file already exists and may have a balance. Do you want to delete it?"):
@@ -941,9 +816,6 @@ def verify_bitcoin_message(ctx, message, signature, address):
         click.echo("Not verified")
 
 
-main.add_command(startdaemon)
-main.add_command(stopdaemon)
-main.add_command(uninstalldaemon)
 main.add_command(create)
 main.add_command(restore)
 main.add_command(payout_address)

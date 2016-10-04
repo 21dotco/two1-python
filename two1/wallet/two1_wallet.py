@@ -1,5 +1,4 @@
 import builtins
-import getpass
 import json
 import logging
 import random
@@ -9,7 +8,6 @@ import base64
 import os
 import pyaes
 import two1
-from jsonrpcclient.exceptions import ReceivedErrorResponse
 from pbkdf2 import PBKDF2
 from two1.bitcoin.crypto import HDKey
 from two1.bitcoin.crypto import HDPrivateKey
@@ -29,11 +27,8 @@ from two1.wallet.base_wallet import BaseWallet
 from two1.wallet.cache_manager import CacheManager
 from two1.wallet.wallet_txn import WalletTransaction
 from two1.wallet import fees as txn_fees
-from two1.wallet.socket_rpc_server import UnixSocketServerProxy
 from two1.wallet.utxo_selectors import utxo_selector_smallest_first
 from two1.wallet.utxo_selectors import _fee_calc
-
-from two1.wallet import daemonizable
 
 
 def _public_key_serializer(public_key):
@@ -530,7 +525,6 @@ class Two1Wallet(BaseWallet):
                 self.logger.debug("Account %d (%s) public key: %s" %
                                   (a.index & 0x7fffffff, a.name, kser))
 
-    @daemonizable.property
     @property
     def testnet(self):
         """ Getter testnet property
@@ -562,7 +556,6 @@ class Two1Wallet(BaseWallet):
         if len(self._accounts) > 1:
             del self._accounts[-1]
 
-    @daemonizable.method
     def create_account(self, name):
         """ Creates an account.
 
@@ -702,9 +695,6 @@ class Two1Wallet(BaseWallet):
 
         return private_keys
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_private_key_serializer,
-                               deserializer=_private_key_deserializer)
     def get_private_key(self, address):
         """ Returns the private key corresponding to address, if it is
         a part of this wallet.
@@ -718,12 +708,6 @@ class Two1Wallet(BaseWallet):
         pkeys = self.get_private_keys([address])
         return pkeys[address] if address in pkeys else None
 
-    @daemonizable.method
-    @daemonizable.arg(arg_name="public_key",
-                      serializer=_public_key_serializer,
-                      deserializer=_public_key_deserializer)
-    @daemonizable.return_value(serializer=_private_key_serializer,
-                               deserializer=_private_key_deserializer)
     def get_private_for_public(self, public_key):
         """ Returns the private key for the given public_key, if it is
         a part of this wallet.
@@ -878,7 +862,6 @@ class Two1Wallet(BaseWallet):
 
         self._cache_manager.to_file(cache_file, force_cache_write)
 
-    @daemonizable.method
     def sync_wallet_file(self, force_cache_write=False):
         """ Syncs all wallet data to the wallet file used
             to construct this wallet instance, if one was used.
@@ -889,7 +872,6 @@ class Two1Wallet(BaseWallet):
             self.to_file(self._filename, force_cache_write)
             self.logger.debug("Sync'ed file %s" % self._filename)
 
-    @daemonizable.method
     def addresses(self, accounts=[]):
         """ Gets the address list for the current wallet.
 
@@ -907,7 +889,6 @@ class Two1Wallet(BaseWallet):
 
         return addresses
 
-    @daemonizable.property
     @property
     def current_address(self):
         """ Gets the preferred address.
@@ -917,7 +898,6 @@ class Two1Wallet(BaseWallet):
         """
         return self.get_payout_address()
 
-    @daemonizable.method
     def get_payout_address(self, account_name_or_index=None):
         """ Gets the next payout address.
 
@@ -936,7 +916,6 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(False)
 
-    @daemonizable.method
     def get_change_address(self, account_name_or_index=None):
         """ Gets the next change address.
 
@@ -955,9 +934,6 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_address(True)
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_public_key_serializer,
-                               deserializer=_public_key_deserializer)
     def get_payout_public_key(self, account_name_or_index=None):
         """ Gets the next payout public key.
 
@@ -976,9 +952,6 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_public_key(False)
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_public_key_serializer,
-                               deserializer=_public_key_deserializer)
     def get_change_public_key(self, account_name_or_index=None):
         """ Gets the next change public_key.
 
@@ -997,7 +970,6 @@ class Two1Wallet(BaseWallet):
 
         return acct.get_next_public_key(True)
 
-    @daemonizable.method
     def sign_message(self, message,
                      account_name_or_index=None,
                      key_index=0):
@@ -1033,7 +1005,6 @@ class Two1Wallet(BaseWallet):
 
         return base64.b64encode(bytes(priv_key.sign(message))).decode()
 
-    @daemonizable.method
     def sign_bitcoin_message(self, message, address):
         """ Bitcoin signs an arbitrary message.
 
@@ -1068,7 +1039,6 @@ class Two1Wallet(BaseWallet):
 
         return priv_key.sign_bitcoin(message, True).decode()
 
-    @daemonizable.method
     def verify_bitcoin_message(self, message, signature, address):
         """ Verifies a bitcoin signed message
 
@@ -1091,9 +1061,6 @@ class Two1Wallet(BaseWallet):
                                         signature=signature,
                                         address=address)
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_public_key_serializer,
-                               deserializer=_public_key_deserializer)
     def get_message_signing_public_key(self,
                                        account_name_or_index=None,
                                        key_index=0):
@@ -1118,10 +1085,6 @@ class Two1Wallet(BaseWallet):
         # Return the PrivateKey object, not the HDPrivateKey object
         return acct.get_public_key(change=False, n=key_index)._key
 
-    @daemonizable.method
-    @daemonizable.arg(arg_name="tx",
-                      serializer=_txn_serializer,
-                      deserializer=lambda a: a)
     def broadcast_transaction(self, tx):
         """ Broadcasts the transaction to the Bitcoin network.
 
@@ -1153,9 +1116,6 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_txn_list_serializer,
-                               deserializer=_txn_list_deserializer)
     def build_signed_transaction(self, addresses_and_amounts,
                                  use_unconfirmed=False,
                                  insert_into_cache=False,
@@ -1303,9 +1263,6 @@ class Two1Wallet(BaseWallet):
 
         return [txn]
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_txn_dict_list_serializer,
-                               deserializer=_txn_dict_list_deserializer)
     def make_signed_transaction_for(self, address, amount,
                                     use_unconfirmed=False,
                                     insert_into_cache=False,
@@ -1426,9 +1383,6 @@ class Two1Wallet(BaseWallet):
 
         return res
 
-    @daemonizable.method
-    @daemonizable.return_value(serializer=_txn_dict_list_serializer,
-                               deserializer=_txn_dict_list_deserializer)
     def send_to(self, address, amount,
                 use_unconfirmed=False, fees=None, accounts=[]):
         """ Sends Bitcoin to the provided address for the specified amount.
@@ -1497,7 +1451,6 @@ class Two1Wallet(BaseWallet):
 
         return total_value, num_utxos
 
-    @daemonizable.method
     def sweep(self, address, accounts=[], fee_calculator=_fee_calc):
         """ Sweeps the entire balance to a single address.
 
@@ -1557,7 +1510,6 @@ class Two1Wallet(BaseWallet):
         return [t['txid'] for t in tx_list]
 
     # TODO: test this function, since it is currently completely untested
-    @daemonizable.method
     def spread_utxos(self, threshold, num_addresses, accounts=[]):
         """ Spreads out UTXOs >= threshold satoshis to a set
         of new change addresses.
@@ -1657,7 +1609,6 @@ class Two1Wallet(BaseWallet):
 
         return balances
 
-    @daemonizable.method
     def balances_by_address(self, account_name_or_index):
         """ Returns a dict of balances by address
 
@@ -1672,7 +1623,6 @@ class Two1Wallet(BaseWallet):
 
         return acct.balances_by_address()
 
-    @daemonizable.method
     def confirmed_balance(self, account_name_or_index=None):
         """ Gets the current confirmed balance of the wallet in Satoshi.
 
@@ -1693,7 +1643,6 @@ class Two1Wallet(BaseWallet):
 
         return rv
 
-    @daemonizable.method
     def unconfirmed_balance(self, account_name_or_index=None):
         """ Gets the current total balance of the wallet in Satoshi,
         including unconfirmed transactions
@@ -1792,7 +1741,6 @@ class Two1Wallet(BaseWallet):
 
         return record
 
-    @daemonizable.method
     def transaction_history(self, accounts=[]):
         """ Returns a list containing all transactions associated with
             this wallet. Transactions are ordered from oldest to most
@@ -1828,7 +1776,6 @@ class Two1Wallet(BaseWallet):
         """
         return self._accounts
 
-    @daemonizable.property
     @property
     def account_names(self):
         """ Names of all accounts in the wallet.
@@ -1838,7 +1785,6 @@ class Two1Wallet(BaseWallet):
         """
         return [a.name for a in self._accounts]
 
-    @daemonizable.property
     @property
     def account_map(self):
         """ Returns the mapping of account name to account index.
@@ -1850,17 +1796,16 @@ class Two1Wallet(BaseWallet):
 
 
 class Wallet(object):
-    """ Abstraction layer between wallet object and wallet daemon proxy.
-
-    This class abstracts away between usage of a wallet object
-    when a daemon is not found/running and a daemon proxy object
-    when a daemon is running.
+    """ Abstraction layer over wallet object
 
     Rather than using the Two1Wallet class, this class should be
-    used in the vast majority of cases. Examples of when the
-    Two1Wallet class should be used are: 1. creating/configuring a
-    wallet. 2. any application where running a daemon is not
-    possible or would cause problems.
+    used in the vast majority of cases. An example of when the
+    Two1Wallet class should be used instead is creating/configuring a
+    wallet.
+
+    This abstraction will make it easy to transparently add alternative
+    wallet backends in the future, such as a wallet backend that caches
+    transaction data.
 
     Args:
         wallet_path (str): Path to the wallet to be opened. If no path
@@ -1874,71 +1819,16 @@ class Wallet(object):
     Returns:
         Two1WalletProxy: A proxy object.
     """
-    SOCKET_FILE_NAME = os.path.join(os.path.expanduser('~'),
-                                    ".two1",
-                                    "wallet",
-                                    "walletd.sock")
-
-    @staticmethod
-    def check_daemon_running(wallet_path=Two1Wallet.DEFAULT_WALLET_PATH):
-        """ Checks whether the wallet daemon is running.
-
-        Args:
-            wallet_path (str): The path to the wallet that the daemon
-                should have loaded up.
-
-        Returns:
-            UnixSocketServerProxy:
-                Returns the wallet proxy object
-                used to communicate with the daemon, or None if the
-                daemon is not running.
-        """
-        rv = None
-        try:
-            w = UnixSocketServerProxy(Wallet.SOCKET_FILE_NAME)
-
-            # Check the path to make sure it's the same
-            wp = w.wallet_path()
-            rv = w if wp == wallet_path else None
-
-        except (exceptions.DaemonNotRunningError, ReceivedErrorResponse):
-            rv = None
-
-        return rv
-
-    @staticmethod
-    def check_wallet_proxy_unlocked(w, passphrase):
-        """ Checks if the wallet currently loaded by the daemon
-        is unlocked.
-
-        Args:
-            w (UnixSocketServerProxy): The wallet proxy object to check.
-            passphrase (str): The passphrase to send if the wallet is
-                locked.
-        """
-        if w.is_locked():
-            if not passphrase:
-                print("The wallet is locked and requires a passphrase.")
-                passphrase = getpass.getpass("Passphrase to unlock wallet: ")
-
-            w.unlock(passphrase)
-
-        return not w.is_locked()
-
     def __init__(self, wallet_path=Two1Wallet.DEFAULT_WALLET_PATH,
                  data_provider=None, passphrase=''):
-        w = self.check_daemon_running(wallet_path)
-        if w is not None:
-            self.w = w
-            self.check_wallet_proxy_unlocked(w, passphrase)
+        if data_provider is None:
+            dp = TwentyOneProvider()
         else:
-            if data_provider is None:
-                dp = TwentyOneProvider()
-            else:
-                dp = data_provider
-            self.w = Two1Wallet(params_or_file=wallet_path,
-                                data_provider=dp,
-                                passphrase=passphrase)
+            dp = data_provider
+
+        self.w = Two1Wallet(params_or_file=wallet_path,
+                            data_provider=dp,
+                            passphrase=passphrase)
 
     def __hash__(self):
         return hash(self.w)
@@ -1957,37 +1847,8 @@ class Wallet(object):
             raise getattr(builtins, data['type'])(data['message'])
 
     def __getattr__(self, method_name):
-        rv = None
         if hasattr(self.w, method_name):
-            attr = getattr(self.w, method_name)
-
-            if isinstance(self.w, Two1Wallet):
-                # If it's the actual wallet object, just return the
-                # attribute
-                rv = attr
-            else:
-                # If it's the proxy object we need to be a bit more
-                # creative: we should look up whether this is a
-                # property and if it is actually call the function.
-                if isinstance(getattr(Two1Wallet, method_name, None), property):
-                    try:
-                        rv = attr()
-                    except ReceivedErrorResponse as e:
-                        self._handle_server_error(e)
-                else:
-                    def wrapper(*args, **kwargs):
-                        try:
-                            new_args, new_kwargs = daemonizable.serdes_args(
-                                True, Two1Wallet, method_name, *args, **kwargs)
-                            return daemonizable.serdes_return_value(
-                                False, Two1Wallet, method_name,
-                                attr(*new_args, **new_kwargs))
-                        except ReceivedErrorResponse as e:
-                            self._handle_server_error(e)
-
-                    rv = wrapper
+            return getattr(self.w, method_name)
         else:
             raise exceptions.UndefinedMethodError(
                 "wallet has no method or property: %s" % (method_name))
-
-        return rv
