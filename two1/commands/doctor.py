@@ -77,10 +77,6 @@ class Doctor(object):
         "Linux": "4.0.0",
         "Darwin": "14.0.0"
         }
-    UNMAINTAINED_OS = {
-        "Linux": "3.10.0",
-        "Darwin": "14.0.0"
-        }
 
     # python version
     SUPPORTED_PYTHON_VERSION = "3.3.0"
@@ -225,7 +221,8 @@ class Doctor(object):
         Returns:
             Check.Result, str, str: Result of the check
                                     Human readable message describing the check
-                                    The name of the operating system
+                                    The name of the operating system,
+                                    e.g. "Linux"
         """
         check_str = "OS Kernel"
         actual_os = platform.system()
@@ -240,25 +237,15 @@ class Doctor(object):
         Returns:
             Check.Result, str, str: Result of the check
                                     Human readable message describing the check
-                                    Operating system version
+                                    Operating system version,
+                                    e.g. "4.4.14-11.x86_64"
         """
         check_str = "OS Kernel Version"
-        actual_os = platform.system()
         actual_os_version = platform.release()
 
-        # make sure the os is supported first
-        if actual_os in self.SUPPORTED_OS.keys():
-
-            # use the os as a lookup for the version
-            expected_os_version = self.SUPPORTED_OS[actual_os]
-            unmaintained_os_version = self.UNMAINTAINED_OS[actual_os]
-            if version.is_version_gte(actual_os_version, expected_os_version):
-                return Check.Result.PASS, check_str, actual_os_version
-
-            elif version.is_version_gte(actual_os_version, unmaintained_os_version):
-                return Check.Result.WARN, check_str, actual_os_version
-
-        return Check.Result.FAIL, check_str, actual_os_version
+        # Always return success, but display actual OS version to
+        # help with debugging
+        return Check.Result.PASS, check_str, actual_os_version
 
     def check_general_python_version(self):
         """ Checks if the python version is valid
