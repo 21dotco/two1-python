@@ -163,13 +163,7 @@ def test_doctor_integration(doctor):
 
 
 @pytest.mark.parametrize('system, release_os, check_status', [
-    ('Linux', '3.09.0', Check.Result.FAIL),
-    ('Linux', '3.10.0', Check.Result.WARN),
-    ('Linux', '3.12.0', Check.Result.WARN),
-    ('Linux', '3.13.0-74-generic', Check.Result.WARN),
     ('Linux', '4.0.0', Check.Result.PASS),
-    ('Linux', '4.1.10-v7+', Check.Result.PASS),
-    ('Darwin', '13.0.0', Check.Result.FAIL),
     ('Darwin', '14.5.0', Check.Result.PASS),
 ])
 def test_doctor_operating_system_check(doctor, system, release_os, check_status):
