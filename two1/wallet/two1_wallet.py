@@ -1796,17 +1796,16 @@ class Two1Wallet(BaseWallet):
 
 
 class Wallet(object):
-    """ Abstraction layer between wallet object and wallet daemon proxy.
-
-    This class abstracts away between usage of a wallet object
-    when a daemon is not found/running and a daemon proxy object
-    when a daemon is running.
+    """ Abstraction layer over wallet object
 
     Rather than using the Two1Wallet class, this class should be
-    used in the vast majority of cases. Examples of when the
-    Two1Wallet class should be used are: 1. creating/configuring a
-    wallet. 2. any application where running a daemon is not
-    possible or would cause problems.
+    used in the vast majority of cases. An example of when the
+    Two1Wallet class should be used instead is creating/configuring a
+    wallet.
+
+    This abstraction will make it easy to transparently add alternative
+    wallet backends in the future, such as a wallet backend that caches
+    transaction data.
 
     Args:
         wallet_path (str): Path to the wallet to be opened. If no path
