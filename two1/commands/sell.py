@@ -236,8 +236,6 @@ $ 21 sell start --all
 
     logger.info(click.style("Checking dependencies.", fg=cli_helpers.TITLE_COLOR))
     deps_list = installer.check_dependencies()
-    if no_zt_dep:
-        deps_list[[name for name, installed in deps_list].index("Zerotier")]
     all_deps_installed = cli_helpers.package_check(deps_list, True)
 
     # install virtualbox, docker, and zerotier deps
