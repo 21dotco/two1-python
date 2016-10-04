@@ -223,23 +223,15 @@ def print_str(title, message, status_text, status_state, force=False):
     else:
         grouped = []
         for line in message:
-            split = line.split()
-            pre_add = ""
-            i = 0
-            while i < len(split):
-                word = split[i]
-                if len(word) > width:
+            for word in line.split():
+                if not grouped:
                     grouped.append(word)
-                    i += 1
                     continue
-                post_add = pre_add + word + " "
-                if len(post_add) > width:
-                    grouped.append(pre_add)
-                    pre_add = ""
+                if len(grouped[-1] + ' ' + word) <= width:
+                    grouped[-1] += ' '
+                    grouped[-1] += word
                 else:
-                    i += 1
-                    pre_add = post_add
-            grouped.append(pre_add)
+                    grouped.append(word)
     logger.info("  {0: <{width}}->  {1: <{width}}  [{2}]".format(
                 title,
                 grouped[0] if len(message) != 0 else "",
