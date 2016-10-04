@@ -221,7 +221,7 @@ def set_payout_address(client, wallet):
     Returns:
         bytes: extra nonce 1 which is required for computing the coinbase transaction
         int: the size in bytes of the extra nonce 2
-        int: reward amount given upon sucessfull solution found
+        int: reward amount given upon successful solution found
     """
     payout_address = wallet.current_address
     auth_resp = client.account_payout_address_post(payout_address)
