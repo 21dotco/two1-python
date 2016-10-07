@@ -77,22 +77,29 @@ class TwentyOneRestClient(object):
                 requests.exceptions.ConnectionError):
             raise exceptions.ServerConnectionError(uxstring.UxString.Error.connection.format("21 Servers"))
 
-        # update required
         if response.status_code == 301:
             raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
-
-        if response.status_code == 403:
-            ex = exceptions.ServerRequestError(message=uxstring.UxString.Error.server_403, response=response)
-            if "detail" in ex.data and "TO100" in ex.data["detail"]:
-                raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed,
-                                                            response=response)
+        elif 300 <= response.status_code <= 399:
+            raise exceptions.ServerRequestError(
+                response, message='Encountered a %d error' % response.status_code)
+        elif response.status_code == 403:
+            ex = exceptions.ServerRequestError(
+                response, message=uxstring.UxString.Error.server_403)
+            if ex.data.get('detail') == 'TO100':
+                raise exceptions.BitcoinComputerNeededError(
+                    response, message=uxstring.UxString.bitcoin_computer_needed)
             else:
                 raise ex
-
-        if response.status_code >= 300:
-            raise exceptions.ServerRequestError(message=uxstring.UxString.Error.server_err, response=response)
-
-        return response
+        elif 400 <= response.status_code <= 499:
+            raise exceptions.ServerRequestError(response)
+        elif 500 <= response.status_code <= 599:
+            raise exceptions.ServerRequestError(
+                response,
+                message="You have experienced a server-side technical error. "
+                "We are working to correct the issue."
+            )
+        else:
+            return response
 
     # GET /pool/accounts
     def account_info(self):

@@ -56,7 +56,12 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
                     try:
                         json.loads(data)
                     except ValueError:
-                        assert 'error' in ex_info.value.data
+                        try:
+                            json.loads(data)
+                        except ValueError:
+                            assert 'error' in ex_info.value.message
+                        else:
+                            assert 'error' in ex_info.value.data
                     else:
                         assert json.loads(data) == ex_info.value.data
             else:
