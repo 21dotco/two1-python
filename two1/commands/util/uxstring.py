@@ -38,10 +38,6 @@ class UxString:
     update_required = click.style("You are using an old version of 21. Please update using the '21 "
                                   "update' command.",
                                   fg="red")
-    bitcoin_computer_needed = click.style("You need a 21 Bitcoin Computer (21.co/buy) to access "
-                                          "this service. If you believe you have received this "
-                                          "message in error, please contact support@21.co.",
-                                          fg="red")
     max_accounts_reached = click.style(
         "You have reached the maximum number of 21.co accounts that you can create. ", fg="red") +\
         click.style("Use ", fg="red") +\
@@ -117,10 +113,6 @@ class UxString:
     login_prompt_invalid_user = "Please select a number between {} and {} to select the " \
                                 "corresponding username"
     login_prompt_user_does_not_exist = "User {} does not exist or is not authorized for this wallet.\n"
-
-    existing_account = click.style("There is already a username associated with your current wallet. Use ", fg="red") +\
-        click.style("21 login -u {}", bold=True, fg="red") +\
-        click.style(" to login.", fg="red")
 
     set_new_password = "Please set a password for" +\
                        click.style(" {}.", bold=True) +\
@@ -552,17 +544,11 @@ Network: %s
     class Error:
         """ Put all Error type uxstrings here """
         # network errors
-        connection = click.style("Error: Cannot connect to {}. Please check your Internet connection.", fg="red")
         connection_cli = "An internet connection is required to run this command."
         timeout = "Error: Connection to %s timed out."
         request = click.style("Error: Server request error occurred", fg="red")
 
         non_existing_user = "Error: Username %s does not exist."
-
-        # 403 errors
-        server_403 = click.style("Received forbidden error (403). Login in with ", fg="red") +\
-            click.style("21 login ", bold=True, fg="red") +\
-            click.style("and try again.", fg="red")
 
         # wallet errors
         create_wallet_failed = "Error: Could not create wallet."
