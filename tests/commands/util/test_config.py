@@ -41,6 +41,21 @@ def capture_stdout(command, *args, **kwargs):
     yield out
 
 
+@contextmanager
+def capture_stderr(command, *args, **kwargs):
+    """Captures stderr"""
+    old_stderr = sys.stderr
+    sys.stderr = TextIOWrapper(BytesIO(), sys.stderr.encoding)
+    command(*args, **kwargs)
+    # get output
+    sys.stderr.seek(0)
+    err = sys.stderr.read()
+    # restore stderr
+    sys.stderr.close()
+    sys.stderr = old_stderr
+    yield err
+
+
 @mock.patch('os.path.exists', mock.Mock(return_value=True))
 @mock.patch('two1.commands.util.config.open', mock.mock_open(read_data=CONFIG_DATA), create=True)
 def test_basic_config():
@@ -117,7 +132,7 @@ def test_prompts_update_needed():
     mock_config = mock.mock_open(read_data=json.dumps(tmp_config_data))
     with mock.patch('two1.commands.util.config.Config.save', return_value=None):
         with mock.patch('two1.commands.util.config.open', mock_config, create=True):
-            with capture_stdout(
+            with capture_stderr(
                     config.Config, 'config_file', check_update=True) as output:
                 output = output.strip()
                 assert(len(output) > 0)

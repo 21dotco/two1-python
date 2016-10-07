@@ -4,6 +4,9 @@ import os
 import json
 import time
 import logging
+import sys
+
+import click
 
 # two1 imports
 from two1.commands.util import zerotier
@@ -77,7 +80,7 @@ class Config:
             latest_version = version.get_latest_two1_version_pypi()
             self.set('last_update_check', time.time(), should_save=True)
             if not version.is_version_gte(actual_version, latest_version):
-                logger.warning(uxstring.UxString.update_required)
+                click.echo(click.style(uxstring.UxString.update_required, fg='red'), file=sys.stderr)
 
     def leave_zerotier(self):
         """
