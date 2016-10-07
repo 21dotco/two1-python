@@ -543,13 +543,6 @@ Network: %s
 
     class Error:
         """ Put all Error type uxstrings here """
-        # network errors
-        connection_cli = "An internet connection is required to run this command."
-        timeout = "Error: Connection to %s timed out."
-        request = click.style("Error: Server request error occurred", fg="red")
-
-        non_existing_user = "Error: Username %s does not exist."
-
         # wallet errors
         create_wallet_failed = "Error: Could not create wallet."
 
