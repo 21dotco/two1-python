@@ -103,8 +103,8 @@ class TwentyOneRestClient(object):
         elif 500 <= response.status_code <= 599:
             raise exceptions.ServerRequestError(
                 response,
-                message="You have experienced a server-side technical error. "
-                "We are working to correct the issue."
+                message="You have experienced a server error (%d). "
+                "We are working to correct the issue." % response.status_code
             )
         else:
             return response
