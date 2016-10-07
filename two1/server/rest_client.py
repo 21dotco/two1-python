@@ -79,9 +79,6 @@ class TwentyOneRestClient(object):
 
         if response.status_code == 301:
             raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
-        elif 300 <= response.status_code <= 399:
-            raise exceptions.ServerRequestError(
-                response, message='Encountered a %d error' % response.status_code)
         elif response.status_code == 403:
             ex = exceptions.ServerRequestError(
                 response, message=uxstring.UxString.Error.server_403)
