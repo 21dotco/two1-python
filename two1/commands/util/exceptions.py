@@ -65,7 +65,9 @@ class ServerRequestError(Two1Error):
         else:
             self.error = self.data.get('error')
             self.detail = self.data.get('detail')
-        message = message or self.detail or self.error or 'Unspecified error'
+        message = (
+            message or self.detail or self.error or
+            'Unspecified HTTP error (%d).' % self.status_code)
         super(ServerRequestError, self).__init__(message)
 
 
