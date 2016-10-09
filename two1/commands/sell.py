@@ -46,6 +46,14 @@ List services available to sell.
 $ 21 sell list
 
 \b
+Make a specifc tag of a Docker Hub repository available to sell
+$ 21 sell add <repository> [-t <tag>]...
+
+\b
+Remove a specifc tag of a Docker Hub repository
+$ 21 sell remove <repository> [-t <tag>]...
+
+\b
 Start selling a single service.
 $ 21 sell start <service_name>
 
@@ -111,7 +119,7 @@ $ 21 sell add <repository>
 
 \b
 Adding specific tags of a repository
-$ 21 sell add <repository> [-t <tag>]...
+$ 21 sell add <repository> [-t <tag>]..
 """
     manager = ctx.obj['manager']
     logger.info(click.style("Adding tags.", fg=cli_helpers.TITLE_COLOR))
@@ -149,7 +157,7 @@ $ 21 sell remove <repository>
 
 \b
 Removing specific tags of a repository
-$ 21 sell remove <repository> [-t <tag>]...
+$ 21 sell remove <repository> [-t <tag>]..
 
 \b
 Removing all tags from 21 sell
