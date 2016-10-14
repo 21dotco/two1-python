@@ -333,20 +333,24 @@ class Two1ComposerContainers(Two1Composer):
         return 0
 
     def parse_custom_service(self, service_str):
+
         slashes = re.findall('/', service_str)
         colons = re.findall(':', service_str)
+
         if len(slashes) == 1 and len(colons) == 1 and service_str.find('/') < service_str.find(':'):
             return (service_str.split('/')[0],) + tuple(service_str.split('/')[1].split(':'))
+        elif len(slashes) == 0 and len(colons) == 1:
+            return tuple(service_str.split(':'))
         else:
             raise ValueError()
 
     def custom_service_tag_2_service_name(self, service_str):
-        return '%s-%s-%s' % self.parse_custom_service(service_str)
+        return "-".join(self.parse_custom_service(service_str))
 
     def service_name_2_custom_service_tag(self, service_name):
         dashes = re.findall('-', service_name)
-        if len(dashes) == 2:
-            return (service_name.split('-')[0],) + tuple(service_name.split('-')[1].split('-'))
+        if len(dashes) == 2 or len(dashes) == 1:
+            return service_name.split('-')
         else:
             raise ValueError()
 
@@ -377,8 +381,6 @@ class Two1ComposerContainers(Two1Composer):
             up_hook (Callable): A callable hook that takes in a service name and is run when said service goes up.
 
         Returns:
-            dict: Dictionary with service as key and value as dictionary.
-                  Inner dictionary has format {"started": bool, "message": str, "order": int}.
 
         Raises:
 
