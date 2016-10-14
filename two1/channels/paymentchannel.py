@@ -208,10 +208,7 @@ class PaymentChannel:
 
             # Call pay() on server
             try:
-                payment_txid = payment_server.pay(
-                    sm.deposit_txid,
-                    payment_tx,
-                    sm.deposit_amount - sm.balance_amount + amount)
+                payment_txid = payment_server.pay(sm.deposit_txid, payment_tx)
                 sm.pay_ack()
             except server.PaymentChannelNotFoundError:
                 sm.pay_nack()

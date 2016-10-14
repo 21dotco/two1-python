@@ -173,17 +173,17 @@ def test_receive_payment():
 
     # Test that payment receipt fails when no channel exists
     with pytest.raises(PaymentChannelNotFoundError):
-        channel_server.receive_payment('fake', test_client.payment_tx, TEST_PMT_AMOUNT)
+        channel_server.receive_payment('fake', test_client.payment_tx)
 
     # Initiate and complete the payment channel handshake
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
 
     # Test that payment receipt succeeds
-    channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+    channel_server.receive_payment(deposit_txid, test_client.payment_tx)
 
     # Test that payment receipt fails with a duplicate payment
     with pytest.raises(PaymentServerError):
-        channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+        channel_server.receive_payment(deposit_txid, test_client.payment_tx)
 
 
 def test_redeem_payment():
@@ -197,7 +197,7 @@ def test_redeem_payment():
 
     # Test that payment redeem succeeds
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
 
     amount = channel_server.redeem(payment_txid)
     assert amount == TEST_PMT_AMOUNT
@@ -218,7 +218,7 @@ def test_status_close_channel():
 
     # Open the channel and make a payment
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
     channel_server.redeem(payment_txid)
 
     # Test that channel close fails without a valid signature
@@ -238,7 +238,7 @@ def test_channel_sync(monkeypatch):
     # Seed the database with activity in Channel A
     test_client_a = _create_client_txs()
     deposit_txid_a = channel_server.open(test_client_a.deposit_tx, test_client_a.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid_a, test_client_a.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid_a, test_client_a.payment_tx)
     amount = channel_server.redeem(payment_txid)
     assert amount == TEST_PMT_AMOUNT
 
@@ -246,14 +246,14 @@ def test_channel_sync(monkeypatch):
     cust_wallet._private_key = PrivateKey.from_random()
     test_client_b = _create_client_txs()
     deposit_txid_b = channel_server.open(test_client_b.deposit_tx, test_client_b.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid_b, test_client_b.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid_b, test_client_b.payment_tx)
     amount = channel_server.redeem(payment_txid)
     payment_tx1 = _create_client_payment(test_client_b, 2)
     payment_tx2 = _create_client_payment(test_client_b, 3)
     payment_tx3 = _create_client_payment(test_client_b, 4)
-    payment_txid1 = channel_server.receive_payment(deposit_txid_b, payment_tx1, TEST_PMT_AMOUNT * 2)
-    payment_txid2 = channel_server.receive_payment(deposit_txid_b, payment_tx2, TEST_PMT_AMOUNT * 3)
-    payment_txid3 = channel_server.receive_payment(deposit_txid_b, payment_tx3, TEST_PMT_AMOUNT * 4)
+    payment_txid1 = channel_server.receive_payment(deposit_txid_b, payment_tx1)
+    payment_txid2 = channel_server.receive_payment(deposit_txid_b, payment_tx2)
+    payment_txid3 = channel_server.receive_payment(deposit_txid_b, payment_tx3)
     amount1 = channel_server.redeem(payment_txid1)
     amount2 = channel_server.redeem(payment_txid3)
     amount3 = channel_server.redeem(payment_txid2)
@@ -318,18 +318,18 @@ def test_channel_low_balance_message():
 
     # Open the channel and make a payment
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
     channel_server.redeem(payment_txid)
 
     # Create a payment that almost completely drains the channel
     payment_tx2 = _create_client_payment(test_client, 17)
-    payment_txid2 = channel_server.receive_payment(deposit_txid, payment_tx2, TEST_PMT_AMOUNT * 17)
+    payment_txid2 = channel_server.receive_payment(deposit_txid, payment_tx2)
     channel_server.redeem(payment_txid2)
 
     # Make a payment that spends more than the remaining channel balance
     payment_tx3 = _create_client_payment(test_client, 18)
     with pytest.raises(BadTransactionError) as exc:
-        channel_server.receive_payment(deposit_txid, payment_tx3, TEST_PMT_AMOUNT * 18)
+        channel_server.receive_payment(deposit_txid, payment_tx3)
 
     assert 'Payment channel balance' in str(exc)
 
@@ -350,7 +350,7 @@ def test_channel_redeem_race_condition():
     channel_server._db = DatabaseSQLite3(multiprocess_db)
     test_client = _create_client_txs()
     deposit_txid = channel_server.open(test_client.deposit_tx, test_client.redeem_script)
-    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx, TEST_PMT_AMOUNT)
+    payment_txid = channel_server.receive_payment(deposit_txid, test_client.payment_tx)
 
     # Cache channel result for later
     channel = channel_server._db.pc.lookup(deposit_txid)

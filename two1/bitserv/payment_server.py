@@ -198,7 +198,7 @@ class PaymentServer:
         return str(deposit_tx.hash)
 
     @lock
-    def receive_payment(self, deposit_txid, payment_tx, amount):
+    def receive_payment(self, deposit_txid, payment_tx):
         """Receive and process a payment within the channel.
 
         The customer makes a payment in the channel by sending the merchant a
@@ -212,7 +212,6 @@ class PaymentServer:
                 transaction hash. This is used to look up the payment channel.
             payment_tx (string): half-signed payment transaction from a
                 customer.
-            amount (int): payment amount in satoshis.
         Returns:
             (string): payment transaction id
         """
@@ -280,13 +279,13 @@ class PaymentServer:
         # Verify that the transaction has adequate fees
         net_pmt_amount = sum([d.value for d in payment_tx.outputs])
         deposit_amount = channel.amount
-        fees = deposit_amount - net_pmt_amount
-        if fees < PaymentServer.MIN_TX_FEE:
+        fee = deposit_amount - net_pmt_amount
+        if fee < PaymentServer.MIN_TX_FEE:
             raise BadTransactionError('Payment must have adequate fees.')
 
         # Reproduce customer payment from merchant side.
         payment_tx_copy = self._wallet.create_unsigned_payment_tx(
-            channel.deposit_tx, redeem_script, amount, fees)
+            channel.deposit_tx, redeem_script, new_pmt_amt, fee)
 
         # Attach signed input script from customer payment.
         signed_input_script = payment_tx.inputs[0].script

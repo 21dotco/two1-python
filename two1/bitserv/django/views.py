@@ -66,24 +66,15 @@ class ChannelViewSet(ViewSet):
 
         Params (json):
             payment_tx (string): half-signed serialized payment transaction.
-            amount (int): payment amount in satoshis.
         """
         try:
             # Validate parameters
             params = request.data
             if 'payment_tx' not in params:
                 raise BadParametersError('No payment provided.')
-            if 'amount' not in params:
-                raise BadParametersError('No amount provided.')
-
-            try:
-                amount = int(params['amount'])
-            except ValueError:
-                raise BadParametersError('Invalid amount.')
 
             # Receive a new payment in the channel
-            payment_txid = payment.server.receive_payment(
-                pk, params['payment_tx'], amount)
+            payment_txid = payment.server.receive_payment(pk, params['payment_tx'])
 
             # Respond with the payment transaction id as confirmation
             return Response({'payment_txid': payment_txid})

@@ -95,7 +95,7 @@ class MockPaymentChannelServer(server.PaymentChannelServerBase):
 
         self.channels[deposit_txid] = {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None}
 
-    def pay(self, deposit_txid, payment_tx, amount):
+    def pay(self, deposit_txid, payment_tx):
         # Deserialize payment tx
         payment_tx = bitcoin.Transaction.from_hex(payment_tx)
 
