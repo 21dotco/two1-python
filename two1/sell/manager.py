@@ -219,17 +219,29 @@ class Two1Manager:
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)
 
-    def add_user_tag(self, *args, **kwargs):
-        return self.composer.add_user_tag(*args, **kwargs)
+    def add_user_image_name(self, *args, **kwargs):
+        """
+        See Two1Composer.add_user_image_name
+        """
+        return self.composer.add_user_image_name(*args, **kwargs)
 
-    def get_user_tags(self, *args, **kwargs):
-        return self.composer.get_user_tags(*args, **kwargs)
+    def get_user_image_names(self, *args, **kwargs):
+        """
+        See Two1Composer.get_user_image_names
+        """
+        return self.composer.get_user_image_names(*args, **kwargs)
 
-    def remove_user_tag(self, *args, **kwargs):
-        return self.composer.remove_user_tag(*args, **kwargs)
+    def remove_user_image_name(self, *args, **kwargs):
+        """
+        See Two1Composer.remove_user_image_name
+        """
+        return self.composer.remove_user_image_name(*args, **kwargs)
 
     def pull_user_image(self, *args, **kwargs):
         return self.composer.pull_user_image(*args, **kwargs)
 
     def custom_service_tag_2_service_name(self, *args, **kwargs):
+        """
+        See Two1Composer.custom_service_tag_2_service_name
+        """
         return self.composer.custom_service_tag_2_service_name(*args, **kwargs)

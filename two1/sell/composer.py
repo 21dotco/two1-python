@@ -58,47 +58,119 @@ class Two1Composer(metaclass=ABCMeta):
     SERVICE_START_TIMEOUT = 10
     SERVICE_PUBLISH_TIMEOUT = 15
 
-    def tags2file(self, tags, filepath):
+    @staticmethod
+    def string_set_2_file(string_set, filepath):
+        """
+        Writes a set of strings line by line (as in delimited by newlines) to a file path using 'w' mode, purging
+        existing data at aforementioned file path
+
+        Args:
+            string_set (iter[str]): iterable of strings
+            filepath (str): path to file to overwrite
+
+        Returns:
+            bool: a boolean indicating whether or not the operation failed
+        """
         try:
             with open(filepath, 'w') as file:
-                for tag in tags:
+                for tag in string_set:
                     file.write(tag + '\n')
         except:
             return False
         else:
             return True
 
-    def file2tags(self, filepath):
+    @staticmethod
+    def file_2_string_set(filepath):
+        """
+        Given a file path, return a set of non-trivial (not all blank space) lines of the file
+
+        Args:
+            filepath (str): path of file to read from
+
+        Returns:
+            set[str]: a set of non-trivial lines of the file
+        """
         try:
             with open(filepath, 'r') as file:
                 return {line.strip() for line in file.readlines() if line.strip()}
         except:
-            return set()
+            return set()  # return empty set of exception is thrown
 
-    def get_user_tags(self):
-        return self.file2tags(Two1Composer.USER_TAGS_FILE)
+    @staticmethod
+    def get_user_image_names():
+        """
+        Gets existing user image names at Two1Composer.USER_TAGS_FILE
 
-    def add_user_tag(self, tag, tag_successfully_added_hook, tag_already_exists_hook, tag_failed_to_add_hook):
-        existing_tags = self.get_user_tags()
+        Returns:
+            set[str]: a set of user image names
+        """
+        return Two1Composer.file_2_string_set(Two1Composer.USER_TAGS_FILE)
 
-        if tag in existing_tags:
-            tag_already_exists_hook(tag)
+    @staticmethod
+    def update_user_image_names(image_names):
+        """
+        Writes a set of user image names to Two1Composer.USER_TAGS_FILE
+
+        Args:
+            image_names (iter[str]): iterable of user image names
+
+        Returns:
+            bool: a boolean indicating whether or not the operation failed
+        """
+        return Two1Composer.string_set_2_file(image_names, Two1Composer.USER_TAGS_FILE)
+
+    @staticmethod
+    def add_user_image_name(image_name,
+                            image_name_successfully_added_hook, image_name_already_exists_hook,
+                            image_name_failed_to_add_hook):
+        """
+        Adds a user image name to the existing set of user image names
+
+        Args:
+            image_name (str): the user image name to add
+            image_name_successfully_added_hook (Callable): A callable hook that takes in an image name and is run when
+                                                           said image name is successfully added
+            image_name_already_exists_hook (Callable): A callable hook that takes in an image name and is run when
+                                                       said image name already exists
+            image_name_failed_to_add_hook (Callable): A callable hook that takes in an image name and is run when
+                                                      said image name fails to be added
+        """
+        existing_user_image_names = Two1Composer.get_user_image_names()
+
+        if image_name in existing_user_image_names:
+            image_name_already_exists_hook(image_name)
         else:
-            if self.tags2file(existing_tags | {tag}, Two1Composer.USER_TAGS_FILE):
-                tag_successfully_added_hook(tag)
+            if Two1Composer.update_user_image_names(existing_user_image_names | {image_name}):  # set union
+                image_name_successfully_added_hook(image_name)
             else:
-                tag_failed_to_add_hook(tag)
+                image_name_failed_to_add_hook(image_name)
 
-    def remove_user_tag(self, tag, tag_successfully_removed_hook, tag_does_not_exists_hook, tag_failed_to_remove_hook):
-        existing_tags = self.get_user_tags()
+    @staticmethod
+    def remove_user_image_name(image_name,
+                               image_name_successfully_removed_hook, image_name_does_not_exists_hook,
+                               image_name_failed_to_remove_hook):
+        """
+        Removes a user image name from the existing set of user image names
 
-        if tag in existing_tags:
-            if self.tags2file(existing_tags - {tag}, Two1Composer.USER_TAGS_FILE):
-                tag_successfully_removed_hook(tag)
+        Args:
+            image_name (str): the user image name to remove
+            image_name_successfully_removed_hook (Callable): A callable hook that takes in an image name and is run when
+                                                             said image name is successfully removed
+            image_name_does_not_exists_hook (Callable): A callable hook that takes in an image name and is run when
+                                                        said image name does not exist
+            image_name_failed_to_remove_hook (Callable): A callable hook that takes in an image name and is run when
+                                                         said image name fails to be removed
+        """
+        existing_user_image_names = Two1Composer.get_user_image_names()
+
+        if image_name in existing_user_image_names:
+            if Two1Composer.update_user_image_names(existing_user_image_names - {image_name}):  # set difference
+                image_name_successfully_removed_hook(image_name)
             else:
-                tag_failed_to_remove_hook(tag)
+                image_name_failed_to_remove_hook(image_name)
         else:
-            return tag_does_not_exists_hook(tag)
+            image_name_does_not_exists_hook(image_name)
 
     class ComposerYAMLContext(YamlDataContext):
         """ Context manager for composer YAML service file.
@@ -329,6 +401,13 @@ class Two1ComposerContainers(Two1Composer):
         return 0
 
     def pull_user_image(self, repo, tag):
+        """
+        Pull an image from user Docker Hub
+
+        Args:
+            repo (str): the user Docker Hub repository
+            tag (str): the tag to pull from `repo`
+        """
         self.docker_client.pull(repo, tag, stream=False)
         return 0
 

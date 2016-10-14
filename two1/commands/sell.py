@@ -136,8 +136,8 @@ $ 21 sell add <repository> [-t <tag>]..
     full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
 
     for full_tag_repr in full_tag_reprs:
-        manager.add_user_tag(full_tag_repr,
-                             tag_successfully_added_hook, tag_already_exists_hook, tag_failed_to_add_hook)
+        manager.add_user_image_name(full_tag_repr, tag_successfully_added_hook, tag_already_exists_hook,
+                                    tag_failed_to_add_hook)
 
 
 @sell.command()
@@ -180,13 +180,13 @@ $ 21 sell remove --all
         cli_helpers.print_str(tag, ["Failed to remove"], "FALSE", False)
 
     if is_all:
-        full_tag_reprs = manager.get_user_tags()
+        full_tag_reprs = manager.get_user_image_names()
     else:
         full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
 
     for full_tag_repr in full_tag_reprs:
-        manager.remove_user_tag(full_tag_repr,
-                                tag_successfully_removed_hook, tag_does_not_exists_hook, tag_failed_to_remove_hook)
+        manager.remove_user_image_name(full_tag_repr, tag_successfully_removed_hook, tag_does_not_exists_hook,
+                                       tag_failed_to_remove_hook)
 
 
 @sell.command()
@@ -382,7 +382,7 @@ $ 21 sell start --all
 
     # start microservices
     two1_services = manager.list_available_services()
-    user_services = list(manager.get_user_tags())
+    user_services = list(manager.get_user_image_names())
     if all:
         try:
             valid_services = two1_services
@@ -662,7 +662,7 @@ $ 21 sell status
     try:
         available_services = manager.list_available_services()
         available_user_services = [manager.custom_service_tag_2_service_name(user_tag)
-                                   for user_tag in manager.get_user_tags()]
+                                   for user_tag in manager.get_user_image_names()]
         composer_service_statuser(available_services + available_user_services)
     except Exception:
         logger.info("Unable to get service status.", fg="magenta")
@@ -708,7 +708,7 @@ $ 21 sell list
     logger.info(click.style(85*"-", fg=cli_helpers.MENU_COLOR))
 
     available_official_services = manager.list_available_services()
-    available_user_services = manager.get_user_tags()
+    available_user_services = manager.get_user_image_names()
 
     tips = []
 
