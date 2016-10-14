@@ -1,17 +1,22 @@
 """This module implements the server side of payment channels."""
-import os
-import time
 import codecs
-import threading
 import contextlib
+import os
+import threading
+import time
 
+from two1.bitcoin import Hash
+from two1.bitcoin import Script
+from two1.bitcoin import Signature
+from two1.bitcoin import Transaction
 from two1.bitcoin.utils import pack_u32
-from two1.bitcoin import Transaction, Hash, Signature, Script
-from two1.channels.statemachine import PaymentChannelRedeemScript
 from two1.channels.blockchain import TwentyOneBlockchain
+from two1.channels.statemachine import PaymentChannelRedeemScript
+from two1.channels.walletwrapper import Two1WalletWrapper
 
-from .wallet import Two1WalletWrapper
-from .models import DatabaseSQLite3, ChannelSQLite3, Channel
+from .models import Channel
+from .models import ChannelSQLite3
+from .models import DatabaseSQLite3
 
 
 class PaymentServerError(Exception):
@@ -45,7 +50,6 @@ class TransactionVerificationError(PaymentServerError):
 
 
 class Lock(contextlib.ContextDecorator):
-
     """An inter-thread lock decorator."""
 
     def __init__(self):
@@ -60,7 +64,6 @@ class Lock(contextlib.ContextDecorator):
 
 
 class PaymentServer:
-
     """Payment channel handling.
 
     This class handles the server-side implementation of payment channels from
@@ -94,47 +97,55 @@ class PaymentServer:
     lock = Lock()
     """Thread and process lock for database access."""
 
-    def __init__(self, wallet, db=None, account='default', blockchain=None,
-                 zeroconf=False, sync_period=600, db_dir=None):
-        """Initalize the payment server.
+    def __init__(self, wallet, db=None, blockchain=None, zeroconf=False,
+            sync_period=600, db_dir=None):
+        """Initialize the payment server.
 
         Args:
-            wallet (.wallet.Two1WalletWrapper): a two1 wallet wrapped with
-                payment server functionality.
+            wallet (two1.wallet.Wallet): wallet instance.
             db (.models.ChannelDataManager): a database wrapper to manage the
                 payment channel server's interface with a persistent store of
                 data.
-            account (string): which account within the wallet to use (e.g.
-                'merchant', 'customer', 'default', etc).
             blockchain (two1.blockchain.provider): a blockchain data
                 provider capable of broadcasting raw transactions.
             zeroconf (boolean): whether or not to use a payment channel before
                 the deposit transaction has been confirmed by the network.
             sync_period (integer): how often to sync channel status (in sec).
         """
+        if blockchain is None:
+            url = PaymentServer.DEFAULT_TWENTYONE_BLOCKCHAIN_URL
+            if wallet.testnet:
+                url = PaymentServer.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL
+            blockchain = TwentyOneBlockchain(url)
+
         self.zeroconf = zeroconf
-        self._wallet = Two1WalletWrapper(wallet, account)
+
+        self._wallet = Two1WalletWrapper(wallet, blockchain)
         self._blockchain = blockchain
         self._db = db
         if db is None:
             self._db = DatabaseSQLite3(db_dir=db_dir)
-        if blockchain is None:
-            self._blockchain = TwentyOneBlockchain(
-                PaymentServer.DEFAULT_TWENTYONE_BLOCKCHAIN_URL if not self._wallet._wallet.testnet else
-                PaymentServer.DEFAULT_TWENTYONE_TESTNET_BLOCKCHAIN_URL)
+
         self._sync_stop = threading.Event()
-        self._sync_thread = threading.Thread(target=self._auto_sync, args=(sync_period, self._sync_stop), daemon=True)
+        self._sync_thread = threading.Thread(
+            target=self._auto_sync,
+            args=(sync_period, self._sync_stop),
+            daemon=True)
         self._sync_thread.start()
 
     def identify(self):
-        """Query the payment server's merchant information and server configuration.
+        """Query the payment server information.
 
         Returns:
-            (dict): a key-value store that contains the merchant's public key and other custom config.
+            (dict): a key-value store that contains the merchant's public key
+                and other custom config.
         """
-        return dict(public_key=self._wallet.get_public_key(),
-                    version=self.PROTOCOL_VERSION,
-                    zeroconf=self.zeroconf)
+        public_key = self._wallet.get_payout_public_key().compressed_bytes
+        return dict(
+            public_key=codecs.encode(public_key, 'hex_codec').decode(),
+            version=self.PROTOCOL_VERSION,
+            zeroconf=self.zeroconf,
+        )
 
     @lock
     def open(self, deposit_tx, redeem_script):
@@ -145,6 +156,7 @@ class PaymentServer:
                 2 of 2 multisig script hash.
             redeem_script (string): the redeem script that comprises the script
                 hash so that the merchant can verify.
+
         Returns:
             (string): deposit transaction id
         """
@@ -159,11 +171,11 @@ class PaymentServer:
 
         # Parse payment channel data for open
         deposit_txid = str(deposit_tx.hash)
-        merch_pubkey = codecs.encode(redeem_script.merchant_public_key.compressed_bytes, 'hex_codec').decode()
+        merchant_public_key = codecs.encode(redeem_script.merchant_public_key.compressed_bytes, 'hex_codec').decode()
         amount = deposit_tx.outputs[output_index].value
 
         # Verify that one of the public keys belongs to the merchant
-        valid_merchant_public_key = self._wallet.validate_merchant_public_key(redeem_script.merchant_public_key)
+        valid_merchant_public_key = self._wallet.validate_public_key(redeem_script.merchant_public_key)
         if not valid_merchant_public_key:
             raise BadTransactionError('Public key does not belong to the merchant.')
 
@@ -177,7 +189,7 @@ class PaymentServer:
             raise TransactionVerificationError('Transaction locktime must be further in the future.')
 
         # Open and save the payment channel
-        self._db.pc.create(deposit_tx, merch_pubkey, amount, redeem_script.expiration_time)
+        self._db.pc.create(deposit_tx, merchant_public_key, amount, redeem_script.expiration_time)
 
         # Set the channel to `ready` if zeroconf is enabled
         if self.zeroconf:
@@ -186,7 +198,7 @@ class PaymentServer:
         return str(deposit_tx.hash)
 
     @lock
-    def receive_payment(self, deposit_txid, payment_tx):
+    def receive_payment(self, deposit_txid, payment_tx, amount):
         """Receive and process a payment within the channel.
 
         The customer makes a payment in the channel by sending the merchant a
@@ -200,6 +212,7 @@ class PaymentServer:
                 transaction hash. This is used to look up the payment channel.
             payment_tx (string): half-signed payment transaction from a
                 customer.
+            amount (int): payment amount in satoshis.
         Returns:
             (string): payment transaction id
         """
@@ -214,7 +227,7 @@ class PaymentServer:
 
         # Get merchant public key information from payment channel
         redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
-        merch_pubkey = redeem_script.merchant_public_key
+        merchant_public_key = redeem_script.merchant_public_key
 
         # Verify that the payment has a valid signature from the customer
         txn_copy = payment_tx._copy_for_sig(0, Transaction.SIG_HASH_ALL, redeem_script)
@@ -243,7 +256,7 @@ class PaymentServer:
             raise ChannelClosedError('Payment channel closed.')
 
         # Verify that payment is made to the merchant's pubkey
-        index = payment_tx.output_index_for_address(merch_pubkey.hash160())
+        index = payment_tx.output_index_for_address(merchant_public_key.hash160())
         if index is None:
             raise BadTransactionError('Payment must pay to merchant pubkey.')
 
@@ -267,14 +280,26 @@ class PaymentServer:
         # Verify that the transaction has adequate fees
         net_pmt_amount = sum([d.value for d in payment_tx.outputs])
         deposit_amount = channel.amount
-        if deposit_amount < net_pmt_amount + PaymentServer.MIN_TX_FEE:
+        fees = deposit_amount - net_pmt_amount
+        if fees < PaymentServer.MIN_TX_FEE:
             raise BadTransactionError('Payment must have adequate fees.')
 
-        # Update the current payment transaction
-        self._db.pc.update_payment(deposit_txid, payment_tx, new_pmt_amt)
-        self._db.pmt.create(deposit_txid, payment_tx, new_pmt_amt - channel.last_payment_amount)
+        # Reproduce customer payment from merchant side.
+        payment_tx_copy = self._wallet.create_unsigned_payment_tx(
+            channel.deposit_tx, redeem_script, amount, fees)
 
-        return str(payment_tx.hash)
+        # Attach signed input script from customer payment.
+        signed_input_script = payment_tx.inputs[0].script
+        payment_tx_copy.inputs[0].script = signed_input_script
+
+        if payment_tx.to_hex() != payment_tx_copy.to_hex():
+            raise BadTransactionError('Invalid payment channel transaction structure.')
+
+        # Update the current payment transaction
+        self._db.pc.update_payment(deposit_txid, payment_tx_copy, new_pmt_amt)
+        self._db.pmt.create(deposit_txid, payment_tx_copy, new_pmt_amt - channel.last_payment_amount)
+
+        return str(payment_tx_copy.hash)
 
     def status(self, deposit_txid):
         """Get a payment channel's current status.

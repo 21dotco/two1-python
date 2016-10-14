@@ -210,6 +210,7 @@ class Channel(views.MethodView):
 
         Params (json):
             payment_tx (string): half-signed serialized payment transaction.
+            amount (int): payment amount in satoshis.
         """
         params = request.get_json(force=True, silent=True)
         if params is None:
@@ -218,9 +219,17 @@ class Channel(views.MethodView):
             # Validate parameters
             if 'payment_tx' not in params:
                 raise BadParametersError('No payment provided.')
+            if 'amount' not in params:
+                raise BadParametersError('No amount provided.')
+
+            try:
+                amount = int(params['amount'])
+            except ValueError:
+                raise BadParametersError('Invalid amount.')
 
             # Receive a new payment in the channel
-            payment_txid = self.server.receive_payment(deposit_txid, params['payment_tx'])
+            payment_txid = self.server.receive_payment(
+                deposit_txid, params['payment_tx'], amount)
 
             # Respond with the payment transaction id as confirmation
             return jsonify({'payment_txid': payment_txid})

@@ -53,14 +53,14 @@ class PaymentChannelServerBase:
         """
         raise NotImplementedError()
 
-    def pay(self, deposit_txid, payment_tx):
+    def pay(self, deposit_txid, payment_tx, amount):
         """Pay to a payment channel with the merchant.
 
         Args:
             deposit_txid (str): Deposit transaction ID identifying the payment
                 channel (RPC byte order).
             payment_tx (str): Serialized half-signed payment transaction.
-
+            amount (int): Payment amount in satoshis.
 
         Returns:
             str: Redeemable token for the payment.
@@ -160,8 +160,13 @@ class HTTPPaymentChannelServer(PaymentChannelServerBase):
         if r.status_code != 200:
             raise PaymentChannelServerError("Opening payment channel: Status Code {}, {}".format(r.status_code, r.text))
 
-    def pay(self, deposit_txid, payment_tx):
-        r = self._requests.put(self._url + "/" + deposit_txid, data={'payment_tx': payment_tx})
+    def pay(self, deposit_txid, payment_tx, amount):
+        r = self._requests.put(
+            self._url + "/" + deposit_txid,
+            data={
+                'payment_tx': payment_tx,
+                'amount': amount,
+            })
         if r.status_code == 404:
             raise PaymentChannelNotFoundError()
         elif r.status_code != 200:
@@ -259,7 +264,7 @@ class TestPaymentChannelServer(PaymentChannelServerBase):
         self._store_channel(
             deposit_txid, {'deposit_tx': deposit_tx, 'redeem_script': redeem_script, 'payment_tx': None})
 
-    def pay(self, deposit_txid, payment_tx):
+    def pay(self, deposit_txid, payment_tx, amount):
         # Load channel
         channel = self._load_channel(deposit_txid)
 
