@@ -2,6 +2,8 @@
 import re
 import os
 import time
+from collections import namedtuple
+
 import json
 import shutil
 import subprocess
@@ -57,6 +59,29 @@ class Two1Composer(metaclass=ABCMeta):
 
     SERVICE_START_TIMEOUT = 10
     SERVICE_PUBLISH_TIMEOUT = 15
+
+    class ImageNameTuple(namedtuple('ImageNameTuple', 'docker_hub_account repository tag')):
+        @property
+        def is_docker_hub_image(self):
+            return self.docker_hub_account and self.repository and self.tag
+
+        @classmethod
+        def from_image_name(cls, image_name):
+            slashes = re.findall('/', image_name)
+            colons = re.findall(':', image_name)
+
+            if len(slashes) == 1 and len(colons) == 1 and image_name.find('/') < image_name.find(':'):
+                docker_hub_account, rest = image_name.split('/')
+                repository, tag = rest.split(':')
+                return cls(docker_hub_account=docker_hub_account, repository=repository, tag=tag)
+            elif len(slashes) == 0 and len(colons) == 1:
+                repository, tag = image_name.split(':')
+                return cls(docker_hub_account=None, repository=repository, tag=tag)
+            else:
+                raise ValueError()
+
+        def to_service_name(self):
+            return '-'.join([el for el in self if el])
 
     @staticmethod
     def string_set_2_file(string_set, filepath):
@@ -171,6 +196,10 @@ class Two1Composer(metaclass=ABCMeta):
                 image_name_failed_to_remove_hook(image_name)
         else:
             image_name_does_not_exists_hook(image_name)
+
+    @staticmethod
+    def service_name_2_container_name(service_name):
+        return 'sell_%s' % service_name
 
     class ComposerYAMLContext(YamlDataContext):
         """ Context manager for composer YAML service file.
@@ -423,19 +452,6 @@ class Two1ComposerContainers(Two1Composer):
         else:
             raise ValueError()
 
-    def custom_service_tag_2_service_name(self, service_str):
-        return "-".join(self.parse_custom_service(service_str))
-
-    def service_name_2_custom_service_tag(self, service_name):
-        dashes = re.findall('-', service_name)
-        if len(dashes) == 2 or len(dashes) == 1:
-            return service_name.split('-')
-        else:
-            raise ValueError()
-
-    def service_name_2_container_name(self, service_name):
-        return 'sell_%s' % service_name
-
     def container_name_2_service_name(self, container_name):
         if container_name.startswith('sell_'):
             return container_name[len('sell_'):]
@@ -475,9 +491,11 @@ class Two1ComposerContainers(Two1Composer):
         for service_name in services:
             try:  # custom user image
                 image = service_name
-                service_name = self.custom_service_tag_2_service_name(service_name)
+                image_name_tuple = self.ImageNameTuple.from_image_name(service_name)
+                service_name = image_name_tuple.to_service_name()
             except:  # two1 official docker image
                 image = '%s:%s' % (Two1Composer.DOCKERHUB_REPO, 'service-' + service_name)
+            container_name = self.service_name_2_container_name(service_name)
 
             # create nginx routes for service_name
             self._create_service_route(service_name)
@@ -488,7 +506,7 @@ class Two1ComposerContainers(Two1Composer):
                 mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
                 docker_compose_yaml['services'][service_name] = {
                     'image': image,
-                    'container_name': self.service_name_2_container_name(service_name),
+                    'container_name': container_name,
                     'depends_on': ['base'],
                     'restart': 'always',
                     'environment': {
