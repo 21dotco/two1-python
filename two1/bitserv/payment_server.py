@@ -6,9 +6,11 @@ import threading
 import time
 
 from two1.bitcoin import Hash
+from two1.bitcoin import PublicKey
 from two1.bitcoin import Script
 from two1.bitcoin import Signature
 from two1.bitcoin import Transaction
+from two1.bitcoin.utils import pack_compact_int
 from two1.bitcoin.utils import pack_u32
 from two1.channels.blockchain import TwentyOneBlockchain
 from two1.channels.statemachine import PaymentChannelRedeemScript
@@ -225,8 +227,12 @@ class PaymentServer:
             raise PaymentChannelNotFoundError('Related channel not found.')
 
         # Get merchant public key information from payment channel
+        merchant_public_key = PublicKey.from_hex(channel.merchant_pubkey)
+
+        # Verify that redeem script contains the merchant public key
         redeem_script = PaymentChannelRedeemScript.from_bytes(payment_tx.inputs[0].script[-1])
-        merchant_public_key = redeem_script.merchant_public_key
+        if redeem_script.merchant_public_key.to_hex() != merchant_public_key.to_hex():
+            raise BadTransactionError('Invalid merchant pubkey.')
 
         # Verify that the payment has a valid signature from the customer
         txn_copy = payment_tx._copy_for_sig(0, Transaction.SIG_HASH_ALL, redeem_script)
@@ -254,7 +260,7 @@ class PaymentServer:
         elif channel.state == ChannelSQLite3.CLOSED:
             raise ChannelClosedError('Payment channel closed.')
 
-        # Verify that payment is made to the merchant's pubkey
+        # Verify that payment is made to the merchant public key
         index = payment_tx.output_index_for_address(merchant_public_key.hash160())
         if index is None:
             raise BadTransactionError('Payment must pay to merchant pubkey.')
@@ -283,12 +289,22 @@ class PaymentServer:
         if fee < PaymentServer.MIN_TX_FEE:
             raise BadTransactionError('Payment must have adequate fees.')
 
-        # Reproduce customer payment from merchant side.
+        # Recreate redeem script from merchant side
+        redeem_script_copy = PaymentChannelRedeemScript(
+            merchant_public_key,
+            redeem_script.customer_public_key,
+            channel.expires_at)
+        if redeem_script.to_hex() != redeem_script_copy.to_hex():
+            raise BadTransactionError('Invalid redeem script.')
+
+        # Recreate customer payment from merchant side
         payment_tx_copy = self._wallet.create_unsigned_payment_tx(
             channel.deposit_tx, redeem_script, new_pmt_amt, fee)
 
-        # Attach signed input script from customer payment.
-        signed_input_script = payment_tx.inputs[0].script
+        # Recreate signed input script using signature from customer
+        hash_type = pack_compact_int(Transaction.SIG_HASH_ALL)
+        signed_input_script = Script(
+            [sig.to_der() + hash_type, "OP_1", bytes(redeem_script)])
         payment_tx_copy.inputs[0].script = signed_input_script
 
         if payment_tx.to_hex() != payment_tx_copy.to_hex():
