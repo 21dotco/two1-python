@@ -1,4 +1,5 @@
 """ Two1 command to publish an app to the 21 Marketplace """
+import sys
 from urllib.parse import urlparse
 import copy
 import functools
@@ -88,22 +89,37 @@ at the prompt.
 
 
 @publish.command()
-@click.argument('app_id')
+@click.argument('app_id', required=False)
+@click.option('-a', '--all', is_flag=True,
+              help='Selects all published apps for removal.')
+@click.option('-y', '--assume-yes', is_flag=True, default=False,
+              help='Removes selected published apps without confirmation.')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
 @decorators.check_notifications
-def remove(ctx, app_id):
+def remove(ctx, app_id, all, assume_yes):
     """
 \b
 Removes a published app from the Marketplace.
-$ 21 publish remove {app_id}
+$ 21 publish remove [--assume-yes] {app_id}
+
+\b
+Removes all published apps from the Marketplace.
+$ 21 publish remove [--assume-yes] --all
 
 \b
 The {app_id} can be obtained by performing:
 $ 21 publish list
     """
-    _delete_app(ctx.obj['config'], ctx.obj['client'], app_id)
+    if all and not app_id:
+        for _app_id in _get_all_app_ids(ctx.obj['config'], ctx.obj['client']):
+            _delete_app(ctx.obj['config'], ctx.obj['client'], _app_id, assume_yes)
+    elif app_id and not all:
+        _delete_app(ctx.obj['config'], ctx.obj['client'], app_id, assume_yes)
+    else:
+        logger.info(ctx.command.get_help(ctx))
+        sys.exit(1)
 
 
 @publish.command()
@@ -234,7 +250,27 @@ def _list_apps(config, client):
             return
 
 
-def _delete_app(config, client, app_id):
+def _get_all_app_ids(config, client):
+    """ Gets all apps published by the current user to the 21 marketplace
+
+    Args:
+        config (Config): config object used for getting .two1 information
+        client (two1.server.rest_client.TwentyOneRestClient) an object for
+            sending authenticated requests to the TwentyOne backend.
+
+    Returns:
+        set[str]: A set of app ids published by the current user to the 21 marketplace
+    """
+    rv = set()
+    total_pages = client.get_published_apps(config.username, 0).json()["total_pages"]
+    for current_page in range(total_pages):
+        current_page_results = client.get_published_apps(config.username, current_page).json()['results']
+        for result in current_page_results:
+            rv.add(result['id'])
+    return rv
+
+
+def _delete_app(config, client, app_id, assume_yes):
     """ Deletes an app that has been published to the 21 marketplace
 
     Args:
@@ -242,8 +278,10 @@ def _delete_app(config, client, app_id):
         client (two1.server.rest_client.TwentyOneRestClient) an object for
             sending authenticated requests to the TwentyOne backend.
         app_id (str): a unique string that identifies the application.
+        assume_yes (bool): a boolean indicating whether or not to assume
+            yes responses for user confirmations
     """
-    if click.confirm("Are you sure that you want to delete the app with id '{}'?".format(app_id)):
+    if assume_yes or click.confirm("Are you sure that you want to delete the app with id '{}'?".format(app_id)):
         try:
             resp = client.delete_app(config.username, app_id)
             resp_json = resp.json()
