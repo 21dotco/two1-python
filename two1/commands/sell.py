@@ -224,23 +224,28 @@ $ 21 sell start --all
 
     if cli_helpers.running_old_sell(manager, installer):
         if click.confirm(click.style("It appears that you are running an old version of 21 sell.\n"
-                                     "In order to continue using 21 sell, you must update the 21 VM.\n"
-                                     "Would you like to delete the existing VM and create a new one?",
+                                     "In order to continue using 21 sell, you must update the 21 "
+                                     "VM.\nWould you like to delete the existing VM and create a "
+                                     "new one?",
                                      fg=cli_helpers.WARNING_COLOR)):
             upgrade_21_sell(ctx, services, all, wait_time, no_vm)
             sys.exit()
         else:
-            logger.info(click.style("Please note that your services may be unreachable without this update.",
+            logger.info(click.style("Please note that your services may be unreachable "
+                                    "without this update.",
                                     fg=cli_helpers.WARNING_COLOR))
             sys.exit()
 
     logger.info(click.style("Checking dependencies.", fg=cli_helpers.TITLE_COLOR))
     deps_list = installer.check_dependencies()
+    if no_zt_dep:
+        del deps_list[[name for name, installed in deps_list].index("Zerotier")]
     all_deps_installed = cli_helpers.package_check(deps_list, True)
 
     # install virtualbox, docker, and zerotier deps
     if not all_deps_installed:
-        if assume_yes or click.confirm(click.style("Would you like to install the missing packages?",
+        if assume_yes or click.confirm(click.style("Would you like to install the missing "
+                                                   "packages?",
                                                    fg=cli_helpers.PROMPT_COLOR)):
             logger.info(click.style("Installing missing dependencies.", fg=cli_helpers.TITLE_COLOR))
             all_installed = cli_helpers.install_missing_dependencies(deps_list,
@@ -330,7 +335,8 @@ $ 21 sell start --all
         else:
             if not isinstance(manager.machine, Two1MachineVirtual):
                 if assume_yes or click.confirm(click.style(
-                        "21mkt network not connected. Would you like to join 21mkt?", fg=cli_helpers.PROMPT_COLOR)):
+                        "21mkt network not connected. Would you like to join 21mkt?",
+                        fg=cli_helpers.PROMPT_COLOR)):
                     logger.info("You might need to enter your superuser password.")
                     manager.connect_market(ctx.obj["client"])
                 else:
