@@ -455,8 +455,6 @@ def display_app_info(config, client, app_id):
                 app_info["min_price"], app_info["max_price"])
         doc_url = click.style("Docs URL        : ", fg="blue") + click.style(
             "{}".format(app_info["docs_url"]))
-        manifest_url = click.style("Manifest URL    : ", fg="blue") + click.style(
-            "{}".format(app_info["manifest_url"]))
 
         quick_start = click.style("Quick Start\n\n", fg="blue") + click.style(
             app_info["quick_buy"])
@@ -469,7 +467,7 @@ def display_app_info(config, client, app_id):
         page_components = [title, "\n",
                            rating_row, up_status, availability, last_crawl, last_update, version,
                            "\n",
-                           desc, app_url, original_url, doc_url, manifest_url, "\n",
+                           desc, app_url, original_url, doc_url, "\n",
                            category, price, "\n", quick_start, "\n"]
         if usage_docs:
             page_components.append(usage_docs + "\n")
