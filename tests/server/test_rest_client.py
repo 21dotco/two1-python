@@ -30,10 +30,10 @@ from tests.mock import MockHttpResponse
     (None, 403, json.dumps({'detail': "TO100"}), exceptions.BitcoinComputerNeededError),
 
     # checks generic error status code with valid json data
-    (None, 300, json.dumps({"test": "data"}), exceptions.ServerRequestError),
+    (None, 400, json.dumps({"test": "data"}), exceptions.ServerRequestError),
 
     # checks generic error status code with invalid json data
-    (None, 300, "{bad: json}", exceptions.ServerRequestError),
+    (None, 400, "{bad: json}", exceptions.ServerRequestError),
     ])
 def test_request_error_paths(mock_wallet, request_side_effect, status_code, data, raised_exception):
     # creates a machine_auth from a mock wallet
@@ -56,7 +56,12 @@ def test_request_error_paths(mock_wallet, request_side_effect, status_code, data
                     try:
                         json.loads(data)
                     except ValueError:
-                        assert 'error' in ex_info.value.data
+                        try:
+                            json.loads(data)
+                        except ValueError:
+                            assert 'error' in ex_info.value.message
+                        else:
+                            assert 'error' in ex_info.value.data
                     else:
                         assert json.loads(data) == ex_info.value.data
             else:

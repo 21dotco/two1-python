@@ -277,10 +277,7 @@ def get_work(client):
     try:
         response = client.get_work()
     except exceptions.ServerRequestError as e:
-        if e.status_code == 403 and "detail" in e.data and "TO200" in e.data["detail"]:
-            raise exceptions.BitcoinComputerNeededError(
-                message=uxstring.UxString.mining_bitcoin_computer_needed, response=response)
-        elif e.status_code == 403 and e.data.get("detail") == "TO201":
+        if e.status_code == 403 and e.data.get("detail") == "TO201":
             raise exceptions.MiningDisabledError(uxstring.UxString.Error.suspended_account)
         elif e.status_code == 403 and e.data.get("detail") == "TO501":
             raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)

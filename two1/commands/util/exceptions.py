@@ -51,17 +51,24 @@ class FileDecodeError(Exception):
 class ServerRequestError(Two1Error):
     """ Error during a request to a server """
 
-    def __init__(self, message="", response=None, status_code=None, data=None):
-        super(ServerRequestError, self).__init__(message)
-        if response is not None:
-            self.status_code = response.status_code
-            try:
-                self.data = response.json()
-            except ValueError:
-                self.data = {"error": "Request Error"}
+    def __init__(self, response, message=''):
+        self.response = response
+        self.status_code = response.status_code
+        try:
+            # For 4XX responses we expect the response json to have this format:
+            # {"error": "invalid_login", "detail": "Incorrect username or password"}
+            self.data = response.json()
+        except ValueError:
+            self.data = {}
+            self.error = None
+            self.detail = None
         else:
-            self.status_code = status_code
-            self.data = data
+            self.error = self.data.get('error')
+            self.detail = self.data.get('detail')
+        message = (
+            message or self.detail or self.error or
+            'Unspecified HTTP error (%d).' % self.status_code)
+        super(ServerRequestError, self).__init__(message)
 
 
 class ServerConnectionError(Two1Error):

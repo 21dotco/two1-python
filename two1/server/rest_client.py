@@ -1,13 +1,11 @@
-# standard python imports
 import urllib
 import base64
 import json
 import datetime
 
-# 3rd party imports
+import click
 import requests
 
-# two1 imports
 import two1
 from two1.commands.util import exceptions
 from two1.commands.util import uxstring
@@ -75,24 +73,41 @@ class TwentyOneRestClient(object):
             response = self._session.request(method, url, headers=headers, **kwargs)
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError):
-            raise exceptions.ServerConnectionError(uxstring.UxString.Error.connection.format("21 Servers"))
-
-        # update required
+            raise exceptions.ServerConnectionError(
+                'Error: Cannot connect to 21 servers. '
+                'Please check your Internet connection.'
+            )
         if response.status_code == 301:
             raise exceptions.UpdateRequiredError(uxstring.UxString.update_required)
-
-        if response.status_code == 403:
-            ex = exceptions.ServerRequestError(message=uxstring.UxString.Error.server_403, response=response)
-            if "detail" in ex.data and "TO100" in ex.data["detail"]:
-                raise exceptions.BitcoinComputerNeededError(uxstring.UxString.bitcoin_computer_needed,
-                                                            response=response)
+        elif response.status_code == 403:
+            ex = exceptions.ServerRequestError(
+                response,
+                message=click.style(
+                    "Received forbidden error (403). Login in with ", fg="red") +
+                click.style("21 login ", bold=True, fg="red") +
+                click.style("and try again.", fg="red")
+            )
+            if ex.data.get('detail') in ('TO100', 'TO200'):
+                raise exceptions.BitcoinComputerNeededError(
+                    response,
+                    message=(
+                        "You need a 21 Bitcoin Computer (21.co/buy) to access "
+                        "this service. If you believe you have received this "
+                        "message in error, please contact support@21.co."
+                    )
+                )
             else:
                 raise ex
-
-        if response.status_code >= 300:
-            raise exceptions.ServerRequestError(message=uxstring.UxString.Error.server_err, response=response)
-
-        return response
+        elif 400 <= response.status_code <= 499:
+            raise exceptions.ServerRequestError(response)
+        elif 500 <= response.status_code <= 599:
+            raise exceptions.ServerRequestError(
+                response,
+                message="You have experienced a server error (%d). "
+                "We are working to correct the issue." % response.status_code
+            )
+        else:
+            return response
 
     # GET /pool/accounts
     def account_info(self):
@@ -127,7 +142,13 @@ class TwentyOneRestClient(object):
             ret = self._request(sign_username=self.username, method="POST", path=path, data=data)
         except exceptions.ServerRequestError as e:
             if e.status_code == 409:
-                raise exceptions.UnloggedException(uxstring.UxString.existing_account.format(e.data["username"]))
+                raise exceptions.UnloggedException(
+                    (
+                        click.style("There is already a username associated with your current wallet. Use ", fg="red") +
+                        click.style("21 login -u {}", bold=True, fg="red") +
+                        click.style(" to login.", fg="red")
+                    ).format(e.data["username"])
+                )
             else:
                 raise e
         return ret
