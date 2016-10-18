@@ -141,19 +141,6 @@ class Two1Manager:
         """
         return self.composer.initialize_server(*args)
 
-    def list_available_services(self):
-        """ List available services to sell.
-        """
-        return self.composer.list_services()
-
-    def pull_latest_images(self, *args):
-        """ Pull latest service images.
-        """
-        self.composer.connect(self.machine.env(),
-                              self.machine.host,
-                              self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.pull_latest_images(*args)
-
     def start_services(self, *args):
         """ Start services.
         """
@@ -219,29 +206,26 @@ class Two1Manager:
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)
 
-    def add_user_image_name(self, *args, **kwargs):
-        """
-        See Two1Composer.add_user_image_name
-        """
-        return self.composer.add_user_image_name(*args, **kwargs)
+    def get_available_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_services(*args, **kwargs)
 
-    def get_user_image_names(self, *args, **kwargs):
-        """
-        See Two1Composer.get_user_image_names
-        """
-        return self.composer.get_user_image_names(*args, **kwargs)
+    def get_image(self, *args, **kwargs):
+        return self.composer.ServiceManager.get_image(*args, **kwargs)
 
-    def remove_user_image_name(self, *args, **kwargs):
-        """
-        See Two1Composer.remove_user_image_name
-        """
-        return self.composer.remove_user_image_name(*args, **kwargs)
+    def pull_image(self, *args, **kwargs):
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.pull_image(*args, **kwargs)
 
-    def pull_user_image(self, *args, **kwargs):
-        return self.composer.pull_user_image(*args, **kwargs)
+    def add_service(self, *args, **kwargs):
+        return self.composer.ServiceManager.add_service(*args, **kwargs)
 
-    def custom_service_tag_2_service_name(self, image_name):
-        """
-        See Two1Composer.custom_service_tag_2_service_name
-        """
-        return self.composer.ImageNameTuple.from_image_name(image_name).to_service_name()
+    def remove_service(self, *args, **kwargs):
+        return self.composer.ServiceManager.remove_service(*args, **kwargs)
+
+    def available_user_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_user_services(*args, **kwargs)
+
+    def available_21_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_21_services(*args, **kwargs)

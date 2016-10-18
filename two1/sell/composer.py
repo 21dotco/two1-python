@@ -60,142 +60,116 @@ class Two1Composer(metaclass=ABCMeta):
     SERVICE_START_TIMEOUT = 10
     SERVICE_PUBLISH_TIMEOUT = 15
 
-    class ImageNameTuple(namedtuple('ImageNameTuple', 'docker_hub_account repository tag')):
-        @property
-        def is_docker_hub_image(self):
-            return self.docker_hub_account and self.repository and self.tag
+    class ServiceManager:
+
+        class Image(namedtuple('Image', 'docker_hub_account repository tag')):
+            @property
+            def is_dockerhub_image(self):
+                return self.docker_hub_account and self.repository and self.tag
+
+            @property
+            def is_local_image(self):
+                return self.repository and self.tag
+
+            def __str__(self):
+                if self.is_dockerhub_image:
+                    return '%s/%s:%s' % self
+                elif self.is_local_image:
+                    return '%s:%s' % self
+                else:
+                    raise ValueError()
+
+            @classmethod
+            def from_string(cls, image_name):
+                slashes = re.findall('/', image_name)
+                colons = re.findall(':', image_name)
+
+                if len(slashes) == 1 and len(colons) == 1 and image_name.find('/') < image_name.find(':'):
+                    docker_hub_account, rest = image_name.split('/')
+                    repository, tag = rest.split(':')
+                    return cls(docker_hub_account=docker_hub_account, repository=repository, tag=tag)
+                elif len(slashes) == 0 and len(colons) == 1:
+                    repository, tag = image_name.split(':')
+                    return cls(docker_hub_account=None, repository=repository, tag=tag)
+                else:
+                    raise ValueError()
 
         @classmethod
-        def from_image_name(cls, image_name):
-            slashes = re.findall('/', image_name)
-            colons = re.findall(':', image_name)
-
-            if len(slashes) == 1 and len(colons) == 1 and image_name.find('/') < image_name.find(':'):
-                docker_hub_account, rest = image_name.split('/')
-                repository, tag = rest.split(':')
-                return cls(docker_hub_account=docker_hub_account, repository=repository, tag=tag)
-            elif len(slashes) == 0 and len(colons) == 1:
-                repository, tag = image_name.split(':')
-                return cls(docker_hub_account=None, repository=repository, tag=tag)
+        def get_image(cls, service_name):
+            if service_name in cls.available_21_services():
+                return cls.Image(
+                    docker_hub_account='21dotco',
+                    repository='two1',
+                    tag=service_name if service_name in Two1Composer.BASE_SERVICES else 'service-%s' % service_name
+                )
+            elif service_name in cls.available_user_services():
+                return cls.Image(**cls._get_user_service_dict()[service_name])
             else:
                 raise ValueError()
 
-        def to_service_name(self):
-            return '-'.join([el for el in self if el])
+        @classmethod
+        def available_services(cls):
+            return cls.available_21_services() | cls.available_user_services()
 
-    @staticmethod
-    def string_set_2_file(string_set, filepath):
-        """
-        Writes a set of strings line by line (as in delimited by newlines) to a file path using 'w' mode, purging
-        existing data at aforementioned file path
+        @classmethod
+        def available_21_services(cls):
+            service_image_data = requests.get(os.path.join(
+                Two1Composer.DOCKERHUB_API_URL, Two1Composer.DOCKERHUB_REPO, 'tags')).json().get('results')
+            return set([image_data['name'].split('service-')[1] for image_data in
+                        service_image_data if re.match(r'^service-', image_data['name'])])
 
-        Args:
-            string_set (iter[str]): iterable of strings
-            filepath (str): path to file to overwrite
+        @classmethod
+        def available_user_services(cls):
+            return set(cls._get_user_service_dict().keys())
 
-        Returns:
-            bool: a boolean indicating whether or not the operation failed
-        """
-        try:
-            with open(filepath, 'w') as file:
-                for tag in string_set:
-                    file.write(tag + '\n')
-        except:
-            return False
-        else:
-            return True
-
-    @staticmethod
-    def file_2_string_set(filepath):
-        """
-        Given a file path, return a set of non-trivial (not all blank space) lines of the file
-
-        Args:
-            filepath (str): path of file to read from
-
-        Returns:
-            set[str]: a set of non-trivial lines of the file
-        """
-        try:
-            with open(filepath, 'r') as file:
-                return {line.strip() for line in file.readlines() if line.strip()}
-        except:
-            return set()  # return empty set of exception is thrown
-
-    @staticmethod
-    def get_user_image_names():
-        """
-        Gets existing user image names at Two1Composer.USER_TAGS_FILE
-
-        Returns:
-            set[str]: a set of user image names
-        """
-        return Two1Composer.file_2_string_set(Two1Composer.USER_TAGS_FILE)
-
-    @staticmethod
-    def update_user_image_names(image_names):
-        """
-        Writes a set of user image names to Two1Composer.USER_TAGS_FILE
-
-        Args:
-            image_names (iter[str]): iterable of user image names
-
-        Returns:
-            bool: a boolean indicating whether or not the operation failed
-        """
-        return Two1Composer.string_set_2_file(image_names, Two1Composer.USER_TAGS_FILE)
-
-    @staticmethod
-    def add_user_image_name(image_name,
-                            image_name_successfully_added_hook, image_name_already_exists_hook,
-                            image_name_failed_to_add_hook):
-        """
-        Adds a user image name to the existing set of user image names
-
-        Args:
-            image_name (str): the user image name to add
-            image_name_successfully_added_hook (Callable): A callable hook that takes in an image name and is run when
-                                                           said image name is successfully added
-            image_name_already_exists_hook (Callable): A callable hook that takes in an image name and is run when
-                                                       said image name already exists
-            image_name_failed_to_add_hook (Callable): A callable hook that takes in an image name and is run when
-                                                      said image name fails to be added
-        """
-        existing_user_image_names = Two1Composer.get_user_image_names()
-
-        if image_name in existing_user_image_names:
-            image_name_already_exists_hook(image_name)
-        else:
-            if Two1Composer.update_user_image_names(existing_user_image_names | {image_name}):  # set union
-                image_name_successfully_added_hook(image_name)
+        @classmethod
+        def add_service(cls, service_name, image_name_string,
+                        service_successfully_added_hook, service_already_exists_hook,
+                        service_failed_to_add_hook):
+            service_dict = cls._get_user_service_dict()
+            if service_name in service_dict:
+                service_already_exists_hook(service_name)
             else:
-                image_name_failed_to_add_hook(image_name)
+                service_dict[service_name] = cls.Image.from_string(image_name_string)._asdict()
+                if cls._commit_user_service_dict(service_dict):
+                    service_successfully_added_hook(service_name)
+                else:
+                    service_failed_to_add_hook(service_name)
 
-    @staticmethod
-    def remove_user_image_name(image_name,
-                               image_name_successfully_removed_hook, image_name_does_not_exists_hook,
-                               image_name_failed_to_remove_hook):
-        """
-        Removes a user image name from the existing set of user image names
-
-        Args:
-            image_name (str): the user image name to remove
-            image_name_successfully_removed_hook (Callable): A callable hook that takes in an image name and is run when
-                                                             said image name is successfully removed
-            image_name_does_not_exists_hook (Callable): A callable hook that takes in an image name and is run when
-                                                        said image name does not exist
-            image_name_failed_to_remove_hook (Callable): A callable hook that takes in an image name and is run when
-                                                         said image name fails to be removed
-        """
-        existing_user_image_names = Two1Composer.get_user_image_names()
-
-        if image_name in existing_user_image_names:
-            if Two1Composer.update_user_image_names(existing_user_image_names - {image_name}):  # set difference
-                image_name_successfully_removed_hook(image_name)
+        @classmethod
+        def remove_service(cls, service_name,
+                           service_successfully_removed_hook,
+                           service_does_not_exists_hook,
+                           service_failed_to_remove_hook):
+            service_dict = cls._get_user_service_dict()
+            if service_name in service_dict:
+                del service_dict[service_name]
+                if cls._commit_user_service_dict(service_dict):
+                    service_successfully_removed_hook(service_name)
+                else:
+                    service_failed_to_remove_hook(service_name)
             else:
-                image_name_failed_to_remove_hook(image_name)
-        else:
-            image_name_does_not_exists_hook(image_name)
+                service_does_not_exists_hook(service_name)
+
+        @classmethod
+        def _get_user_service_dict(cls):
+            try:
+                with open(Two1Composer.USER_TAGS_FILE, 'r') as data_file:
+                    service_dict = json.load(data_file)
+            except:
+                return {}
+            else:
+                return service_dict
+
+        @classmethod
+        def _commit_user_service_dict(cls, service_dict):
+            try:
+                with open(Two1Composer.USER_TAGS_FILE, 'w') as outfile:
+                    json.dump(service_dict, outfile)
+            except:
+                return False
+            else:
+                return True
 
     @staticmethod
     def service_name_2_container_name(service_name):
@@ -296,11 +270,6 @@ class Two1Composer(metaclass=ABCMeta):
     def start_services(self, *args):
         """ Start router, payments server, and machine-payable
         services.
-        """
-
-    @abstractmethod
-    def list_services(self):
-        """ List all available services.
         """
 
     @abstractmethod
@@ -410,14 +379,21 @@ class Two1ComposerContainers(Two1Composer):
 
         return 0, new_wallet
 
-    def list_services(self):
-        """ List available services to sell.
-        """
-        service_image_data = requests.get(os.path.join(
-            Two1Composer.DOCKERHUB_API_URL, Two1Composer.DOCKERHUB_REPO, 'tags')).json().get('results')
-        valid_service_names = set([image_data['name'].split('service-')[1] for image_data in
-                                   service_image_data if re.match(r'^service-', image_data['name'])])
-        return list(valid_service_names)
+    def pull_image(self, image,
+                   image_sucessfully_pulled_hook, image_failed_to_pull_hook, image_is_local_hook,
+                   image_is_malformed_hook):
+        if image.is_dockerhub_image:
+            try:
+                self.docker_client.pull('%s/%s' % (image.docker_hub_account, image.repository),
+                                        tag=image.tag, stream=False)
+            except:
+                image_failed_to_pull_hook(image)
+            else:
+                image_sucessfully_pulled_hook(image)
+        elif image.is_local_image:
+            image_is_local_hook(image)
+        else:
+            image_is_malformed_hook(image)
 
     def pull_latest_images(self, images):
         """ Pull latest images from 21 DockerHub.
@@ -489,12 +465,7 @@ class Two1ComposerContainers(Two1Composer):
 
         # Attempt to start all market services
         for service_name in services:
-            try:  # custom user image
-                image = service_name
-                image_name_tuple = self.ImageNameTuple.from_image_name(service_name)
-                service_name = image_name_tuple.to_service_name()
-            except:  # two1 official docker image
-                image = '%s:%s' % (Two1Composer.DOCKERHUB_REPO, 'service-' + service_name)
+            image = Two1Composer.ServiceManager.get_image(service_name)
             container_name = self.service_name_2_container_name(service_name)
 
             # create nginx routes for service_name
@@ -505,7 +476,7 @@ class Two1ComposerContainers(Two1Composer):
                 password = docker_compose_yaml['services']['payments']['environment']['TWO1_PASSWORD']
                 mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
                 docker_compose_yaml['services'][service_name] = {
-                    'image': image,
+                    'image': str(image),
                     'container_name': container_name,
                     'depends_on': ['base'],
                     'restart': 'always',

@@ -104,12 +104,12 @@ $ 21 sell stop --help
 
 
 @sell.command()
-@click.argument('repository')
-@click.option('-t', '--tag', 'tags', multiple=True, default=['latest'])
+@click.argument('service_name')
+@click.argument('image_name')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def add(ctx, repository, tags):
+def add(ctx, service_name, image_name):
     """
 Make Docker Hub images available to 21 sell
 
@@ -122,32 +122,28 @@ Adding specific tags of a repository
 $ 21 sell add <repository> [-t <tag>]..
 """
     manager = ctx.obj['manager']
-    logger.info(click.style("Adding tags.", fg=cli_helpers.TITLE_COLOR))
+    logger.info(click.style("Adding services.", fg=cli_helpers.TITLE_COLOR))
 
-    def tag_successfully_added_hook(tag):
+    def service_successfully_added_hook(tag):
         cli_helpers.print_str(tag, ["Added"], "TRUE", True)
 
-    def tag_already_exists_hook(tag):
+    def service_already_exists_hook(tag):
         cli_helpers.print_str(tag, ["Already exists"], "FALSE", False)
 
-    def tag_failed_to_add_hook(tag):
+    def service_failed_to_add_hook(tag):
         cli_helpers.print_str(tag, ["Failed to add"], "FALSE", False)
 
-    full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
-
-    for full_tag_repr in full_tag_reprs:
-        manager.add_user_image_name(full_tag_repr, tag_successfully_added_hook, tag_already_exists_hook,
-                                    tag_failed_to_add_hook)
+    manager.add_service(service_name, image_name, service_successfully_added_hook, service_already_exists_hook,
+                        service_failed_to_add_hook)
 
 
 @sell.command()
-@click.argument('repository', required=False)
-@click.option('-t', '--tag', 'tags', multiple=True, default=['latest'])
+@click.argument('service_names', nargs=-1)
 @click.option('-a', '--all', 'is_all', is_flag=True)
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def remove(ctx, repository, tags, is_all):
+def remove(ctx, service_names, is_all):
     """
 Make Docker Hub images unavailable to 21 sell
 
@@ -163,30 +159,29 @@ $ 21 sell remove <repository> [-t <tag>]..
 Removing all tags from 21 sell
 $ 21 sell remove --all
 """
-    if repository is None and is_all is False:
-        logger.info(ctx.command.get_help(ctx))
-        sys.exit()
+    if not service_names and is_all is False:
+        raise click.UsageError('No service selected.', ctx=ctx)
 
     manager = ctx.obj['manager']
-    logger.info(click.style("Removing tags.", fg=cli_helpers.TITLE_COLOR))
+    logger.info(click.style("Removing services.", fg=cli_helpers.TITLE_COLOR))
 
-    def tag_successfully_removed_hook(tag):
+    def service_successfully_removed_hook(tag):
         cli_helpers.print_str(tag, ["Removed"], "TRUE", True)
 
-    def tag_does_not_exists_hook(tag):
+    def service_does_not_exists_hook(tag):
         cli_helpers.print_str(tag, ["Doesn't exist"], "FALSE", False)
 
-    def tag_failed_to_remove_hook(tag):
+    def service_failed_to_remove_hook(tag):
         cli_helpers.print_str(tag, ["Failed to remove"], "FALSE", False)
 
     if is_all:
-        full_tag_reprs = manager.get_user_image_names()
+        services_to_remove = manager.available_user_services()
     else:
-        full_tag_reprs = {"%s:%s" % (repository, tag) for tag in tags}
+        services_to_remove = service_names
 
-    for full_tag_repr in full_tag_reprs:
-        manager.remove_user_image_name(full_tag_repr, tag_successfully_removed_hook, tag_does_not_exists_hook,
-                                       tag_failed_to_remove_hook)
+    for service_name in services_to_remove:
+        manager.remove_service(service_name, service_successfully_removed_hook, service_does_not_exists_hook,
+                               service_failed_to_remove_hook)
 
 
 @sell.command()
@@ -214,15 +209,13 @@ $ 21 sell start <service_name>
 Start selling all available services.
 $ 21 sell start --all
 """
-    # display help command if no args
+    # display help command if no service is selected
     if len(services) == 0 and all is False:
-        logger.info(ctx.command.get_help(ctx))
-        sys.exit()
+        raise click.UsageError('No service selected.', ctx=ctx)
 
     # no-vm version coming soon
     if no_vm:
-        logger.info(click.style("This mode is not yet supported.", fg="magenta"))
-        sys.exit()
+        raise click.UsageError('This mode is not yet supported.', ctx=ctx)
 
     # assign manager and installer from context
     manager = ctx.obj['manager']
@@ -380,59 +373,68 @@ $ 21 sell start --all
                                 "contact support@21.co.", fg="magenta"))
         sys.exit()
 
-    # start microservices
-    two1_services = manager.list_available_services()
-    user_services = list(manager.get_user_image_names())
-    if all:
-        try:
-            valid_services = two1_services
-            valid_user_services = user_services
-        except Exception:
-            logger.info(click.style("Error: unable to fetch machine images. Please try again or "
-                                    "contact support@21.co.", fg="magenta"))
-            sys.exit()
+    available_services = manager.get_available_services()
+
+    if len(available_services) == 0:
+        raise click.ClickException(click.style("Error: unable to fetch machine images. Please try again or contact"
+                                               " support@21.co.", fg="magenta"))
+
+    if not all:
+        logger.info(click.style("Checking availabilities of selected services.", fg=cli_helpers.TITLE_COLOR))
+        all_services_available = True
+        for service_name in services:
+            if service_name in available_services:
+                cli_helpers.print_str(service_name, ["Available"], "TRUE", True)
+            else:
+                cli_helpers.print_str(service_name, ["Unavailable"], "False", False)
+                all_services_available = False
+
+        services_to_start = available_services & services
+        if not all_services_available:
+            if not click.confirm(click.style("Not all selected services are available, would you like to start the"
+                                             " available ones anyways?", fg=cli_helpers.PROMPT_COLOR)):
+                raise click.Abort()
     else:
-        valid_services = []
-        valid_user_services = []
-        for serv in services:
-            if serv in two1_services:
-                valid_services.append(serv)
-            elif serv in user_services:
-                valid_user_services.append(serv)
+        services_to_start = available_services
 
-    if len(valid_services) <= 0 and len(valid_user_services) <= 0:
-        logger.info(click.style("No service available to sell. Please try again or "
-                                "contact support@21.co.", fg="magenta"))
-        sys.exit()
+    images_to_start = {
+        service_name: manager.get_image(service_name) for service_name in services_to_start
+    }
 
-    logger.info(click.style("Pulling latest images.", fg=cli_helpers.TITLE_COLOR))
-    selected_services = list(set(['service-' + name for name in valid_services]).union(set(Two1Composer.BASE_SERVICES)))
-    try:
-        manager.pull_latest_images(selected_services)
-        for user_service in valid_user_services:
-            manager.pull_user_image(*user_service.split(':'))
-    except Exception:
-        logger.info("Unable to pull latest images.", fg="magenta")
-        sys.exit()
+    logger.info(click.style("Pulling images for services.", fg=cli_helpers.TITLE_COLOR))
+    for service_name, image in images_to_start.items():
+        def image_sucessfully_pulled_hook(image):
+            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Pulled"], "TRUE", True)
+
+        def image_failed_to_pull_hook(image):
+            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Failed to pull"], "False", False)
+
+        def image_is_local_hook(image):
+            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Exists locally"], "TRUE", True)
+
+        def image_is_malformed_hook(image):
+            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Malformed image name"], "False", False)
+
+        manager.pull_image(image,
+                           image_sucessfully_pulled_hook, image_failed_to_pull_hook, image_is_local_hook,
+                           image_is_malformed_hook)
 
     logger.info(click.style("Starting services.", fg=cli_helpers.TITLE_COLOR))
     try:
-        manager.start_services(valid_services + valid_user_services,
+        manager.start_services(services_to_start,
                                cli_helpers.failed_to_start_hook,
                                cli_helpers.started_hook,
                                cli_helpers.failed_to_restart_hook,
                                cli_helpers.restarted_hook,
                                cli_helpers.failed_to_up_hook,
                                cli_helpers.up_hook)
-    except Exception:
-        logger.info("Unable to start services.", fg="magenta")
-        sys.exit()
+    except:
+        click.ClickException(click.style("Unable to start services.", fg="magenta"))
 
     try:
         started_services = manager.get_running_services()
-    except Exception:
-        logger.info("Unable to fetch running services.", fg="magenta")
-        sys.exit()
+    except:
+        click.ClickException(click.style("Unable to fetch running services.", fg="magenta"))
 
     published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes=assume_yes)
     for stat in published_stats:
@@ -660,10 +662,8 @@ $ 21 sell status
 
     # fetch available services
     try:
-        available_services = manager.list_available_services()
-        available_user_services = [manager.custom_service_tag_2_service_name(user_tag)
-                                   for user_tag in manager.get_user_image_names()]
-        composer_service_statuser(available_services + available_user_services)
+        available_services = manager.get_available_services()
+        composer_service_statuser(available_services)
     except Exception:
         logger.info("Unable to get service status.", fg="magenta")
         sys.exit()
@@ -673,10 +673,10 @@ $ 21 sell status
         cli_helpers.service_balance_check()
 
     logger.info(click.style("TRANSACTION TOTALS", fg=cli_helpers.TITLE_COLOR))
-    cli_helpers.service_earning_check(available_services + available_user_services, detail)
+    cli_helpers.service_earning_check(available_services, detail)
 
     logger.info(click.style("EXAMPLE USAGE", fg=cli_helpers.TITLE_COLOR))
-    cli_helpers.print_example_usage(available_services,
+    cli_helpers.print_example_usage(manager.available_21_services(),
                                     'http://' + manager.get_market_address(),
                                     manager.get_server_port())
 
@@ -707,15 +707,15 @@ $ 21 sell list
     logger.info(click.style("AVAILABLE 21 MICROSERVICES", fg=cli_helpers.MENU_COLOR))
     logger.info(click.style(85*"-", fg=cli_helpers.MENU_COLOR))
 
-    available_official_services = manager.list_available_services()
-    available_user_services = manager.get_user_image_names()
+    available_21_services = manager.available_21_services()
+    available_user_services = manager.available_user_services()
 
     tips = []
 
-    if len(available_official_services) > 0 or len(available_user_services) > 0:
-        if len(available_official_services) > 0:
+    if len(available_21_services) > 0 or len(available_user_services) > 0:
+        if len(available_21_services) > 0:
             logger.info(click.style("Official microservices", fg=cli_helpers.TITLE_COLOR))
-            for service in available_official_services:
+            for service in available_21_services:
                 cli_helpers.print_str(service, ["Available"], "TRUE", True)
         else:
             logger.info(click.style("There are no official services available at this time.", fg="magenta"))
