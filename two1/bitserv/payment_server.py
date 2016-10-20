@@ -294,8 +294,7 @@ class PaymentServer:
             merchant_public_key,
             redeem_script.customer_public_key,
             channel.expires_at)
-
-        if redeem_script.hash160() != redeem_script_copy.hash160():
+        if redeem_script.to_hex() != redeem_script_copy.to_hex():
             raise BadTransactionError('Invalid redeem script.')
 
         # Recreate customer payment from merchant side
