@@ -191,6 +191,8 @@ def _buy(config, client, machine_auth, resource, info_only=False, payment_method
         raise click.ClickException(e)
     except RequestException as e:
         raise exceptions.Two1Error('Requests exception: %s' % e)
+    except channels.NotReadyError:
+        raise exceptions.Two1Error(uxstring.UxString.channel_not_ready)
 
     # Write response text to stdout or a filename if provided
     if not output_file:
