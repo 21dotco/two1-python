@@ -798,10 +798,21 @@ class Signature(object):
         """
         d = get_bytes(der)
         # d must conform to (from btcd):
-        # 0x30 <length> 0x02 <length r> r 0x02 <length s> s
+        # [0 ] 0x30      - ASN.1 identifier for sequence
+        # [1 ] <1-byte>  - total remaining length
+        # [2 ] 0x02      - ASN.1 identifier to specify an integer follows
+        # [3 ] <1-byte>  - length of R
+        # [4.] <bytes>   - R
+        # [..] 0x02      - ASN.1 identifier to specify an integer follows
+        # [..] <1-byte>  - length of S
+        # [..] <bytes>   - S
 
+        # 6 bytes + R (min. 1 byte) + S (min. 1 byte)
         if len(d) < 8:
             raise ValueError("DER signature string is too short.")
+        # 6 bytes + R (max. 33 bytes) + S (max. 33 bytes)
+        if len(d) > 72:
+            raise ValueError("DER signature string is too long.")
         if d[0] != 0x30:
             raise ValueError("DER signature does not start with 0x30.")
         if d[1] != len(d[2:]):
@@ -812,7 +823,7 @@ class Signature(object):
         if d[2] != 0x02:
             raise ValueError("DER signature no 1st int marker.")
         if d[3] <= 0 or d[3] > (total_length - 7):
-            raise ValueError("DER signature incorrect r length.")
+            raise ValueError("DER signature incorrect R length.")
 
         # Grab R, check for errors
         rlen = d[3]
@@ -832,7 +843,7 @@ class Signature(object):
         slen_index = s_magic_index + 1
         slen = d[slen_index]
         if slen <= 0 or slen > len(d) - (slen_index + 1):
-            raise ValueError("DER signature incorrect s length.")
+            raise ValueError("DER signature incorrect S length.")
 
         sb = d[slen_index + 1:]
 
