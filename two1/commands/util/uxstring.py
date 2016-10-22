@@ -181,6 +181,15 @@ class UxString:
     buy_channel_aborted = "Payment aborted."
     buy_bad_data_format = "Unknown data format."
     buy_balances = "\nYou spent: {} satoshis. Remaining {} balance: {} satoshis."
+    channel_not_ready = "Channel not ready\n" \
+        + "\n" \
+        + "Please wait for the channel to finish opening, and then try again.\n" \
+        + "It may take up to 90 minutes for a channel to open.\n" \
+        + "\n" \
+        + "You may check on the status of your channels by running\n" \
+        + "the following commands:\n" \
+        + "    channels sync\n" \
+        + "    channels list\n" \
 
     # doctor
     doctor_start = click.style("21 doctor", fg='green') + "\n\n" + \
