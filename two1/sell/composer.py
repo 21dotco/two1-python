@@ -53,7 +53,7 @@ class Two1Composer(metaclass=ABCMeta):
 
     COMPOSE_FILE = os.path.join(BASE_DIR, "21-compose.yaml")
 
-    USER_TAGS_FILE = os.path.join(BASE_DIR, "user-tags")
+    USER_TAGS_FILE = os.path.join(BASE_DIR, "user-services.json")
 
     BASE_SERVICES = ["router", "payments", "base"]
 
@@ -65,37 +65,59 @@ class Two1Composer(metaclass=ABCMeta):
         class Image(namedtuple('Image', 'docker_hub_account repository tag')):
             @property
             def is_dockerhub_image(self):
+                """
+                Returns True iff image has all fields
+                """
                 return self.docker_hub_account and self.repository and self.tag
 
             @property
             def is_local_image(self):
-                return self.repository and self.tag
+                """
+                Returns True iff image doesn't have docker_hub_account but has all other fields
+                """
+                return not self.docker_hub_account and self.repository and self.tag
 
             def __str__(self):
+                """
+                Returns the image name
+                """
                 if self.is_dockerhub_image:
-                    return '%s/%s:%s' % self
+                    return '%s/%s:%s' % (self.docker_hub_account, self.repository, self.tag)
                 elif self.is_local_image:
-                    return '%s:%s' % self
+                    return '%s:%s' % (self.repository, self.tag)
                 else:
                     raise ValueError()
 
             @classmethod
             def from_string(cls, image_name):
+                """
+                Create an image from an image name
+                """
                 slashes = re.findall('/', image_name)
                 colons = re.findall(':', image_name)
 
-                if len(slashes) == 1 and len(colons) == 1 and image_name.find('/') < image_name.find(':'):
-                    docker_hub_account, rest = image_name.split('/')
-                    repository, tag = rest.split(':')
-                    return cls(docker_hub_account=docker_hub_account, repository=repository, tag=tag)
-                elif len(slashes) == 0 and len(colons) == 1:
-                    repository, tag = image_name.split(':')
-                    return cls(docker_hub_account=None, repository=repository, tag=tag)
-                else:
-                    raise ValueError()
+                if len(slashes) == 1:
+                    if len(colons) == 1 and image_name.find('/') < image_name.find(':'):
+                        docker_hub_account, rest = image_name.split('/')
+                        repository, tag = rest.split(':')
+                        return cls(docker_hub_account=docker_hub_account, repository=repository, tag=tag)
+                    elif len(colons) == 0:
+                        docker_hub_account, repository = image_name.split('/')
+                        return cls(docker_hub_account=docker_hub_account, repository=repository, tag='latest')
+                elif len(slashes) == 0:
+                    if len(colons) == 1:
+                        repository, tag = image_name.split(':')
+                        return cls(docker_hub_account=None, repository=repository, tag=tag)
+                    elif len(colons) == 0:
+                        return cls(docker_hub_account=None, repository=image_name, tag='latest')
+
+                raise ValueError()
 
         @classmethod
         def get_image(cls, service_name):
+            """
+            Returns the Image object pointed to by the service_name
+            """
             if service_name in cls.available_21_services():
                 return cls.Image(
                     docker_hub_account='21dotco',
@@ -109,10 +131,16 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def available_services(cls):
+            """
+            Returns all available service names
+            """
             return cls.available_21_services() | cls.available_user_services()
 
         @classmethod
         def available_21_services(cls):
+            """
+            Returns all available 21 services by querying Docker Hub
+            """
             service_image_data = requests.get(os.path.join(
                 Two1Composer.DOCKERHUB_API_URL, Two1Composer.DOCKERHUB_REPO, 'tags')).json().get('results')
             return set([image_data['name'].split('service-')[1] for image_data in
@@ -120,12 +148,18 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def available_user_services(cls):
+            """
+            Returns all available user services
+            """
             return set(cls._get_user_service_dict().keys())
 
         @classmethod
         def add_service(cls, service_name, image_name_string,
                         service_successfully_added_hook, service_already_exists_hook,
                         service_failed_to_add_hook):
+            """
+            Adds a user service with service_name and image_name_string
+            """
             service_dict = cls._get_user_service_dict()
             if service_name in service_dict:
                 service_already_exists_hook(service_name)
@@ -141,6 +175,9 @@ class Two1Composer(metaclass=ABCMeta):
                            service_successfully_removed_hook,
                            service_does_not_exists_hook,
                            service_failed_to_remove_hook):
+            """
+            Removes a user service with service_name
+            """
             service_dict = cls._get_user_service_dict()
             if service_name in service_dict:
                 del service_dict[service_name]
@@ -153,6 +190,9 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def _get_user_service_dict(cls):
+            """
+            Read and return Two1Composer.USER_TAGS_FILE as json
+            """
             try:
                 with open(Two1Composer.USER_TAGS_FILE, 'r') as data_file:
                     service_dict = json.load(data_file)
@@ -163,6 +203,9 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def _commit_user_service_dict(cls, service_dict):
+            """
+            Writes service_dict to Two1Composer.USER_TAGS_FILE as json
+            """
             try:
                 with open(Two1Composer.USER_TAGS_FILE, 'w') as outfile:
                     json.dump(service_dict, outfile)
@@ -382,6 +425,9 @@ class Two1ComposerContainers(Two1Composer):
     def pull_image(self, image,
                    image_sucessfully_pulled_hook, image_failed_to_pull_hook, image_is_local_hook,
                    image_is_malformed_hook):
+        """
+        Pulls an Image if said it is a Docker Hub image.
+        """
         if image.is_dockerhub_image:
             try:
                 self.docker_client.pull('%s/%s' % (image.docker_hub_account, image.repository),
@@ -394,45 +440,6 @@ class Two1ComposerContainers(Two1Composer):
             image_is_local_hook(image)
         else:
             image_is_malformed_hook(image)
-
-    def pull_latest_images(self, images):
-        """ Pull latest images from 21 DockerHub.
-
-        Args:
-            images (list): List of images to pull from the 21 DockerHub.
-        """
-        for image_tag in images:
-            self.docker_client.pull(Two1Composer.DOCKERHUB_REPO, image_tag, stream=False)
-        return 0
-
-    def pull_user_image(self, repo, tag):
-        """
-        Pull an image from user Docker Hub
-
-        Args:
-            repo (str): the user Docker Hub repository
-            tag (str): the tag to pull from `repo`
-        """
-        self.docker_client.pull(repo, tag, stream=False)
-        return 0
-
-    def parse_custom_service(self, service_str):
-
-        slashes = re.findall('/', service_str)
-        colons = re.findall(':', service_str)
-
-        if len(slashes) == 1 and len(colons) == 1 and service_str.find('/') < service_str.find(':'):
-            return (service_str.split('/')[0],) + tuple(service_str.split('/')[1].split(':'))
-        elif len(slashes) == 0 and len(colons) == 1:
-            return tuple(service_str.split(':'))
-        else:
-            raise ValueError()
-
-    def container_name_2_service_name(self, container_name):
-        if container_name.startswith('sell_'):
-            return container_name[len('sell_'):]
-        else:
-            raise ValueError()
 
     def start_services(self, services, failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
                        failed_to_up_hook, up_hook):

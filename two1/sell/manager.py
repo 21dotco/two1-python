@@ -157,13 +157,13 @@ class Two1Manager:
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.stop_services(*args)
 
-    def force_stop_services(self, *args):
+    def force_stop_services(self, *args, **kwargs):
         """ Silently force stops all services.
         """
         self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.silently_force_stop_all_services()
+        return self.composer.silently_force_stop_all_services(*args, **kwargs)
 
     def status_services(self, *args):
         """ Get status of all services.
@@ -201,7 +201,7 @@ class Two1Manager:
         self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.publish_service(*args)
+        return self.composer.publish_service(*args, **kwargs)
 
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)

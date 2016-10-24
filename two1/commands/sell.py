@@ -46,12 +46,12 @@ List services available to sell.
 $ 21 sell list
 
 \b
-Make a specifc tag of a Docker Hub repository available to sell
-$ 21 sell add <repository> [-t <tag>]...
+Adding a new service
+$ 21 sell add <service_name> <docker_image_name>
 
 \b
-Remove a specifc tag of a Docker Hub repository
-$ 21 sell remove <repository> [-t <tag>]...
+Removing a service
+$ 21 sell remove <service_name>
 
 \b
 Start selling a single service.
@@ -105,21 +105,17 @@ $ 21 sell stop --help
 
 @sell.command()
 @click.argument('service_name')
-@click.argument('image_name')
+@click.argument('docker_image_name')
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage
-def add(ctx, service_name, image_name):
+def add(ctx, service_name, docker_image_name):
     """
-Make Docker Hub images available to 21 sell
+Add a new service to 21 sell
 
 \b
-Adding the :latest tag of a repository
-$ 21 sell add <repository>
-
-\b
-Adding specific tags of a repository
-$ 21 sell add <repository> [-t <tag>]..
+Adding a new service
+$ 21 sell add <service_name> <docker_image_name>
 """
     manager = ctx.obj['manager']
     logger.info(click.style("Adding services.", fg=cli_helpers.TITLE_COLOR))
@@ -133,7 +129,7 @@ $ 21 sell add <repository> [-t <tag>]..
     def service_failed_to_add_hook(tag):
         cli_helpers.print_str(tag, ["Failed to add"], "FALSE", False)
 
-    manager.add_service(service_name, image_name, service_successfully_added_hook, service_already_exists_hook,
+    manager.add_service(service_name, docker_image_name, service_successfully_added_hook, service_already_exists_hook,
                         service_failed_to_add_hook)
 
 
@@ -145,15 +141,11 @@ $ 21 sell add <repository> [-t <tag>]..
 @decorators.capture_usage
 def remove(ctx, service_names, is_all):
     """
-Make Docker Hub images unavailable to 21 sell
+Remove a service from 21 sell
 
 \b
-Removing the :latest tag of a repository
-$ 21 sell remove <repository>
-
-\b
-Removing specific tags of a repository
-$ 21 sell remove <repository> [-t <tag>]..
+Removing a service
+$ 21 sell remove <service_name>
 
 \b
 Removing all tags from 21 sell
@@ -389,7 +381,7 @@ $ 21 sell start --all
                 cli_helpers.print_str(service_name, ["Unavailable"], "False", False)
                 all_services_available = False
 
-        services_to_start = available_services & services
+        services_to_start = available_services & set(services)
         if not all_services_available:
             if not click.confirm(click.style("Not all selected services are available, would you like to start the"
                                              " available ones anyways?", fg=cli_helpers.PROMPT_COLOR)):
@@ -727,7 +719,7 @@ $ 21 sell list
         else:
             logger.info(click.style("There are no user services available at this time.", fg="magenta"))
             tips.append(click.style("run ", fg=cli_helpers.PROMPT_COLOR) +
-                        click.style("`21 sell add <dockerhub-repo> [-t <tag>]`",
+                        click.style("`21 sell add <service_name> <docker_image_name>`",
                                     bold=True, fg=cli_helpers.PROMPT_COLOR) +
                         click.style(" to make your microservices available to sell.", fg=cli_helpers.PROMPT_COLOR))
         tips.append(click.style("run ", fg=cli_helpers.PROMPT_COLOR) +
