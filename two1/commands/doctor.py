@@ -522,7 +522,7 @@ class Doctor(object):
                                     HTTP status code from the request
         """
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
         except requests.exceptions.RequestException:
             return Check.Result.FAIL, check_str, url
 
