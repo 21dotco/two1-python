@@ -20,20 +20,14 @@ DUST_LIMIT_PER_KB = 5000  # satoshis
 # cf. https://github.com/bitcoin/bitcoin/blob/28ad4d9fc2be102786a8c6c32ebecb466b2a03dd/src/primitives/transaction.h#L175
 DUST_LIMIT = int(DUST_LIMIT_PER_KB * 0.20 * 3)
 
-_fee_session = None
 _fee_host = "http://api.cointape.com/"
 
 logger = logging.getLogger('wallet')
 
 
 def get_fees():
-    global _fee_session
-
-    if _fee_session is None:
-        _fee_session = requests.Session()
-
     try:
-        response = _fee_session.get(_fee_host + "v1/fees/recommended")
+        response = requests.get(_fee_host + "v1/fees/recommended")
         if response.status_code == 200:
             fee_per_kb = response.json()['halfHourFee'] * 1000
         else:
