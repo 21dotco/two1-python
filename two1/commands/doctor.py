@@ -1,15 +1,16 @@
 """Diagnose 21 installation."""
+from urllib.parse import urljoin
+import enum
+import logging
 import os
 import platform
+import requests
 import shutil
 import socket
 import sys
-import enum
 import urllib.parse as parse
-import logging
 
 import click
-import requests
 
 from two1.commands import market
 from two1.commands.util import bitcoin_computer
@@ -461,13 +462,10 @@ class Doctor(object):
                                     Human readable message describing the check
                                     Url to the 21 blockchain provider
         """
-        check_str = "21 Blockchain Provider"
-        result = Check.Result.FAIL
-        # checks connection and status code
-        if self.make_http_connection(two1.TWO1_PROVIDER_HOST):
-            result = Check.Result.PASS
-
-        return result, check_str, two1.TWO1_PROVIDER_HOST
+        return self._check_server(
+            "21 Blockchain Provider",
+            urljoin(two1.TWO1_PROVIDER_HOST, 'blockchain/bitcoin/blocks/latest')
+        )
 
     def check_server_21_pypi(self):
         """ Checks if 21 hosted pypi server is up
@@ -524,7 +522,7 @@ class Doctor(object):
                                     HTTP status code from the request
         """
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
         except requests.exceptions.RequestException:
             return Check.Result.FAIL, check_str, url
 
