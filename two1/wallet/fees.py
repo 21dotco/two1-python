@@ -1,7 +1,7 @@
 import logging
 import requests
 
-DEFAULT_FEE_PER_KB = 10000  # Satoshis
+DEFAULT_FEE_PER_KB = 100000  # Satoshis
 
 # Each txn input is ~150 bytes:
 # outpoint: 32 bytes
