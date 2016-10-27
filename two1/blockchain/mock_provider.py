@@ -191,7 +191,7 @@ class MockProvider(BaseProvider):
                     end = (i + 1) * self.address_increment
                     addr_range = range(start, end)
 
-                    out = TransactionOutput(value=10000,
+                    out = TransactionOutput(value=100000,
                                             script=Script.build_p2pkh(
                                                 address_to_key_hash(
                                                     addr_list[i])[1]))

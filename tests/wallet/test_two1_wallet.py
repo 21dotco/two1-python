@@ -192,7 +192,7 @@ def test_rest():
     assert wallet.get_account_name(0) == "default"
 
     # Check the balance
-    assert wallet.balances == {'confirmed': 10000, 'total': 20000}
+    assert wallet.balances == {'confirmed': 100000, 'total': 200000}
 
     # Check that we can get a new payout address
     ext_addr = wallet.get_payout_address("default")
@@ -201,7 +201,7 @@ def test_rest():
 
     # Check the balance again - should be the same
     m.set_num_used_addresses(0, 1, 0)
-    assert wallet.balances == {'confirmed': 10000, 'total': 20000}
+    assert wallet.balances == {'confirmed': 100000, 'total': 200000}
 
     # Try sending below the dust limit
     with pytest.raises(ValueError):
@@ -217,21 +217,21 @@ def test_rest():
     # Try sending more than we have and make sure it raises an exception
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
-                       amount=1000000)
+                       amount=10000000)
 
     # Should still fail when using unconfirmed if amount is greater
     # than unconfirmed balance
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                        use_unconfirmed=True,
-                       amount=1000000)
+                       amount=10000000)
 
     # Should fail when not using unconfirmed txns and
     # confirmed < amount < unconfirmed.
     with pytest.raises(exceptions.WalletBalanceError):
         wallet.send_to(address="14ocdLGpBp7Yv3gsPDszishSJUv3cpLqUM",
                        use_unconfirmed=False,
-                       amount=15000)
+                       amount=150000)
 
     # Should get past checking balance but raise a NotImplementedError
     with pytest.raises(NotImplementedError):

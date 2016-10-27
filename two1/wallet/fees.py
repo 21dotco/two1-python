@@ -1,6 +1,8 @@
 import logging
 import requests
 
+from two1.wallet import exceptions
+
 DEFAULT_FEE_PER_KB = 100000  # Satoshis
 
 # Each txn input is ~150 bytes:
@@ -37,6 +39,10 @@ def get_fees():
         logger.error(
             "Error getting recommended fees from server: %s. Using defaults." %
             error)
+
+    if not 0 <= fee_per_kb <= 2 * DEFAULT_FEE_PER_KB:
+        raise exceptions.UnreasonableFeeError(
+            'Unreasonable fee per kB: %s' % fee_per_kb)
 
     return {
         'per_kb': fee_per_kb,
