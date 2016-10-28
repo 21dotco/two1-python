@@ -53,33 +53,105 @@ class Two1Composer(metaclass=ABCMeta):
 
     COMPOSE_FILE = os.path.join(BASE_DIR, "21-compose.yaml")
 
-    USER_TAGS_FILE = os.path.join(BASE_DIR, "user-services.json")
-
     BASE_SERVICES = ["router", "payments", "base"]
 
     SERVICE_START_TIMEOUT = 10
     SERVICE_PUBLISH_TIMEOUT = 15
 
+    @property
+    def wallet_file(self):
+        """ Get the default wallet path.
+        """
+        try:
+            with open(Two1Composer.PRIMARY_ACCOUNT_FILE, 'r') as f:
+                account_info = json.load(f)
+        except Exception:
+            raise
+        return account_info.get("wallet_path")
+
+    @abstractmethod
+    def start_services(self, *args):
+        """ Start router, payments server, and machine-payable services.
+        """
+
+    @abstractmethod
+    def stop_services(self, *args):
+        """ Stop router, payments server, and machine-payable services.
+        """
+
+    @abstractmethod
+    def status_services(self, *args):
+        """ Get the status of services.
+        """
+
+    @abstractmethod
+    def status_router(self, *args):
+        """ Get the status of the router.
+        """
+
+    @abstractmethod
+    def status_payments_server(self, *args):
+        """ Get the status of the payments server.
+        """
+
+    @abstractmethod
+    def connect(self, *args, **kwargs):
+        """ Connect to the docker client
+        """
+
+    @abstractmethod
+    def read_server_config(self):
+        """Read configuration of server.
+        """
+
+
+class Two1ComposerNative(Two1Composer):
+    """ Manage machine-payable microservices natively.
+    """
+
+    def __init__(self):
+        self._connected = ComposerState.DISCONNECTED
+        self.provider = TwentyOneProvider()
+        self.default_wallet = Two1Wallet(self.wallet_file,
+                                         self.provider)
+
+    def connect(self, *args, **kwargs):
+        """ Create docker client.
+        """
+        self.docker_client = Client()
+        self._connected = ComposerState.DISCONNECTED
+
+
+class Two1ComposerContainers(Two1Composer):
+    """ Manage machine-payable microservices in containers.
+    """
+
+    def __init__(self):
+        self._connected = ComposerState.DISCONNECTED
+        self.provider = TwentyOneProvider()
+        self.default_wallet = Two1Wallet(self.wallet_file, self.provider)
+
     class ServiceManager:
+        """ Query and modify user services persisting at cls.USER_SERVICES_FILE.
+        """
+
+        USER_SERVICES_FILE = os.path.join(Two1Composer.BASE_DIR, "user-services.json")
 
         class Image(namedtuple('Image', 'docker_hub_account repository tag')):
             @property
             def is_dockerhub_image(self):
-                """
-                Returns True iff image has all fields
+                """ Returns: True iff Image instance has all fields.
                 """
                 return self.docker_hub_account and self.repository and self.tag
 
             @property
             def is_local_image(self):
-                """
-                Returns True iff image doesn't have docker_hub_account but has all other fields
+                """ Returns: True iff Image instance doesn't have docker_hub_account but has all other fields.
                 """
                 return not self.docker_hub_account and self.repository and self.tag
 
             def __str__(self):
-                """
-                Returns the image name
+                """ Returns: Docker image name constructed from Image instance fields.
                 """
                 if self.is_dockerhub_image:
                     return '%s/%s:%s' % (self.docker_hub_account, self.repository, self.tag)
@@ -90,8 +162,13 @@ class Two1Composer(metaclass=ABCMeta):
 
             @classmethod
             def from_string(cls, image_name):
-                """
-                Create an image from an image name
+                """ Constructs an Image instance from a docker image name.
+
+                Args:
+                    image_name (str): A docker image name.
+
+                Returns:
+                    Image: An Image instance.
                 """
                 slashes = re.findall('/', image_name)
                 colons = re.findall(':', image_name)
@@ -110,13 +187,18 @@ class Two1Composer(metaclass=ABCMeta):
                         return cls(docker_hub_account=None, repository=repository, tag=tag)
                     elif len(colons) == 0:
                         return cls(docker_hub_account=None, repository=image_name, tag='latest')
-
                 raise ValueError()
 
         @classmethod
         def get_image(cls, service_name):
-            """
-            Returns the Image object pointed to by the service_name
+            """ Constructs an Image instance for a service.
+
+            Args:
+                service_name (str): The name of either a 21 service in the 21dotco/two1 repository or a user service
+                                    added to ServiceManager.USER_SERVICES_FILE by ServiceManager.add_service.
+
+            Returns:
+                Image: An Image instance corresponding to the given service.
             """
             if service_name in cls.available_21_services():
                 return cls.Image(
@@ -131,15 +213,13 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def available_services(cls):
-            """
-            Returns all available service names
+            """ Returns: All available service names.
             """
             return cls.available_21_services() | cls.available_user_services()
 
         @classmethod
         def available_21_services(cls):
-            """
-            Returns all available 21 services by querying Docker Hub
+            """ Returns: All available 21 services by querying Docker Hub.
             """
             service_image_data = requests.get(os.path.join(
                 Two1Composer.DOCKERHUB_API_URL, Two1Composer.DOCKERHUB_REPO, 'tags')).json().get('results')
@@ -148,8 +228,7 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def available_user_services(cls):
-            """
-            Returns all available user services
+            """ Returns: All available user services.
             """
             return set(cls._get_user_service_dict().keys())
 
@@ -157,8 +236,11 @@ class Two1Composer(metaclass=ABCMeta):
         def add_service(cls, service_name, image_name_string,
                         service_successfully_added_hook, service_already_exists_hook,
                         service_failed_to_add_hook):
-            """
-            Adds a user service with service_name and image_name_string
+            """ Adds a new service definition to ServiceManager.USER_SERVICES_FILE.
+
+            Args:
+                service_name (str): Name of the service definition to add.
+                image_name_string (str): Docker image name for the service definition.
             """
             service_dict = cls._get_user_service_dict()
             if service_name in service_dict:
@@ -175,8 +257,10 @@ class Two1Composer(metaclass=ABCMeta):
                            service_successfully_removed_hook,
                            service_does_not_exists_hook,
                            service_failed_to_remove_hook):
-            """
-            Removes a user service with service_name
+            """ Removes a service definition from ServiceManager.USER_SERVICES_FILE.
+
+            Args:
+                service_name (str): Name of the service definition to remove.
             """
             service_dict = cls._get_user_service_dict()
             if service_name in service_dict:
@@ -190,11 +274,10 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def _get_user_service_dict(cls):
-            """
-            Read and return Two1Composer.USER_TAGS_FILE as json
+            """ Returns: ServiceManager.USER_SERVICES_FILE as a dict.
             """
             try:
-                with open(Two1Composer.USER_TAGS_FILE, 'r') as data_file:
+                with open(cls.USER_SERVICES_FILE, 'r') as data_file:
                     service_dict = json.load(data_file)
             except:
                 return {}
@@ -203,20 +286,23 @@ class Two1Composer(metaclass=ABCMeta):
 
         @classmethod
         def _commit_user_service_dict(cls, service_dict):
-            """
-            Writes service_dict to Two1Composer.USER_TAGS_FILE as json
+            """ Writes a dict of user services to ServiceManager.USER_SERVICES_FILE in json format.
+
+            Args:
+                service_dict (dict): A dictionary of user services of the form
+                                     {service_name : _as_dict representation of corresponding Image instance..}.
+
+            Returns:
+                bool: True iff no exceptions were raised when writing service_dict to ServiceManager.USER_SERVICES_FILE
+                      as json.
             """
             try:
-                with open(Two1Composer.USER_TAGS_FILE, 'w') as outfile:
+                with open(cls.USER_SERVICES_FILE, 'w') as outfile:
                     json.dump(service_dict, outfile)
             except:
                 return False
             else:
                 return True
-
-    @staticmethod
-    def service_name_2_container_name(service_name):
-        return 'sell_%s' % service_name
 
     class ComposerYAMLContext(YamlDataContext):
         """ Context manager for composer YAML service file.
@@ -298,89 +384,14 @@ class Two1Composer(metaclass=ABCMeta):
                 }
             }
 
-    @property
-    def wallet_file(self):
-        """ Get the default wallet path.
-        """
-        try:
-            with open(Two1Composer.PRIMARY_ACCOUNT_FILE, 'r') as f:
-                account_info = json.load(f)
-        except Exception:
-            raise
-        return account_info.get("wallet_path")
-
-    @abstractmethod
-    def start_services(self, *args):
-        """ Start router, payments server, and machine-payable
-        services.
-        """
-
-    @abstractmethod
-    def stop_services(self, *args):
-        """ Stop router, payments server, and machine-payable
-        services.
-        """
-
-    @abstractmethod
-    def status_services(self, *args):
-        """ Get the status of services.
-        """
-
-    @abstractmethod
-    def status_router(self, *args):
-        """ Get the status of the router.
-        """
-
-    @abstractmethod
-    def status_payments_server(self, *args):
-        """ Get the status of the payments server.
-        """
-
-    @abstractmethod
-    def connect(self, *args, **kwargs):
-        """ Connect to the docker client
-        """
-
-    @abstractmethod
-    def read_server_config(self):
-        """Read configuration of server.
-        """
-
-
-class Two1ComposerNative(Two1Composer):
-    """ Manage machine-payable microservices natively.
-    """
-
-    def __init__(self):
-        self._connected = ComposerState.DISCONNECTED
-        self.provider = TwentyOneProvider()
-        self.default_wallet = Two1Wallet(self.wallet_file,
-                                         self.provider)
-
-    def connect(self, *args, **kwargs):
-        """ Create docker client.
-        """
-        self.docker_client = Client()
-        self._connected = ComposerState.DISCONNECTED
-
-
-class Two1ComposerContainers(Two1Composer):
-    """ Manage machine-payable microservices in containers.
-    """
-
-    def __init__(self):
-        self._connected = ComposerState.DISCONNECTED
-        self.provider = TwentyOneProvider()
-        self.default_wallet = Two1Wallet(self.wallet_file, self.provider)
-
     # public api
     def connect(self, machine_env, host, machine_config_file):
         """ Connect service composer to machine layer.
 
         Args:
-            machine_env (dict): Environment dictionary for the docker client of the machine layer
-            host: Hostname of the machine layer docker daemon
-            machine_config_file (str): Path to the config file for the machine layer
+            machine_env (dict): Environment dictionary for the docker client of the machine layer.
+            host (str): Hostname of the machine layer docker daemon.
+            machine_config_file (str): Path to the config file for the machine layer.
         """
         self.machine_env = machine_env
         self.machine_host = host
@@ -399,10 +410,10 @@ class Two1ComposerContainers(Two1Composer):
         Generates a wallet mnemonic if non-existent.
 
         Args:
-            username (str): Username to log in with
-            password (str): Password to log in with
-            server_port (int): The server port that the router is running on
-            wallet: The wallet to use for the payments server and subsequent services
+            username (str): Username to log in with.
+            password (str): Password to log in with.
+            server_port (int): The server port that the router is running on.
+            wallet: The wallet to use for the payments server and subsequent services.
         """
         self._create_base_server(server_port)  # create base router server config
         self._create_payments_route()  # create route to payments server
@@ -425,8 +436,10 @@ class Two1ComposerContainers(Two1Composer):
     def pull_image(self, image,
                    image_sucessfully_pulled_hook, image_failed_to_pull_hook, image_is_local_hook,
                    image_is_malformed_hook):
-        """
-        Pulls an Image if said it is a Docker Hub image.
+        """ Pulls an Image instance iff it is a Docker Hub image.
+
+        Args:
+            image (Image): An Image instance.
         """
         if image.is_dockerhub_image:
             try:
@@ -441,12 +454,13 @@ class Two1ComposerContainers(Two1Composer):
         else:
             image_is_malformed_hook(image)
 
-    def start_services(self, services, failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
-                       failed_to_up_hook, up_hook):
+    def start_services(self, service_names,
+                       failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook, failed_to_up_hook,
+                       up_hook):
         """ Start selected services.
 
         Args:
-            services (list): List of services to start.
+            service_names (list): List of service names to start.
             failed_to_start_hook (Callable): A callable hook that takes in a service name and is run when said service
                                              fails to start.
             started_hook (Callable): A callable hook that takes in a service name and is run when said service starts.
@@ -457,11 +471,6 @@ class Two1ComposerContainers(Two1Composer):
             failed_to_up_hook (Callable): A callable hook that takes in a service name and is run when said service
                                           fails to go up.
             up_hook (Callable): A callable hook that takes in a service name and is run when said service goes up.
-
-        Returns:
-
-        Raises:
-
         """
         self._start_sell_service('base', failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
         self._start_sell_service('router', failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
@@ -471,49 +480,54 @@ class Two1ComposerContainers(Two1Composer):
                                    failed_to_up_hook, up_hook)
 
         # Attempt to start all market services
-        for service_name in services:
-            image = Two1Composer.ServiceManager.get_image(service_name)
-            container_name = self.service_name_2_container_name(service_name)
+        for service_name in service_names:
+            try:
+                image = self.ServiceManager.get_image(service_name)
+                container_name = self.service_name_2_container_name(service_name)
 
-            # create nginx routes for service_name
-            self._create_service_route(service_name)
-            # add service_name to docker compose file
-            with self.ComposerYAMLContext() as docker_compose_yaml:
-                username = docker_compose_yaml['services']['payments']['environment']['TWO1_USERNAME']
-                password = docker_compose_yaml['services']['payments']['environment']['TWO1_PASSWORD']
-                mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
-                docker_compose_yaml['services'][service_name] = {
-                    'image': str(image),
-                    'container_name': container_name,
-                    'depends_on': ['base'],
-                    'restart': 'always',
-                    'environment': {
-                        "TWO1_USERNAME": str(username),
-                        "TWO1_PASSWORD": str(password),
-                        "TWO1_WALLET_MNEMONIC": str(mnemonic),
-                        "SERVICE": str(service_name),
-                        "PAYMENT_SERVER_IP": "http://%s:%s" % (self.machine_host, self.machine_config["server_port"])
-                    },
-                    'volumes': [
-                        Two1Composer.DB_DIR + ":/usr/src/db/"
-                    ],
-                    'logging': {
-                        'driver': 'json-file'
-                    },
-                    'cap_drop': [
-                        'ALL'
-                    ],
-                    'cap_add': [
-                        'DAC_OVERRIDE',
-                        'NET_RAW',
-                    ],
-                }
-                link_str = '%s:%s' % (service_name, service_name)
-                if link_str not in docker_compose_yaml['services']['router']['links']:
-                    docker_compose_yaml['services']['router']['links'].append(link_str)
-
-            # attempt to build service_name
-            self._start_sell_service(service_name, failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
+                # create nginx routes for service_name
+                self._create_service_route(service_name)
+                # add service_name to docker compose file
+                with self.ComposerYAMLContext() as docker_compose_yaml:
+                    username = docker_compose_yaml['services']['payments']['environment']['TWO1_USERNAME']
+                    password = docker_compose_yaml['services']['payments']['environment']['TWO1_PASSWORD']
+                    mnemonic = docker_compose_yaml['services']['payments']['environment']['TWO1_WALLET_MNEMONIC']
+                    docker_compose_yaml['services'][service_name] = {
+                        'image': str(image),
+                        'container_name': container_name,
+                        'depends_on': ['base'],
+                        'restart': 'always',
+                        'environment': {
+                            "TWO1_USERNAME": str(username),
+                            "TWO1_PASSWORD": str(password),
+                            "TWO1_WALLET_MNEMONIC": str(mnemonic),
+                            "SERVICE": str(service_name),
+                            "PAYMENT_SERVER_IP":
+                                "http://%s:%s" % (self.machine_host, self.machine_config["server_port"])
+                        },
+                        'volumes': [
+                            Two1Composer.DB_DIR + ":/usr/src/db/"
+                        ],
+                        'logging': {
+                            'driver': 'json-file'
+                        },
+                        'cap_drop': [
+                            'ALL'
+                        ],
+                        'cap_add': [
+                            'DAC_OVERRIDE',
+                            'NET_RAW',
+                        ],
+                    }
+                    link_str = '%s:%s' % (service_name, service_name)
+                    if link_str not in docker_compose_yaml['services']['router']['links']:
+                        docker_compose_yaml['services']['router']['links'].append(link_str)
+            except:
+                # something went wrong while configuring service_name
+                failed_to_start_hook(service_name)
+            else:
+                # attempt to build service_name
+                self._start_sell_service(service_name, failed_to_start_hook, started_hook, failed_to_up_hook, up_hook)
 
         self._restart_sell_service('router', failed_to_start_hook, started_hook, failed_to_restart_hook, restarted_hook,
                                    failed_to_up_hook, up_hook)
@@ -598,12 +612,23 @@ class Two1ComposerContainers(Two1Composer):
 
     @staticmethod
     def names_from_containers(containers):
-        """ Return names from containers.
+        """ Return service names from container definitions.
+
+        See service_name_2_container_name for the inverse operation but on one service name.
 
         Args:
-            containers (list): List of containers as returned by self.docker_client.containers
+            containers (list): List of container descriptions as returned by self.docker_client.containers.
+
+        Returns:
+            set: Set of service names generated by removing the 'sell_' prefix from the containers' names.
         """
-        return frozenset([service['Names'][0][6:] for service in containers])
+        return {service['Names'][0][6:] for service in containers}
+
+    @staticmethod
+    def service_name_2_container_name(service_name):
+        """ Generates a container name from a service name by prepending 'sell_'
+        """
+        return 'sell_%s' % service_name
 
     def status_services(self, services,
                         service_nonexistent_hook,
@@ -614,18 +639,6 @@ class Two1ComposerContainers(Two1Composer):
 
         Args:
             services (list): List of services to get status for.
-            service_nonexistent_hook (Callable): A callable hook that takes in a service name and is run when said
-                                                 service is non-existent.
-            service_running_hook (Callable): A callable hook that takes in a service name and is run when said service
-                                             is running.
-            service_exited_hook (Callable): A callable hook that takes in a service name and is run when said service
-                                            has exited.
-            service_unknown_state_hook (Callable): A callable hook that takes in a service name and is run when said
-                                                   service is in an unknown state.
-        Returns:
-            dict: Dictionary with service as key and value as dictionary.
-            Inner dictionary has format: {"status": str, "message": str}.
-            "Status" choices are: Not found, Running, Exited, Unable to contact.
         """
 
         existent_services = self.names_from_containers(self.docker_client.containers(all=True))
@@ -633,11 +646,6 @@ class Two1ComposerContainers(Two1Composer):
         exited_services = self.names_from_containers(self.docker_client.containers(filters={"status": "exited"}))
 
         for service_name in services:
-            try:
-                service_name = self.custom_service_tag_2_service_name(service_name)
-            except:
-                pass
-
             if service_name in running_services:
                 service_running_hook(service_name)
             elif service_name in exited_services:
@@ -648,13 +656,13 @@ class Two1ComposerContainers(Two1Composer):
                 service_nonexistent_hook(service_name)
 
     def get_running_services(self):
-        """ Get list of running services.
+        """ Get list of currently running services that aren't 21 base services.
 
         Returns:
-            (list) started services
+            list: List of currently running services.
         """
-        return list(set(self.names_from_containers(self.docker_client.containers(
-            filters={"status": "running"}))).difference(set(Two1Composer.BASE_SERVICES)))
+        return list(self.names_from_containers(self.docker_client.containers(
+            filters={"status": "running"})).difference(set(Two1Composer.BASE_SERVICES)))
 
     def status_router(self, service_running_hook, service_unknown_state_hook):
         """ Get status of Nginx router container.

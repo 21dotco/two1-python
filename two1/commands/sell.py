@@ -148,7 +148,7 @@ Removing a service
 $ 21 sell remove <service_name>
 
 \b
-Removing all tags from 21 sell
+Removing all services from 21 sell
 $ 21 sell remove --all
 """
     if not service_names and is_all is False:
@@ -365,6 +365,7 @@ $ 21 sell start --all
                                 "contact support@21.co.", fg="magenta"))
         sys.exit()
 
+    # check that services to start are available
     available_services = manager.get_available_services()
 
     if len(available_services) == 0:
@@ -389,28 +390,31 @@ $ 21 sell start --all
     else:
         services_to_start = available_services
 
+    # pull corresponding images for services
     images_to_start = {
         service_name: manager.get_image(service_name) for service_name in services_to_start
     }
 
     logger.info(click.style("Pulling images for services.", fg=cli_helpers.TITLE_COLOR))
+
+    def image_sucessfully_pulled_hook(image):
+        cli_helpers.print_str('%s -> %s' % (service_name, image), ["Pulled"], "TRUE", True)
+
+    def image_failed_to_pull_hook(image):
+        cli_helpers.print_str('%s -> %s' % (service_name, image), ["Failed to pull"], "False", False)
+
+    def image_is_local_hook(image):
+        cli_helpers.print_str('%s -> %s' % (service_name, image), ["Exists locally"], "TRUE", True)
+
+    def image_is_malformed_hook(image):
+        cli_helpers.print_str('%s -> %s' % (service_name, image), ["Malformed image name"], "False", False)
+
     for service_name, image in images_to_start.items():
-        def image_sucessfully_pulled_hook(image):
-            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Pulled"], "TRUE", True)
-
-        def image_failed_to_pull_hook(image):
-            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Failed to pull"], "False", False)
-
-        def image_is_local_hook(image):
-            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Exists locally"], "TRUE", True)
-
-        def image_is_malformed_hook(image):
-            cli_helpers.print_str('%s -> %s' % (service_name, image), ["Malformed image name"], "False", False)
-
         manager.pull_image(image,
                            image_sucessfully_pulled_hook, image_failed_to_pull_hook, image_is_local_hook,
                            image_is_malformed_hook)
 
+    # start services
     logger.info(click.style("Starting services.", fg=cli_helpers.TITLE_COLOR))
     try:
         manager.start_services(services_to_start,
@@ -428,6 +432,7 @@ $ 21 sell start --all
     except:
         click.ClickException(click.style("Unable to fetch running services.", fg="magenta"))
 
+    # prompt to publish services
     published_stats = cli_helpers.prompt_to_publish(started_services, manager, assume_yes=assume_yes)
     for stat in published_stats:
         cli_helpers.print_str(stat[0],
@@ -611,7 +616,7 @@ $ 21 sell status
     logger.info(click.style("NETWORKING", fg=cli_helpers.TITLE_COLOR))
 
     def nonexistent_hook(service_name):
-        cli_helpers.print_str(service_name.capitalize(), ["Nonexistent"], "FALSE", False)
+        cli_helpers.print_str(service_name.capitalize(), ["Not running"], "FALSE", False)
 
     def running_hook(service_name):
         cli_helpers.print_str(service_name.capitalize(), ["Running"], "TRUE", True)
@@ -702,10 +707,13 @@ $ 21 sell list
     available_21_services = manager.available_21_services()
     available_user_services = manager.available_user_services()
 
+    # list of tips that gets appended to as we learn about what's available
     tips = []
 
+    # if there are ANY services available
     if len(available_21_services) > 0 or len(available_user_services) > 0:
         if len(available_21_services) > 0:
+            # list available 21 services
             logger.info(click.style("Official microservices", fg=cli_helpers.TITLE_COLOR))
             for service in available_21_services:
                 cli_helpers.print_str(service, ["Available"], "TRUE", True)
@@ -713,6 +721,7 @@ $ 21 sell list
             logger.info(click.style("There are no official services available at this time.", fg="magenta"))
 
         if len(available_user_services) > 0:
+            # list available user services
             logger.info(click.style("User microservices", fg=cli_helpers.TITLE_COLOR))
             for service in available_user_services:
                 cli_helpers.print_str(service, ["Available"], "TRUE", True)
@@ -728,6 +737,7 @@ $ 21 sell list
     else:
         logger.info(click.style("There are no services available at this time.", fg="magenta"))
 
+    # tip formatting
     if len(tips) > 0:
         if len(tips) == 1:
             logger.info(click.style("\nTip: ", fg=cli_helpers.PROMPT_COLOR) + tips[0])
