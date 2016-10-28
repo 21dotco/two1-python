@@ -68,3 +68,7 @@ class TransactionBuilderException(Exception):
 
 class OverfullTransactionException(TransactionBuilderException):
     pass
+
+
+class UnreasonableFeeError(WalletError):
+    pass

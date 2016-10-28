@@ -36,11 +36,11 @@ increment = HDAccount.DISCOVERY_INCREMENT
 
 @pytest.mark.parametrize("num_used_payout_addresses, num_used_change_addresses, expected_balance",
                          [(0, 0, {'confirmed': 0, 'total': 0}),
-                          (1, 0, {'confirmed': 0, 'total': 10000}),
-                          (1, 2, {'confirmed': 10000, 'total': 20000}),
-                          (2*increment + 1, 2, {'confirmed': 10000, 'total': 40000}),
-                          (2*increment + 1, increment + 1, {'confirmed': 20000, 'total': 50000}),
-                          (2*increment + increment//2, 3 * increment, {'confirmed': 30000, 'total': 60000})])
+                          (1, 0, {'confirmed': 0, 'total': 100000}),
+                          (1, 2, {'confirmed': 100000, 'total': 200000}),
+                          (2*increment + 1, 2, {'confirmed': 100000, 'total': 400000}),
+                          (2*increment + 1, increment + 1, {'confirmed': 200000, 'total': 500000}),
+                          (2*increment + increment//2, 3 * increment, {'confirmed': 300000, 'total': 600000})])
 def test_all(num_used_payout_addresses, num_used_change_addresses, expected_balance):
     m = mock_provider
     m.reset_mocks()
