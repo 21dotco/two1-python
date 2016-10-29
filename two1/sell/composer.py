@@ -632,10 +632,6 @@ class Two1ComposerContainers(Two1Composer):
         return 'sell_%s' % service_name
 
     def status_services(self, services):
-                        # service_nonexistent_hook,
-                        # service_running_hook,
-                        # service_exited_hook,
-                        # service_unknown_state_hook):
         """ Gets running status of specified services.
 
         Args:
