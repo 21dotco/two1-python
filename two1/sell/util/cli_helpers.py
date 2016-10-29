@@ -422,49 +422,6 @@ def get_example_usage(services, host, port):
     return example_usages
 
 
-# def service_status_check_detailed(start_stats, host, port):
-#     """ Gives detailed status of services.
-#     """
-#     rest_client = get_rest_client()
-#     dollars_per_sat = rest_client.quote_bitcoin_price(1).json()["price"]
-#
-#     services_list = [i[0].lower() for i in start_stats]
-#     balances = get_balances(services_list, rest_client)
-#     earnings = get_earnings(services_list)
-#     example_usages = get_example_usage(services_list, host, port)
-#
-#     for service_info in start_stats:
-#         service = service_info[0].lower()
-#         request_count = earnings[service]["request_count"]
-#
-#         buffer_earn_sat = earnings[service]["buffer"]
-#         wallet_earn_sat = earnings[service]["wallet"]
-#         channels_earn_sat = earnings[service]["channels"]
-#
-#         buffer_bal_sat = balances[service]["buffer"]
-#         wallet_bal_sat = balances[service]["wallet"]
-#         channels_bal_sat = balances[service]["channels"]
-#
-#         print_str(service.title(),
-#                   [service_info[2]],
-#                   "TRUE" if service_info[1] else "FALSE",
-#                   service_info[1])
-#
-#         print_str_no_stat(["Requests: %s" % str(request_count).rjust(10)])
-#         print_str_no_stat(["Lifetime Earnings:",
-#                            build_detail_line("buffer", buffer_earn_sat, dollars_per_sat),
-#                            build_detail_line("wallet", wallet_earn_sat, dollars_per_sat),
-#                            build_detail_line("channels", channels_earn_sat, dollars_per_sat)])
-#
-#         print_str_no_stat(["Current Balances:",
-#                            build_detail_line("buffer", buffer_bal_sat, dollars_per_sat),
-#                            build_detail_line("wallet", wallet_bal_sat, dollars_per_sat),
-#                            build_detail_line("channels", channels_bal_sat, dollars_per_sat)])
-#         if service in example_usages:
-#             print_str_no_stat(["Example Usage:",
-#                                example_usages[service]])
-
-
 def build_detail_line(btc_type, satoshi, exchange_rate):
     btc_formatted = ("%s " % btc_type.title()).ljust(9)
     satoshi_formatted = str(satoshi).rjust(9)
