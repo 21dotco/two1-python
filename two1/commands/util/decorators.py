@@ -230,8 +230,6 @@ def catch_all(func):
 
         except click.ClickException:
             raise  # Let click deal with it
-        except click.UsageError:
-            raise
 
         except Exception:
             # generic error string
