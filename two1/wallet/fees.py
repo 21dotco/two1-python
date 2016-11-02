@@ -22,7 +22,7 @@ DUST_LIMIT_PER_KB = 5000  # satoshis
 # cf. https://github.com/bitcoin/bitcoin/blob/28ad4d9fc2be102786a8c6c32ebecb466b2a03dd/src/primitives/transaction.h#L175
 DUST_LIMIT = int(DUST_LIMIT_PER_KB * 0.20 * 3)
 
-_fee_host = "http://api.cointape.com/"
+_fee_host = "https://bitcoinfees.21.co/"
 
 logger = logging.getLogger('wallet')
 
