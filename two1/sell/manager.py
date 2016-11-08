@@ -141,19 +141,6 @@ class Two1Manager:
         """
         return self.composer.initialize_server(*args)
 
-    def list_available_services(self):
-        """ List available services to sell.
-        """
-        return self.composer.list_services()
-
-    def pull_latest_images(self, *args):
-        """ Pull latest service images.
-        """
-        self.composer.connect(self.machine.env(),
-                              self.machine.host,
-                              self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.pull_latest_images(*args)
-
     def start_services(self, *args):
         """ Start services.
         """
@@ -170,13 +157,13 @@ class Two1Manager:
                               self.machine.MACHINE_CONFIG_FILE)
         return self.composer.stop_services(*args)
 
-    def force_stop_services(self, *args):
+    def force_stop_services(self, *args, **kwargs):
         """ Silently force stops all services.
         """
         self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.silently_force_stop_all_services()
+        return self.composer.silently_force_stop_all_services(*args, **kwargs)
 
     def status_services(self, *args):
         """ Get status of all services.
@@ -214,7 +201,31 @@ class Two1Manager:
         self.composer.connect(self.machine.env(),
                               self.machine.host,
                               self.machine.MACHINE_CONFIG_FILE)
-        return self.composer.publish_service(*args)
+        return self.composer.publish_service(*args, **kwargs)
 
     def get_services_mnemonic(self, *args, **kwargs):
         return self.composer.get_services_mnemonic(*args, **kwargs)
+
+    def get_available_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_services(*args, **kwargs)
+
+    def get_image(self, *args, **kwargs):
+        return self.composer.ServiceManager.get_image(*args, **kwargs)
+
+    def pull_image(self, *args, **kwargs):
+        self.composer.connect(self.machine.env(),
+                              self.machine.host,
+                              self.machine.MACHINE_CONFIG_FILE)
+        return self.composer.pull_image(*args, **kwargs)
+
+    def add_service(self, *args, **kwargs):
+        return self.composer.ServiceManager.add_service(*args, **kwargs)
+
+    def remove_service(self, *args, **kwargs):
+        return self.composer.ServiceManager.remove_service(*args, **kwargs)
+
+    def available_user_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_user_services(*args, **kwargs)
+
+    def available_21_services(self, *args, **kwargs):
+        return self.composer.ServiceManager.available_21_services(*args, **kwargs)
