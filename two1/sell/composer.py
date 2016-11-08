@@ -2,6 +2,7 @@
 import re
 import os
 import time
+from collections import OrderedDict
 from collections import namedtuple
 
 import json
@@ -138,6 +139,13 @@ class Two1ComposerContainers(Two1Composer):
         USER_SERVICES_FILE = os.path.join(Two1Composer.BASE_DIR, "user-services.json")
 
         class Image(namedtuple('Image', 'docker_hub_account repository tag')):
+
+            def _asdict(self):
+                # Fixes a bug for Python 3.4 users
+                # https://bugs.python.org/issue24931
+                'A new OrderedDict mapping field names to their values'
+                return OrderedDict(zip(self._fields, self))
+
             @property
             def is_dockerhub_image(self):
                 """ Returns: True iff Image instance has all fields.
