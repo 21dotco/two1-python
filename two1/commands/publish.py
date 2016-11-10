@@ -281,7 +281,9 @@ def _delete_app(config, client, app_id, assume_yes):
         assume_yes (bool): a boolean indicating whether or not to assume
             yes responses for user confirmations
     """
-    if assume_yes or click.confirm("Are you sure that you want to delete the app with id '{}'?".format(app_id)):
+    title = client.get_app_full_info(config.username, app_id).json()['app_info']['title']
+    if assume_yes or click.confirm(
+            "Are you sure that you want to delete App '{} ({})'?".format(app_id, title)):
         try:
             resp = client.delete_app(config.username, app_id)
             resp_json = resp.json()
