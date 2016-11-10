@@ -758,7 +758,7 @@ class Two1ComposerContainers(Two1Composer):
         except Exception:
             raise exceptions.Two1ComposerRouteException()
 
-    def publish_service(self, service_name, publishing_ip, rest_client, published_hook,
+    def publish_service(self, service_name, host_override, rest_client, published_hook,
                         already_published_hook, failed_to_publish_hook,
                         unknown_publish_error_hook):
         strm, stat = self.docker_client.get_archive('sell_%s' % service_name,
@@ -766,6 +766,7 @@ class Two1ComposerContainers(Two1Composer):
 
         with tarfile.open(fileobj=BytesIO(strm.read()), mode='r') as tf:
             manifest = yaml.load(tf.extractfile(stat[u'name']).read().decode())
+        manifest['host'] = host_override
 
         try:
             resp = rest_client.publish({"manifest": manifest,

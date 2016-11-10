@@ -537,17 +537,16 @@ def get_published_apps():
     return published_app_urls
 
 
-def prompt_to_publish(started_services, manager, publishing_ip, assume_yes=False):
+def prompt_to_publish(started_services, manager, ip_address, assume_yes=False):
     """ Prompt user to publish services if not published.
     """
-    if publishing_ip is None:
-        zt_ip = manager.get_market_address()
-    else:
-        zt_ip = publishing_ip
+    if ip_address is None:
+        ip_address = manager.get_market_address()
     port = manager.get_server_port()
+    host_override = '%s:%s' % (ip_address, port)
 
     published_apps = get_published_apps()
-    started_apps = ["%s:%s/%s" % (zt_ip, port, service) for service in started_services]
+    started_apps = ["%s:%s/%s" % (ip_address, port, service) for service in started_services]
     not_published = [i for i in started_apps if i not in published_apps]
     not_published_names = [i.split("/")[1] for i in not_published]
 
@@ -560,7 +559,7 @@ def prompt_to_publish(started_services, manager, publishing_ip, assume_yes=False
         published = start_long_running("Publishing services",
                                        publish_started,
                                        not_published_names,
-                                       zt_ip,
+                                       host_override,
                                        manager)
         return published
     else:
