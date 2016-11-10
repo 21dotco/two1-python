@@ -104,7 +104,7 @@ $ 21 sell stop --help
 @click.option('-w', '--wait-time',
               type=int, default=10)
 @click.option('--no-vm', is_flag=True, default=False)
-@click.option('-y', '--assume-yes', is_flag=True, default=False)
+@click.option('-y', '--yes', '--assume-yes', is_flag=True, default=False)
 @click.pass_context
 @decorators.catch_all
 @decorators.capture_usage

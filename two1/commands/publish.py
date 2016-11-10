@@ -92,7 +92,7 @@ at the prompt.
 @click.argument('app_id', required=False)
 @click.option('-a', '--all', is_flag=True,
               help='Selects all published apps for removal.')
-@click.option('-y', '--assume-yes', is_flag=True, default=False,
+@click.option('-y', '--yes', '--assume-yes', is_flag=True, default=False,
               help='Removes selected published apps without confirmation.')
 @click.pass_context
 @decorators.catch_all
@@ -102,11 +102,11 @@ def remove(ctx, app_id, all, assume_yes):
     """
 \b
 Removes a published app from the Marketplace.
-$ 21 publish remove [--assume-yes] {app_id}
+$ 21 publish remove [--yes] {app_id}
 
 \b
 Removes all published apps from the Marketplace.
-$ 21 publish remove [--assume-yes] --all
+$ 21 publish remove [--yes] --all
 
 \b
 The {app_id} can be obtained by performing:
