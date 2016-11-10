@@ -537,14 +537,16 @@ def get_published_apps():
     return published_app_urls
 
 
-def prompt_to_publish(started_services, manager, assume_yes=False):
+def prompt_to_publish(started_services, manager, ip_address, assume_yes=False):
     """ Prompt user to publish services if not published.
     """
-    zt_ip = manager.get_market_address()
+    if ip_address is None:
+        ip_address = manager.get_market_address()
     port = manager.get_server_port()
+    host_override = '%s:%s' % (ip_address, port)
 
     published_apps = get_published_apps()
-    started_apps = ["%s:%s/%s" % (zt_ip, port, service) for service in started_services]
+    started_apps = ["%s:%s/%s" % (ip_address, port, service) for service in started_services]
     not_published = [i for i in started_apps if i not in published_apps]
     not_published_names = [i.split("/")[1] for i in not_published]
 
@@ -557,6 +559,7 @@ def prompt_to_publish(started_services, manager, assume_yes=False):
         published = start_long_running("Publishing services",
                                        publish_started,
                                        not_published_names,
+                                       host_override,
                                        manager)
         return published
     else:
@@ -564,7 +567,7 @@ def prompt_to_publish(started_services, manager, assume_yes=False):
         return []
 
 
-def publish_started(not_published, manager):
+def publish_started(not_published, publishing_ip, manager):
     """ Publish started services.
     """
 
@@ -583,8 +586,9 @@ def publish_started(not_published, manager):
         def unknown_publish_error_hook(sname):
             publish_stats.append((sname, False, ["An unknown error occurred"]))
 
-        manager.publish_service(service_name, get_rest_client(), published_hook, already_published_hook,
-                                failed_to_publish_hook, unknown_publish_error_hook)
+        manager.publish_service(service_name, publishing_ip, get_rest_client(), published_hook,
+                                already_published_hook, failed_to_publish_hook,
+                                unknown_publish_error_hook)
 
     return publish_stats
 
