@@ -13,16 +13,19 @@ class Market:
 
     DEFAULT_MARKET_HOST = 'https://mkt.21.co/21dotco'
 
-    def __init__(self):
-        """Return a new Market instance."""
-        self.resource = ''
-        self.host = Market.DEFAULT_MARKET_HOST
+    def __getattr__(self, resource):
+        return Function(resource)
+
+
+class Function:
+    def __init__(self, resource):
+        self.resource = resource
+        self.host = Market.DEFAULT_MARKET_HOST + '/'
         self.bitrequests = bitrequests
 
     def __getattr__(self, resource):
         """Recursively look up the resource being requested."""
-        self.resource = self.resource + '/' + resource
-        return self
+        return Function(self.resource + '/' + resource)
 
     def __call__(self, _data=None, **kwargs):
         """Make a HTTP to the requested first-party app resource.
@@ -49,9 +52,7 @@ class Market:
             requests.exceptions.HTTPError: 4xx or 5xx response from the server.
 
         """
-        # Reset resource value for subsequent calls
         resource = self.resource
-        self.resource = ''
 
         # GET request with the keyword arguments passed
         if not _data:
