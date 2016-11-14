@@ -186,7 +186,7 @@ class PaymentServer:
             raise BadTransactionError('That deposit has already been used to create a channel.')
 
         # Verify that the lock time is an allowable amount in the future
-        minimum_locktime = int(time.time()) + self.MIN_EXP_TIME
+        minimum_locktime = int(time.time()) + self.MIN_EXP_TIME - 1
         if redeem_script.expiration_time < minimum_locktime:
             raise TransactionVerificationError('Transaction locktime must be further in the future.')
 
