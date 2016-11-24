@@ -54,8 +54,8 @@ class PaymentChannel:
     """Rebroadcast timeout for the deposit, if it hasn't been confirmed by the
     blockchain."""
 
-    MIN_EXPIRATION_TIMEOUT = 12 * 3600
-    """Minimum channel duration."""
+    MIN_EXPIRATION_TIMEOUT = 4 * 24 * 3600
+    """Minimum channel duration (in seconds)."""
 
     REFUND_BROADCAST_TIME_OFFSET = 90 * 60
     """Refund broadcast time offset to take into account the effect of Median
