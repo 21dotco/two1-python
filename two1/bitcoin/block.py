@@ -183,7 +183,7 @@ class Block(object):
         """
         self = cls.__new__(cls)
         self.block_header = bh
-        self.transactions = txns
+        self.txns = txns
 
         self.merkle_tree = None
         self.invalidate()
@@ -238,7 +238,7 @@ class Block(object):
             self.block_header.merkle_root_hash = self.merkle_tree.hash
 
     def _compute_merkle_tree(self):
-        """ Computes the merkle tree from the transactions in self.transactions.
+        """ Computes the merkle tree from the transactions in self.txns.
             The merkle root is the top node in the tree and can be accessed as
             self.merkle_tree.merkle_hash.
         """
