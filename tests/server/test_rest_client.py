@@ -27,7 +27,7 @@ from tests.mock import MockHttpResponse
     (None, 301, None, exceptions.UpdateRequiredError),
 
     # checks 403 forbidden because api call needs bitcoin computer
-    (None, 403, json.dumps({'detail': "TO100"}), exceptions.BitcoinComputerNeededError),
+    (None, 403, json.dumps({'error': "TO100"}), exceptions.BitcoinComputerNeededError),
 
     # checks generic error status code with valid json data
     (None, 400, json.dumps({"test": "data"}), exceptions.ServerRequestError),

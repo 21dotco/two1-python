@@ -175,7 +175,7 @@ def create_account_on_bc(config, machine_auth):
             # handle an error where a bitcoin computer is necessary
             elif ex.status_code == 403:
                 r = ex.data
-                if "detail" in r and "TO200" in r["detail"]:
+                if r.get("error") == 'TO200':
                     raise exceptions.UnloggedException(uxstring.UxString.max_accounts_reached)
             else:
                 logger.info(uxstring.UxString.Error.account_failed)

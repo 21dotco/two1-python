@@ -56,17 +56,12 @@ class ServerRequestError(Two1Error):
         self.status_code = response.status_code
         try:
             # For 4XX responses we expect the response json to have this format:
-            # {"error": "invalid_login", "detail": "Incorrect username or password"}
+            # {"error": "invalid_login", "message": "Incorrect username or password"}
             self.data = response.json()
         except ValueError:
             self.data = {}
-            self.error = None
-            self.detail = None
-        else:
-            self.error = self.data.get('error')
-            self.detail = self.data.get('detail')
         message = (
-            message or self.detail or self.error or
+            message or self.data.get('message') or self.data.get('error') or
             'Unspecified HTTP error (%d).' % self.status_code)
         super(ServerRequestError, self).__init__(message)
 
