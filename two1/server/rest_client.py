@@ -87,7 +87,7 @@ class TwentyOneRestClient(object):
                 click.style("21 login ", bold=True, fg="red") +
                 click.style("and try again.", fg="red")
             )
-            if ex.data.get('detail') in ('TO100', 'TO200'):
+            if ex.data.get('error') in ('TO100', 'TO200'):
                 raise exceptions.BitcoinComputerNeededError(
                     response,
                     message=(

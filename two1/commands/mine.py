@@ -277,13 +277,13 @@ def get_work(client):
     try:
         response = client.get_work()
     except exceptions.ServerRequestError as e:
-        if e.status_code == 403 and e.data.get("detail") == "TO201":
+        if e.status_code == 403 and e.data.get("error") == "TO201":
             raise exceptions.MiningDisabledError(uxstring.UxString.Error.suspended_account)
-        elif e.status_code == 403 and e.data.get("detail") == "TO501":
+        elif e.status_code == 403 and e.data.get("error") == "TO501":
             raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
-        elif e.status_code == 403 and e.data.get("detail") == "TO502":
+        elif e.status_code == 403 and e.data.get("error") == "TO502":
             raise exceptions.MiningDisabledError(uxstring.UxString.lifetime_earn_limit_reached)
-        elif e.status_code == 403 and e.data.get("detail") == "TO503":
+        elif e.status_code == 403 and e.data.get("error") == "TO503":
             raise exceptions.MiningDisabledError(uxstring.UxString.no_earn_allocations.format(
                 two1.TWO1_WWW_HOST, client.username))
         elif e.status_code == 404:
