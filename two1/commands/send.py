@@ -76,10 +76,10 @@ def _send(wallet, address, satoshis, verbose, use_unconfirmed=False):
             balance = min(wallet.confirmed_balance(), wallet.unconfirmed_balance())
             if has_mining_chip():
                 raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain_21bc.format(
-                    balance, satoshis, address))
+                    balance, satoshis, address, str(e)))
             else:
                 raise exceptions.Two1Error(uxstring.UxString.send_insufficient_blockchain_free.format(
-                    balance, satoshis, address))
+                    balance, satoshis, address, str(e)))
     except DataProviderError as e:
         if "rejected" in str(e):
             raise exceptions.Two1Error(uxstring.UxString.send_rejected)

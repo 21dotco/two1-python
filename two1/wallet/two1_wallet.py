@@ -1183,12 +1183,10 @@ class Two1Wallet(BaseWallet):
         total_with_fees = subtotal_amount + fees
         enough_money = bool(selected_utxos)
         if not enough_money:
-            message = ('Available utxos (%d satoshis total) is less than '
-                       'payment (%d satoshis) + fees (%d satoshis) = %d satoshis. '
-                       'Available utxos: %r')
-            utxo_values = {address: [u.value for u in utxos] for address, utxos in selected_utxos.items()}
+            message = ('Available balance (%d satoshis) is less than\n'
+                       'payment (%d satoshis) + fees (%d satoshis) = %d satoshis.')
             raise exceptions.WalletBalanceError(
-                message % (total_available, subtotal_amount, fees, total_with_fees, utxo_values)
+                message % (total_available, subtotal_amount, fees, total_with_fees)
             )
 
         if use_unconfirmed:
