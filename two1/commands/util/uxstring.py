@@ -520,13 +520,15 @@ Network: %s
     send_insufficient_confirmed = ("Insufficient confirmed balance. However, you can use unconfirmed"
                                    " transactions with --use-unconfirmed. ")
     send_insufficient_blockchain_21bc = (
-        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
-        "Run %s, then %s to increase your on-chain balance." %
-        (click.style("21 mine", bold=True), click.style("21 flush", bold=True)))
+        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n\n"
+        "{}\n\n"
+        "Try sending fewer satoshis, or run 21 mine, then 21 flush\n"
+        "to increase your on-chain balance so you can send more.")
     send_insufficient_blockchain_free = (
-        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n"
-        "Run %s, then %s to increase your on-chain balance." %
-        (click.style("21 earn", bold=True), click.style("21 flush", bold=True)))
+        "Insufficient Blockchain balance of {} satoshis.\nCannot send {} satoshis to {}.\n\n"
+        "{}\n\n"
+        "Try sending fewer satoshis, or run 21 earn, then 21 flush\n"
+        "to increase your on-chain balance so you can send more.")
     send_rejected = ("Transaction rejected.\nYou may have to wait for other transactions to confirm.")
 
     # wallet
