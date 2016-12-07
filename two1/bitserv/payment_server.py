@@ -5,6 +5,7 @@ import os
 import threading
 import time
 
+from two1 import TWO1_CHANNELS_MIN_DURATION
 from two1.bitcoin import Hash
 from two1.bitcoin import PublicKey
 from two1.bitcoin import Script
@@ -87,7 +88,7 @@ class PaymentServer:
     DUST_LIMIT = 3000
     """Minimum payment amount (dust limit) for any transaction output."""
 
-    MIN_EXP_TIME = 4 * 24 * 3600
+    MIN_EXP_TIME = TWO1_CHANNELS_MIN_DURATION
     """Minimum expiration time (in sec) for a payment channel refund."""
 
     # Three days is the maximum length of time an unconfirmed
