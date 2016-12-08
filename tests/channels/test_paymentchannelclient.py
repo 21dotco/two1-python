@@ -8,6 +8,7 @@ import two1.channels.paymentchannel as paymentchannel
 import two1.channels.database as database
 import tests.channels.mock as mock
 
+DEFAULT_EXPIRATION = 86400 * 8
 
 # Monkey-patch mock payment channel server protocol
 paymentchannel.SupportedProtocols['mock'] = mock.MockPaymentChannelServer
@@ -39,11 +40,11 @@ def test_paymentchannelclient():
     # Check channel list
     assert pc.list() == []
 
-    # Open a payment channel with 100000 deposit, 86400 seconds expiration, and 10000 fee
-    url1 = pc.open('mock://test', 100000, 86400, 10000, False)
+    # Open a payment channel with 100000 deposit, default expiration, and 10000 fee
+    url1 = pc.open('mock://test', 100000, DEFAULT_EXPIRATION, 10000, False)
 
-    # Open a payment channel with 300000 deposit, 50000 seconds expiration, and 20000 fee
-    url2 = pc.open('mock://test', 300000, 50000, 20000, True)
+    # Open a payment channel with 300000 deposit, 500000 seconds expiration, and 20000 fee
+    url2 = pc.open('mock://test', 300000, 500000, 20000, True)
 
     # Check channel list
     assert len(pc.list()) == 2
@@ -58,7 +59,7 @@ def test_paymentchannelclient():
     url1_expected_status['deposit'] = 100000
     url1_expected_status['fee'] = 10000
     url1_expected_status['creation_time'] = lambda status: status.creation_time > 0
-    url1_expected_status['expiration_time'] = int(status.creation_time + 86400)
+    url1_expected_status['expiration_time'] = int(status.creation_time + DEFAULT_EXPIRATION)
     url1_expected_status['expired'] = False
     url1_expected_status['deposit_txid'] = lambda status: status.deposit_txid
     url1_expected_status['spend_txid'] = None
@@ -74,7 +75,7 @@ def test_paymentchannelclient():
     url2_expected_status['deposit'] = 300000
     url2_expected_status['fee'] = 20000
     url2_expected_status['creation_time'] = lambda status: status.creation_time > 0
-    url2_expected_status['expiration_time'] = int(status.creation_time + 50000)
+    url2_expected_status['expiration_time'] = int(status.creation_time + 500000)
     url2_expected_status['expired'] = False
     url2_expected_status['deposit_txid'] = lambda status: status.deposit_txid
     url2_expected_status['spend_txid'] = None
@@ -195,8 +196,8 @@ def test_paymentchannelclient():
     url2_expected_status['state'] = statemachine.PaymentChannelState.CLOSED
     assert_paymentchannel_status(url2_expected_status, status)
 
-    # Open a payment channel with 400000 deposit, 50000 seconds expiration, and 20000 fee
-    url3 = pc.open('mock://test', 400000, 50000, 20000, True)
+    # Open a payment channel with 400000 deposit, 500000 seconds expiration, and 20000 fee
+    url3 = pc.open('mock://test', 400000, 500000, 20000, True)
 
     # Check url3 properties
     status = pc.status(url3)
@@ -208,7 +209,7 @@ def test_paymentchannelclient():
     url3_expected_status['deposit'] = 400000
     url3_expected_status['fee'] = 20000
     url3_expected_status['creation_time'] = lambda status: status.creation_time > 0
-    url3_expected_status['expiration_time'] = int(status.creation_time + 50000)
+    url3_expected_status['expiration_time'] = int(status.creation_time + 500000)
     url3_expected_status['expired'] = False
     url3_expected_status['deposit_txid'] = lambda status: status.deposit_txid
     url3_expected_status['spend_txid'] = None

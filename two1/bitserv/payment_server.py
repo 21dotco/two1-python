@@ -5,6 +5,7 @@ import os
 import threading
 import time
 
+from two1 import TWO1_CHANNELS_MIN_DURATION
 from two1.bitcoin import Hash
 from two1.bitcoin import PublicKey
 from two1.bitcoin import Script
@@ -87,10 +88,12 @@ class PaymentServer:
     DUST_LIMIT = 3000
     """Minimum payment amount (dust limit) for any transaction output."""
 
-    MIN_EXP_TIME = 12 * 3600
+    MIN_EXP_TIME = TWO1_CHANNELS_MIN_DURATION
     """Minimum expiration time (in sec) for a payment channel refund."""
 
-    EXP_TIME_BUFFER = 4 * 3600
+    # Three days is the maximum length of time an unconfirmed
+    # transaction will stay in a Bitcoin Core node's mempool
+    EXP_TIME_BUFFER = 3 * 24 * 3600
     """Buffer time before expiration (in sec) in which to broadcast payment."""
 
     PROTOCOL_VERSION = 2
