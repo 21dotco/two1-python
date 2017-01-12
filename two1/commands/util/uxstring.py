@@ -331,6 +331,11 @@ class UxString:
         click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
         click.style("message in error, please contact support@21.co.", fg="red")
 
+    mining_profile_call_to_action = click.style(
+        "You can earn more bitcoin by responding to messages after configuring your public "
+        "profile page at ",
+        fg="green") + click.style("{}", bold=True, fg="green") + click.style(" .", fg="green")
+
     # uninstall
     uninstall_init = "Uninstalling 21's software libraries and tools."
     uninstall_success = "21 has been successfully uninstalled."
