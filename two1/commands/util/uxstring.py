@@ -284,9 +284,7 @@ class UxString:
                          "Please try again in a few hours."
     lifetime_earn_limit_reached = "You have reached the faucet earning limit for your account. "
 
-    no_earn_allocations = (
-        "Please enable the faucet by connecting a social network to your 21 account at {}/{}/config/profile."
-    )
+    no_earn_allocations = "The 21 Faucet is disabled at this time."
 
     # wallet
     wallet_top_title = click.style("Your 21 wallets:\n", fg="magenta")
