@@ -282,13 +282,9 @@ class UxString:
     earn_faucet_finish = "\nView your balance with {}, or spend with {}."
     earn_limit_reached = "\nFurther earning advances are not possible at this time. " \
                          "Please try again in a few hours."
-    lifetime_earn_limit_reached = "You have reached the faucet earning limit for your account. " \
-                                  "Please visit 21.co/learn to discover new ways you can earn " \
-                                  "bitcoin."
+    lifetime_earn_limit_reached = "You have reached the faucet earning limit for your account. "
 
-    no_earn_allocations = (
-        "Please enable the faucet by connecting a social network to your 21 account at {}/{}/config/profile."
-    )
+    no_earn_allocations = "The 21 Faucet is disabled at this time."
 
     # wallet
     wallet_top_title = click.style("Your 21 wallets:\n", fg="magenta")
@@ -330,6 +326,11 @@ class UxString:
         click.style("21 buybitcoin", bold=True, fg="red") +\
         click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
         click.style("message in error, please contact support@21.co.", fg="red")
+
+    mining_profile_call_to_action = click.style(
+        "You can earn more bitcoin by responding to messages after configuring your public "
+        "profile page at ",
+        fg="green") + click.style("{}", bold=True, fg="green") + click.style(" .", fg="green")
 
     # uninstall
     uninstall_init = "Uninstalling 21's software libraries and tools."

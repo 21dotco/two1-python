@@ -277,20 +277,26 @@ def get_work(client):
     try:
         response = client.get_work()
     except exceptions.ServerRequestError as e:
+        profile_url = "{}/{}".format(two1.TWO1_WWW_HOST, client.username)
+        profile_cta = uxstring.UxString.mining_profile_call_to_action.format(profile_url)
+        err_string = None
         if e.status_code == 403 and e.data.get("error") == "TO201":
-            raise exceptions.MiningDisabledError(uxstring.UxString.Error.suspended_account)
+            err_string = uxstring.UxString.Error.suspended_account
         elif e.status_code == 403 and e.data.get("error") == "TO501":
-            raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
+            err_string = uxstring.UxString.monthly_mining_limit_reached
         elif e.status_code == 403 and e.data.get("error") == "TO502":
-            raise exceptions.MiningDisabledError(uxstring.UxString.lifetime_earn_limit_reached)
+            err_string = uxstring.UxString.lifetime_earn_limit_reached
         elif e.status_code == 403 and e.data.get("error") == "TO503":
-            raise exceptions.MiningDisabledError(uxstring.UxString.no_earn_allocations.format(
-                two1.TWO1_WWW_HOST, client.username))
+            err_string = uxstring.UxString.no_earn_allocations.format(two1.TWO1_WWW_HOST,
+                                                                      client.username)
         elif e.status_code == 404:
             if bitcoin_computer.has_mining_chip():
-                raise exceptions.MiningDisabledError(uxstring.UxString.monthly_mining_limit_reached)
+                err_string = uxstring.UxString.monthly_mining_limit_reached
             else:
-                raise exceptions.MiningDisabledError(uxstring.UxString.earn_limit_reached)
+                err_string = uxstring.UxString.earn_limit_reached
+
+        if err_string:
+            raise exceptions.MiningDisabledError("{}\n\n{}".format(err_string, profile_cta))
         else:
             raise e
 
