@@ -51,7 +51,6 @@ Summary
   Get bitcoin
   -----------
   21 faucet                 # Request bitcoin from 21 faucet
-  21 buybitcoin             # Buy bitcoin via Coinbase
   21 status                 # View your current bitcoin balance
   21 log                    # See all past purchases and earnings
   \b

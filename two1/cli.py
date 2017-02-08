@@ -27,7 +27,6 @@ from two1.commands.util import exceptions
 from two1.commands.util import wallet as wallet_utils
 from two1.commands.util import account as account_utils
 from two1.commands.buy import buy
-from two1.commands.buybitcoin import buybitcoin
 from two1.commands.doctor import doctor
 from two1.commands.mine import mine
 from two1.commands.log import log
@@ -168,7 +167,6 @@ For full documentation, visit 21.co/learn.
             sys.exit(1)
 
 main.add_command(buy)
-main.add_command(buybitcoin)
 main.add_command(channels)
 main.add_command(doctor)
 main.add_command(earn)
