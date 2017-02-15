@@ -201,68 +201,6 @@ class UxString:
     doctor_error = click.style("    Error: ", fg='red')
     doctor_total = click.style("Summary", fg='yellow')
 
-    # buybitcoin
-    minimum_bitcoin_purchase = click.style("The minimum bitcoin purchase is $2.", fg="red")
-    exchange_info_header = click.style("\nExchange Info", fg="magenta")
-    exchange_info = "    Exchange Name          : {}\n" \
-                    "    Exchange Username      : {}\n" \
-                    "    Linked Exchange Wallet : {}\n" \
-                    "    Linked Payment Method  : {}\n"
-    buybitcoin_instruction_header = click.style("Buying Bitcoin:", fg="magenta")
-    buybitcoin_instructions = "    Use " + click.style("21 buybitcoin", bold=True) +\
-                              " to buy k satoshis from {}.\n" +\
-                              "    Purchased bitcoin will automatically appear in your 21 wallet.\n\n"
-    buybitcoin_pairing = \
-        "To buy bitcoin, you need to pair your 21 and {} account.\n\n" + \
-        "If you haven't done this yet, create a password for your account by " \
-        "executing " + click.style("21 login --setpassword", bold=True) + \
-        "\nThen go to http://21.co/{}/config/coinbase/ in your " + \
-        "browser to complete the pairing.\n"
-    buybitcoin_no_payment_method = \
-        "To add a payment method to {}, go to {}."
-    buybitcoin_confirmation = "\nYou are about to withdraw {} from the bank connected to your " \
-                              "Coinbase account to buy {}.\n" \
-                              "{} includes {}\n" \
-                              "Your bitcoin will be deposited to your local wallet.\n"
-    buybitcoin_confirmation_prompt = "Are you sure you want to continue with this purchase?"
-    buybitcoin_error = click.style("Error:", bold=True, fg="red") + " {}"
-    buybitcoin_success = click.style("\nYou have successfully bought ", fg="magenta") +\
-        click.style("{} ", fg="magenta", bold=True) +\
-        click.style("for", fg="magenta") +\
-        click.style(" {}.\n", bold=True, fg="magenta")
-
-    buybitcoin_success_payout_time = "Your bitcoin will be deposited to your 21 wallet on {}."
-    buybitcoin_success_instant = "Your bitcoin will be deposited to your 21 wallet in the next " \
-                                 "few minutes."
-
-    coinbase_purchase_in_progress = "\nPurchasing bitcoin from Coinbase...\n"
-
-    coinbase_deposit_type_mapping = {"WALLET": "your Blockchain balance",
-                                     "TO_BALANCE": "your 21.co buffer"}
-    coinbase_wallet_completed = "The bitcoin you bought at Coinbase was deposited to your wallet on {}"
-    coinbase_21_completed = "The bitcoin you bought at Coinbase was added to your on-chain balance. " \
-                            "Around {}, {} BTC amount were withdrawn from your " \
-                            "Coinbase wallet for this purchase."
-
-    coinbase_wallet_pending = "The bitcoin you bought at Coinbase will be deposited to your wallet around {}"
-    coinbase_21_pending = "The bitcoin you bought at Coinbase was added to your on-chain balance immediately. " \
-                          "Around {}, {} BTC will be withdrawn from your Coinbase wallet for this " \
-                          "purchase."
-
-    coinbase_history_title = click.style("[21 Bitcoin Purchase History]\n", bold=True, fg="magenta")
-    coinbase_no_bitcoins_purchased = "[No purchases yet]"
-    coinbase_history = click.style(
-        "{} : {} bitcoin from your Coinbase to {}.\n",
-        fg="cyan") + "Description: {}"
-    coinbase_quote_price_satoshis = "The current price for {} {} is {} {}."
-    coinbase_quote_price_dollars = "You can get {} {} for {} {}."
-    coinbase_max_buy_reached = click.style(
-        "You have reached the daily maximum for Bitcoin purchases. Please try again in a few "
-        "hours.", fg="red")
-    coinbase_amount_too_high = click.style(
-        "The amount you entered is too high. The maximum daily bitcoin purchase limit "
-        "is 100 USD.", fg="red")
-
     # earning
     use_21_earn_instead = click.style(
         "21 mine only works on Bitcoin Computers. Try 21 earn, 21 faucet, or 21 sell instead.",
@@ -322,10 +260,8 @@ class UxString:
                                    "Please try again in 30 days."
 
     mining_bitcoin_computer_needed = click.style(
-        "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nYou can use ", fg="red") +\
-        click.style("21 buybitcoin", bold=True, fg="red") +\
-        click.style(" to add Bitcoins to your account instead. \nIf you believe you have received this ", fg="red") +\
-        click.style("message in error, please contact support@21.co.", fg="red")
+        "You need a 21 Bitcoin Computer (21.co/buy) to access this service. \nIf you believe you have ", fg="red") +\
+        click.style("received this message in error, please contact support@21.co.", fg="red")
 
     mining_profile_call_to_action = click.style(
         "You can earn more bitcoin by responding to messages after configuring your public "
