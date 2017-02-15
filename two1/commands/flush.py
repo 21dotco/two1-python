@@ -107,7 +107,7 @@ def _flush(client, wallet, machine_auth, amount=None, payout_address=None, silen
             logger.info(success_msg)
     except exceptions.ServerRequestError as ex:
         if ex.status_code == 401:
-            logger.info(uxstring.UxString.flush_insufficient_earnings)
+            logger.info(ex.message)
         elif ex.status_code == 400 and ex.data.get("error") == "TO500":
             logger.info(uxstring.UxString.flush_not_enough_earnings.format(amount), fg="red")
         elif ex.status_code == 403 and ex.data.get("error") == "social_account_required_to_flush":

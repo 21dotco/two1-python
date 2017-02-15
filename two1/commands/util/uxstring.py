@@ -342,8 +342,6 @@ class UxString:
     flush_status = "\n* Your flushed amount of %s satoshis will appear " \
                    "in your wallet balance as soon as they appear on the Blockchain."
 
-    flush_insufficient_earnings = "You need to flush a minimum of 20000 satoshis."
-
     flush_not_enough_earnings = "You don't have enough balance to flush {} satoshis."
 
     flush_invalid_address = click.style(
