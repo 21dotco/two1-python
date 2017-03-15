@@ -3,7 +3,7 @@ import requests
 
 from two1.wallet import exceptions
 
-DEFAULT_FEE_PER_KB = 100000  # Satoshis
+DEFAULT_FEE_PER_KB = 150000  # Satoshis
 
 # Each txn input is ~150 bytes:
 # outpoint: 32 bytes
