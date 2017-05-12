@@ -23,6 +23,19 @@ def is_installed():
     return shutil.which('zerotier-cli') is not None
 
 
+def is_running():
+    """ Checks the system whether zerotier-on is running
+
+    Returns:
+        bool: True if zerotier-one is running, False otherwise
+    """
+    cmd = 'ps -e | grep zerotier-one | grep -v grep' 
+    ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    if len(ps.stdout.read()) == 0:
+        return False
+    return True
+
+
 def cli(*args):
     """ Runs zerotier-cli as superuser and returns the results
 
@@ -201,14 +214,18 @@ def start_daemon():
             cmd = ('sudo', 'systemctl', 'start', 'zerotier-one.service')
         elif shutil.which("service"):
             cmd = ('sudo', 'service', 'zerotier-one', 'start')
+        elif shutil.which("zerotier-one"):
+            cmd = ('sh -c "sudo zerotier-one -d && sleep 1"')
+            # instant return because shell=True is needed
+            return subprocess.call(cmd, shell=True)
         else:
-            raise EnvironmentError("Do not know how to start zerotier deamon on your system")
+            raise EnvironmentError("Do not know how to start zerotier daemon on your system")
     elif platform.system() in "Darwin":
         # ZT post install for Macs already load the daemon
         return ""
     else:
-        raise EnvironmentError("Do not know how to start zerotier deamon on your system")
-
+        raise EnvironmentError("Do not know how to start zerotier daemon on your system")
+    
     return subprocess.call(cmd)  # Command errors if already started
 
 
@@ -286,7 +303,7 @@ def get_network_id(network_name):
 
 
 def leave_all():
-    if not is_installed():
+    if not (is_installed() or is_running()):
         return
     logger.info('Leaving all ZeroTier networks.')
     for network, address in get_all_addresses().items():
