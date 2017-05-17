@@ -7,6 +7,7 @@ import sys
 import os
 
 import two1
+from two1 import TWO1_CHANNELS_FEE
 from two1.wallet import Wallet, Two1Wallet
 
 from . import PaymentChannelClient
@@ -142,7 +143,7 @@ def cli_list(ctx):
 @click.argument('url', type=click.STRING)
 @click.argument('deposit', type=click.INT)
 @click.argument('expiration', type=click.INT)
-@click.option('--fee', default=30000, help="Fee amount in satoshis.")
+@click.option('--fee', default=TWO1_CHANNELS_FEE, help="Fee amount in satoshis.")
 @click.option('--zeroconf', default=False, is_flag=True,
               help="Use payment channel without deposit confirmation. This preference " +
               "will be overriden by server configuration if applicable.")
