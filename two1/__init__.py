@@ -42,4 +42,4 @@ TWO1_LOGGER_SERVER = os.environ.get('TWO1_LOGGER_SERVER', 'https://logger.21.co'
 TWO1_POOL_URL = os.environ.get('TWO1_POOL_URL', 'swirl+tcp://grid.21.co:21006')
 TWO1_DEVICE_ID = os.environ.get('TWO1_DEVICE_ID')
 TWO1_CHANNELS_MIN_DURATION = int(os.environ.get('TWO1_CHANNELS_MIN_DURATION', 4 * 24 * 3600))
-TWO1_CHANNELS_FEE = int(os.environ.get('TWO1_CHANNELS_FEE', 30000))
+TWO1_CHANNELS_FEE = int(os.environ.get('TWO1_CHANNELS_FEE', 125000))
