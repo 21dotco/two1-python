@@ -42,7 +42,7 @@ class MockTwo1Wallet:
         utxo_script_sig = Script.build_p2pkh(self._private_key.public_key.hash160())
         inp = TransactionInput(
             outpoint=Hash('0' * 64), outpoint_index=0, script=utxo_script_sig, sequence_num=0xffffffff)
-        out = TransactionOutput(value=500000, script=Script.build_p2sh(hash160))
+        out = TransactionOutput(value=215000, script=Script.build_p2sh(hash160))
         txn = Transaction(version=Transaction.DEFAULT_TRANSACTION_VERSION, inputs=[inp], outputs=[out], lock_time=0)
         txn.sign_input(
             input_index=0, hash_type=Transaction.SIG_HASH_ALL, private_key=self._private_key,
