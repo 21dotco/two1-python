@@ -34,8 +34,8 @@ def test_paymentchannel_typical():
     # Clear mock payment channel server channels.
     mock.MockPaymentChannelServer.channels = {}
 
-    # Open a payment channel with 100000 deposit, default expiration, and 30000 fee
-    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 30000, False)
+    # Open a payment channel with 100000 deposit, default expiration, and 125000 fee
+    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 125000, False)
 
     # Assert payment channel properties
     expected_state = {}
@@ -44,7 +44,7 @@ def test_paymentchannel_typical():
     expected_state['ready'] = False
     expected_state['balance'] = 100000
     expected_state['deposit'] = 100000
-    expected_state['fee'] = 30000
+    expected_state['fee'] = 125000
     expected_state['creation_time'] = lambda pc: pc.creation_time > 0
     expected_state['expiration_time'] = int(pc.creation_time + DEFAULT_EXPIRATION)
     expected_state['expired'] = False
@@ -154,8 +154,8 @@ def test_paymentchannel_typical_zeroconf():
     # Clear mock payment channel server channels.
     mock.MockPaymentChannelServer.channels = {}
 
-    # Open a payment channel with 100000 deposit, default expiration, and 30000 fee
-    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 30000, True)
+    # Open a payment channel with 100000 deposit, default expiration, and 125000 fee
+    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 125000, True)
 
     # Assert payment channel properties
     expected_state = {}
@@ -164,7 +164,7 @@ def test_paymentchannel_typical_zeroconf():
     expected_state['ready'] = True
     expected_state['balance'] = 100000
     expected_state['deposit'] = 100000
-    expected_state['fee'] = 30000
+    expected_state['fee'] = 125000
     expected_state['creation_time'] = lambda pc: pc.creation_time > 0
     expected_state['expiration_time'] = int(pc.creation_time + DEFAULT_EXPIRATION)
     expected_state['expired'] = False
@@ -204,8 +204,8 @@ def test_paymentchannel_expiration():
     # Clear mock payment channel server channels.
     mock.MockPaymentChannelServer.channels = {}
 
-    # Open a payment channel with 100000 deposit, default expiration, and 30000 fee
-    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 30000, False)
+    # Open a payment channel with 100000 deposit, default expiration, and 125000 fee
+    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 125000, False)
 
     # Confirm the deposit tx
     bc.mock_confirm(pc.deposit_txid)
@@ -218,7 +218,7 @@ def test_paymentchannel_expiration():
     expected_state['ready'] = True
     expected_state['balance'] = 100000
     expected_state['deposit'] = 100000
-    expected_state['fee'] = 30000
+    expected_state['fee'] = 125000
     expected_state['creation_time'] = lambda pc: pc.creation_time > 0
     expected_state['expiration_time'] = int(pc.creation_time + DEFAULT_EXPIRATION)
     expected_state['expired'] = False
@@ -288,8 +288,8 @@ def test_paymentchannel_serverside_close():
     # Clear mock payment channel server channels.
     mock.MockPaymentChannelServer.channels = {}
 
-    # Open a payment channel with 100000 deposit, default expiration, and 30000 fee
-    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 30000, False)
+    # Open a payment channel with 100000 deposit, default expiration, and 125000 fee
+    pc = paymentchannel.PaymentChannel.open(db, wallet, bc, 'mock://test', 100000, DEFAULT_EXPIRATION, 125000, False)
 
     # Confirm the deposit tx
     bc.mock_confirm(pc.deposit_txid)
@@ -302,7 +302,7 @@ def test_paymentchannel_serverside_close():
     expected_state['ready'] = True
     expected_state['balance'] = 100000
     expected_state['deposit'] = 100000
-    expected_state['fee'] = 30000
+    expected_state['fee'] = 125000
     expected_state['creation_time'] = lambda pc: pc.creation_time > 0
     expected_state['expiration_time'] = int(pc.creation_time + DEFAULT_EXPIRATION)
     expected_state['expired'] = False

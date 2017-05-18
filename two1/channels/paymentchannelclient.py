@@ -7,6 +7,7 @@ from . import walletwrapper
 from . import database
 from . import blockchain
 from . import paymentchannel
+from two1 import TWO1_CHANNELS_FEE
 
 
 logger = logging.getLogger('channels')
@@ -105,7 +106,7 @@ class PaymentChannelClient:
                     self._channels[url] = paymentchannel.PaymentChannel(
                         url, self._database, self._wallet, self._blockchain)
 
-    def open(self, url, deposit, expiration, fee=30000, zeroconf=False, use_unconfirmed=False):
+    def open(self, url, deposit, expiration, fee=TWO1_CHANNELS_FEE, zeroconf=False, use_unconfirmed=False):
         """Open a payment channel at the specified URL.
 
         Args:

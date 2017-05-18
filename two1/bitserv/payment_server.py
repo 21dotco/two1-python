@@ -5,6 +5,7 @@ import os
 import threading
 import time
 
+from two1 import TWO1_CHANNELS_FEE
 from two1 import TWO1_CHANNELS_MIN_DURATION
 from two1.bitcoin import Hash
 from two1.bitcoin import PublicKey
@@ -82,7 +83,7 @@ class PaymentServer:
         "TWO1_PROVIDER_HOST", "https://blockchain.21.co") + "/blockchain/testnet3"
     """Default testnet blockchain URL."""
 
-    MIN_TX_FEE = 30000
+    MIN_TX_FEE = TWO1_CHANNELS_FEE
     """Minimum transaction fee for payment channel deposit/payment."""
 
     DUST_LIMIT = 3000
