@@ -408,8 +408,8 @@ def get_search_results(config, client, page):
 
     total_pages = resp_json["total_pages"]
     logger.info("\nPage {}/{}".format(page + 1, total_pages), fg="green")
-    headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime",
-               "Last Update"]
+    headers = ["id", "Title", "Url", "Rating", "Is up", "Is healthy", "Average Uptime"]
+
     rows = []
     for r in search_results:
         rating = "Not yet Rated"
@@ -419,14 +419,15 @@ def get_search_results(config, client, page):
             if r["rating_count"] > 1:
                 rating += "s"
             rating += ")"
-        rows.append([r["id"],
-                     r["title"],
-                     r["app_url"],
-                     rating,
-                     str(r["is_up"]),
-                     str(r["is_healthy"]),
-                     "{:.2f}%".format(r["average_uptime"] * 100),
-                     util.format_date(r["last_update"])])
+        rows.append([
+            r["id"],
+            r["title"],
+            r["app_url"],
+            rating,
+            str(r["is_up"]),
+            str(r["is_healthy"]),
+            "{:.2f}%".format(r["average_uptime"] * 100),
+        ])
 
     logger.info(tabulate(rows, headers, tablefmt="simple"))
 
@@ -474,10 +475,6 @@ def display_app_info(config, client, app_id):
         version = click.style("Version         : ", fg="blue") + click.style(
             "{}".format(app_info["version"]))
 
-        last_updated_str = util.format_date(app_info["updated"])
-        last_update = click.style("Last Update     : ", fg="blue") + click.style(
-            "{}".format(last_updated_str))
-
         availability = click.style("Availability    : ", fg="blue") + click.style(
             "{:.2f}%".format(app_info["average_uptime"] * 100))
 
@@ -505,7 +502,7 @@ def display_app_info(config, client, app_id):
                 app_info["usage_docs"])
 
         page_components = [title, "\n",
-                           rating_row, up_status, availability, last_crawl, last_update, version,
+                           rating_row, up_status, availability, last_crawl, version,
                            "\n",
                            desc, app_url, original_url, doc_url, "\n",
                            category, price, "\n", quick_start, "\n"]
