@@ -137,7 +137,7 @@ class InstallerMac(InstallerBase):
 
         packages.append("Docker Machine")
         try:
-            subprocess.check_output(["docker-machine", "version"])
+            subprocess.check_output(["docker-machine", "--version"])
         except:
             installed.append(False)
         else:
