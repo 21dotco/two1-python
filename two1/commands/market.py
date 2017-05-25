@@ -169,20 +169,30 @@ def check_platform():
     system = platform.system()
     distro = platform.platform()
     is_raspberry_pi = False
+    is_docker = False
     try:
         info = open("/proc/cpuinfo").read()
     except FileNotFoundError:
-        is_raspberry_pi = False
+        #is_raspberry_pi is already False
+        pass
     else:
         # bcm2708: Raspberry Pi 1
         # bcm2709: Raspberry Pi 2
         # bcm2710: Raspberry Pi 3
         is_raspberry_pi = 'BCM27' in info or 'ODROID' in info
+    try:
+        proc = open("/proc/{}/cgroup".format(os.getpid())).read()
+    except FileNotFoundError:
+        # is_docker is already False
+        pass
+    else:
+        is_docker = 'docker' in proc
 
     return system == "Linux" and (
         os.path.isfile('/proc/device-tree/hat/uuid') or
         'boot2docker' in distro.lower() or
         is_raspberry_pi or
+        is_docker or
         os.path.isfile('/sys/hypervisor/uuid') or
         os.path.isdir('/var/lib/digitalocean')
     )
