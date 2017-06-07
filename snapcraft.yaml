@@ -1,0 +1,19 @@
+name: two1
+version: master
+summary: Send and receive BTC over HTTP
+description: |
+  21 is an open source Python library and command line interface for quickly
+  building machine-payable web services.
+
+grade: stable
+confinement: strict
+
+apps:
+  two1:
+    command: env LC_ALL=C.UTF-8 LANG=C.UTF-8 21
+    plugs: [network]
+
+parts:
+  two1-python:
+    source: .
+    plugin: python
