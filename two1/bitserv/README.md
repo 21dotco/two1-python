@@ -2,12 +2,12 @@
 
 ## Overview
 
-The BitServ library adds a simple API for servers to create payable resources in both Flask and Django frameworks. It enables a server (also referred to as a merchant) to receive payment from a client (also referred to as a customer) for a resource. See the [bitrequests readme](https://github.com/21dotco/two1/blob/devel/two1/bitrequests/docs/README.md) for more information on the `402 payment-resource exchange`.
+The BitServ library adds a simple API for servers to create payable resources in both Flask and Django frameworks. It enables a server (also referred to as a merchant) to receive payment from a client (also referred to as a customer) for a resource. See the [bitrequests readme](https://github.com/21dotco/two1/blob/master/two1/bitrequests/docs/README.md) for more information on the `402 payment-resource exchange`.
 
 
 ## Payment Methods
 
-The bitserv library provides a base set of [payment_methods](https://github.com/21dotco/two1/blob/devel/two1/bitserv/payment_methods.py) that framework-specific decorators can use to accept different payment types (e.g. `OnChain`, `Payment Channel` and `BitTransfer` types). Payment methods should implement the following methods:
+The bitserv library provides a base set of [payment_methods](https://github.com/21dotco/two1/blob/master/two1/bitserv/payment_methods.py) that framework-specific decorators can use to accept different payment types (e.g. `OnChain`, `Payment Channel` and `BitTransfer` types). Payment methods should implement the following methods:
 
   * **get_402_headers()** provides a list of headers that the *server* returns to the client in the initial `402 PAYMENT REQUIRED` response.
 
@@ -100,9 +100,9 @@ python manage.py migrate
 
 ## Payment Server
 
-[payment_server.py](https://github.com/21dotco/two1/blob/devel/two1/bitserv/payment_server.py) is concerned with managing the server side of payment channels. The `PaymentServer` object is generic enough to be used by various communication protocols, though it is presently only implemented over HTTP REST as a core part of the `bitserv` library.
+[payment_server.py](https://github.com/21dotco/two1/blob/master/two1/bitserv/payment_server.py) is concerned with managing the server side of payment channels. The `PaymentServer` object is generic enough to be used by various communication protocols, though it is presently only implemented over HTTP REST as a core part of the `bitserv` library.
 
-The `PaymentServer` - and to some extent, each `PaymentBase` method - relies on state being maintained by the application. It consumes the [models.py](https://github.com/21dotco/two1/blob/devel/two1/bitserv/models.py) API in order to store and retrieve channel state. The default database implementation uses the `sqlite3` standard library to communicate with an SQLite database. The django-specific database implementation provides an adapter that hooks into the django ORM to allow payment methods to keep their data with the rest of the django application.
+The `PaymentServer` - and to some extent, each `PaymentBase` method - relies on state being maintained by the application. It consumes the [models.py](https://github.com/21dotco/two1/blob/master/two1/bitserv/models.py) API in order to store and retrieve channel state. The default database implementation uses the `sqlite3` standard library to communicate with an SQLite database. The django-specific database implementation provides an adapter that hooks into the django ORM to allow payment methods to keep their data with the rest of the django application.
 
 The `PaymentServer` also uses a custom `wallet.py` wrapper to provide added transaction-building functionality. You can set up a barebones payment server by passing it a two1 wallet instance
 

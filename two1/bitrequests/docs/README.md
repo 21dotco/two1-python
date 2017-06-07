@@ -4,7 +4,7 @@
 
 BitRequests wraps the python HTTP [Requests](http://docs.python-requests.org/en/latest/) library, adding a simple API for users to pay for resources. It enables a client (also referred to as a customer) to pay a server (also referred to as a merchant) for a resource.
 
-![402 flow](https://github.com/21dotco/two1/blob/devel/two1/bitrequests/docs/bitrequests.png)
+![402 flow](https://github.com/21dotco/two1/blob/master/two1/bitrequests/docs/bitrequests.png)
 
 The 402 payment-resource exchange adds an intermediary negotiation step between a standard HTTP request/response session. The following is how the transaction would occur for a `GET` request.
 
