@@ -52,4 +52,4 @@ def test_smallest_first():
             largest_selected = s.value
 
     # Make sure that the largest of the selected is <= min(remaining)
-    assert largest_selected <= min([u.value for u in remaining])
+    assert remaining == [] or largest_selected <= min([u.value for u in remaining])
