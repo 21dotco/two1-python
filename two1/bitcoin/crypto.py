@@ -1476,7 +1476,7 @@ class HDPrivateKey(HDKey, PrivateKeyBase):
         return self.public_key.hash160()
 
     def __int__(self):
-        return int(self.key)
+        return int(self._key)
 
 
 class HDPublicKey(HDKey, PublicKeyBase):
