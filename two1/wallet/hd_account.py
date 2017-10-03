@@ -264,6 +264,27 @@ class HDAccount(object):
         # Always do compressed keys
         return self.get_public_key(change, n).address(True, self.testnet)
 
+    def get_segwit_address(self, change, n=-1):
+        """ Returns a public address
+
+        Args:
+            change (bool): If True, returns an address for change purposes,
+               otherwise returns an address for payment.
+            n (int): index of address in chain. If n == -1, a new key
+               is created with index = self.last_[change|payout]_index + 1
+
+        Returns:
+            str: A bitcoin address
+        """
+        # TODO: perhaps these segwit_address functions should be merged with the address functions instead.
+        # TODO: Fix cache functionality. Removed as this will clash when mixing address types.
+        # c = int(change)
+        # cached = self._cache_manager.get_address(self.index, c, n)
+        # if cached is not None:
+        #     return cached
+
+        return self.get_public_key(change, n).segwit_address(testnet=self.testnet)
+
     def _new_key_or_address(self, change, key=False):
         c = int(change)
         last_index = self.last_indices[c]
