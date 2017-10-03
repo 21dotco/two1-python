@@ -146,6 +146,21 @@ class Script(object):
         return Script(['OP_HASH160', hash160_key, 'OP_EQUAL'])
 
     @staticmethod
+    def build_p2wsh(hash160_key, version=0):
+        """ Builds a Pay-to-Script-Hash script.
+
+        Args:
+            hash160_key (bytes): the RIPEMD-160 hash of the script in
+              internal byte order.
+
+        Returns:
+            scr (Script): a serializable Script object containing the
+            p2sh script.
+        """
+
+        return Script(['OP_%d' % version, hash160_key])
+
+    @staticmethod
     def build_multisig_redeem(m, pub_keys):
         """ Builds a multisig redeem script and corresponding
         Pay-to-Script-Hash script.

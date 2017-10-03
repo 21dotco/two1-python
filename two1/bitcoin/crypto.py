@@ -14,9 +14,9 @@ from two1.bitcoin.utils import rand_bytes
 from two1.crypto.ecdsa_base import Point
 from two1.crypto.ecdsa import ECPointAffine
 from two1.crypto.ecdsa import secp256k1
+from two1.bitcoin import bech32
 
 bitcoin_curve = secp256k1()
-
 
 def get_bytes(s):
     """Returns the byte representation of a hex- or byte-string."""
@@ -726,6 +726,19 @@ class PublicKey(PublicKeyBase):
         # Put the version byte in front, 0x00 for Mainnet, 0x6F for testnet
         version = bytes([self.TESTNET_VERSION]) if testnet else bytes([self.MAINNET_VERSION])
         return base58.b58encode_check(version + self.hash160(compressed))
+
+    def segwit_address(self, testnet=False, version=0, address_type='p2sh-p2wsh'):
+        from two1.bitcoin import Script
+        compressed = True  # required
+
+        if address_type == 'p2sh-p2wsh':
+            p2wsh_script = Script.build_p2wsh(self.hash160(compressed), version)
+            return p2wsh_script.address(testnet=testnet)
+
+        elif address_type == 'bech32':
+            prefix = 'tb' if testnet else 'bc'
+            return bech32.encode(prefix, version, self.hash160(compressed))
+
 
     def verify(self, message, signature, do_hash=True):
         """ Verifies that message was appropriately signed.
@@ -1588,6 +1601,21 @@ class HDPublicKey(HDKey, PublicKeyBase):
             bytes: Base58Check encoded string
         """
         return self._key.address(True, testnet)
+
+    def segwit_address(self, testnet=False, version=0, address_type='p2sh-p2wsh'):
+        """ Address property that returns the Base58Check
+        encoded version of the HASH160.
+
+        Args:
+            compressed (bool): Whether or not the compressed key should
+               be used.
+            testnet (bool): Whether or not the key is intended for testnet
+               usage. False indicates mainnet usage.
+
+        Returns:
+            bytes: Base58Check encoded string
+        """
+        return self._key.segwit_address(testnet, version, address_type)
 
     def verify(self, message, signature, do_hash=True):
         """ Verifies that message was appropriately signed.
