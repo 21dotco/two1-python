@@ -147,15 +147,16 @@ class Script(object):
 
     @staticmethod
     def build_p2wsh(hash160_key, version=0):
-        """ Builds a Pay-to-Script-Hash script.
+        """ Builds a Pay-to-Witness-Script-Hash script.
 
         Args:
             hash160_key (bytes): the RIPEMD-160 hash of the script in
               internal byte order.
+            version (int): witness version
 
         Returns:
             scr (Script): a serializable Script object containing the
-            p2sh script.
+            p2wsh script.
         """
 
         return Script(['OP_%d' % version, hash160_key])
