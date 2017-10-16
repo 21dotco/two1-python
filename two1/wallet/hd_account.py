@@ -30,6 +30,7 @@ class HDAccount(object):
         index (int): Child index of this account relative to the parent.
         data_provider (BaseProvider): A compatible data provider.
         testnet (bool): Whether or not this account will be used on testnet.
+        generation_type (str): Specifiy Segwit(P2SH-P2WPKH) generation or other custom generation types
     """
     PAYOUT_CHAIN = 0
     CHANGE_CHAIN = 1
@@ -38,7 +39,8 @@ class HDAccount(object):
     MAX_UPDATE_THRESHOLD = 30  # seconds
 
     def __init__(self, hd_key, name, index, data_provider, cache_manager,
-                 testnet=False, last_state=None, skip_discovery=False):
+                 testnet=False, last_state=None, skip_discovery=False,
+                 generation_type=''):
         # Take in either public or private key for this account as we
         # can derive everything from it.
         if not isinstance(hd_key, HDKey):
@@ -49,6 +51,7 @@ class HDAccount(object):
         self.index = index
         self.data_provider = data_provider
         self.testnet = testnet
+        self.generation_type = generation_type
 
         self.last_indices = [-1, -1]
         self._cache_manager = cache_manager
@@ -256,13 +259,37 @@ class HDAccount(object):
             str: A bitcoin address
         """
         # If this is an address we've already generated, don't regenerate.
-        c = int(change)
-        cached = self._cache_manager.get_address(self.index, c, n)
-        if cached is not None:
-            return cached
+        if (self.generation_type == 'P2SH-P2WPKH'):
+            return self.get_segwit_address(change, n)
+        else:
+            c = int(change)
+            cached = self._cache_manager.get_address(self.index, c, n)
+            if cached is not None:
+                return cached
 
-        # Always do compressed keys
-        return self.get_public_key(change, n).address(True, self.testnet)
+            # Always do compressed keys
+            return self.get_public_key(change, n).address(True, self.testnet)
+
+    def get_segwit_address(self, change, n=-1):
+        """ Returns a public address
+
+        Args:
+            change (bool): If True, returns an address for change purposes,
+               otherwise returns an address for payment.
+            n (int): index of address in chain. If n == -1, a new key
+               is created with index = self.last_[change|payout]_index + 1
+
+        Returns:
+            str: A bitcoin address
+        """
+        # TODO: perhaps these segwit_address functions should be merged with the address functions instead.
+        # TODO: Fix cache functionality. Removed as this will clash when mixing address types.
+        # c = int(change)
+        # cached = self._cache_manager.get_address(self.index, c, n)
+        # if cached is not None:
+        #     return cached
+
+        return self.get_public_key(change, n).segwit_address(testnet=self.testnet)
 
     def _new_key_or_address(self, change, key=False):
         c = int(change)
