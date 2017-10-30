@@ -35,7 +35,8 @@ def utxo_selector_smallest_first(utxos_by_addr, amount,
             else:
                 utxos_to_use[addr] = [utxo]
 
-            calc_fees += input_fee
+            if fees is None:
+                calc_fees += input_fee
         else:
             break
 
