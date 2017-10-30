@@ -12,16 +12,17 @@ def _get_utxos_addr_tuple_list(utxos_by_addr):
 
 def utxo_selector_smallest_first(utxos_by_addr, amount,
                                  num_outputs, fees=None):
-    f = get_fees()
-    input_fee = f['per_input']
-    output_fee = f['per_output']
-
     # Order the utxos by amount
     utxo_tuple_list = _get_utxos_addr_tuple_list(utxos_by_addr)
     ordered_utxos = sorted(utxo_tuple_list,
                            key=lambda utxo_addr_tuple: utxo_addr_tuple[1].value)
 
-    calc_fees = num_outputs * output_fee
+    if fees is None:
+        f = get_fees()
+        input_fee = f['per_input']
+        output_fee = f['per_output']
+        calc_fees = num_outputs * output_fee
+
     utxos_to_use = {}
     utxo_sum = 0
 
