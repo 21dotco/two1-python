@@ -155,12 +155,7 @@ class InsightProvider(BaseProvider):
                           outputs,
                           txn_json["locktime"])
 
-        # Added try/except but that kind of defeats the purpose of this assert
-        try:
-            assert txn.hash == Hash(txn_json['txid'])
-        except AssertionError as e:
-            print(e)
-            pass
+        assert txn.hash == Hash(txn_json['txid'])
 
         return txn, addr_keys
 
