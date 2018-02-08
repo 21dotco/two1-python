@@ -95,12 +95,7 @@ class CacheManager(object):
         if not self._dirty and not force:
             return
 
-        # All we really need to serialize is the address and txn caches
-        d = json.dumps(dict(addresses=self._address_cache,
-                            txns=self._serialize_cache(self._txn_cache),
-                            last_block=self.last_block,
-                            version=self.CACHE_VERSION),
-                       sort_keys=True).encode('utf-8')
+        d = self.to_dict()
 
         p = os.path.abspath(filename)
 
@@ -109,6 +104,15 @@ class CacheManager(object):
             fp.write(d)
 
         self._dirty = False
+
+    def to_dict(self):
+        # All we really need to serialize is the address and txn caches
+        d = json.dumps(dict(addresses=self._address_cache,
+                            txns=self._serialize_cache(self._txn_cache),
+                            last_block=self.last_block,
+                            version=self.CACHE_VERSION),
+                       sort_keys=True).encode('utf-8')
+        return d     
 
     def load_from_dict(self, d, prune_provisional=True):
         """ Loads the cache manager from a dict
