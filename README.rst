@@ -1,4 +1,4 @@
-two1
+two1 - an amazing tool
 ====
 
 ``two1`` (``21``) is a command line tool and library that allows users
